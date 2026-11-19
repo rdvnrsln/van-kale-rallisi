@@ -162,19 +162,23 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
 .kucuk-dugme { font-size: 16px; padding: 8px 16px 9px; }
 
 /* ---------- mutfak ---------- */
-#mutfak { display: flex; align-items: center; justify-content: center; background: rgba(11, 22, 34, 0.86); overflow-y: auto; touch-action: pan-y; }
-.mutfak-ic { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 12px; }
-.tarif { display: flex; flex-wrap: wrap; gap: 8px; }
-.tarif span { border: 1px solid var(--cizgi); padding: 5px 11px 6px; font-family: var(--f-baslik); font-weight: 600; font-size: 18px; color: var(--soluk); }
-.tarif span.sira { border-color: var(--kehribar); color: var(--kehribar); }
-.tarif span.tamam { background: var(--gol); border-color: var(--gol); color: #062a30; }
-.cubuk { height: 8px; background: rgba(243, 239, 230, 0.14); }
-#mutfak-sure { height: 100%; width: 100%; background: var(--kehribar); }
-.izgara { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.izgara button { background: var(--panel); border: 1px solid var(--cizgi); padding: 14px 6px; min-height: 64px; font-family: var(--f-baslik); font-weight: 600; font-size: 19px; line-height: 1.15; }
-.izgara button:hover { border-color: var(--kehribar); }
-.izgara button:disabled { opacity: 0.35; }
-.izgara button.yanlis { border-color: #ff5a47; color: #ff5a47; }
+#mutfak { display: flex; align-items: center; justify-content: center; background: rgba(11, 22, 34, 0.88); overflow-y: auto; touch-action: pan-y; }
+.mutfak-ic { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 10px; }
+.cubuk { display: block; height: 7px; background: rgba(243, 239, 230, 0.14); }
+#mutfak-sure, .musteri .cubuk span { display: block; height: 100%; width: 100%; background: var(--kehribar); }
+.musteriler, .ocak { display: grid; gap: 8px; }
+.musteriler { grid-template-columns: repeat(3, minmax(0, 1fr)); } .ocak { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.musteri { display: grid; gap: 4px; text-align: start; background: var(--panel); border: 1px solid var(--cizgi); padding: 8px 10px; min-height: 78px; }
+.musteri:disabled { opacity: 0.4; } .musteri.acele { border-color: #ff5a47; } .musteri.acele .cubuk span { background: #ff5a47; }
+.m-ad { font-size: 12.5px; color: var(--soluk); } .m-yemek { font-family: var(--f-baslik); font-weight: 700; font-size: 20px; line-height: 1.1; }
+.tabak { background: transparent; border: 1px dashed var(--cizgi); padding: 10px; min-height: 50px; font-family: var(--f-baslik); font-weight: 600; font-size: 17px; color: var(--soluk); }
+.tabak.hazir { border: 1px solid var(--gol); background: var(--gol); color: #062a30; } .tabak.yanik { border: 1px solid #ff5a47; color: #ff5a47; }
+.tezgah-sira { display: flex; gap: 8px; align-items: center; }
+.tezgah { flex: 1; min-width: 0; border-bottom: 2px solid var(--kehribar); padding: 6px 2px; font-family: var(--f-baslik); font-weight: 600; font-size: 18px; min-height: 34px; }
+.izgara { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.izgara button { background: var(--panel); border: 1px solid var(--cizgi); padding: 10px 4px; min-height: 52px; font-family: var(--f-baslik); font-weight: 600; font-size: 16.5px; line-height: 1.1; }
+.izgara button:hover { border-color: var(--kehribar); } .izgara button:disabled { background: var(--kehribar); color: #1a1206; opacity: 1; }
+@media (max-width: 460px) { .izgara { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
 /* ---------- konuşma ---------- */
 #konusma { display: flex; align-items: flex-end; background: linear-gradient(0deg, rgba(11, 22, 34, 0.94) 0, rgba(11, 22, 34, 0.8) 210px, rgba(11, 22, 34, 0) 430px); }
@@ -336,12 +340,21 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
 
 <div id="mutfak" class="kat" hidden>
   <div class="mutfak-ic">
-    <div class="etiket konum" id="mutfak-sira"></div>
-    <h2 id="mutfak-yemek" class="ayar-baslik"></h2>
-    <div id="mutfak-tarif" class="tarif"></div>
+    <div class="etiket konum" id="mutfak-ust"></div>
     <div class="cubuk"><div id="mutfak-sure"></div></div>
+    <div class="musteriler">
+      <button type="button" class="musteri" id="musteri-0"><span class="m-ad"></span><span class="m-yemek"></span><span class="cubuk"><span></span></span></button>
+      <button type="button" class="musteri" id="musteri-1"><span class="m-ad"></span><span class="m-yemek"></span><span class="cubuk"><span></span></span></button>
+      <button type="button" class="musteri" id="musteri-2"><span class="m-ad"></span><span class="m-yemek"></span><span class="cubuk"><span></span></span></button>
+    </div>
+    <div class="ocak">
+      <button type="button" class="tabak" id="tabak-0"></button>
+      <button type="button" class="tabak" id="tabak-1"></button>
+    </div>
+    <div class="tezgah-sira"><div id="mutfak-tezgah" class="tezgah"></div><button type="button" id="mutfak-cop" class="ikincil kucuk-dugme" data-i18n="mutfak.cop">Boşalt</button></div>
     <div id="mutfak-izgara" class="izgara"></div>
-    <p class="kucuk" data-i18n="mutfak.ipucu">Tarifteki malzemeleri sırayla seç. Tuşlar: 1–9.</p>
+    <p class="kucuk" id="mutfak-tarifler"></p>
+    <p class="kucuk" data-i18n="mutfak.ipucu">Malzemeleri seç, tabak pişince siparişi veren misafire dokun.</p>
   </div>
 </div>
 
@@ -394,9 +407,12 @@ const DIL = {
     'menu.kasa': 'Kasa: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · kasa {1} ₺', 'menu.arac': 'Araç', 'arac.araba': 'Araba', 'arac.trike': 'Üç teker',
     'arac.motor': 'Motorlu üç teker', 'kilit.araba': 'Bu etkinlik araba ister. Araba {0} ₺.', 'kilit.kisa': 'araba gerekli',
     'al.yetmez': '{0} ₺ gerekli, kasada {1} ₺ var', 'hikaye.biriktir': '{0} ₺ biriktir', 'hikaye.biriktir.alt': 'Kasada {0} ₺ var. Mavi sütundan yük işi al.', 'ayar.testAc': 'Test: tüm araçları aç',
-    'ev.kahvalti': 'Van Kahvaltısı', 'ev.kahvalti.alt': 'Mutfakta beş tabak: murtuğa, kavut, otlu peynir, bal kaymak, çay. Malzemeleri sırayla seç',
-    'pisir.veri': '5 tabak · süreye karşı · mutfak', 'mutfak.siparis': 'Tabak {0}/{1}', 'mutfak.lezzet': 'Lezzet {0}/100', 'mutfak.yandi': 'Sofra dağıldı',
-    'mutfak.ipucu': 'Tarifteki malzemeleri sırayla seç. Klavyede 1–9 tuşları da çalışır.',
+    'ev.kahvalti': 'Van Kahvaltısı', 'ev.kahvalti.alt': 'Kahvaltı salonunda vardiya: misafirlerin siparişini hazırla, pişir, sabırları bitmeden servis et',
+    'pisir.veri': '90 saniyelik vardiya · hedef 300 ₺ · mutfak', 'mutfak.siparis': 'Tabak {0}/{1}', 'mutfak.lezzet': 'Lezzet {0}/100', 'mutfak.yandi': 'Vardiya zayıf geçti',
+    'mutfak.ipucu': 'Malzemeleri seç; tabak pişince siparişi veren misafire dokun. Bekleyen sıcak tabak yanar. Klavye: 1–9, 0, -, = malzeme; Q W E misafir; X boşalt.',
+    'mutfak.vardiya': 'Vardiya {0} sn', 'mutfak.kasa': '{0} / {1} ₺', 'mutfak.seri': 'seri ×{0}', 'mutfak.bos': 'Boş masa', 'mutfak.ocak': 'Ocak boş', 'mutfak.tezgah': 'Tezgâh boş',
+    'mutfak.pisiyor': 'pişiyor', 'mutfak.hazir': 'hazır', 'mutfak.yanik': 'yandı, at', 'mutfak.cop': 'Boşalt', 'mutfak.sonuc': '{0} misafir doydu, {1} misafir gitti', 'mutfak.hedef': 'hedef {0} ₺',
+    'mutfak.misafir': ['Tebrizli misafir', 'Öğretmen', 'Balıkçı', 'Öğrenci', 'Rehber', 'Kayakçı'],
     'mutfak.malzeme': ['Tereyağı', 'Un', 'Yumurta', 'Bal', 'Kaymak', 'Ceviz', 'Otlu peynir', 'Domates', 'Salatalık', 'Kavut unu', 'Çay', 'Şeker', 'Zeytin', 'Ekmek'],
     'mutfak.yemek': ['Murtuğa', 'Kavut', 'Otlu peynir tabağı', 'Bal kaymak', 'Çay'],
     'zemin.asfalt': 'Asfalt', 'zemin.toprak': 'Toprak', 'zemin.kaya': 'Kaya', 'zemin.kar': 'Kar',
@@ -509,9 +525,12 @@ const DIL = {
     'menu.kasa': 'Savings: ₺{0}', 'sonuc.kazanc': '+₺{0} · savings ₺{1}', 'menu.arac': 'Vehicle', 'arac.araba': 'Car', 'arac.trike': 'Cargo trike',
     'arac.motor': 'Motor trike', 'kilit.araba': 'This event needs a car. The car costs ₺{0}.', 'kilit.kisa': 'car needed',
     'al.yetmez': 'You need ₺{0}; you have ₺{1}', 'hikaye.biriktir': 'Save ₺{0}', 'hikaye.biriktir.alt': 'You have ₺{0}. Take a cargo job at the blue column.', 'ayar.testAc': 'Test: unlock all vehicles',
-    'ev.kahvalti': 'Van Breakfast', 'ev.kahvalti.alt': 'Five plates in the kitchen: murtuğa, kavut, herb cheese, honey and clotted cream, tea. Pick the ingredients in order',
-    'pisir.veri': '5 plates · against the clock · kitchen', 'mutfak.siparis': 'Plate {0}/{1}', 'mutfak.lezzet': 'Taste {0}/100', 'mutfak.yandi': 'The table fell apart',
-    'mutfak.ipucu': 'Pick the ingredients of the recipe in order. Keys 1–9 also work.',
+    'ev.kahvalti': 'Van Breakfast', 'ev.kahvalti.alt': 'A shift at the breakfast house: prepare the orders, cook them, and serve before the guests lose patience',
+    'pisir.veri': '90-second shift · target ₺300 · kitchen', 'mutfak.siparis': 'Plate {0}/{1}', 'mutfak.lezzet': 'Taste {0}/100', 'mutfak.yandi': 'A weak shift',
+    'mutfak.ipucu': 'Pick the ingredients; when the plate is ready, tap the guest who ordered it. A hot plate burns if it waits. Keys: 1–9, 0, -, = ingredients; Q W E guests; X clear.',
+    'mutfak.vardiya': 'Shift {0} s', 'mutfak.kasa': '₺{0} / ₺{1}', 'mutfak.seri': 'streak ×{0}', 'mutfak.bos': 'Empty table', 'mutfak.ocak': 'Stove free', 'mutfak.tezgah': 'Board empty',
+    'mutfak.pisiyor': 'cooking', 'mutfak.hazir': 'ready', 'mutfak.yanik': 'burnt, discard', 'mutfak.cop': 'Clear', 'mutfak.sonuc': '{0} guests served, {1} guests left', 'mutfak.hedef': 'target ₺{0}',
+    'mutfak.misafir': ['Guest from Tabriz', 'Teacher', 'Fisherman', 'Student', 'Tour guide', 'Skier'],
     'mutfak.malzeme': ['Butter', 'Flour', 'Egg', 'Honey', 'Clotted cream', 'Walnut', 'Herb cheese', 'Tomato', 'Cucumber', 'Kavut flour', 'Tea', 'Sugar', 'Olives', 'Bread'],
     'mutfak.yemek': ['Murtuğa', 'Kavut', 'Herb cheese plate', 'Honey and clotted cream', 'Tea'],
     'zemin.asfalt': 'Asphalt', 'zemin.toprak': 'Dirt', 'zemin.kaya': 'Rock', 'zemin.kar': 'Snow',
@@ -624,9 +643,12 @@ const DIL = {
     'menu.kasa': 'پس‌انداز: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · پس‌انداز {1} ₺', 'menu.arac': 'وسیله', 'arac.araba': 'خودرو', 'arac.trike': 'سه‌چرخه',
     'arac.motor': 'سه‌چرخه موتوری', 'kilit.araba': 'این مسابقه خودرو می‌خواهد. قیمت خودرو {0} ₺ است.', 'kilit.kisa': 'خودرو لازم است',
     'al.yetmez': '{0} ₺ لازم است؛ در پس‌انداز {1} ₺ داری', 'hikaye.biriktir': '{0} ₺ پس‌انداز کن', 'hikaye.biriktir.alt': 'در پس‌انداز {0} ₺ داری. از ستون آبی کار باربری بگیر.', 'ayar.testAc': 'آزمایش: همه وسیله‌ها را باز کن',
-    'ev.kahvalti': 'صبحانه وان', 'ev.kahvalti.alt': 'پنج بشقاب در آشپزخانه: مورتوغا، کاووت، پنیر سبزی، عسل و سرشیر، چای. مواد را به ترتیب انتخاب کن',
-    'pisir.veri': '5 بشقاب · با زمان · آشپزخانه', 'mutfak.siparis': 'بشقاب {0}/{1}', 'mutfak.lezzet': 'مزه {0}/100', 'mutfak.yandi': 'سفره به هم ریخت',
-    'mutfak.ipucu': 'مواد دستور را به ترتیب انتخاب کن. کلیدهای 1 تا 9 هم کار می‌کنند.',
+    'ev.kahvalti': 'صبحانه وان', 'ev.kahvalti.alt': 'یک نوبت کار در صبحانه‌خانه: سفارش مهمان‌ها را آماده کن، بپز و پیش از تمام شدن صبرشان سرو کن',
+    'pisir.veri': 'نوبت 90 ثانیه‌ای · هدف 300 ₺ · آشپزخانه', 'mutfak.siparis': 'بشقاب {0}/{1}', 'mutfak.lezzet': 'مزه {0}/100', 'mutfak.yandi': 'نوبت ضعیفی بود',
+    'mutfak.ipucu': 'مواد را انتخاب کن؛ وقتی بشقاب آماده شد، مهمانی را که سفارش داده لمس کن. بشقاب گرم اگر بماند می‌سوزد.',
+    'mutfak.vardiya': 'نوبت {0} ثانیه', 'mutfak.kasa': '{0} / {1} ₺', 'mutfak.seri': 'پیاپی ×{0}', 'mutfak.bos': 'میز خالی', 'mutfak.ocak': 'اجاق خالی', 'mutfak.tezgah': 'پیشخوان خالی',
+    'mutfak.pisiyor': 'در حال پخت', 'mutfak.hazir': 'آماده', 'mutfak.yanik': 'سوخت، دور بریز', 'mutfak.cop': 'خالی کن', 'mutfak.sonuc': '{0} مهمان سیر شد، {1} مهمان رفت', 'mutfak.hedef': 'هدف {0} ₺',
+    'mutfak.misafir': ['مهمان تبریزی', 'آموزگار', 'ماهیگیر', 'دانشجو', 'راهنما', 'اسکی‌باز'],
     'mutfak.malzeme': ['کره', 'آرد', 'تخم‌مرغ', 'عسل', 'سرشیر', 'گردو', 'پنیر سبزی', 'گوجه', 'خیار', 'آرد کاووت', 'چای', 'شکر', 'زیتون', 'نان'],
     'mutfak.yemek': ['مورتوغا', 'کاووت', 'بشقاب پنیر سبزی', 'عسل و سرشیر', 'چای'],
     'zemin.asfalt': 'آسفالت', 'zemin.toprak': 'خاکی', 'zemin.kaya': 'سنگ', 'zemin.kar': 'برف',
@@ -2911,7 +2933,11 @@ function makeCat() {
     keys[e.code] = true;
     initAudio();
     if (G.state === 'talk') { if (e.code === 'Enter' || e.code === 'Space' || e.code === 'NumpadEnter') nextLine(); return; }
-    if (G.state === 'cook') { const d = /^(Digit|Numpad)([1-9])$/.exec(e.code); if (d) { const b = $('mutfak-izgara').children[+d[2] - 1]; if (b) b.click(); } else if (e.code === 'Escape') showMenu(false); return; }
+    if (G.state === 'cook') {   // 1–9, 0, -, = malzemeler; Q W E misafirler; X tezgâhı boşalt
+      const d = /^(Digit|Numpad)([0-9])$/.exec(e.code), k = d ? (+d[2] + 9) % 10 : e.code === 'Minus' ? 10 : e.code === 'Equal' ? 11 : -1, m = ['KeyQ', 'KeyW', 'KeyE'].indexOf(e.code);
+      if (k >= 0) tapIngredient(k); else if (m >= 0) tapCustomer(m); else if (e.code === 'KeyX') $('mutfak-cop').click(); else if (e.code === 'Escape') showMenu(false);
+      return;
+    }
     if (G.state === 'menu' || G.state === 'result') {
       if (e.code === 'Escape' && !$('ayarlar').hidden) closeSettings();
       else if (e.code === 'Escape' && G.state === 'menu' && G.resume) resume();
@@ -3404,75 +3430,104 @@ function makeCat() {
     (devam ? $('btn-hikaye-devam') : $('btn-tekrar')).focus();
   }
 
-  // ---------------------------------------------------------------- mutfak: Van kahvaltısı
-  // Beş tabak sırayla gelir. Tarifteki malzemeler ızgaradan doğru sırayla seçilir; yanlış seçim ve süre aşımı lezzeti düşürür.
-  const YEMEK = [[0, 1, 2], [9, 0, 3], [6, 7, 8], [4, 3, 5], [10, 11]];   // malzeme sıraları (mutfak.malzeme dizinleri)
+  // ---------------------------------------------------------------- mutfak: Van kahvaltı salonu vardiyası
+  // Yemek oyunlarının bilinen düzeni: misafirler gelir, sipariş verir, sabırları azalır. Malzemeler tezgâhta birleşir,
+  // sıcak tabaklar ocakta pişer (bekletilirse yanar), tabak doğru misafire verilir. Hızlı servis bahşiş, art arda servis seri getirir.
+  const YEMEK = [[0, 1, 2], [9, 0, 3], [6, 7, 8], [4, 3, 5], [10, 11]], YFIYAT = [60, 60, 45, 50, 25], YPISER = [2.6, 2.6, 0, 0, 1.6];
   let M = null;
   function startCooking(ev) {
     clearRace();
     G.lastEvent = ev; G.state = 'cook'; G.near = null;
     for (const el of ['menu', 'hud', 'sonuc', 'konusma']) $(el).hidden = true;
     $('mutfak').hidden = false;
-    M = { ev, i: 0, adim: 0, t: 0, sure: 11, lezzet: 100, toplam: 0, rnd: rng(Math.floor(G.t * 1000) + 7) };
-    nextDish();
-  }
-  function nextDish() {
-    if (M.i >= YEMEK.length) { finishCooking(); return; }
-    const tarif = YEMEK[M.i], ad = TA('mutfak.malzeme');
-    M.adim = 0; M.t = 0;
-    $('mutfak-sira').textContent = T('mutfak.siparis', M.i + 1, YEMEK.length) + ' · ' + T('mutfak.lezzet', M.lezzet);
-    $('mutfak-yemek').textContent = TA('mutfak.yemek')[M.i];
-    const tr = $('mutfak-tarif'); tr.innerHTML = '';
-    tarif.forEach((k, n) => { const sp = document.createElement('span'); sp.textContent = n + 1 + '. ' + ad[k]; if (n === 0) sp.className = 'sira'; tr.appendChild(sp); });
-    const set = tarif.slice();
-    while (set.length < 9) { const k = Math.floor(M.rnd() * ad.length); if (set.indexOf(k) < 0) set.push(k); }
-    for (let n = set.length - 1; n > 0; n--) { const j = Math.floor(M.rnd() * (n + 1)), q = set[n]; set[n] = set[j]; set[j] = q; }
-    const iz = $('mutfak-izgara'); iz.innerHTML = '';
-    set.forEach((k, n) => {
-      const b = document.createElement('button'); b.type = 'button'; b.id = 'malzeme-' + n; b.setAttribute('data-k', k); b.textContent = ad[k];
-      b.addEventListener('click', () => tapIngredient(k, b));
+    M = { ev, t: 0, sure: 90, para: 0, hedef: 300, seri: 0, doyan: 0, giden: 0, tezgah: [], tabak: [null, null], musteri: [null, null, null], gelis: 1.2, n: 0, rnd: rng(Math.floor(G.t * 1000) + 7) };
+    const ad = TA('mutfak.malzeme'), iz = $('mutfak-izgara');
+    iz.innerHTML = '';
+    for (let k = 0; k < 12; k++) {
+      const b = document.createElement('button'); b.type = 'button'; b.id = 'malzeme-' + k; b.textContent = ad[k];
+      b.addEventListener('click', () => tapIngredient(k));
       iz.appendChild(b);
-    });
-  }
-  function tapIngredient(k, b) {
-    if (G.state !== 'cook') return;
-    initAudio();
-    const tarif = YEMEK[M.i], chips = $('mutfak-tarif').children;
-    if (k === tarif[M.adim]) {
-      chips[M.adim].className = 'tamam'; b.disabled = true;
-      beep(700 + M.adim * 120, 0.1, 0.22, 'triangle');
-      if (++M.adim >= tarif.length) { beep(1320, 0.25, 0.25, 'triangle', 0.08); M.i++; nextDish(); } else chips[M.adim].className = 'sira';
-    } else {
-      M.lezzet = Math.max(0, M.lezzet - 12);
-      b.className = 'yanlis'; setTimeout(() => { b.className = ''; }, 350);
-      beep(170, 0.18, 0.25, 'square');
-      $('mutfak-sira').textContent = T('mutfak.siparis', M.i + 1, YEMEK.length) + ' · ' + T('mutfak.lezzet', M.lezzet);
     }
+    $('mutfak-tarifler').textContent = YEMEK.map((r, y) => TA('mutfak.yemek')[y] + ': ' + r.map((k) => ad[k]).join(' + ')).join(' · ');
+    renderCook();
   }
+  const plateState = (p) => (p.t < p.pis ? 0 : p.pis > 0 && p.t > p.pis + 8 ? 2 : 1);   // 0 pişiyor, 1 hazır, 2 yandı
+  function tapIngredient(k) {
+    if (G.state !== 'cook' || M.tezgah.indexOf(k) >= 0) return;
+    initAudio();
+    M.tezgah.push(k);
+    const y = YEMEK.findIndex((r) => r.length === M.tezgah.length && r.every((q) => M.tezgah.indexOf(q) >= 0));
+    if (y >= 0) {
+      const slot = M.tabak.indexOf(null);
+      if (slot < 0) { M.tezgah.pop(); beep(170, 0.15, 0.22, 'square'); return; }      // ocak dolu
+      M.tabak[slot] = { y, t: 0, pis: YPISER[y] }; M.tezgah = [];
+      beep(820, 0.1, 0.2, 'triangle');
+    } else if (M.tezgah.length >= 3) { M.tezgah = []; M.seri = 0; beep(170, 0.2, 0.25, 'square'); }   // tarif tutmadı
+    else beep(560, 0.05, 0.14, 'triangle');
+  }
+  function tapCustomer(i) {
+    if (G.state !== 'cook') return;
+    const c = M.musteri[i];
+    if (!c) return;
+    const slot = M.tabak.findIndex((p) => p && p.y === c.y && plateState(p) === 1);
+    if (slot < 0) { beep(170, 0.15, 0.22, 'square'); return; }
+    const kazanc = Math.round((YFIYAT[c.y] + YFIYAT[c.y] * 0.5 * (c.sabir / c.max)) * (1 + 0.1 * Math.min(5, M.seri)));
+    M.para += kazanc; M.seri++; M.doyan++; M.musteri[i] = null; M.tabak[slot] = null;
+    beep(880, 0.1, 0.25, 'triangle'); beep(1320, 0.18, 0.25, 'triangle', 0.08);
+  }
+  function tapPlate(i) { if (G.state === 'cook' && M.tabak[i]) { M.tabak[i] = null; M.seri = 0; beep(240, 0.1, 0.2, 'square'); } }   // tabağı at
   function cookTick(dt) {
-    M.t += dt; M.toplam += dt;
+    M.t += dt;
+    if (M.t >= M.sure) { finishCooking(); return; }
+    M.gelis -= dt;
+    if (M.gelis <= 0) {
+      const bos = M.musteri.indexOf(null);
+      if (bos >= 0) M.musteri[bos] = { y: Math.floor(M.rnd() * Math.min(5, 2 + Math.floor(M.t / 16))), sabir: 24, max: 24, ad: M.n++ % 6 };
+      M.gelis = Math.max(3.5, 7.5 - M.t / 30) + M.rnd() * 2;
+    }
+    M.musteri.forEach((c, i) => { if (c && (c.sabir -= dt) <= 0) { M.musteri[i] = null; M.giden++; M.seri = 0; beep(150, 0.3, 0.25, 'square'); } });
+    for (const pl of M.tabak) if (pl) pl.t += dt;
+    renderCook();
+  }
+  function renderCook() {
+    const ad = TA('mutfak.malzeme'), ye = TA('mutfak.yemek');
+    $('mutfak-ust').textContent = T('mutfak.vardiya', Math.ceil(M.sure - M.t)) + ' · ' + T('mutfak.kasa', M.para, M.hedef) + (M.seri > 1 ? ' · ' + T('mutfak.seri', M.seri) : '');
     $('mutfak-sure').style.width = Math.max(0, 100 * (1 - M.t / M.sure)).toFixed(1) + '%';
-    if (M.t > M.sure) { M.lezzet = Math.max(0, M.lezzet - 20); beep(170, 0.25, 0.25, 'square'); M.i++; nextDish(); }   // tabak yetişmedi
+    M.musteri.forEach((c, i) => {
+      const el = $('musteri-' + i);
+      el.disabled = !c;
+      el.children[0].textContent = c ? TA('mutfak.misafir')[c.ad] : T('mutfak.bos');
+      el.children[1].textContent = c ? ye[c.y] : '';
+      el.children[2].firstChild.style.width = c ? Math.max(0, (100 * c.sabir) / c.max).toFixed(0) + '%' : '0%';
+      el.classList.toggle('acele', !!c && c.sabir < 7);
+    });
+    M.tabak.forEach((pl, i) => {
+      const el = $('tabak-' + i), st = pl ? plateState(pl) : -1;
+      el.disabled = !pl;
+      el.textContent = pl ? ye[pl.y] + ' · ' + T(st === 0 ? 'mutfak.pisiyor' : st === 1 ? 'mutfak.hazir' : 'mutfak.yanik') : T('mutfak.ocak');
+      el.className = 'tabak' + (st === 1 ? ' hazir' : st === 2 ? ' yanik' : '');
+    });
+    $('mutfak-tezgah').textContent = M.tezgah.length ? M.tezgah.map((k) => ad[k]).join(' + ') : T('mutfak.tezgah');
+    const iz = $('mutfak-izgara').children;
+    for (let k = 0; k < iz.length; k++) iz[k].disabled = M.tezgah.indexOf(k) >= 0;
   }
   function finishCooking() {
-    const ev = M.ev, t = M.toplam, lz = M.lezzet;
-    const kazanc = Math.round(ev.odeme * (lz / 100) * (t < 28 ? 1.5 : t < 40 ? 1.2 : 1));
+    const ev = M.ev, ciro = M.para, ok = ciro >= M.hedef, kazanc = Math.round(ciro * 0.6);   // cironun %60'ı oyuncuya kalır (yük işiyle denge)
     addMoney(kazanc);
-    if (lz >= 45 && (!ev.best || t < ev.best)) { ev.best = t; store.set('best.' + ev.id, t); }
     G.state = 'result';
     $('mutfak').hidden = true; $('sonuc').hidden = false;
     $('sonuc-ad').textContent = ev.ad;
-    $('sonuc-baslik').textContent = T(lz >= 85 ? 'sonuc.altin' : lz >= 65 ? 'sonuc.gumus' : lz >= 45 ? 'sonuc.bronz' : 'mutfak.yandi');
-    $('sonuc-not').textContent = T('sonuc.kazanc', para(kazanc), para(G.para)) + ' · ' + T('mutfak.lezzet', lz);
-    const tb = $('sonuc-tablo'); tb.innerHTML = '';
-    const tr = document.createElement('tr'); tr.className = 'ben';
-    for (const v of ['1.', player.name, fmt(t)]) { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); }
-    tb.appendChild(tr);
-    const devam = (!!G.lastStory && lz >= 45) || paraReady();
+    $('sonuc-baslik').textContent = T(ciro >= M.hedef * 1.8 ? 'sonuc.altin' : ciro >= M.hedef * 1.4 ? 'sonuc.gumus' : ok ? 'sonuc.bronz' : 'mutfak.yandi');
+    $('sonuc-not').textContent = T('sonuc.kazanc', para(kazanc), para(G.para)) + ' · ' + T('mutfak.sonuc', M.doyan, M.giden) + ' · ' + T('mutfak.hedef', para(M.hedef));
+    $('sonuc-tablo').innerHTML = '';
+    const devam = (!!G.lastStory && ok) || paraReady();
     $('btn-hikaye-devam').hidden = !devam;
-    $('btn-tekrar').textContent = T(G.lastStory && lz < 45 ? 'sonuc.tekrarDene' : 'sonuc.tekrar');
+    $('btn-tekrar').textContent = T(G.lastStory && !ok ? 'sonuc.tekrarDene' : 'sonuc.tekrar');
     (devam ? $('btn-hikaye-devam') : $('btn-tekrar')).focus();
   }
+  for (let i = 0; i < 3; i++) $('musteri-' + i).addEventListener('click', () => tapCustomer(i));
+  for (let i = 0; i < 2; i++) $('tabak-' + i).addEventListener('click', () => tapPlate(i));
+  $('mutfak-cop').addEventListener('click', () => { if (G.state === 'cook') { M.tezgah = []; beep(240, 0.08, 0.18, 'square'); } });
 
   // ---------------------------------------------------------------- fizik adımı
   const STEP = 1 / 120;
@@ -3742,7 +3797,7 @@ function makeCat() {
     G, EVENTS, STORY, S, startStory, nextLine, loadRegion, get bolge() { return REGION.id; }, get player() { return player; }, get cars() { return cars; }, startEvent, startFree, tick,
     sim(sec) { const n = Math.round(sec / STEP); for (let i = 0; i < n; i++) { if (G.state === 'free' || G.state === 'race' || G.state === 'count') tick(STEP); } },
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
-    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, mobil: MOBIL, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
+    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, mobil: MOBIL, get mutfak() { return M; }, cookTick, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     ayar: () => ({ kalite: AYAR.kalite, golge: renderer.shadowMap.enabled, golgeBoyu: sun.shadow.mapSize.x, piksel: renderer.getPixelRatio(), ses: AYAR.ses, kazanc: masterGain() }),
     look(x, y, z, tx, ty, tz) { G.state = 'menu'; G.resume = null; G.freeze = [x, y, z, tx, ty, tz]; },
     bench(n) { const gl = renderer.getContext(), t0 = performance.now(); for (let i = 0; i < n; i++) { renderer.render(scene, camera); gl.finish(); } return { ms: (performance.now() - t0) / n, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }; },
