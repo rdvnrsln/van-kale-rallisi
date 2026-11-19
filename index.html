@@ -161,24 +161,60 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
 #ayar-ses-n { font-family: var(--f-baslik); font-weight: 700; font-size: 22px; font-variant-numeric: tabular-nums; min-width: 3ch; }
 .kucuk-dugme { font-size: 16px; padding: 8px 16px 9px; }
 
-/* ---------- mutfak ---------- */
-#mutfak { display: flex; align-items: center; justify-content: center; background: rgba(11, 22, 34, 0.88); overflow-y: auto; touch-action: pan-y; }
-.mutfak-ic { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 10px; }
-.cubuk { display: block; height: 7px; background: rgba(243, 239, 230, 0.14); }
-#mutfak-sure, .musteri .cubuk span { display: block; height: 100%; width: 100%; background: var(--kehribar); }
-.musteriler, .ocak { display: grid; gap: 8px; }
-.musteriler { grid-template-columns: repeat(3, minmax(0, 1fr)); } .ocak { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.musteri { display: grid; gap: 4px; text-align: start; background: var(--panel); border: 1px solid var(--cizgi); padding: 8px 10px; min-height: 78px; }
-.musteri:disabled { opacity: 0.4; } .musteri.acele { border-color: #ff5a47; } .musteri.acele .cubuk span { background: #ff5a47; }
-.m-ad { font-size: 12.5px; color: var(--soluk); } .m-yemek { font-family: var(--f-baslik); font-weight: 700; font-size: 20px; line-height: 1.1; }
-.tabak { background: transparent; border: 1px dashed var(--cizgi); padding: 10px; min-height: 50px; font-family: var(--f-baslik); font-weight: 600; font-size: 17px; color: var(--soluk); }
-.tabak.hazir { border: 1px solid var(--gol); background: var(--gol); color: #062a30; } .tabak.yanik { border: 1px solid #ff5a47; color: #ff5a47; }
-.tezgah-sira { display: flex; gap: 8px; align-items: center; }
-.tezgah { flex: 1; min-width: 0; border-bottom: 2px solid var(--kehribar); padding: 6px 2px; font-family: var(--f-baslik); font-weight: 600; font-size: 18px; min-height: 34px; }
-.izgara { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-.izgara button { background: var(--panel); border: 1px solid var(--cizgi); padding: 10px 4px; min-height: 52px; font-family: var(--f-baslik); font-weight: 600; font-size: 16.5px; line-height: 1.1; }
-.izgara button:hover { border-color: var(--kehribar); } .izgara button:disabled { background: var(--kehribar); color: #1a1206; opacity: 1; }
-@media (max-width: 460px) { .izgara { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* ---------- mutfak (kahvaltı salonu) ---------- */
+#mutfak { padding: 0; background: #1b120b; color: #2b1d12; overflow: hidden; }
+.mt-ekran { position: absolute; inset: 0; }
+#mt-oyun { background: #1b120b; }
+#mt-svg { width: 100%; height: 100%; display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
+.mt-yazi { font-family: var(--f-baslik); }
+.mt-dokun { cursor: pointer; }
+.mt-alev { animation: mt-titre 0.2s steps(2) infinite; }
+@keyframes mt-titre { 50% { transform: scale(1.07) rotate(9deg); } }
+.mt-buhar, .mt-duman { animation: mt-buhar 1.4s ease-in-out infinite; }
+@keyframes mt-buhar { 0% { transform: translateY(6px); opacity: 0; } 40% { opacity: 0.85; } 100% { transform: translateY(-14px); opacity: 0; } }
+.mt-cop-acik { filter: drop-shadow(0 0 10px #e2493b); }
+#mt-hub { box-sizing: border-box; background: linear-gradient(180deg, #f8eed8, #ecd6ae); overflow-y: auto; touch-action: pan-y; display: flex; flex-direction: column; gap: 14px; color: #2b1d12;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(18px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  border-top: 14px solid #b8402e; border-image: repeating-linear-gradient(90deg, #b8402e 0 22px, #f3e2bd 22px 44px, #1c8ea0 44px 66px, #23303f 66px 88px) 14 0 0 0; }
+.mt-ust { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.mt-baslik { margin: 0; font-family: var(--f-baslik); font-weight: 800; font-style: italic; font-size: clamp(28px, 4.6vw, 46px); line-height: 1.05; text-transform: uppercase; color: #7a2418; }
+.mt-bilgi, .mt-sira { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.mt-rozet { background: #23303f; color: #f6ead2; border-radius: 999px; padding: 7px 14px; font-family: var(--f-baslik); font-weight: 700; font-size: 18px; }
+.mt-rozet.mt-sari { background: #f2b824; color: #3b2a05; }
+.mt-govde { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 860px) { .mt-govde { grid-template-columns: 1fr; } }
+.mt-sol, .mt-sag { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.mt-seviyeler { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 9px; }
+.mt-sev { position: relative; aspect-ratio: 1; border: 3px solid #c9a877; border-radius: 16px; background: #fffaf0; color: #2b1d12; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; padding: 4px; font: inherit; }
+.mt-sev.secili { border-color: #c8553d; background: #fff; box-shadow: 0 4px 0 #c8553d; transform: translateY(-2px); }
+.mt-sev.kilitli { background: #e2d0b0; opacity: 0.7; cursor: default; }
+.mt-sev-no { font-family: var(--f-baslik); font-weight: 800; font-size: 26px; line-height: 1; }
+.mt-sev-y { font-size: 13px; letter-spacing: 1px; color: #c9b48c; } .mt-sev-y i { font-style: normal; } .mt-sev-y i.dolu { color: #e0a211; }
+.mt-sev-yeni { position: absolute; top: -8px; inset-inline-end: -6px; background: #1c8ea0; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 999px; }
+.mt-kart { background: #fffaf0; border: 2px solid #c9a877; border-radius: 18px; padding: 14px 16px; display: flex; flex-direction: column; gap: 9px; }
+.mt-kart-ad { font-family: var(--f-baslik); font-weight: 800; font-size: 24px; text-transform: uppercase; color: #7a2418; line-height: 1.15; }
+.mt-kart-alt { font-size: 14.5px; color: #5b4630; }
+.mt-menu { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.mt-menu-u { display: flex; align-items: center; gap: 6px; font-size: 14px; } .mt-menu-u.yeni span { font-weight: 700; color: #12606d; }
+.mt-not { margin: 0; font-size: 14px; color: #5b4630; } .mt-uyari { color: #b8402e; font-weight: 700; }
+.mt-dugme { font: inherit; font-family: var(--f-baslik); font-weight: 700; font-size: 19px; border-radius: 14px; border: 0; padding: 10px 18px; cursor: pointer; min-height: 44px; }
+.mt-birincil { background: #c8553d; color: #fff; box-shadow: 0 4px 0 #7a2418; } .mt-ikincil { background: #23303f; color: #f6ead2; box-shadow: 0 4px 0 #0b1622; }
+.mt-dugme:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #0b1622; }
+.mt-dugme:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
+.mt-buyuk { font-size: 24px; padding: 14px 24px; align-self: flex-start; } .mt-kucuk { font-size: 16px; padding: 6px 12px; min-height: 36px; white-space: nowrap; }
+.mt-dugme:focus-visible, .mt-sev:focus-visible { outline: 3px solid #1c8ea0; outline-offset: 2px; }
+.mt-pipler { display: flex; gap: 5px; flex-wrap: wrap; } .mt-pipler i { width: 22px; height: 14px; border-radius: 4px; background: #e2d0b0; } .mt-pipler i.dolu { background: #6a994e; }
+.mt-yuk { display: flex; align-items: center; gap: 10px; border-top: 1px solid #e2d0b0; padding-top: 8px; }
+.mt-yuk-yazi { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 13.5px; color: #5b4630; } .mt-yuk-yazi b { font-size: 15.5px; color: #2b1d12; }
+.mt-kademe { display: flex; gap: 4px; } .mt-kademe i { width: 12px; height: 12px; border-radius: 50%; background: #e2d0b0; } .mt-kademe i.dolu { background: #c8553d; }
+.mt-tam { font-weight: 700; color: #4f7d36; font-size: 14px; }
+#mt-pano { position: absolute; inset: 0; box-sizing: border-box; background: rgba(27, 18, 11, 0.72); display: flex; align-items: center; justify-content: center; padding: 16px; overflow-y: auto; }
+.mt-pano-ic { box-sizing: border-box; background: #fffaf0; color: #2b1d12; border: 4px solid #c8553d; border-radius: 24px; padding: 22px 26px; width: 100%; max-width: 470px; display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center; }
+.mt-pano-ic .mt-sira { justify-content: center; }
+.mt-yildizlar { display: flex; gap: 6px; } .mt-yildizlar span.dolu { animation: mt-yildiz 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+@keyframes mt-yildiz { from { transform: scale(0) rotate(-40deg); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.mt-dokum { width: 100%; display: flex; flex-direction: column; font-size: 15.5px; } .mt-dokum > div { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px dashed #e2d0b0; padding: 4px 0; } .mt-dokum .mt-vurgu { color: #2f7d3f; font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .mt-alev, .mt-buhar, .mt-duman, .mt-yildizlar span.dolu { animation: none; } }
 
 /* ---------- konuşma ---------- */
 #konusma { display: flex; align-items: flex-end; background: linear-gradient(0deg, rgba(11, 22, 34, 0.94) 0, rgba(11, 22, 34, 0.8) 210px, rgba(11, 22, 34, 0) 430px); }
@@ -279,6 +315,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
     <table><tbody id="sonuc-tablo"></tbody></table>
     <div class="ana-dugmeler">
       <button id="btn-hikaye-devam" class="birincil" type="button" hidden data-i18n="sonuc.hikayeDevam">Hikâyeye devam</button>
+      <button id="btn-salon" class="birincil" type="button" hidden data-i18n="erzak.salon">Salona gir</button>
       <button id="btn-tekrar" class="ikincil" type="button">Tekrar</button>
       <button id="btn-son-serbest" class="ikincil" type="button" data-i18n="menu.serbest">Serbest sürüş</button>
       <button id="btn-son-menu" class="ikincil" type="button" data-i18n="hud.menu">Menü</button>
@@ -307,6 +344,10 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
       </div>
       <p class="kucuk" data-i18n="ayar.kaliteNot">Düşük: gölge yok, tam piksel. Orta: yumuşak gölge. Yüksek: keskin gölge, yüksek çözünürlük.</p>
       <label class="onay"><input type="checkbox" id="ayar-oto" checked> <span data-i18n="ayar.oto">Kare hızı düşerse kaliteyi kendiliğinden düşür</span></label>
+    </div>
+    <div class="ayar">
+      <div class="etiket" data-i18n="ayar.sehir">Şehir</div>
+      <label class="onay"><input type="checkbox" id="ayar-trafik" checked> <span data-i18n="ayar.trafik">Şehir trafiği: yollarda araçlar dolaşsın</span></label>
     </div>
     <div class="ayar">
       <label class="etiket" for="ayar-ses" data-i18n="ayar.ses">Ses düzeyi</label>
@@ -338,25 +379,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
   </div>
 </div>
 
-<div id="mutfak" class="kat" hidden>
-  <div class="mutfak-ic">
-    <div class="etiket konum" id="mutfak-ust"></div>
-    <div class="cubuk"><div id="mutfak-sure"></div></div>
-    <div class="musteriler">
-      <button type="button" class="musteri" id="musteri-0"><span class="m-ad"></span><span class="m-yemek"></span><span class="cubuk"><span></span></span></button>
-      <button type="button" class="musteri" id="musteri-1"><span class="m-ad"></span><span class="m-yemek"></span><span class="cubuk"><span></span></span></button>
-      <button type="button" class="musteri" id="musteri-2"><span class="m-ad"></span><span class="m-yemek"></span><span class="cubuk"><span></span></span></button>
-    </div>
-    <div class="ocak">
-      <button type="button" class="tabak" id="tabak-0"></button>
-      <button type="button" class="tabak" id="tabak-1"></button>
-    </div>
-    <div class="tezgah-sira"><div id="mutfak-tezgah" class="tezgah"></div><button type="button" id="mutfak-cop" class="ikincil kucuk-dugme" data-i18n="mutfak.cop">Boşalt</button></div>
-    <div id="mutfak-izgara" class="izgara"></div>
-    <p class="kucuk" id="mutfak-tarifler"></p>
-    <p class="kucuk" data-i18n="mutfak.ipucu">Malzemeleri seç, tabak pişince siparişi veren misafire dokun.</p>
-  </div>
-</div>
+<div id="mutfak" class="kat" hidden></div>
 
 <div id="konusma" class="kat" hidden>
   <div class="konusma-ic">
@@ -415,6 +438,26 @@ const DIL = {
     'mutfak.misafir': ['Tebrizli misafir', 'Öğretmen', 'Balıkçı', 'Öğrenci', 'Rehber', 'Kayakçı'],
     'mutfak.malzeme': ['Tereyağı', 'Un', 'Yumurta', 'Bal', 'Kaymak', 'Ceviz', 'Otlu peynir', 'Domates', 'Salatalık', 'Kavut unu', 'Çay', 'Şeker', 'Zeytin', 'Ekmek'],
     'mutfak.yemek': ['Murtuğa', 'Kavut', 'Otlu peynir tabağı', 'Bal kaymak', 'Çay'],
+    // kahvaltı salonu (src/mutfak.js)
+    'mt.baslik': 'Halil Usta’nın Kahvaltı Salonu', 'mt.kasa': 'Kasa {0} ₺', 'mt.cik': 'Salondan çık', 'mt.yeni': 'Yeni', 'mt.vardiya': 'Vardiya {0}', 'mt.misafir': '{0} misafir', 'mt.misafirSay': 'Misafir {0}/{1}',
+    'mt.basla': 'Vardiyaya başla', 'mt.erzakGerek': 'Kiler boş. Önce erzak getir.', 'mt.kiler': 'Kiler', 'mt.kilerDurum': '{0} vardiyalık erzak var. Her vardiya bir erzak harcar.',
+    'mt.erzakGit': 'Çarşıdan erzak getir', 'mt.erzakGitAlt': 'Sürüş görevi: {0} ile en çok {1} vardiyalık erzak taşırsın. Sarsarsan yumurtalar kırılır, kilere daha az girer.', 'mt.kurye': 'Kuryeyle getirt: 2 erzak · {0} ₺',
+    'mt.gelistir': 'Salonu geliştir', 'mt.tam': 'Tamam', 'mt.tabela': 'KAHVALTI SALONU', 'mt.kilitli': 'Vardiya {0} ile açılır', 'mt.kombo': 'Kombo ×{0}',
+    'mt.yerYok': 'Yer yok', 'mt.once': 'Önce: {0}', 'mt.istekYok': 'Bunu isteyen yok', 'mt.eksik': 'Eksik: bal ekle',
+    'mt.ip.para': 'Parayı topla', 'mt.ip.yandi': 'Yandı: dokun, at', 'mt.ip.hazir': 'Hazır: dokun, misafire gitsin', 'mt.ip.cay': 'Çay isteyen var: bardağa dokun', 'mt.ip.ekmek': 'Ekmek isteyen var: sepete dokun', 'mt.ip.taban': 'Buna dokun: {0}', 'mt.ip.ek': 'Şimdi ekle: {0}',
+    'mt.s.ciro': 'Ciro', 'mt.s.misafir': 'Doyan misafir', 'mt.s.kombo': 'En uzun kombo', 'mt.s.yevmiye': 'Yevmiyen (cironun %30’u)', 'mt.s.prim': 'Yeni yıldız primi', 'mt.s.sonraki': 'Sonraki yıldız için ciro {0} ₺ olmalı.',
+    'mt.sonraki': 'Sonraki vardiya', 'mt.tekrar': 'Tekrar dene', 'mt.salon': 'Salona dön', 'mt.durdu': 'Vardiya durdu', 'mt.devam': 'Devam et', 'mt.birak': 'Vardiyayı bırak', 'mt.menuVeri': '{0}/20 vardiya · {1}/60 yıldız · mutfak',
+    'mt.sonucBaslik': ['Vardiya zayıf geçti', 'İyi vardiya', 'Çok iyi vardiya', 'Kusursuz vardiya'],
+    'mt.urun': ['Çay', 'Ekmek', 'Sahanda yumurta', 'Sucuklu yumurta', 'Otlu peynir', 'Peynir ve zeytin', 'Peynir ve söğüş', 'Serpme tabak', 'Bal kaymak', 'Cevizli bal kaymak', 'Murtuğa'],
+    'mt.kaynak': ['Yumurta', 'Sucuk', 'Murtuğa', 'Otlu peynir', 'Zeytin', 'Söğüş', 'Kaymak', 'Bal', 'Ceviz', 'Ekmek', 'Çay', 'Çöp'],
+    'mt.yeniNot': ['Çay kendiliğinden demlenir; dolu bardağa dokun. Yumurtaya dokun, sahanda pişsin; pişince sahana dokun.', 'Ekmek sepetine dokun; isteyen misafire gider. Sepet kendiliğinden dolar.', 'Yumurta sahandayken sucuğa dokun. Sade isteyene sucuklu gitmez.',
+      'Peynire dokun, tabağa girer. Zeytin isteyene zeytini ekle, sonra tabağa dokun.', 'Söğüş (domates ve salatalık) tabağa eklenir. Peynir, zeytin ve söğüş birlikte serpme tabak olur.', 'Kaymağı kâseye koy, balı ekle. Balsız kaymak servis edilmez.',
+      'Murtuğa sahanda pişer ve yumurtadan uzun sürer. Sahanları ona göre paylaştır.', 'Bal kaymağa ceviz ekle. En pahalı tatlı tabak budur.'],
+    'mt.yukAd': ['Sahan', 'Çay bardağı', 'Güçlü ocak', 'Büyük demlik', 'Kilim ve minder', 'Tabak', 'Kâse'],
+    'mt.yukAlt': ['Ocağa bir sahan daha', 'Tepside bir bardak daha', 'Sahanda pişme süresi kısalır', 'Çay daha çabuk demlenir', 'Misafir daha uzun bekler', 'Tezgâhta bir tabak daha', 'Bal kaymak için bir kâse daha'],
+    'ev.erzak': 'Erzak', 'ev.erzak.alt': 'Çarşıdan kahvaltı salonuna erzak taşı', 'erzak.al': 'Çarşı', 'erzak.birak': 'Kahvaltı salonu', 'erzak.basla': 'Erzak almaya', 'erzak.basla.alt': 'Çarşıdaki mavi sütunda dur, erzakı yükle',
+    'erzak.bindi': 'Erzak yüklendi', 'erzak.bindi.alt': 'Salona dön. Sarsma: yumurtalar kırılır.', 'erzak.tamam': 'Erzak kilerde', 'erzak.kirildi': 'Yumurtaların yarısı kırıldı',
+    'erzak.sonuc': 'Kilere {0} vardiyalık erzak girdi (bu araç en çok {1} taşır). Kilerde {2} var.', 'erzak.konfor': 'sağlam erzak %{0}', 'erzak.salon': 'Salona gir',
     'zemin.asfalt': 'Asfalt', 'zemin.toprak': 'Toprak', 'zemin.kaya': 'Kaya', 'zemin.kar': 'Kar',
     'menu.konum': 'İpekyolu · Tuşba — 38,50° K 43,34° D', 'menu.baslik': 'Van <em>Kale</em> Rallisi',
     'menu.tanitim': 'Gerçek Van sokaklarında, kalenin gölgesinde yarış. Göl kıyısından Eski Van’a kadar şehir açık.',
@@ -442,7 +485,7 @@ const DIL = {
     'zone.koyu': '{0} köyü', 'zone.pistYolu': 'Pist yolu', 'zone.kayakYolu': 'Kayak yolu', 'zone.artos': 'Artos yamacı',
     'ayar.baslik': 'Ayarlar', 'ayar.dil': 'Dil', 'ayar.kalite': 'Grafik kalitesi', 'ayar.dusuk': 'Düşük', 'ayar.orta': 'Orta', 'ayar.yuksek': 'Yüksek',
     'ayar.kaliteNot': 'Düşük: gölge yok, tam piksel. Orta: yumuşak gölge. Yüksek: keskin gölge, yüksek çözünürlük.',
-    'ayar.oto': 'Kare hızı düşerse kaliteyi kendiliğinden düşür', 'ayar.ses': 'Ses düzeyi', 'ayar.kamera': 'Kamera', 'ayar.yakin': 'Yakın', 'ayar.uzak': 'Uzak', 'ayar.surucu': 'Sürücü',
+    'ayar.oto': 'Kare hızı düşerse kaliteyi kendiliğinden düşür', 'ayar.sehir': 'Şehir', 'ayar.trafik': 'Şehir trafiği: yollarda araçlar dolaşsın', 'ayar.ses': 'Ses düzeyi', 'ayar.kamera': 'Kamera', 'ayar.yakin': 'Yakın', 'ayar.uzak': 'Uzak', 'ayar.surucu': 'Sürücü',
     'ayar.ekran': 'Ekran', 'ayar.tamEkran': 'Tam ekranı aç ya da kapat', 'ayar.tamEkranNot': 'F11 ya da Alt+Enter', 'ayar.kayit': 'Kayıt', 'ayar.sifirla': 'İlerlemeyi sıfırla',
     'ayar.sifirlaNot': 'Hikâye ilerlemesi, en iyi süreler ve bulunan kediler silinir. Geri alınamaz.', 'ayar.evetSil': 'Evet, sil', 'ayar.vazgec': 'Vazgeç', 'ayar.silindi': 'İlerleme silindi.', 'ayar.geri': 'Geri',
     'sen': 'Sen', 'kisi.zelal': 'Zelal',
@@ -533,6 +576,26 @@ const DIL = {
     'mutfak.misafir': ['Guest from Tabriz', 'Teacher', 'Fisherman', 'Student', 'Tour guide', 'Skier'],
     'mutfak.malzeme': ['Butter', 'Flour', 'Egg', 'Honey', 'Clotted cream', 'Walnut', 'Herb cheese', 'Tomato', 'Cucumber', 'Kavut flour', 'Tea', 'Sugar', 'Olives', 'Bread'],
     'mutfak.yemek': ['Murtuğa', 'Kavut', 'Herb cheese plate', 'Honey and clotted cream', 'Tea'],
+    // breakfast house (src/mutfak.js)
+    'mt.baslik': 'Halil Usta’s Breakfast House', 'mt.kasa': 'Savings ₺{0}', 'mt.cik': 'Leave', 'mt.yeni': 'New', 'mt.vardiya': 'Shift {0}', 'mt.misafir': '{0} guests', 'mt.misafirSay': 'Guests {0}/{1}',
+    'mt.basla': 'Start the shift', 'mt.erzakGerek': 'The pantry is empty. Bring supplies first.', 'mt.kiler': 'Pantry', 'mt.kilerDurum': 'Supplies for {0} shifts. Each shift uses one.',
+    'mt.erzakGit': 'Fetch supplies from the market', 'mt.erzakGitAlt': 'Driving job: the {0} carries supplies for up to {1} shifts. Rough driving breaks eggs, so less reaches the pantry.', 'mt.kurye': 'Order by courier: 2 supplies · ₺{0}',
+    'mt.gelistir': 'Upgrade the house', 'mt.tam': 'Done', 'mt.tabela': 'BREAKFAST HOUSE', 'mt.kilitli': 'Opens at shift {0}', 'mt.kombo': 'Combo ×{0}',
+    'mt.yerYok': 'No room', 'mt.once': 'First: {0}', 'mt.istekYok': 'Nobody ordered this', 'mt.eksik': 'Missing: add honey',
+    'mt.ip.para': 'Collect the money', 'mt.ip.yandi': 'Burnt: tap to bin it', 'mt.ip.hazir': 'Ready: tap to serve', 'mt.ip.cay': 'Someone wants tea: tap a glass', 'mt.ip.ekmek': 'Someone wants bread: tap the basket', 'mt.ip.taban': 'Tap this: {0}', 'mt.ip.ek': 'Now add: {0}',
+    'mt.s.ciro': 'Revenue', 'mt.s.misafir': 'Guests served', 'mt.s.kombo': 'Longest combo', 'mt.s.yevmiye': 'Your wage (30% of revenue)', 'mt.s.prim': 'New star bonus', 'mt.s.sonraki': 'The next star needs ₺{0} revenue.',
+    'mt.sonraki': 'Next shift', 'mt.tekrar': 'Try again', 'mt.salon': 'Back to the house', 'mt.durdu': 'Shift paused', 'mt.devam': 'Resume', 'mt.birak': 'Quit the shift', 'mt.menuVeri': '{0}/20 shifts · {1}/60 stars · kitchen',
+    'mt.sonucBaslik': ['A weak shift', 'Good shift', 'Very good shift', 'Perfect shift'],
+    'mt.urun': ['Tea', 'Bread', 'Fried eggs', 'Eggs with sucuk', 'Herbed cheese', 'Cheese and olives', 'Cheese and salad', 'Full breakfast plate', 'Honey and clotted cream', 'Honey, cream and walnuts', 'Murtuğa'],
+    'mt.kaynak': ['Eggs', 'Sucuk', 'Murtuğa', 'Herbed cheese', 'Olives', 'Salad', 'Clotted cream', 'Honey', 'Walnuts', 'Bread', 'Tea', 'Bin'],
+    'mt.yeniNot': ['Tea brews on its own; tap a full glass. Tap the eggs to cook them in a pan; tap the pan when they are done.', 'Tap the bread basket; a loaf goes to the guest who ordered it. The basket refills on its own.', 'Tap the sucuk while the eggs are in the pan. A guest who ordered plain eggs will not take them with sucuk.',
+      'Tap the cheese to put it on a plate. Add olives for guests who want them, then tap the plate.', 'Salad (tomato and cucumber) goes on the plate. Cheese, olives and salad together make the full plate.', 'Put clotted cream in a bowl, then add honey. Cream without honey cannot be served.',
+      'Murtuğa cooks in a pan and takes longer than eggs. Share the pans between them.', 'Add walnuts to honey and cream. It is the most expensive sweet dish.'],
+    'mt.yukAd': ['Pan', 'Tea glass', 'Strong stove', 'Large teapot', 'Kilim and cushions', 'Plate', 'Bowl'],
+    'mt.yukAlt': ['One more pan on the stove', 'One more glass on the tray', 'Food cooks faster', 'Tea brews faster', 'Guests wait longer', 'One more plate on the counter', 'One more bowl for honey and cream'],
+    'ev.erzak': 'Supplies', 'ev.erzak.alt': 'Carry supplies from the market to the breakfast house', 'erzak.al': 'Market', 'erzak.birak': 'Breakfast house', 'erzak.basla': 'Supply run', 'erzak.basla.alt': 'Stop at the blue column in the market and load the supplies',
+    'erzak.bindi': 'Supplies loaded', 'erzak.bindi.alt': 'Drive back to the house. Drive gently: eggs break.', 'erzak.tamam': 'Supplies in the pantry', 'erzak.kirildi': 'Half of the eggs broke',
+    'erzak.sonuc': 'Supplies for {0} shifts reached the pantry (this vehicle carries up to {1}). The pantry holds {2}.', 'erzak.konfor': 'intact supplies {0}%', 'erzak.salon': 'Enter the house',
     'zemin.asfalt': 'Asphalt', 'zemin.toprak': 'Dirt', 'zemin.kaya': 'Rock', 'zemin.kar': 'Snow',
     'menu.konum': 'İpekyolu · Tuşba — 38.50° N 43.34° E', 'menu.baslik': 'Van <em>Castle</em> Rally',
     'menu.tanitim': 'Race on the real streets of Van, in the shadow of the castle. The city is open from the lake shore to Old Van.',
@@ -560,7 +623,7 @@ const DIL = {
     'zone.koyu': '{0} village', 'zone.pistYolu': 'Piste track', 'zone.kayakYolu': 'Ski road', 'zone.artos': 'Artos slope',
     'ayar.baslik': 'Settings', 'ayar.dil': 'Language', 'ayar.kalite': 'Graphics quality', 'ayar.dusuk': 'Low', 'ayar.orta': 'Medium', 'ayar.yuksek': 'High',
     'ayar.kaliteNot': 'Low: no shadows, native pixels. Medium: soft shadows. High: sharp shadows, high resolution.',
-    'ayar.oto': 'Lower the quality automatically when the frame rate drops', 'ayar.ses': 'Volume', 'ayar.kamera': 'Camera', 'ayar.yakin': 'Near', 'ayar.uzak': 'Far', 'ayar.surucu': 'Driver',
+    'ayar.oto': 'Lower the quality automatically when the frame rate drops', 'ayar.sehir': 'City', 'ayar.trafik': 'City traffic: cars drive on the roads', 'ayar.ses': 'Volume', 'ayar.kamera': 'Camera', 'ayar.yakin': 'Near', 'ayar.uzak': 'Far', 'ayar.surucu': 'Driver',
     'ayar.ekran': 'Display', 'ayar.tamEkran': 'Toggle full screen', 'ayar.tamEkranNot': 'F11 or Alt+Enter', 'ayar.kayit': 'Save data', 'ayar.sifirla': 'Reset progress',
     'ayar.sifirlaNot': 'This deletes story progress, best times and found cats. It cannot be undone.', 'ayar.evetSil': 'Yes, delete', 'ayar.vazgec': 'Cancel', 'ayar.silindi': 'Progress deleted.', 'ayar.geri': 'Back',
     'sen': 'You', 'kisi.zelal': 'Zelal',
@@ -651,6 +714,26 @@ const DIL = {
     'mutfak.misafir': ['مهمان تبریزی', 'آموزگار', 'ماهیگیر', 'دانشجو', 'راهنما', 'اسکی‌باز'],
     'mutfak.malzeme': ['کره', 'آرد', 'تخم‌مرغ', 'عسل', 'سرشیر', 'گردو', 'پنیر سبزی', 'گوجه', 'خیار', 'آرد کاووت', 'چای', 'شکر', 'زیتون', 'نان'],
     'mutfak.yemek': ['مورتوغا', 'کاووت', 'بشقاب پنیر سبزی', 'عسل و سرشیر', 'چای'],
+    // صبحانه‌خانه (src/mutfak.js)
+    'mt.baslik': 'صبحانه‌خانهٔ اوستا خلیل', 'mt.kasa': 'پس‌انداز {0} ₺', 'mt.cik': 'خروج', 'mt.yeni': 'تازه', 'mt.vardiya': 'نوبت {0}', 'mt.misafir': '{0} مهمان', 'mt.misafirSay': 'مهمان {0}/{1}',
+    'mt.basla': 'شروع نوبت', 'mt.erzakGerek': 'انبار خالی است. اول آذوقه بیاور.', 'mt.kiler': 'انبار', 'mt.kilerDurum': 'آذوقه برای {0} نوبت هست. هر نوبت یک آذوقه مصرف می‌کند.',
+    'mt.erzakGit': 'از بازار آذوقه بیاور', 'mt.erzakGitAlt': 'کار رانندگی: {0} تا {1} نوبت آذوقه می‌برد. اگر تکان بدهی تخم‌مرغ‌ها می‌شکنند و کمتر به انبار می‌رسد.', 'mt.kurye': 'با پیک بیاور: ۲ آذوقه · {0} ₺',
+    'mt.gelistir': 'بهتر کردن صبحانه‌خانه', 'mt.tam': 'کامل', 'mt.tabela': 'صبحانه‌خانه', 'mt.kilitli': 'در نوبت {0} باز می‌شود', 'mt.kombo': 'پشت‌سرهم ×{0}',
+    'mt.yerYok': 'جا نیست', 'mt.once': 'اول: {0}', 'mt.istekYok': 'کسی این را نخواسته', 'mt.eksik': 'کم است: عسل اضافه کن',
+    'mt.ip.para': 'پول را بردار', 'mt.ip.yandi': 'سوخت: بزن و دور بریز', 'mt.ip.hazir': 'آماده است: بزن تا برای مهمان برود', 'mt.ip.cay': 'کسی چای می‌خواهد: روی استکان بزن', 'mt.ip.ekmek': 'کسی نان می‌خواهد: روی سبد بزن', 'mt.ip.taban': 'روی این بزن: {0}', 'mt.ip.ek': 'حالا اضافه کن: {0}',
+    'mt.s.ciro': 'فروش', 'mt.s.misafir': 'مهمان سیرشده', 'mt.s.kombo': 'بلندترین پشت‌سرهم', 'mt.s.yevmiye': 'مزد تو (۳۰٪ فروش)', 'mt.s.prim': 'پاداش ستارهٔ تازه', 'mt.s.sonraki': 'برای ستارهٔ بعدی فروش باید {0} ₺ باشد.',
+    'mt.sonraki': 'نوبت بعدی', 'mt.tekrar': 'دوباره', 'mt.salon': 'برگشت به صبحانه‌خانه', 'mt.durdu': 'نوبت متوقف شد', 'mt.devam': 'ادامه', 'mt.birak': 'رها کردن نوبت', 'mt.menuVeri': '{0}/20 نوبت · {1}/60 ستاره · آشپزخانه',
+    'mt.sonucBaslik': ['نوبت ضعیف بود', 'نوبت خوب', 'نوبت خیلی خوب', 'نوبت بی‌نقص'],
+    'mt.urun': ['چای', 'نان', 'نیمرو', 'نیمرو با سوجوک', 'پنیر سبزی‌دار', 'پنیر و زیتون', 'پنیر و گوجه‌خیار', 'بشقاب کامل صبحانه', 'عسل و سرشیر', 'عسل و سرشیر با گردو', 'مورتوغا'],
+    'mt.kaynak': ['تخم‌مرغ', 'سوجوک', 'مورتوغا', 'پنیر سبزی‌دار', 'زیتون', 'گوجه‌خیار', 'سرشیر', 'عسل', 'گردو', 'نان', 'چای', 'سطل'],
+    'mt.yeniNot': ['چای خودش دم می‌کشد؛ روی استکان پر بزن. روی تخم‌مرغ بزن تا در تابه بپزد؛ وقتی پخت روی تابه بزن.', 'روی سبد نان بزن؛ نان برای مهمانی که خواسته می‌رود. سبد خودش پر می‌شود.', 'وقتی تخم‌مرغ در تابه است روی سوجوک بزن. مهمانی که نیمروی ساده خواسته، با سوجوک نمی‌گیرد.',
+      'روی پنیر بزن تا در بشقاب برود. برای کسی که زیتون خواسته زیتون اضافه کن، بعد روی بشقاب بزن.', 'گوجه و خیار به بشقاب اضافه می‌شود. پنیر، زیتون و گوجه‌خیار با هم بشقاب کامل می‌شود.', 'سرشیر را در کاسه بگذار و عسل اضافه کن. سرشیر بدون عسل سرو نمی‌شود.',
+      'مورتوغا در تابه می‌پزد و از نیمرو بیشتر طول می‌کشد. تابه‌ها را بین آن‌ها تقسیم کن.', 'به عسل و سرشیر گردو اضافه کن. گران‌ترین خوراک شیرین است.'],
+    'mt.yukAd': ['تابه', 'استکان چای', 'اجاق قوی', 'قوری بزرگ', 'گلیم و پشتی', 'بشقاب', 'کاسه'],
+    'mt.yukAlt': ['یک تابهٔ دیگر روی اجاق', 'یک استکان دیگر در سینی', 'غذا زودتر می‌پزد', 'چای زودتر دم می‌کشد', 'مهمان بیشتر صبر می‌کند', 'یک بشقاب دیگر روی پیشخوان', 'یک کاسهٔ دیگر برای عسل و سرشیر'],
+    'ev.erzak': 'آذوقه', 'ev.erzak.alt': 'از بازار به صبحانه‌خانه آذوقه ببر', 'erzak.al': 'بازار', 'erzak.birak': 'صبحانه‌خانه', 'erzak.basla': 'آوردن آذوقه', 'erzak.basla.alt': 'کنار ستون آبی بازار بایست و آذوقه را بار کن',
+    'erzak.bindi': 'آذوقه بار شد', 'erzak.bindi.alt': 'به صبحانه‌خانه برگرد. آرام بران: تخم‌مرغ می‌شکند.', 'erzak.tamam': 'آذوقه در انبار است', 'erzak.kirildi': 'نیمی از تخم‌مرغ‌ها شکست',
+    'erzak.sonuc': 'آذوقهٔ {0} نوبت به انبار رسید (این وسیله تا {1} می‌برد). در انبار {2} هست.', 'erzak.konfor': 'آذوقهٔ سالم {0}٪', 'erzak.salon': 'ورود به صبحانه‌خانه',
     'zemin.asfalt': 'آسفالت', 'zemin.toprak': 'خاکی', 'zemin.kaya': 'سنگ', 'zemin.kar': 'برف',
     'menu.konum': 'ایپک‌یولو · توشبا — 38.50° شمالی، 43.34° شرقی', 'menu.baslik': 'رالی <em>قلعه</em> وان',
     'menu.tanitim': 'در خیابان‌های واقعی وان، زیر سایه قلعه مسابقه بده. شهر از ساحل دریاچه تا وان قدیم باز است.',
@@ -678,7 +761,7 @@ const DIL = {
     'zone.koyu': 'روستای {0}', 'zone.pistYolu': 'راه پیست', 'zone.kayakYolu': 'جاده پیست', 'zone.artos': 'دامنه آرتوس',
     'ayar.baslik': 'تنظیمات', 'ayar.dil': 'زبان', 'ayar.kalite': 'کیفیت گرافیک', 'ayar.dusuk': 'کم', 'ayar.orta': 'متوسط', 'ayar.yuksek': 'زیاد',
     'ayar.kaliteNot': 'کم: بدون سایه. متوسط: سایه نرم. زیاد: سایه دقیق و وضوح بالا.',
-    'ayar.oto': 'اگر سرعت فریم افت کرد، کیفیت خودکار کم شود', 'ayar.ses': 'بلندی صدا', 'ayar.kamera': 'دوربین', 'ayar.yakin': 'نزدیک', 'ayar.uzak': 'دور', 'ayar.surucu': 'راننده',
+    'ayar.oto': 'اگر سرعت فریم افت کرد، کیفیت خودکار کم شود', 'ayar.sehir': 'شهر', 'ayar.trafik': 'ترافیک شهر: خودروها در خیابان‌ها حرکت کنند', 'ayar.ses': 'بلندی صدا', 'ayar.kamera': 'دوربین', 'ayar.yakin': 'نزدیک', 'ayar.uzak': 'دور', 'ayar.surucu': 'راننده',
     'ayar.ekran': 'صفحه', 'ayar.tamEkran': 'تمام‌صفحه را باز یا بسته کن', 'ayar.tamEkranNot': 'F11 یا Alt+Enter', 'ayar.kayit': 'داده‌های ذخیره‌شده', 'ayar.sifirla': 'پاک کردن پیشرفت',
     'ayar.sifirlaNot': 'پیشرفت داستان، بهترین زمان‌ها و گربه‌های پیداشده پاک می‌شود. این کار برگشت‌پذیر نیست.', 'ayar.evetSil': 'بله، پاک کن', 'ayar.vazgec': 'انصراف', 'ayar.silindi': 'پیشرفت پاک شد.', 'ayar.geri': 'بازگشت',
     'sen': 'تو', 'kisi.zelal': 'زلال',
@@ -1965,8 +2048,8 @@ function makeCarMesh(colorHex, isPlayer, style) {
   return { group: g, wheels, tail };
 }
 
-function makeCar(colorHex, isPlayer, name, style) {
-  const m = makeCarMesh(colorHex, isPlayer, style);
+function makeCar(colorHex, isPlayer, name, style, hazir) {
+  const m = hazir || makeCarMesh(colorHex, isPlayer, style);
   return {
     mesh: m.group, wheels: m.wheels, tail: m.tail, isPlayer: !!isPlayer, name: name || '',
     x: 0, z: 0, y: 0, vx: 0, vz: 0, vy: 0, h: 0, vf: 0, steer: 0, air: false, pitch: 0, roll: 0, slip: 0,
@@ -2393,6 +2476,1128 @@ function makeCat() {
 
 'use strict';
 // =====================================================================
+// TRAFİK — şehir içi araçlar.
+// Yol ağından kavşak grafiği kurulur. Her araç yolun sağ şeridinde bir "havuç" noktasını izler,
+// öndekine ve oyuncuya yol verir, yavaş gideni sollar, önü kapanınca korna çalar.
+// Fizik oyuncununkiyle aynıdır (stepCar): çarpınca savrulur, sonra şeridine döner.
+// Araçlar yalnız oyuncunun çevresinde yaşar: uzaklaşan geri alınır, halkanın içinde yenisi doğar.
+// =====================================================================
+const TRF = { net: [], nodes: [], spawn: [], pool: [], free: [], act: [], col: [], hedef: 0, scanT: 0, fill: 0, tickN: 0, honk: null, opt: [] };
+const TRF_V = [17, 15, 13.5, 12, 10, 9];   // yol sınıfına göre seyir hızı (m/sn)
+const TRF_RENK = ['#e9e7e1', '#e9e7e1', '#e9e7e1', '#b9bec4', '#b9bec4', '#5c6268', '#1b1d21', '#27364f', '#7a1f1f', '#8d7a5b', '#2f5d46'];
+// Dolmuş: uzun ve yüksek kabin. Satır biçimi CAR_STYLES ile aynı (arkadan öne).
+CAR_STYLES.minibus = [[-2.26, 0.8, 0.8, 0, 0], [-2.18, 0.93, 1.0, 0, 0], [-2.1, 0.95, 1.05, 0, 0],
+  [-1.92, 0.95, 1.05, 1.95, 0.84], [0.72, 0.95, 1.02, 1.97, 0.85], [1.36, 0.94, 0.98, 0, 0], [1.86, 0.92, 0.9, 0, 0], [2.12, 0.86, 0.78, 0, 0], [2.24, 0.72, 0.68, 0, 0]];
+
+// ------------------------------------------------------------ yol ağı
+// Trafiğe açık yollar: asfalt cadde ve sokaklar (sınıf ≤ 5, genişlik ≥ 5 m). Ara yollar ve toprak yollar dışarıda.
+function buildTrafficNet() {
+  const net = [], idx = new Map();
+  ROADS.forEach((r, i) => {
+    if (r.cls > 5 || r.w < 5 || r.pts.length < 2) return;
+    const n = r.pts.length;
+    const t = { cls: r.cls, w: r.w, one: !!r.one, n, x: new Float32Array(n), z: new Float32Array(n), s: new Float32Array(n), L: 0, v: TRF_V[r.cls], lane: r.one ? (r.w >= 8 ? r.w * 0.2 : 0) : clamp(r.w / 4, 1.3, 2.2), junc: [] };
+    let s = 0;
+    for (let k = 0; k < n; k++) {
+      if (k) s += Math.hypot(r.pts[k].x - r.pts[k - 1].x, r.pts[k].z - r.pts[k - 1].z);
+      t.x[k] = r.pts[k].x; t.z[k] = r.pts[k].z; t.s[k] = s;
+    }
+    t.L = s;
+    if (s < 1) return;
+    idx.set(i, net.length); net.push(t);
+  });
+  // Kavşak: ham veride iki yolun paylaştığı düğüm. Yeniden örnekleme ham düğümleri koruduğu için yay uzunluğu aynıdır.
+  const at = new Map();
+  ROADS.forEach((r, i) => {
+    const ti = idx.get(i);
+    if (ti === undefined) return;
+    const raw = D.roads[i];
+    let s = 0;
+    for (let k = 4; k < raw.length; k += 2) {
+      if (k > 4) s += Math.hypot(raw[k] - raw[k - 2], raw[k + 1] - raw[k - 1]);
+      const key = raw[k] + ',' + raw[k + 1];
+      let a = at.get(key);
+      if (!a) at.set(key, (a = []));
+      a.push({ r: ti, s: Math.min(s, net[ti].L) });
+    }
+  });
+  const nodes = [];
+  for (const a of at.values()) {
+    if (a.length < 2) continue;
+    const id = nodes.length;
+    nodes.push(a);
+    for (const e of a) net[e.r].junc.push({ s: e.s, node: id });
+  }
+  for (const t of net) t.junc.sort((p, q) => p.s - q.s);
+  const spawn = [];
+  net.forEach((t, ri) => {
+    for (let s = 25; s < t.L - 25; s += 45) { const p = trfPoint(t, s, -1); spawn.push(ri, s, p.x, p.z); }
+  });
+  TRF.net = net; TRF.nodes = nodes; TRF.spawn = spawn;
+  trafficClear();
+}
+const _tp = { x: 0, z: 0, dx: 0, dz: 1, i: 0 };
+function trfPoint(t, s, hint) {
+  s = clamp(s, 0, t.L);
+  let i = hint >= 0 ? Math.min(hint, t.n - 2) : clamp(Math.floor(s / 7), 0, t.n - 2);
+  while (i < t.n - 2 && t.s[i + 1] < s) i++;
+  while (i > 0 && t.s[i] > s) i--;
+  const dx = t.x[i + 1] - t.x[i], dz = t.z[i + 1] - t.z[i], L = t.s[i + 1] - t.s[i] || 1, f = (s - t.s[i]) / L;
+  _tp.x = t.x[i] + dx * f; _tp.z = t.z[i] + dz * f; _tp.dx = dx / L; _tp.dz = dz / L; _tp.i = i;
+  return _tp;
+}
+function trfNextJ(c) {   // gidiş yönünde, c.s'den sonraki ilk kavşak
+  const J = TRF.net[c.r].junc;
+  let i;
+  if (c.dir > 0) { i = 0; while (i < J.length && J[i].s <= c.s + 1) i++; }
+  else { i = J.length - 1; while (i >= 0 && J[i].s >= c.s - 1) i--; }
+  c.jn = i;
+}
+// Kavşakta yön seç: düz devam ağır basar, ana cadde tercih edilir, geri dönüş yoktur.
+function trfChoose(c, node) {
+  const t = TRF.net[c.r], p = trfPoint(t, c.s, c.k), hx = p.dx * c.dir, hz = p.dz * c.dir, opt = TRF.opt;
+  let tot = 0;
+  opt.length = 0;
+  for (const e of TRF.nodes[node]) {
+    const u = TRF.net[e.r];
+    for (let d = 1; d >= -1; d -= 2) {
+      if (d < 0 && u.one) continue;
+      if (d > 0 ? u.L - e.s < 4 : e.s < 4) continue;
+      const same = e.r === c.r && d === c.dir && Math.abs(e.s - c.s) < 3;
+      const q = trfPoint(u, e.s + d * 5, -1), cs = (q.dx * hx + q.dz * hz) * d;
+      if (!same && cs < -0.8) continue;
+      const w = same ? 5 : (u.cls <= 3 ? 2 : 1) * (cs > 0.85 ? 2.2 : 1);
+      opt.push(e.r, e.s, d, w); tot += w;
+    }
+  }
+  if (!opt.length) { c.dead = true; return; }
+  let pick = Math.random() * tot, k = 0;
+  for (; k < opt.length - 4; k += 4) { pick -= opt[k + 3]; if (pick <= 0) break; }
+  if (opt[k] !== c.r || opt[k + 2] !== c.dir) c.k = -1;
+  c.r = opt[k]; c.s = opt[k + 1]; c.dir = opt[k + 2];
+  const u = TRF.net[c.r];
+  c.base = u.one ? (c.id % 2 ? 1 : -1) * u.lane : u.lane;
+  if (c.pass <= 0) c.laneT = c.base;
+  c.turns = 0;
+  trfNextJ(c);
+}
+function trfAdvance(c, ds) {
+  const t = TRF.net[c.r], j = t.junc[c.jn], ns = c.s + ds * c.dir;
+  if (j && (c.dir > 0 ? ns >= j.s : ns <= j.s)) { c.s = j.s; trfChoose(c, j.node); return; }
+  if (ns >= t.L || ns <= 0) { c.s = clamp(ns, 0, t.L); c.dead = true; return; }
+  c.s = ns;
+}
+
+// ------------------------------------------------------------ araç gövdesi
+// Gövde geometrisi tipe göre bir kez üretilir ve paylaşılır; araç başına çizim çağrısı yarış arabasının yarısıdır.
+const TRF_GEO = {}, TRF_MAT = {};
+function trafficMesh(colorHex, style) {
+  if (!TRF_MAT.glass) {
+    TRF_MAT.glass = new THREE.MeshStandardMaterial({ color: LIN('#1a2a36'), roughness: 0.04, metalness: 0.92 });
+    TRF_MAT.parts = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7 });
+    TRF_MAT.rubber = new THREE.MeshStandardMaterial({ color: LIN('#101113'), roughness: 0.95 });
+    TRF_MAT.rim = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.32, metalness: 0.85 });
+    TRF_MAT.paint = {};
+  }
+  let Gm = TRF_GEO[style];
+  if (!Gm) {
+    const B = carBody(CAR_STYLES[style], false), bag = new Bag(), tb = new Bag(), m4 = new THREE.Matrix4(), bx = new THREE.BoxGeometry(1, 1, 1).toNonIndexed();
+    const dark = LIN('#16191d'), head = LIN('#fff3cf'), white = LIN('#f3efe6'), red = LIN('#ffffff');
+    const box = (b, w, h, d, x, y, z, col) => { m4.makeScale(w, h, d); m4.setPosition(x, y, z); b.geom(bx, m4, col); };
+    box(bag, 1.5, 0.4, B.z1 - B.z0 - 0.5, 0, 0.4, (B.z0 + B.z1) / 2, dark);
+    for (const wz of WHEEL_Z) for (const sx of [1, -1]) box(bag, 0.3, 0.52, 0.94, sx * 0.66, 0.46, wz, dark);
+    for (const sx of [1, -1]) {
+      box(bag, 0.3, 0.1, 0.08, sx * 0.5, B.hb1 - 0.08, B.z1 + 0.035, head);
+      box(tb, 0.4, 0.1, 0.08, sx * 0.5, B.hb0 - 0.1, B.z0 - 0.03, red);
+      box(bag, 0.17, 0.09, 0.2, sx * 0.99, B.cowl.hb + 0.09, B.cowl.z - 0.22, dark);
+    }
+    box(bag, 0.62, 0.12, 0.06, 0, 0.44, B.z1 + 0.04, dark);
+    box(bag, 1.46, 0.08, 0.32, 0, 0.27, B.z1 - 0.12, dark); box(bag, 1.46, 0.08, 0.32, 0, 0.27, B.z0 + 0.12, dark);
+    box(bag, 0.44, 0.11, 0.03, 0, 0.47, B.z0 - 0.055, white);
+    Gm = TRF_GEO[style] = { B, parts: bag.mesh(TRF_MAT.parts, false).geometry, tail: tb.mesh(TRF_MAT.parts, false).geometry };
+  }
+  const g = new THREE.Group();
+  const paint = TRF_MAT.paint[colorHex] || (TRF_MAT.paint[colorHex] = new THREE.MeshPhysicalMaterial({ color: LIN(colorHex), roughness: 0.45, metalness: 0.12, clearcoat: 0.45, clearcoatRoughness: 0.15, envMapIntensity: 0.6 }));
+  const body = new THREE.Mesh(Gm.B.paint, paint); body.castShadow = true;
+  const tail = new THREE.MeshStandardMaterial({ color: LIN('#4a0808'), emissive: LIN('#ff2015'), emissiveIntensity: 0.45 });
+  g.add(body, new THREE.Mesh(Gm.B.glass, TRF_MAT.glass), new THREE.Mesh(Gm.parts, TRF_MAT.parts), new THREE.Mesh(Gm.tail, tail));
+  const W = wheelGeometry(), wheels = [];
+  for (const [x, z, front] of [[0.81, WHEEL_Z[0], 1], [-0.81, WHEEL_Z[0], 1], [0.81, WHEEL_Z[1], 0], [-0.81, WHEEL_Z[1], 0]]) {
+    const pivot = new THREE.Group(); pivot.position.set(x, WHEEL_Y, z);
+    const spin = new THREE.Group();
+    spin.add(new THREE.Mesh(W.tire, TRF_MAT.rubber), new THREE.Mesh(W.rim, TRF_MAT.rim));
+    pivot.add(spin); g.add(pivot);
+    wheels.push({ pivot, spin, front });
+  }
+  return { group: g, wheels, tail };
+}
+function trafficInit(scene, n) {
+  const R = rng(4107);
+  for (let i = TRF.pool.length; i < n; i++) {
+    const k = R();
+    // her on araçtan biri sarı taksi, yaklaşık altıda biri beyaz dolmuş
+    const style = i % 10 === 3 ? 'sedan' : i % 6 === 1 ? 'minibus' : k < 0.5 ? 'sedan' : 'hatch';
+    const color = i % 10 === 3 ? '#e8c33a' : style === 'minibus' ? '#e9e7e1' : TRF_RENK[Math.floor(R() * TRF_RENK.length)];
+    const c = makeCar(color, false, '', style, trafficMesh(color, style));
+    c.id = i; c.trafik = true; c.power = style === 'minibus' ? 5.5 : 6.5; c.vmax = 34;
+    c.in = { thr: 0, brk: 0, steer: 0, hb: false, stop: false };
+    c.mesh.visible = false; scene.add(c.mesh);
+    TRF.pool.push(c); TRF.free.push(c);
+  }
+}
+function trafficClear() {
+  for (const c of TRF.act) { c.mesh.visible = false; TRF.free.push(c); }
+  TRF.act.length = 0; TRF.honk = null; TRF.scanT = 0;
+}
+
+// ------------------------------------------------------------ doğma ve geri alınma
+function trfSpawn(ri, s, P) {
+  const c = TRF.free.pop();
+  if (!c) return;
+  const t = TRF.net[ri], p = trfPoint(t, s, -1);
+  let dir = 1;
+  if (!t.one) { const to = p.dx * (P.x - p.x) + p.dz * (P.z - p.z) > 0 ? 1 : -1; dir = Math.random() < 0.65 ? to : -to; }
+  c.r = ri; c.s = s; c.dir = dir; c.k = p.i;
+  c.base = t.one ? (c.id % 2 ? 1 : -1) * t.lane : t.lane; c.lane = c.laneT = c.base;
+  const hx = p.dx * dir, hz = p.dz * dir;
+  placeCar(c, p.x - hz * c.lane, p.z + hx * c.lane, Math.atan2(hx, hz));
+  c.mood = 0.82 + Math.random() * 0.3;
+  const v = t.v * c.mood * 0.8;
+  c.vx = hx * v; c.vz = hz * v; c.vf = v; c.vt = v; c.cruise = t.v * c.mood;
+  c.dead = false; c.gone = false; c.deadT = 0; c.turns = 0; c.pass = 0; c.passO = null; c.passCd = 2; c.blk = null; c.blkT = 0;
+  c.wait = 0; c.ghost = 0; c.rev = 0; c.jam = 0; c.stuck = 0; c.fail = 0; c.honkT = 2; c.d2 = 1e9; c.pitch = 0; c.roll = 0;
+  trfNextJ(c);
+  c.mesh.visible = true;
+  TRF.act.push(c);
+}
+function trfScan(P, cam) {
+  const act = TRF.act;
+  for (let i = act.length - 1; i >= 0; i--) {
+    const c = act[i], dx = c.x - P.x, dz = c.z - P.z, d2 = dx * dx + dz * dz;
+    c.d2 = d2;
+    const behind = (c.x - cam.x) * cam.fx + (c.z - cam.z) * cam.fz < 0;
+    if (i >= TRF.hedef || d2 > 380 * 380 || c.water > 0.6 || (behind && d2 > 240 * 240) || (c.gone && (d2 > 220 * 220 || (behind && d2 > 50 * 50)))) {
+      c.mesh.visible = false; act.splice(i, 1); TRF.free.push(c);
+    }
+  }
+  const fill = TRF.fill > 0 || act.length === 0;
+  let need = Math.min(TRF.hedef - act.length, fill ? 99 : 2);
+  if (need > 0) {
+    const S = TRF.spawn, dmin = fill ? 70 : 190, cand = [];
+    for (let k = 0; k < S.length; k += 4) {
+      const dx = S[k + 2] - P.x, dz = S[k + 3] - P.z, d2 = dx * dx + dz * dz;
+      if (d2 > dmin * dmin && d2 < 330 * 330) cand.push(k);
+    }
+    for (let tr = 0; tr < 40 && need > 0 && cand.length; tr++) {
+      const k = cand[Math.floor(Math.random() * cand.length)], x = S[k + 2], z = S[k + 3];
+      if ((x - cam.x) * cam.fx + (z - cam.z) * cam.fz < 0 && Math.random() > 0.4) continue;
+      let ok = true;
+      for (const o of act) if ((o.x - x) * (o.x - x) + (o.z - z) * (o.z - z) < 30 * 30) { ok = false; break; }
+      if (!ok) continue;
+      trfSpawn(S[k], S[k + 1], P); need--;
+    }
+  }
+  if (TRF.fill > 0) TRF.fill--;
+}
+
+// ------------------------------------------------------------ çarpışma
+// Yarıştaki tek daireli model yan yana geçişe izin vermez; burada her araç ön ve arka iki dairedir.
+const trfYari = (o) => (o.arac && o.arac !== 'car' ? 0.6 : 0.95);
+function trfCollide(cars) {
+  for (let a = 0; a < cars.length; a++) for (let b = a + 1; b < cars.length; b++) {
+    const A = cars[a], B = cars[b], ex = B.x - A.x, ez = B.z - A.z;
+    if (ex * ex + ez * ez > 26 || Math.abs(A.y - B.y) > 2.5) continue;
+    const ra = trfYari(A), rb = trfYari(B), oa = ra > 0.9 ? 1.25 : 0.55, ob = rb > 0.9 ? 1.25 : 0.55, R = ra + rb;
+    const afx = Math.sin(A.h), afz = Math.cos(A.h), bfx = Math.sin(B.h), bfz = Math.cos(B.h);
+    let pen = 0, nx = 0, nz = 0;
+    for (let i = -1; i <= 1; i += 2) for (let j = -1; j <= 1; j += 2) {
+      const dx = B.x + bfx * ob * j - A.x - afx * oa * i, dz = B.z + bfz * ob * j - A.z - afz * oa * i, d2 = dx * dx + dz * dz;
+      if (d2 >= R * R || d2 < 1e-6) continue;
+      const d = Math.sqrt(d2);
+      if (R - d > pen) { pen = R - d; nx = dx / d; nz = dz / d; }
+    }
+    if (pen <= 0) continue;
+    A.x -= nx * pen * 0.5; A.z -= nz * pen * 0.5; B.x += nx * pen * 0.5; B.z += nz * pen * 0.5;
+    const rv = (B.vx - A.vx) * nx + (B.vz - A.vz) * nz;
+    if (rv < 0) {
+      const j = -rv * 0.65;
+      A.vx -= nx * j; A.vz -= nz * j; B.vx += nx * j; B.vz += nz * j;
+      if (-rv > 3) { A.hit = Math.max(A.hit, -rv * 0.7); B.hit = Math.max(B.hit, -rv * 0.7); }
+    }
+  }
+}
+
+// ------------------------------------------------------------ sürücü
+// Karar (saniyede 20 kez): önümde kim var, hangi hıza inmeliyim, sollayabilir miyim.
+function trfThink(c, P, dt) {
+  const dxp = P.x - c.x, dzp = P.z - c.z;
+  c.d2 = dxp * dxp + dzp * dzp;
+  const t = TRF.net[c.r], sp = Math.hypot(c.vx, c.vz), fx = Math.sin(c.h), fz = Math.cos(c.h), rx = -fz, rz = fx, act = TRF.act;
+  c.cruise = t.v * c.mood * (c.pass > 0 ? 1.18 : 1);
+  let vt = c.cruise, blk = null, bcs = 1, bov = 0;
+  const look = 9 + sp * 1.7;
+  if (c.ghost > 0) c.ghost -= dt;
+  if (c.passCd > 0) c.passCd -= dt;
+  if (c.honkT > 0) c.honkT -= dt;
+  for (let i = -1; i < act.length; i++) {
+    const o = i < 0 ? P : act[i];
+    if (o === c) continue;
+    const dx = o.x - c.x, dz = o.z - c.z, f = dx * fx + dz * fz;
+    if (f < 0.5 || f > look || Math.abs(o.y - c.y) > 3) continue;
+    const al = Math.abs(dx * rx + dz * rz), yan = 0.95 + trfYari(o);   // iki yarı genişlik
+    if (al > (f < 9 ? yan + 0.25 : 1.6)) continue;
+    const cs = fx * Math.sin(o.h) + fz * Math.cos(o.h), ov = o.vx * fx + o.vz * fz;
+    if (cs < -0.5 && al > 1.15 && ov < -1) continue;                         // karşı şeritten geçiyor
+    if (i >= 0 && (c.ghost > 0 || (o.blk === c && c.id < o.id))) continue;   // karşılıklı bekleme: küçük numaralı geçer
+    if (c.pass > 0 && o === c.passO && !(f < 5.5 && al < yan + 0.1)) continue;   // yanından geçilen araç
+    const gap = f - 5.4, lim = gap < 0.3 ? 0 : Math.max(0, ov) * 0.95 + (gap - 2 - sp * 0.5) * 0.7;
+    if (lim < vt) { vt = Math.max(0, lim); blk = o; bcs = cs; bov = ov; }
+  }
+  c.blk = blk;
+  const slow = !!blk && vt < c.cruise * 0.55;
+  c.blkT = slow ? c.blkT + dt : 0;
+  // kilitlenme bekçisi: kavşakta çapraz ya da burun buruna kalan iki trafik aracı sonsuza dek beklemesin
+  if (slow && blk !== P && sp < 0.6 && bcs < 0.7) { c.wait += dt; if (c.wait > 6) { c.ghost = 2.5; c.wait = 0; } } else c.wait = 0;
+  // sollama
+  if (c.pass > 0) {
+    c.pass -= dt;
+    const o = c.passO, dx = o.x - c.x, dz = o.z - c.z;
+    if (c.pass <= 0 || dx * fx + dz * fz < -7 || dx * dx + dz * dz > 3600) { c.pass = 0; c.passO = null; c.laneT = c.base; c.passCd = 5; }
+  } else if (slow && c.blkT > 1.2 && c.passCd <= 0 && !c.dead && bov < c.cruise * 0.45 && (bcs > 0.3 || Math.abs(blk.vf) < 1) && !(blk.trafik && blk.blk && !blk.gone)) {
+    // Yavaş ya da duran engelin yanından geç: önce kendi tarafımdan (sağdan) sığıyorsam oradan, yoksa karşı şerit boşsa soldan.
+    // Kuyrukta bekleyen araç sollanmaz. Yan konumlar yol eksenine göredir (sağ artı).
+    const clear = 0.95 + trfYari(blk) + 0.4, lim = t.w / 2 - 0.4;
+    const lo = c.lane + (blk.x - c.x) * rx + (blk.z - c.z) * rz;
+    let hedef = null;
+    for (let k = 0; k < 2 && hedef === null; k++) {
+      const cand = k ? lo - clear : lo + clear;
+      if (Math.abs(cand) > lim) continue;
+      const uzak = cand > 0.9 ? 25 : 60;      // karşı şeride çıkılacaksa uzağa bak
+      let free = true;
+      for (let i = -1; i < act.length && free; i++) {
+        const o = i < 0 ? P : act[i];
+        if (o === c || o === blk) continue;
+        const dx = o.x - c.x, dz = o.z - c.z, f = dx * fx + dz * fz;
+        if (f > -6 && f < uzak && Math.abs(c.lane + dx * rx + dz * rz - cand) < 1.95) free = false;
+      }
+      if (free) hedef = cand;
+    }
+    if (hedef !== null) { c.pass = 9; c.passO = blk; c.laneT = hedef; } else c.passCd = 1.5;
+  }
+  if (c.pass > 0 && blk === c.passO && sp < 0.4 && c.rev <= 0) { c.jam += dt; if (c.jam > 1.5) { c.jam = 0; c.rev = 1.1; } } else c.jam = 0;
+  if (blk === P && sp < 1 && c.blkT > 2.5 && c.honkT <= 0 && c.pass <= 0) { TRF.honk = c; c.honkT = 5 + Math.random() * 4; }
+  // sıkışma: gitmek istiyor ama duruyor (duvar, kaldırım) → kısa geri manevra
+  if (vt > 2 && sp < 0.5 && !c.dead && c.rev <= 0) {
+    c.stuck += dt;
+    if (c.stuck > 3) { c.stuck = 0; c.rev = 1.4; if (++c.fail >= 4) c.gone = true; }
+  } else if (sp > 4) { c.stuck = 0; c.fail = 0; }
+  // yolun sonu: iki yönlü yolda geri dön, tek yönde park et ve görünmezken geri alın
+  if (c.dead) {
+    c.deadT += dt;
+    if (c.deadT > 3 && !c.gone) {
+      if (!t.one && c.turns < 2) { c.dir = -c.dir; c.dead = false; c.deadT = 0; c.turns++; trfNextJ(c); }
+      else c.gone = true;
+    }
+  }
+  c.vt = vt;
+}
+// Direksiyon ve gaz (her fizik adımında): havucu ileride tut, ona dön, hedef hıza gel.
+function trfSteer(c, dt) {
+  const sp = Math.hypot(c.vx, c.vz), LA = 6.5 + sp * 0.5, I = c.in;
+  c.lane += clamp(c.laneT - c.lane, -2.4 * dt, 2.4 * dt);
+  let tx = 0, tz = 0, d2 = 0;
+  for (let it = 0; ; it++) {
+    const p = trfPoint(TRF.net[c.r], c.s, c.k);
+    c.k = p.i;
+    tx = p.x - p.dz * c.dir * c.lane; tz = p.z + p.dx * c.dir * c.lane;
+    d2 = (tx - c.x) * (tx - c.x) + (tz - c.z) * (tz - c.z);
+    if (c.dead || d2 >= LA * LA || it > 30) break;
+    trfAdvance(c, 1.5);
+  }
+  const diff = wrapAngle(Math.atan2(tx - c.x, tz - c.z) - c.h);
+  I.stop = false;
+  if (c.rev > 0) { c.rev -= dt; I.steer = clamp(diff * 2, -1, 1); I.thr = 0; I.brk = 0.7; return; }
+  I.steer = clamp(-diff * 2.3, -1, 1);
+  let vt = Math.min(c.vt, c.cruise * clamp(1.15 - Math.abs(diff) * 1.25, 0.28, 1));
+  if (c.dead) vt = Math.min(vt, Math.max(0, Math.sqrt(d2) - 3) * 0.7);
+  if (vt < 0.3) { I.thr = 0; I.brk = sp > 1.2 ? 0.8 : 0; I.stop = true; }
+  else if (sp > vt + 1.2 && sp > 1.2) { I.thr = 0; I.brk = clamp((sp - vt) / 4, 0.15, 1); }
+  else if (sp < vt - 0.4) { I.thr = clamp((vt - sp) / 3, 0.25, 1); I.brk = 0; }
+  else { I.thr = 0.2; I.brk = 0; }
+}
+// Oyun döngüsünden her fizik adımında çağrılır. Uzak araçlar üç adımda bir yürür.
+function trafficTick(dt, P, cam) {
+  TRF.tickN++;
+  TRF.scanT -= dt;
+  if (TRF.scanT <= 0) { TRF.scanT = 0.5; trfScan(P, cam); }
+  const act = TRF.act, col = TRF.col;
+  col.length = 0; col.push(P);
+  for (let i = 0; i < act.length; i++) {
+    const c = act[i], far = c.d2 > 130 * 130, ph = (TRF.tickN + c.id) % 6;
+    col.push(c);
+    if (far && ph % 3) continue;
+    const h = far ? dt * 3 : dt;
+    if (ph === 0) trfThink(c, P, dt * 6);
+    trfSteer(c, h);
+    stepCar(c, c.in, h);
+    if (c.in.stop) c.brake = true;
+  }
+  if (act.length) trfCollide(col);
+  for (let i = 0; i < act.length; i++) {
+    const c = act[i];
+    if (c.hit > 3.5 && c.honkT < 3 && c.d2 < 60 * 60) { TRF.honk = c; c.honkT = 4; }
+    c.hit = 0;
+  }
+}
+
+'use strict';
+// =====================================================================
+// MUTFAK ÇİZİMLERİ — kahvaltı salonunun bütün görselleri kodla çizilen SVG'dir (hazır görsel yok).
+// Her çizim (0,0) merkezli bir parça döndürür; sahne 1600×900 birimlik tek bir SVG'dir.
+// =====================================================================
+const MTC = {};
+MTC.tanim = '<defs>'
+  + '<linearGradient id="mt-bakir" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0b377"/><stop offset="0.5" stop-color="#c0702a"/><stop offset="1" stop-color="#7a3f12"/></linearGradient>'
+  + '<radialGradient id="mt-sahan-ic" cx="0.4" cy="0.35" r="0.8"><stop offset="0" stop-color="#8a4d20"/><stop offset="1" stop-color="#3d200c"/></radialGradient>'
+  + '<linearGradient id="mt-cay" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8552d"/><stop offset="1" stop-color="#8f1d14"/></linearGradient>'
+  + '<linearGradient id="mt-duvar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f8eed8"/><stop offset="1" stop-color="#ecd6ae"/></linearGradient>'
+  + '<linearGradient id="mt-ahsap" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c08a52"/><stop offset="1" stop-color="#8a5a34"/></linearGradient>'
+  + '<linearGradient id="mt-tezgah" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3e7d0"/><stop offset="1" stop-color="#e2d0b0"/></linearGradient>'
+  + '<linearGradient id="mt-gok" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fc7e8"/><stop offset="1" stop-color="#dff0f5"/></linearGradient>'
+  + '<linearGradient id="mt-pirinc" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a8791f"/><stop offset="0.35" stop-color="#f3d27c"/><stop offset="0.7" stop-color="#d9a441"/><stop offset="1" stop-color="#8f6416"/></linearGradient>'
+  + '<radialGradient id="mt-para" cx="0.35" cy="0.3" r="0.9"><stop offset="0" stop-color="#fff0a8"/><stop offset="0.6" stop-color="#f2b824"/><stop offset="1" stop-color="#c98a0c"/></radialGradient>'
+  + '<pattern id="mt-kilim" width="80" height="40" patternUnits="userSpaceOnUse"><rect width="80" height="40" fill="#b8402e"/><path d="M0 20L20 0L40 20L20 40Z" fill="#f3e2bd"/><path d="M8 20L20 8L32 20L20 32Z" fill="#1c8ea0"/><path d="M15 20L20 15L25 20L20 25Z" fill="#f2a93b"/><path d="M40 20L60 0L80 20L60 40Z" fill="#23303f"/><path d="M48 20L60 8L72 20L60 32Z" fill="#f3e2bd"/><path d="M55 20L60 15L65 20L60 25Z" fill="#b8402e"/></pattern>'
+  + '<pattern id="mt-fayans" width="100" height="100" patternUnits="userSpaceOnUse"><rect width="100" height="100" fill="url(#mt-tezgah)"/><path d="M0 0H100M0 0V100" stroke="#d2bf9c" stroke-width="2"/></pattern>'
+  + '</defs>';
+MTC.golge = (rx, ry, y) => '<ellipse cx="0" cy="' + y + '" rx="' + rx + '" ry="' + ry + '" fill="#3b2a1a" opacity="0.2"/>';
+
+// ---------------------------------------------------------------- yiyecekler
+const MT_CAM = 'M-16-36C-18-20-9-12-10-1C-11 10-17 15-15 30L15 30C17 15 11 10 10-1C9-12 18-20 16-36Z';
+// İnce belli bardak. d: doluluk 0..1 (demlenirken yükselir). id: kırpma yolu için tekil ad.
+MTC.cay = (d, id) => MTC.golge(27, 6, 37)
+  + '<ellipse cx="0" cy="33" rx="28" ry="8.5" fill="#fbf7ef" stroke="#c8553d" stroke-width="2.5"/><ellipse cx="0" cy="32" rx="19" ry="5" fill="#efe3cf"/>'
+  + '<clipPath id="' + id + '"><rect x="-20" y="' + (30 - 60 * d).toFixed(1) + '" width="40" height="70"/></clipPath>'
+  + '<path d="' + MT_CAM + '" fill="#ffffff" opacity="0.4"/><path d="' + MT_CAM + '" fill="url(#mt-cay)" clip-path="url(#' + id + ')"/>'
+  + '<path d="' + MT_CAM + '" fill="none" stroke="#ffffff" stroke-width="2.2" opacity="0.95"/><path d="M-11-30C-12-20-6-12-6-2" stroke="#fff" stroke-width="2.6" fill="none" opacity="0.75" stroke-linecap="round"/>';
+MTC.somun = (x, y, r) => '<g transform="translate(' + x + ',' + y + ') rotate(' + (r || 0) + ')"><ellipse cx="0" cy="5" rx="34" ry="20" fill="#b9772c"/><ellipse cx="0" cy="1" rx="32" ry="17" fill="#e3ab5a"/>'
+  + '<path d="M-18-5q6 6 0 12M-4-9q6 8 0 16M10-7q6 7 0 14" stroke="#b5762c" stroke-width="3" fill="none" stroke-linecap="round"/><ellipse cx="-8" cy="-7" rx="14" ry="4" fill="#f6d79b" opacity="0.65"/></g>';
+MTC.ekmek = () => MTC.golge(34, 7, 22) + MTC.somun(0, 0, -6);
+MTC.sepet = (n) => MTC.golge(62, 12, 44)
+  + '<path d="M-60-4C-58 34-36 46 0 46C36 46 58 34 60-4Z" fill="#9a6a34" stroke="#6d4520" stroke-width="2.5"/>'
+  + '<path d="M-54 8C-30 16 30 16 54 8M-48 22C-26 30 26 30 48 22M-36 36C-18 40 18 40 36 36" stroke="#6d4520" stroke-width="2" fill="none" opacity="0.7"/>'
+  + '<path d="M-30-2L-24 40M-8-2L-6 44M14-2L12 44M36-2L30 38" stroke="#c6924f" stroke-width="2" opacity="0.6"/>'
+  + '<ellipse cx="0" cy="-4" rx="60" ry="14" fill="#7b5127"/>'
+  + (n > 2 ? MTC.somun(-22, -14, -14) : '') + (n > 1 ? MTC.somun(22, -14, 12) : '') + (n > 0 ? MTC.somun(0, -24, -3) : '')
+  + '<path d="M-60-4C-40 6 40 6 60-4" stroke="#c6924f" stroke-width="4" fill="none"/>';
+// Bakır sahan (üstten). ic: içindeki yemeğin çizimi.
+MTC.sahan = (ic) => MTC.golge(54, 10, 46)
+  + '<rect x="-68" y="-9" width="28" height="18" rx="8" fill="url(#mt-bakir)" stroke="#7a3f12" stroke-width="2"/><rect x="40" y="-9" width="28" height="18" rx="8" fill="url(#mt-bakir)" stroke="#7a3f12" stroke-width="2"/>'
+  + '<circle r="48" fill="url(#mt-bakir)" stroke="#7a3f12" stroke-width="2.5"/><circle r="39.5" fill="url(#mt-sahan-ic)"/>'
+  + '<path d="M-39-22A45 45 0 0 1 -12-43" stroke="#ffe0b8" stroke-width="3" fill="none" opacity="0.75" stroke-linecap="round"/>' + (ic || '');
+// p: pişme 0..1; yanik: yandı
+MTC.yumurta = (p, yanik) => {
+  const ak = yanik ? '#4a3423' : '#fffdf6', sari = yanik ? '#2b1a10' : p < 0.5 ? '#ffd25e' : '#f5a300', kenar = yanik ? '#2b1a10' : '#e9dfc6';
+  return '<path d="M-27-6C-31-25-8-33 4-25C20-31 35-12 27 4C33 21 14 31 0 25C-16 33-33 18-27-6Z" fill="' + ak + '" opacity="' + (yanik ? 1 : 0.5 + 0.5 * p).toFixed(2) + '" stroke="' + kenar + '" stroke-width="' + (p > 0.9 ? 2 : 0) + '"/>'
+    + '<circle cx="-9" cy="-4" r="10.5" fill="' + sari + '"/><circle cx="12" cy="7" r="9.5" fill="' + sari + '"/>'
+    + (yanik ? '' : '<circle cx="-12" cy="-7" r="3" fill="#fff" opacity="0.7"/><circle cx="9" cy="4" r="2.6" fill="#fff" opacity="0.7"/>');
+};
+MTC.sucukDilim = (x, y) => '<g transform="translate(' + x + ',' + y + ')"><circle r="8.5" fill="#8e2a1e" stroke="#5e1710" stroke-width="1.6"/><circle cx="-3" cy="-2" r="1.6" fill="#f0c4ae"/><circle cx="3" cy="2" r="1.4" fill="#f0c4ae"/><circle cx="2" cy="-4" r="1.1" fill="#f0c4ae"/></g>';
+MTC.sucuk = () => MTC.sucukDilim(-22, 17) + MTC.sucukDilim(21, -18) + MTC.sucukDilim(25, 20) + MTC.sucukDilim(-20, -22);
+MTC.murtuga = (p, yanik) => {
+  const c = yanik ? '#3a2616' : p < 0.5 ? '#f0dcae' : '#e0a94a', k = yanik ? '#1f130a' : p < 0.5 ? '#d9bd80' : '#b9792a', a = yanik ? '#5a4030' : '#f6dc92';
+  return '<path d="M-29-8C-28-27-6-33 6-27C22-31 34-14 29 2C34 20 16 31 0 27C-18 32-33 14-29-8Z" fill="' + c + '" stroke="' + k + '" stroke-width="2"/>'
+    + '<path d="M-16-12q6-6 12 0M4-16q7-4 12 3M-18 6q6-5 11 2M2 4q8-5 14 2M-8 16q7-4 13 2" stroke="' + k + '" stroke-width="3" fill="none" stroke-linecap="round"/>'
+    + '<path d="M-10-2q5-4 9 1M10-6q4-3 7 1" stroke="' + a + '" stroke-width="3" fill="none" stroke-linecap="round"/>';
+};
+MTC.tabak = (ic) => MTC.golge(50, 9, 44)
+  + '<circle r="46" fill="#fdfbf6" stroke="#1fa6b8" stroke-width="4"/><circle r="40.5" fill="none" stroke="#1fa6b8" stroke-width="1.6" stroke-dasharray="3 5" opacity="0.75"/><circle r="35" fill="#f4eee1"/>' + (ic || '');
+MTC.peynir = () => '<path d="M-27-8L1-23L8 0L-20 12Z" fill="#fffdf5" stroke="#dccfae" stroke-width="1.8"/><path d="M-20 12L8 0L9 6L-19 18Z" fill="#e9dfc4"/>'
+  + '<path d="M-6-2L20-10L24 10L0 18Z" fill="#fffdf5" stroke="#dccfae" stroke-width="1.8"/>'
+  + '<g fill="#5f8f3e"><circle cx="-14" cy="-6" r="1.8"/><circle cx="-6" cy="-12" r="1.5"/><circle cx="-10" cy="3" r="1.6"/><circle cx="0" cy="-2" r="1.4"/><circle cx="8" cy="2" r="1.8"/><circle cx="14" cy="-3" r="1.5"/><circle cx="12" cy="10" r="1.6"/><circle cx="4" cy="11" r="1.3"/></g>';
+MTC.zeytin = () => [[16, 20, '#2c2a1e'], [26, 12, '#6b7a2a'], [6, 26, '#6b7a2a'], [24, 24, '#2c2a1e'], [15, 30, '#2c2a1e']]
+  .map((z) => '<ellipse cx="' + z[0] + '" cy="' + z[1] + '" rx="6.2" ry="5" fill="' + z[2] + '"/><circle cx="' + (z[0] - 2) + '" cy="' + (z[1] - 1.6) + '" r="1.5" fill="#fff" opacity="0.55"/>').join('');
+MTC.domates = () => '<circle cx="-18" cy="20" r="10.5" fill="#d93a2b"/><circle cx="-18" cy="20" r="7" fill="#f0765c"/><g fill="#fbe3a8"><circle cx="-21" cy="18" r="1.3"/><circle cx="-15" cy="18" r="1.3"/><circle cx="-18" cy="23" r="1.3"/></g>'
+  + '<circle cx="-27" cy="4" r="9" fill="#d93a2b"/><circle cx="-27" cy="4" r="6" fill="#f0765c"/>'
+  + '<circle cx="-4" cy="27" r="9" fill="#cfe8b0" stroke="#3f7d3a" stroke-width="3"/><circle cx="-4" cy="27" r="3" fill="#b5d792"/>'
+  + '<circle cx="-30" cy="-12" r="8" fill="#cfe8b0" stroke="#3f7d3a" stroke-width="3"/>';
+MTC.kase = (ic) => MTC.golge(40, 8, 36) + '<circle r="37" fill="url(#mt-bakir)" stroke="#7a3f12" stroke-width="2.2"/><circle r="30" fill="#5a2f12"/>' + (ic || '');
+MTC.kaymak = () => '<circle r="28" fill="#fff8e7"/><path d="M-18 3C-18-14 0-20 10-10C20-2 10 13-2 9C-10 6-6-6 2-4" stroke="#eadbb2" stroke-width="5" fill="none" stroke-linecap="round"/>';
+MTC.bal = () => '<path d="M-22-4C-10-17 4 7 21-7C19 14-4 23-19 12Z" fill="#f0a818" opacity="0.95"/><path d="M-14-2C-6-8 4 6 14-2" stroke="#ffe08a" stroke-width="2.5" fill="none" stroke-linecap="round"/>';
+MTC.cevizTane = (x, y, r) => '<g transform="translate(' + x + ',' + y + ') rotate(' + r + ')"><ellipse rx="8" ry="6" fill="#9a6a34" stroke="#5c3a17" stroke-width="1.5"/><path d="M-6 0H6M0-4V4" stroke="#5c3a17" stroke-width="1.3"/></g>';
+MTC.ceviz = () => MTC.cevizTane(-8, -12, -20) + MTC.cevizTane(12, 2, 30) + MTC.cevizTane(-10, 12, 10);
+// Sipariş anahtarından yemeğin çizimi (balonlarda, uçan tabakta, tezgâhta aynı çizim kullanılır)
+MTC.yemek = (key, id) => {
+  const p = key.split('+'), t = p[0], var_ = (s) => p.indexOf(s) > 0;
+  if (t === 'cay') return MTC.cay(1, id || 'mt-c0');
+  if (t === 'ekmek') return MTC.ekmek();
+  if (t === 'yumurta') return MTC.sahan(MTC.yumurta(1) + (var_('sucuk') ? MTC.sucuk() : ''));
+  if (t === 'murtuga') return MTC.sahan(MTC.murtuga(1));
+  if (t === 'peynir') return MTC.tabak(MTC.peynir() + (var_('zeytin') ? MTC.zeytin() : '') + (var_('domates') ? MTC.domates() : ''));
+  return MTC.kase(MTC.kaymak() + (var_('bal') ? MTC.bal() : '') + (var_('ceviz') ? MTC.ceviz() : ''));
+};
+
+// ---------------------------------------------------------------- malzeme kaynakları
+MTC.tahta = (w, h) => MTC.golge(w / 2 + 4, 8, h / 2 + 2) + '<rect x="' + -w / 2 + '" y="' + -h / 2 + '" width="' + w + '" height="' + h + '" rx="12" fill="url(#mt-ahsap)" stroke="#6d4520" stroke-width="2.5"/><path d="M' + (-w / 2 + 12) + ' ' + (-h / 2 + 14) + 'H' + (w / 2 - 12) + 'M' + (-w / 2 + 12) + ' ' + (h / 2 - 14) + 'H' + (w / 2 - 12) + '" stroke="#6d4520" stroke-width="1.5" opacity="0.35"/>';
+MTC.kaynak = {
+  yumurta: () => MTC.golge(54, 10, 38) + '<path d="M-52-6C-50 28-32 40 0 40C32 40 50 28 52-6Z" fill="#b08a55" stroke="#6d4520" stroke-width="2.5"/><path d="M-46 8C-26 15 26 15 46 8M-38 24C-20 30 20 30 38 24" stroke="#6d4520" stroke-width="2" fill="none" opacity="0.6"/><ellipse cx="0" cy="-6" rx="52" ry="12" fill="#7b5127"/>'
+    + [[-26, -12, '#f4e3c8'], [0, -18, '#fbf1dd'], [26, -12, '#e9cfa6'], [-13, -24, '#e9cfa6'], [13, -25, '#f4e3c8']].map((e) => '<ellipse cx="' + e[0] + '" cy="' + e[1] + '" rx="12" ry="15" fill="' + e[2] + '" stroke="#c9ab7b" stroke-width="1.5"/><ellipse cx="' + (e[0] - 4) + '" cy="' + (e[1] - 6) + '" rx="3" ry="4" fill="#fff" opacity="0.7"/>').join(''),
+  sucuk: () => MTC.tahta(104, 76) + '<path d="M-30 14C-36-26 30-30 30 6" stroke="#5e1710" stroke-width="22" fill="none" stroke-linecap="round"/><path d="M-30 14C-36-26 30-30 30 6" stroke="#8e2a1e" stroke-width="17" fill="none" stroke-linecap="round"/><path d="M-26 6C-26-16 22-20 24 2" stroke="#b8493a" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.8"/>' + MTC.sucukDilim(-8, 18) + MTC.sucukDilim(10, 22),
+  murtuga: () => MTC.golge(50, 9, 36) + '<circle r="44" fill="#e9e2d2" stroke="#bfb199" stroke-width="3"/><circle r="36" fill="#f3dfa6"/><path d="M-20-6q10-10 22 0q10 8 18-2M-18 12q12-8 24 2" stroke="#e0b95a" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="-8" cy="-2" r="7" fill="#ffe680"/>'
+    + '<path d="M14-14L52-50" stroke="#8a5a34" stroke-width="8" stroke-linecap="round"/><ellipse cx="12" cy="-12" rx="12" ry="8" transform="rotate(-44 12 -12)" fill="#a9713f"/>',
+  peynir: () => MTC.tahta(108, 78) + '<path d="M-34-22L20-28L30 8L-28 16Z" fill="#fffdf5" stroke="#dccfae" stroke-width="2"/><path d="M-28 16L30 8L31 20L-27 28Z" fill="#e9dfc4"/><g fill="#5f8f3e"><circle cx="-20" cy="-12" r="2.2"/><circle cx="-6" cy="-18" r="1.8"/><circle cx="6" cy="-8" r="2.2"/><circle cx="-12" cy="2" r="2"/><circle cx="16" cy="-16" r="1.8"/><circle cx="14" cy="2" r="2"/><circle cx="-2" cy="8" r="1.7"/></g><path d="M22 24L50-8" stroke="#c9ced4" stroke-width="6" stroke-linecap="round"/><path d="M40 6L52-10" stroke="#5c3a17" stroke-width="8" stroke-linecap="round"/>',
+  zeytin: () => MTC.golge(44, 8, 34) + '<circle r="40" fill="#1c8ea0" stroke="#12606d" stroke-width="2.5"/><circle r="32" fill="#f4eee1"/>' + [[-14, -10, '#2c2a1e'], [4, -16, '#6b7a2a'], [16, -2, '#2c2a1e'], [-4, 2, '#6b7a2a'], [-16, 8, '#2c2a1e'], [8, 14, '#2c2a1e'], [-4, 18, '#6b7a2a']].map((z) => '<ellipse cx="' + z[0] + '" cy="' + z[1] + '" rx="8" ry="6.5" fill="' + z[2] + '"/><circle cx="' + (z[0] - 2.5) + '" cy="' + (z[1] - 2) + '" r="1.8" fill="#fff" opacity="0.55"/>').join(''),
+  domates: () => MTC.tahta(108, 78) + '<circle cx="-20" cy="-2" r="24" fill="#d93a2b" stroke="#a82519" stroke-width="2"/><path d="M-28-22q8 6 16 0" stroke="#3f7d3a" stroke-width="4" fill="none" stroke-linecap="round"/><ellipse cx="-28" cy="-10" rx="7" ry="4" fill="#fff" opacity="0.35"/>'
+    + '<rect x="2" y="-4" width="48" height="22" rx="11" fill="#5d9c4a" stroke="#3f7d3a" stroke-width="2" transform="rotate(-18 26 7)"/><path d="M10 6L44-6" stroke="#8cc276" stroke-width="3" stroke-linecap="round" opacity="0.7"/>',
+  kaymak: () => MTC.golge(38, 7, 34) + '<path d="M-34-18L-28 30C-10 38 10 38 28 30L34-18Z" fill="#fbf7ef" stroke="#c8553d" stroke-width="2.5"/><ellipse cx="0" cy="-18" rx="34" ry="10" fill="#fff8e7" stroke="#e2d6b8" stroke-width="2"/><path d="M-16-18C-10-26 6-24 12-16" stroke="#eadbb2" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M-26 6C-10 12 10 12 26 6" stroke="#c8553d" stroke-width="2" fill="none" opacity="0.6"/>',
+  bal: () => MTC.golge(32, 7, 36) + '<path d="M-26-16C-32 8-30 34 0 34C30 34 32 8 26-16Z" fill="#f0a818" stroke="#b9770c" stroke-width="2.5"/><rect x="-24" y="-30" width="48" height="16" rx="5" fill="#d9c7a0" stroke="#9c8558" stroke-width="2"/><path d="M-16-6C-18 8-14 22-6 26" stroke="#ffe08a" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.8"/><path d="M6-30L26-58" stroke="#8a5a34" stroke-width="6" stroke-linecap="round"/>',
+  ceviz: () => MTC.golge(38, 7, 30) + '<circle r="36" fill="#7b5127" stroke="#5c3a17" stroke-width="2.5"/><circle r="28" fill="#5a3a1c"/>' + MTC.cevizTane(-10, -8, -20) + MTC.cevizTane(10, -10, 30) + MTC.cevizTane(0, 8, 10) + MTC.cevizTane(-16, 8, 60) + MTC.cevizTane(16, 8, -40),
+  cop: () => MTC.golge(34, 7, 40) + '<path d="M-28-22L-22 38C-8 44 8 44 22 38L28-22Z" fill="#8f9aa3" stroke="#56616b" stroke-width="2.5"/><path d="M-12-14L-9 32M0-14V34M12-14L9 32" stroke="#56616b" stroke-width="3" opacity="0.6"/><rect x="-34" y="-32" width="68" height="12" rx="5" fill="#a9b4bd" stroke="#56616b" stroke-width="2.5"/><rect x="-10" y="-40" width="20" height="10" rx="4" fill="none" stroke="#56616b" stroke-width="3"/>',
+};
+MTC.semaver = () => MTC.golge(70, 14, 118)
+  + '<path d="M-44 108L-56 122H56L44 108Z" fill="url(#mt-pirinc)" stroke="#7a5510" stroke-width="2.5"/>'
+  + '<path d="M-50-30C-66 20-56 84-40 108H40C56 84 66 20 50-30Z" fill="url(#mt-pirinc)" stroke="#7a5510" stroke-width="3"/>'
+  + '<path d="M-30-14C-40 22-34 70-26 96" stroke="#fff3c4" stroke-width="6" fill="none" opacity="0.55" stroke-linecap="round"/>'
+  + '<rect x="-54" y="-44" width="108" height="18" rx="8" fill="url(#mt-pirinc)" stroke="#7a5510" stroke-width="2.5"/>'
+  + '<path d="M-58 10C-84 10-84 56-60 56M58 10C84 10 84 56 60 56" stroke="#7a5510" stroke-width="7" fill="none" stroke-linecap="round"/>'
+  + '<rect x="-22" y="-70" width="44" height="28" rx="6" fill="url(#mt-pirinc)" stroke="#7a5510" stroke-width="2.5"/>'
+  + '<path d="M-30-74C-34-104-16-122 0-122C16-122 34-104 30-74Z" fill="#fbf7ef" stroke="#c8553d" stroke-width="3"/><path d="M-24-92C-10-86 10-86 24-92" stroke="#c8553d" stroke-width="3" fill="none"/><path d="M28-104C46-108 50-92 40-84" stroke="#c8553d" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="0" cy="-126" r="6" fill="#c8553d"/>'
+  + '<path d="M0 62V76H26V84" stroke="#7a5510" stroke-width="8" fill="none" stroke-linecap="round"/><circle cx="0" cy="58" r="9" fill="#f3d27c" stroke="#7a5510" stroke-width="2.5"/>';
+
+// ---------------------------------------------------------------- misafirler
+const MT_TEN = ['#f1c9a5', '#e0ac82', '#c98f66', '#f6d7b8'];
+// Sekiz görünüm. Yüz ayrı çizilir: sabır azaldıkça değişir.
+MTC.yuz = (m, biyik) => {
+  const kas = m === 2 ? '<path d="M-22-8L-8-3M22-8L8-3" stroke="#3a2a1e" stroke-width="3.5" stroke-linecap="round"/>' : m === 3 ? '<path d="M-22-6Q-15-12-8-7M22-6Q15-12 8-7" stroke="#3a2a1e" stroke-width="3" fill="none" stroke-linecap="round"/>' : '<path d="M-22-5L-8-6M22-5L8-6" stroke="#3a2a1e" stroke-width="3" stroke-linecap="round"/>';
+  const goz = m === 3 ? '<path d="M-20 7Q-14 0-8 7M20 7Q14 0 8 7" stroke="#2a1d14" stroke-width="3.5" fill="none" stroke-linecap="round"/>' : '<ellipse cx="-14" cy="6" rx="4.2" ry="' + (m === 2 ? 3.6 : 5.2) + '" fill="#2a1d14"/><ellipse cx="14" cy="6" rx="4.2" ry="' + (m === 2 ? 3.6 : 5.2) + '" fill="#2a1d14"/><circle cx="-12.5" cy="4" r="1.4" fill="#fff"/><circle cx="15.5" cy="4" r="1.4" fill="#fff"/>';
+  const agiz = m === 0 ? '<path d="M-11 27Q0 37 11 27" stroke="#7a2a1e" stroke-width="3.5" fill="none" stroke-linecap="round"/>' : m === 1 ? '<path d="M-8 30H8" stroke="#7a2a1e" stroke-width="3.5" stroke-linecap="round"/>' : m === 2 ? '<path d="M-10 33Q0 24 10 33" stroke="#7a2a1e" stroke-width="3.5" fill="none" stroke-linecap="round"/>' : '<path d="M-13 25Q0 43 13 25Z" fill="#7a2a1e"/><path d="M-9 27Q0 31 9 27" stroke="#fff" stroke-width="3" fill="none"/>';
+  return kas + goz + '<ellipse cx="-24" cy="18" rx="7" ry="4.5" fill="#e9836f" opacity="' + (m === 2 ? 0.6 : 0.3) + '"/><ellipse cx="24" cy="18" rx="7" ry="4.5" fill="#e9836f" opacity="' + (m === 2 ? 0.6 : 0.3) + '"/>'
+    + (biyik ? '<path d="M-15 21Q-7 15 0 21Q7 15 15 21Q7 27 0 23Q-7 27-15 21Z" fill="' + biyik + '"/>' : '') + agiz;
+};
+MTC.gorunum = [
+  { ten: 1, giysi: '#3d5a80', sac: '#2a1d14', tip: 'kisa', biyik: '#2a1d14' },
+  { ten: 0, giysi: '#b8402e', ortu: '#1c8ea0', tip: 'ortu' },
+  { ten: 3, giysi: '#6a994e', sac: '#6b3f1d', tip: 'uzun' },
+  { ten: 2, giysi: '#5c5346', sac: '#cfd3d6', tip: 'kasket', biyik: '#cfd3d6', sapka: '#4a5560' },
+  { ten: 0, giysi: '#e2572b', sac: '#3a2a1e', tip: 'bere', sapka: '#22c3d6' },
+  { ten: 3, giysi: '#7a3fa8', sac: '#3a2a1e', tip: 'topuz', gozluk: true },
+  { ten: 1, giysi: '#f2a93b', sac: '#1f1711', tip: 'kivircik' },
+  { ten: 0, giysi: '#23303f', ortu: '#c8553d', sac: '#2a1d14', tip: 'sal' },
+];
+MTC.musteri = (v) => {
+  const g = MTC.gorunum[v % 8], ten = MT_TEN[g.ten];
+  let arka = '', on = '';
+  if (g.tip === 'kisa') on = '<path d="M-41 0C-46-34-22-46 0-46C22-46 46-34 41 0C36-18 24-26 0-26C-24-26-36-18-41 0Z" fill="' + g.sac + '"/>';
+  if (g.tip === 'kivircik') on = '<g fill="' + g.sac + '"><circle cx="-30" cy="-22" r="16"/><circle cx="-12" cy="-36" r="17"/><circle cx="10" cy="-38" r="17"/><circle cx="30" cy="-24" r="16"/><circle cx="-40" cy="-4" r="11"/><circle cx="40" cy="-4" r="11"/></g>';
+  if (g.tip === 'uzun') { arka = '<path d="M-48 0C-52-40-26-50 0-50C26-50 52-40 48 0L52 78H-52Z" fill="' + g.sac + '"/>'; on = '<path d="M-41 2C-42-28-20-42 4-40C24-38 42-26 41 2C30-14 12-24-8-24C-22-24-34-14-41 2Z" fill="' + g.sac + '"/>'; }
+  if (g.tip === 'topuz') { arka = '<circle cx="0" cy="-52" r="17" fill="' + g.sac + '"/>'; on = '<path d="M-41 0C-44-32-22-44 0-44C22-44 44-32 41 0C34-16 20-24 0-24C-20-24-34-16-41 0Z" fill="' + g.sac + '"/>'; }
+  if (g.tip === 'kasket') on = '<path d="M-40-4C-42-12-40-18-36-22H36C40-18 42-12 40-4Z" fill="' + g.sac + '"/><path d="M-44-20C-44-48 44-50 46-22Z" fill="' + g.sapka + '"/><path d="M-50-18C-20-28 30-28 60-14C40-10-20-12-50-18Z" fill="#37424c"/>';
+  if (g.tip === 'bere') on = '<path d="M-40-2C-41-10-40-16-37-20H37C40-16 41-10 40-2Z" fill="' + g.sac + '"/><path d="M-44-16C-46-58 46-58 44-16Z" fill="' + g.sapka + '"/><rect x="-46" y="-26" width="92" height="16" rx="7" fill="#f3efe6"/><circle cx="0" cy="-58" r="10" fill="#f3efe6"/>';
+  if (g.tip === 'ortu') { arka = '<path d="M-52 4C-58-50-26-60 0-60C26-60 58-50 52 4C56 40 44 70 30 84H-30C-44 70-56 40-52 4Z" fill="' + g.ortu + '"/>'; on = '<path d="M-42 4C-46-36-22-48 0-48C22-48 46-36 42 4C36-18 22-30 0-30C-22-30-36-18-42 4Z" fill="' + g.ortu + '"/><path d="M-34 46C-14 64 14 64 34 46C30 70 14 80 0 80C-14 80-30 70-34 46Z" fill="' + g.ortu + '"/>'; }
+  if (g.tip === 'sal') { arka = '<path d="M-54 10C-60-44-28-56 0-56C28-56 60-44 54 10C56 44 46 70 34 84H-34C-46 70-56 44-54 10Z" fill="' + g.ortu + '"/>'; on = '<path d="M-40-2C-40-24-22-36 0-36C22-36 40-24 40-2C30-16 16-22 0-22C-16-22-30-16-40-2Z" fill="' + g.sac + '"/><path d="M-44 6C-50-34-24-52 0-52C24-52 50-34 44 6C40-22 24-40 0-40C-24-40-40-22-44 6Z" fill="' + g.ortu + '"/>'; }
+  return arka
+    + '<path d="M-78 136C-78 84-44 66 0 66C44 66 78 84 78 136Z" fill="' + g.giysi + '"/><path d="M-22 68L0 96L22 68" fill="none" stroke="#000" stroke-width="3" opacity="0.18"/>'
+    + '<rect x="-15" y="46" width="30" height="30" rx="10" fill="' + ten + '"/><path d="M-15 62C-5 70 5 70 15 62" stroke="#000" stroke-width="3" fill="none" opacity="0.12"/>'
+    + '<ellipse cx="-41" cy="10" rx="7" ry="10" fill="' + ten + '"/><ellipse cx="41" cy="10" rx="7" ry="10" fill="' + ten + '"/>'
+    + '<ellipse cx="0" cy="8" rx="40" ry="46" fill="' + ten + '"/>' + on
+    + '<g class="mt-yuz">' + MTC.yuz(0, g.biyik) + '</g>'
+    + (g.gozluk ? '<g fill="none" stroke="#23303f" stroke-width="3"><circle cx="-14" cy="6" r="11"/><circle cx="14" cy="6" r="11"/><path d="M-3 6H3"/></g>' : '');
+};
+
+// ---------------------------------------------------------------- küçük parçalar
+MTC.para = (n) => MTC.golge(30, 6, 14) + [0, 1, 2].slice(0, n > 80 ? 3 : n > 40 ? 2 : 1).map((k) => '<g transform="translate(' + (k * 14 - (n > 80 ? 14 : n > 40 ? 7 : 0)) + ',' + -k * 5 + ')"><ellipse cx="0" cy="6" rx="20" ry="9" fill="#b9770c"/><ellipse cx="0" cy="0" rx="20" ry="9" fill="url(#mt-para)" stroke="#b9770c" stroke-width="1.5"/><text x="0" y="5" text-anchor="middle" font-size="13" font-weight="800" fill="#8a5a05">₺</text></g>').join('');
+MTC.yildiz = (dolu) => '<path d="M0-20L5.9-6.2L20.9-5.5L9.1 4.2L13 18.6L0 10.6L-13 18.6L-9.1 4.2L-20.9-5.5L-5.9-6.2Z" fill="' + (dolu ? '#f2b824' : '#00000033') + '" stroke="' + (dolu ? '#b9770c' : '#ffffff55') + '" stroke-width="2" stroke-linejoin="round"/>';
+MTC.tik = () => '<circle r="15" fill="#3fae5a" stroke="#fff" stroke-width="3"/><path d="M-7 0L-2 6L8-6" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+MTC.kalp = () => '<path d="M0 8C-14-2-10-14 0-7C10-14 14-2 0 8Z" fill="#e2493b" stroke="#fff" stroke-width="2"/>';
+MTC.kilit = () => '<rect x="-13" y="-4" width="26" height="22" rx="5" fill="#8a7a62"/><path d="M-8-4V-11C-8-22 8-22 8-11V-4" stroke="#8a7a62" stroke-width="5" fill="none"/>';
+
+// ---------------------------------------------------------------- salon (arka plan)
+// Pencereden Van Kalesi, göl ve Süphan görünür. Tezgâhın önü kilim desenidir.
+MTC.arka = (tabela) => '<rect width="1600" height="470" fill="url(#mt-duvar)"/>'
+  + '<rect y="330" width="1600" height="140" fill="#c9a877" opacity="0.5"/><path d="M0 330H1600" stroke="#a9845a" stroke-width="5"/>'
+  + '<g transform="translate(800,205)"><rect x="-250" y="-118" width="500" height="236" rx="10" fill="#6d4520"/><rect x="-236" y="-104" width="472" height="208" fill="url(#mt-gok)"/>'
+  + '<path d="M-236 30L-150-34L-96 4L-30-56L20-10L80-40L150 6L236-22V60H-236Z" fill="#a9b9c9"/><path d="M-30-56L-48-36L-22-42L-6-30L10-18L20-10Z" fill="#f4f8fb"/><path d="M-150-34L-164-20L-140-24L-126-12Z" fill="#f4f8fb"/>'
+  + '<rect x="-236" y="44" width="472" height="34" fill="#1fa6b8"/><path d="M-236 52H236M-200 62H180" stroke="#7fd4de" stroke-width="2" opacity="0.7"/>'
+  + '<path d="M-236 104V70C-190 66-150 40-96 40C-70 40-50 34-10 36C40 38 90 52 150 62C190 68 220 74 236 76V104Z" fill="#b08a5c"/>'
+  + '<path d="M-150 44L-150 30H-140V36H-130V30H-120V36H-106V26H-94V36H-70V30H-60V36H-40V28H-28V38H-10" stroke="#8a6a44" stroke-width="5" fill="none"/>'
+  + '<path d="M-236 104V84C-140 76 140 82 236 90V104Z" fill="#7f9a55"/>'
+  + '<path d="M0-104V104M-236 0H236" stroke="#6d4520" stroke-width="10"/>'
+  + '<path d="M-262-126C-232-60-246 40-262 126Z" fill="#c8553d"/><path d="M262-126C232-60 246 40 262 126Z" fill="#c8553d"/><rect x="-272" y="-134" width="544" height="16" rx="8" fill="#6d4520"/></g>'
+  + '<g transform="translate(250,200)"><rect x="-200" y="-6" width="400" height="14" rx="5" fill="url(#mt-ahsap)" stroke="#6d4520" stroke-width="2"/>'
+  + '<g transform="translate(-150,-42)"><rect x="-20" y="-24" width="40" height="60" rx="8" fill="#f0a818" stroke="#b9770c" stroke-width="2"/><rect x="-22" y="-34" width="44" height="12" rx="4" fill="#d9c7a0"/></g>'
+  + '<g transform="translate(-86,-40)"><rect x="-20" y="-22" width="40" height="56" rx="8" fill="#7f9a55" stroke="#55703a" stroke-width="2"/><rect x="-22" y="-32" width="44" height="12" rx="4" fill="#d9c7a0"/></g>'
+  + '<g transform="translate(-10,-30)"><circle r="26" fill="url(#mt-bakir)" stroke="#7a3f12" stroke-width="2"/><circle r="18" fill="#3d200c"/></g>'
+  + '<g transform="translate(64,-36)"><rect x="-18" y="-18" width="36" height="48" rx="8" fill="#b8402e" stroke="#7a2418" stroke-width="2"/><rect x="-20" y="-28" width="40" height="12" rx="4" fill="#d9c7a0"/></g>'
+  + '<g transform="translate(140,-30)"><path d="M-26 24C-30-6-14-24 0-24C14-24 30-6 26 24Z" fill="#1c8ea0" stroke="#12606d" stroke-width="2"/><path d="M-16 0C-6 6 6 6 16 0" stroke="#f3e2bd" stroke-width="3" fill="none"/></g></g>'
+  + '<g transform="translate(1350,160)"><rect x="-190" y="-54" width="380" height="108" rx="14" fill="#23303f" stroke="#f2a93b" stroke-width="5"/><text x="0" y="-8" text-anchor="middle" font-size="30" font-weight="700" fill="#f2a93b" letter-spacing="3" class="mt-yazi">HALİL USTA</text><text x="0" y="30" text-anchor="middle" font-size="26" font-weight="600" fill="#f3efe6" class="mt-yazi">' + tabela + '</text></g>'
+  + '<rect y="470" width="1600" height="430" fill="url(#mt-fayans)"/>'
+  + '<rect y="486" width="1600" height="44" fill="url(#mt-kilim)"/><rect y="484" width="1600" height="5" fill="#6d4520"/><rect y="528" width="1600" height="6" fill="#6d4520" opacity="0.8"/>';
+// Tezgâh üstü: misafirlerin önünde durur (misafirlerden sonra çizilir)
+MTC.tezgah = () => '<rect y="418" width="1600" height="70" fill="url(#mt-ahsap)"/><rect y="418" width="1600" height="7" fill="#d9a970"/><path d="M0 452H1600" stroke="#6d4520" stroke-width="2" opacity="0.25"/><rect y="482" width="1600" height="6" fill="#5c3a17" opacity="0.55"/>';
+MTC.ocak = (n) => '<rect x="-' + (n * 58 + 14) + '" y="-74" width="' + (n * 116 + 28) + '" height="148" rx="16" fill="#2a2d33" stroke="#14161a" stroke-width="3"/>'
+  + Array.from({ length: n }, (_, k) => { const x = (k - (n - 1) / 2) * 116; return '<circle cx="' + x + '" cy="0" r="50" fill="#1b1d21" stroke="#4a4f57" stroke-width="3"/><circle cx="' + x + '" cy="0" r="30" fill="none" stroke="#4a4f57" stroke-width="2" stroke-dasharray="4 6"/>'; }).join('');
+MTC.alev = () => '<g class="mt-alev">' + [0, 60, 120, 180, 240, 300].map((a) => '<path transform="rotate(' + a + ') translate(0,-53)" d="M-7 6C-8-4 0-6 0-14C6-8 8 0 7 6Z" fill="#ff8a2a"/><path transform="rotate(' + (a + 30) + ') translate(0,-52)" d="M-4 5C-5-2 0-3 0-9C4-4 5 0 4 5Z" fill="#ffd25e"/>').join('') + '</g>';
+MTC.duman = () => '<g class="mt-duman" fill="#3a3a3a"><circle cx="-12" cy="-30" r="12" opacity="0.5"/><circle cx="8" cy="-44" r="15" opacity="0.4"/><circle cx="-4" cy="-64" r="17" opacity="0.3"/></g>';
+MTC.buhar = () => '<g class="mt-buhar" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity="0.8"><path d="M-12-52C-18-62-6-68-12-80"/><path d="M4-56C-2-66 10-72 4-86"/><path d="M18-52C12-62 24-68 18-80"/></g>';
+
+'use strict';
+// =====================================================================
+// MUTFAK — Halil Usta'nın kahvaltı salonu.
+// Türün bilinen düzeni: misafir tezgâha gelir, siparişi balonda görünür, sabrı azalır. Çay kendiliğinden demlenir,
+// yumurta sahanda pişer (bekletilirse yanar), tabak ve kâse tezgâhta kurulur; hazır yemeğe dokununca isteyen misafire gider.
+// Para tezgâhta birikir, toplanınca koltuk boşalır. 20 vardiya, vardiya başına üç yıldız, kasadan alınan geliştirmeler.
+// Sürüş oyunuyla bağ: her vardiya kilerden bir erzak harcar; erzak çarşıdan sürüşle getirilir (src/oyun.js, startErzak).
+// Çizimler src/mutfak-cizim.js içindedir. Bu dosya oyun durumunu ve dokunma kurallarını tutar.
+// =====================================================================
+const MT_URUN = ['cay', 'ekmek', 'yumurta', 'yumurta+sucuk', 'peynir', 'peynir+zeytin', 'peynir+domates', 'peynir+domates+zeytin', 'kaymak+bal', 'kaymak+bal+ceviz', 'murtuga'];
+const MT_FIYAT = { cay: 15, ekmek: 10, yumurta: 40, 'yumurta+sucuk': 60, peynir: 35, 'peynir+zeytin': 45, 'peynir+domates': 45, 'peynir+domates+zeytin': 58, 'kaymak+bal': 50, 'kaymak+bal+ceviz': 62, murtuga: 70 };
+// Aşamalar: her aşama menüye yeni ürün ekler. MT_SEV_ASAMA[i] = i. vardiyanın aşaması.
+const MT_ASAMA = [['cay', 'yumurta'], ['ekmek'], ['yumurta+sucuk'], ['peynir', 'peynir+zeytin'], ['peynir+domates', 'peynir+domates+zeytin'], ['kaymak+bal'], ['murtuga'], ['kaymak+bal+ceviz']];
+const MT_SEV_ASAMA = [0, 1, 1, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7];
+const MT_KAYNAK = ['yumurta', 'sucuk', 'murtuga', 'peynir', 'zeytin', 'domates', 'kaymak', 'bal', 'ceviz', 'ekmek', 'cay', 'cop'];
+// Geliştirmeler: fiyat[kademe], asama = görünmesi için gereken en düşük aşama
+const MT_YUK = [
+  { id: 'tava', fiyat: [200, 500], asama: 0 }, { id: 'bardak', fiyat: [120, 300], asama: 0 }, { id: 'ates', fiyat: [250, 600], asama: 0 }, { id: 'demlik', fiyat: [150, 350], asama: 0 },
+  { id: 'kilim', fiyat: [200, 500], asama: 0 }, { id: 'tabak', fiyat: [150, 400], asama: 3 }, { id: 'kase', fiyat: [150, 350], asama: 5 },
+];
+const MT_PAY = 0.3, MT_PRIM = 25, MT_KURYE = 150, MT_YAN = 9, MT_UYARI = 5.5;
+const mtAnahtar = (it) => (it.ek.length ? it.taban + '+' + it.ek.slice().sort().join('+') : it.taban);
+const mtR5 = (v) => Math.round(v / 5) * 5;
+// Vardiya tanımı: misafir listesi tohumlu üretilir; aynı vardiya her seferinde aynı sırayla gelir (öğrenilebilir).
+function mtSeviye(i) {
+  const as = MT_SEV_ASAMA[i], urun = [];
+  for (let k = 0; k <= as; k++) for (const u of MT_ASAMA[k]) urun.push(u);
+  const yeni = i === 0 || MT_SEV_ASAMA[i - 1] !== as ? MT_ASAMA[as] : [];
+  const R = rng(9100 + i * 37), n = 6 + Math.round(i * 0.85), aralik = 6.4 - i * 0.14, maxK = i < 1 ? 1 : i < 6 ? 2 : 3;
+  const sip = [];
+  let at = 1, taban = 0;
+  for (let c = 0; c < n; c++) {
+    const r1 = R(), r2 = R(), r3 = R(), tip = i > 2 && r1 < 0.16 ? 'aceleci' : i > 4 && r1 < 0.34 ? 'turist' : r1 > 0.86 ? 'dede' : 'yerel';
+    let k = 1 + (maxK > 1 && r2 < 0.55 ? 1 : 0) + (maxK > 2 && r3 < 0.32 ? 1 : 0);
+    if (tip === 'turist' && maxK > 1) k = Math.min(3, k + 1);
+    const kalem = [];
+    for (let j = 0; j < k; j++) {
+      let tot = 0;
+      const w = urun.map((u) => { const v = kalem.indexOf(u) >= 0 ? 0 : yeni.indexOf(u) >= 0 ? 2.2 : u === 'cay' ? 1.6 : 1; tot += v; return v; });
+      let p = R() * tot, q = 0;
+      while (q < urun.length - 1 && (p -= w[q]) > 0) q++;
+      kalem.push(urun[q]); taban += MT_FIYAT[urun[q]];
+    }
+    sip.push({ at, tip, kalem, gorunum: Math.floor(R() * 8) });
+    at += aralik * (0.75 + R() * 0.5);
+  }
+  return { i, as, urun, yeni, n, sabir: 25 - i * 0.33, koltuk: i < 5 ? 3 : 4, sip, taban, hedef: [mtR5(taban * 0.6), mtR5(taban * 0.9), mtR5(taban * 1.2)] };
+}
+
+function mutfakKur(api) {
+  const NS = 'http://www.w3.org/2000/svg', T = api.T, TA = api.TA, kok = document.getElementById('mutfak');
+  // Renk geçişleri tek bir görünür SVG'de tanımlanır: gizli bir öğenin içindeki tanıma başvuran dolgu çizilmez.
+  kok.innerHTML = '<svg width="0" height="0" style="position:absolute" aria-hidden="true">' + MTC.tanim + '</svg><div id="mt-hub" class="mt-ekran"></div><div id="mt-oyun" class="mt-ekran" hidden><svg id="mt-svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid meet"></svg></div><div id="mt-pano" hidden></div>';
+  const hub = kok.querySelector('#mt-hub'), oyun = kok.querySelector('#mt-oyun'), svg = kok.querySelector('#mt-svg'), pano = kok.querySelector('#mt-pano');
+  let kayit = null, K = null, L = null, secili = 0, sayac = 0, tws = [];
+  const yukle = () => { kayit = Object.assign({ yildiz: [], yuk: {}, erzak: 3, enIyi: [] }, api.store.get('mutfak', {})); };
+  const kaydet = () => api.store.set('mutfak', kayit);
+  const yukS = (id) => kayit.yuk[id] || 0;
+  const acikSayi = () => { let n = 1; while (n < 20 && (kayit.yildiz[n - 1] || 0) > 0) n++; return n; };
+  const toplamYildiz = () => kayit.yildiz.reduce((a, b) => a + (b || 0), 0);
+  const urunAd = (key) => TA('mt.urun')[MT_URUN.indexOf(key)];
+  const kaynakAd = (id) => TA('mt.kaynak')[MT_KAYNAK.indexOf(id)];
+  const el = (tag, cls, txt, parent) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt) e.textContent = txt; if (parent) parent.appendChild(e); return e; };
+  const dugme = (cls, txt, parent, fn, id) => { const b = el('button', 'mt-dugme ' + cls, txt, parent); b.type = 'button'; if (id) b.id = id; b.addEventListener('click', fn); return b; };
+  const ikon = (ic, boy, kutu) => '<svg viewBox="' + (kutu || '-70 -62 140 124') + '" width="' + boy + '" height="' + boy + '" aria-hidden="true">' + ic + '</svg>';
+  yukle();
+
+  // ---------------------------------------------------------------- salon ekranı (vardiya seçimi, kiler, geliştirme)
+  function hubCiz() {
+    yukle();
+    const ac = acikSayi();
+    if (secili >= ac) secili = ac - 1;
+    hub.innerHTML = '';
+    const ust = el('div', 'mt-ust', '', hub);
+    el('h2', 'mt-baslik', T('mt.baslik'), ust);
+    const bilgi = el('div', 'mt-bilgi', '', ust);
+    el('span', 'mt-rozet', T('mt.kasa', api.paraYaz(api.para())), bilgi).id = 'mt-kasa';
+    el('span', 'mt-rozet mt-sari', '★ ' + toplamYildiz() + '/60', bilgi);
+    dugme('mt-ikincil', T('mt.cik'), bilgi, () => api.cik(), 'mt-cik');
+    const govde = el('div', 'mt-govde', '', hub), sol = el('div', 'mt-sol', '', govde), sag = el('div', 'mt-sag', '', govde);
+    // vardiyalar
+    const izg = el('div', 'mt-seviyeler', '', sol);
+    for (let i = 0; i < 20; i++) {
+      const kilit = i >= ac, b = el('button', 'mt-sev' + (i === secili ? ' secili' : '') + (kilit ? ' kilitli' : ''), '', izg), y = kayit.yildiz[i] || 0;
+      b.type = 'button'; b.id = 'mt-sev-' + i; b.disabled = kilit;
+      el('span', 'mt-sev-no', String(i + 1), b);
+      if (kilit) el('span', 'mt-sev-kilit', '', b).innerHTML = ikon(MTC.kilit(), 20, '-18 -24 36 46');
+      else { const s = el('span', 'mt-sev-y', '', b); for (let k = 0; k < 3; k++) el('i', k < y ? 'dolu' : '', '★', s); }
+      if (MT_SEV_ASAMA[i] !== MT_SEV_ASAMA[i - 1] && i > 0 && !kilit) el('span', 'mt-sev-yeni', T('mt.yeni'), b);
+      b.addEventListener('click', () => { secili = i; hubCiz(); });
+    }
+    // seçili vardiya
+    const lv = mtSeviye(secili), kart = el('div', 'mt-kart mt-secili', '', sol);
+    el('div', 'mt-kart-ad', T('mt.vardiya', secili + 1), kart);
+    el('div', 'mt-kart-alt', T('mt.misafir', lv.n) + ' · ★ ' + api.paraYaz(lv.hedef[0]) + ' ₺ · ★★ ' + api.paraYaz(lv.hedef[1]) + ' ₺ · ★★★ ' + api.paraYaz(lv.hedef[2]) + ' ₺', kart);
+    const menu = el('div', 'mt-menu', '', kart);
+    for (const u of lv.urun) {
+      const m = el('div', 'mt-menu-u' + (lv.yeni.indexOf(u) >= 0 ? ' yeni' : ''), '', menu);
+      m.innerHTML = ikon(MTC.yemek(u, 'mt-h' + (++sayac)), 54);
+      el('span', '', urunAd(u) + ' · ' + MT_FIYAT[u] + ' ₺', m);
+    }
+    if (lv.yeni.length) el('p', 'mt-not', T('mt.yeni') + ': ' + TA('mt.yeniNot')[lv.as], kart);
+    const bas = dugme('mt-birincil mt-buyuk', T('mt.basla'), kart, () => baslat(secili), 'mt-basla');
+    if (kayit.erzak < 1) { bas.disabled = true; el('p', 'mt-not mt-uyari', T('mt.erzakGerek'), kart); }
+    // kiler
+    const kiler = el('div', 'mt-kart', '', sag);
+    el('div', 'mt-kart-ad', T('mt.kiler'), kiler);
+    const pip = el('div', 'mt-pipler', '', kiler);
+    for (let k = 0; k < Math.max(8, kayit.erzak); k++) el('i', k < kayit.erzak ? 'dolu' : '', '', pip);
+    el('div', 'mt-kart-alt', T('mt.kilerDurum', kayit.erzak), kiler);
+    const kd = el('div', 'mt-sira', '', kiler);
+    dugme(kayit.erzak < 1 ? 'mt-birincil' : 'mt-ikincil', T('mt.erzakGit'), kd, () => api.erzakGit(), 'mt-erzak-git');
+    const kur = dugme('mt-ikincil', T('mt.kurye', MT_KURYE), kd, () => { if (api.harca(MT_KURYE)) { kayit.erzak += 2; kaydet(); api.ses('para'); hubCiz(); } }, 'mt-kurye');
+    kur.disabled = api.para() < MT_KURYE;
+    el('p', 'mt-not', T('mt.erzakGitAlt', api.aracAd(), api.aracKap()), kiler);
+    // geliştirmeler
+    const gel = el('div', 'mt-kart', '', sag), ad = TA('mt.yukAd'), alt = TA('mt.yukAlt'), enAsama = MT_SEV_ASAMA[ac - 1];
+    el('div', 'mt-kart-ad', T('mt.gelistir'), gel);
+    MT_YUK.forEach((y, k) => {
+      if (y.asama > enAsama) return;
+      const s = yukS(y.id), sat = el('div', 'mt-yuk', '', gel), yazi = el('div', 'mt-yuk-yazi', '', sat);
+      el('b', '', ad[k], yazi); el('span', '', alt[k], yazi);
+      const kad = el('span', 'mt-kademe', '', sat);
+      for (let q = 0; q < 2; q++) el('i', q < s ? 'dolu' : '', '', kad);
+      if (s >= 2) el('span', 'mt-tam', T('mt.tam'), sat);
+      else { const b = dugme('mt-birincil mt-kucuk', y.fiyat[s] + ' ₺', sat, () => { if (api.harca(y.fiyat[s])) { kayit.yuk[y.id] = s + 1; kaydet(); api.ses('hazir'); hubCiz(); } }, 'mt-yuk-' + y.id); b.disabled = api.para() < y.fiyat[s]; }
+    });
+  }
+  function goster(ne) { hub.hidden = ne !== 'hub'; oyun.hidden = ne === 'hub'; if (ne !== 'pano') pano.hidden = true; }
+
+  // ---------------------------------------------------------------- SVG yardımcıları ve hareket
+  const S = (tag, at, parent) => { const e = document.createElementNS(NS, tag); if (at) for (const k in at) e.setAttribute(k, at[k]); if (parent) parent.appendChild(e); return e; };
+  function yaz(g) { const t = g._t; g.setAttribute('transform', 'translate(' + t.x.toFixed(1) + ',' + t.y.toFixed(1) + ') rotate(' + t.r.toFixed(1) + ') scale(' + t.s.toFixed(3) + ')'); g.setAttribute('opacity', t.o.toFixed(2)); }
+  function grp(parent, x, y, html, s) { const g = S('g', null, parent); g._t = { x, y, s: s || 1, r: 0, o: 1 }; g._h = { x, y, s: s || 1 }; if (html) g.innerHTML = html; yaz(g); return g; }
+  const EASE = { out: (k) => 1 - Math.pow(1 - k, 3), in: (k) => k * k, lin: (k) => k, geri: (k) => 1 + 2.70158 * Math.pow(k - 1, 3) + 1.70158 * Math.pow(k - 1, 2) };
+  function tw(g, to, dur, ease, done, delay, arc) { tws.push({ g, to, from: null, t: -(delay || 0), dur, e: EASE[ease || 'out'], done, arc: arc || 0, bitti: false }); }
+  function twAdim(dt) {
+    for (let i = 0; i < tws.length; i++) {
+      const w = tws[i];
+      w.t += dt;
+      if (w.t < 0) continue;
+      if (!w.from) { w.from = {}; for (const k in w.to) w.from[k] = w.g._t[k]; }
+      const k = Math.min(1, w.t / w.dur), e = w.e(k);
+      for (const p in w.to) w.g._t[p] = w.from[p] + (w.to[p] - w.from[p]) * e;
+      if (w.arc) w.g._t.y -= w.arc * Math.sin(Math.PI * k);
+      yaz(w.g);
+      if (k >= 1) { w.bitti = true; if (w.done) w.done(); }
+    }
+    tws = tws.filter((w) => !w.bitti);
+  }
+  function salla(g) { const x = g._h.x; g._t.x = x; tw(g, { x: x + 9 }, 0.05, 'lin', () => tw(g, { x: x - 9 }, 0.08, 'lin', () => tw(g, { x }, 0.05, 'lin'))); }
+  function zipla(g, k) { g._t.s = g._h.s * (k || 0.8); tw(g, { s: g._h.s }, 0.24, 'geri'); }
+  function ucanYazi(x, y, txt, renk, boy) {
+    const g = grp(L.ust, x, y, '');
+    const t = S('text', { 'text-anchor': 'middle', 'font-size': boy || 34, 'font-weight': 800, fill: renk || '#f2b824', stroke: '#23303f', 'stroke-width': 5, 'paint-order': 'stroke', class: 'mt-yazi' }, g);
+    t.textContent = txt;
+    tw(g, { y: y - 70, o: 0 }, 0.9, 'out', () => g.remove(), 0.15);
+  }
+  function dokun(g, r, fn, dikdortgen) {
+    const h = dikdortgen ? S('rect', { x: -dikdortgen[0] / 2, y: -dikdortgen[1] / 2, width: dikdortgen[0], height: dikdortgen[1], fill: 'transparent', class: 'mt-dokun' }, g) : S('circle', { r, fill: 'transparent', class: 'mt-dokun' }, g);
+    h.addEventListener('pointerdown', (e) => { e.preventDefault(); if (K && !K.durdu && !K.bitti) fn(); });
+    return h;
+  }
+
+  // ---------------------------------------------------------------- vardiyayı kur
+  function baslat(i) {
+    yukle();
+    if (kayit.erzak < 1 || i >= acikSayi()) return false;
+    kayit.erzak--; kaydet();
+    const lv = mtSeviye(i), var_ = (s) => lv.urun.some((u) => u.split('+').indexOf(s) >= 0);
+    tws = []; svg.innerHTML = '';
+    L = {};
+    for (const k of ['arka', 'musteri', 'tezgah', 'balon', 'para', 'ist', 'ucan', 'hud', 'ust']) L[k] = S('g', null, svg);
+    L.arka.innerHTML = MTC.arka(T('mt.tabela'));
+    L.tezgah.innerHTML = MTC.tezgah();
+    const ates = [1, 0.8, 0.65][yukS('ates')];
+    K = {
+      lv, t: 0, ciro: 0, kombo: 0, enKombo: 0, sonTamam: -99, doyan: 0, giden: 0, yanan: 0, sn: 0, sonGelis: -99, mus: [], koltuk: new Array(lv.koltuk).fill(null),
+      kx: lv.koltuk === 3 ? [330, 800, 1270] : [230, 610, 990, 1370], cay: [], tava: [], tabak: [], kase: [], kaynak: {}, ekmek: null, cop: false, durdu: false, bitti: false, bitisT: 0,
+      demSure: [3.8, 2.9, 2.1][yukS('demlik')], sabirK: [1, 1.15, 1.3][yukS('kilim')], ipT: 0, ip: null, hudCiro: -1, ipucuAcik: lv.yeni.length > 0 && !(kayit.yildiz[i] > 0),
+    };
+    // çay ocağı
+    grp(L.ist, 90, 648, MTC.semaver(), 0.95);
+    for (let k = 0; k < 2 + yukS('bardak'); k++) {
+      const id = 'mt-b' + (++sayac), g = grp(L.ist, 200 + k * 58, 650, MTC.cay(1, id)), b = { g, rect: g.querySelector('#' + id + ' rect'), dolu: true, t: 1, x: 200 + k * 58, y: 650 };
+      dokun(g, 0, () => cayTik(b), [56, 96]);
+      K.cay.push(b);
+    }
+    etiket(287, 716, kaynakAd('cay'));
+    if (var_('ekmek')) {
+      const g = grp(L.ist, 300, 808, ''), ic = S('g', null, g);
+      K.ekmek = { g, ic, n: 3, t: 0, x: 300, y: 808 };
+      ic.innerHTML = MTC.sepet(3);
+      dokun(g, 0, ekmekTik, [140, 110]);
+      etiket(300, 874, kaynakAd('ekmek'));
+    }
+    { const g = grp(L.ist, 88, 838, MTC.kaynak.cop(), 0.85); K.copG = g; dokun(g, 44, copTik); }
+    // ocak ve sahanlar
+    const nT = 2 + yukS('tava');
+    grp(L.ist, 655, 640, MTC.ocak(nT));
+    tutucular('tava', nT, 655, 640, 116, MTC.sahan(''), 58);
+    kaynaklar(655, 150, [['yumurta', 'taban', 'tava', 4.5 * ates], var_('sucuk') && ['sucuk', 'ek', 'tava', 0, 'yumurta'], var_('murtuga') && ['murtuga', 'taban', 'tava', 7.5 * ates]]);
+    // peynir tezgâhı
+    if (var_('peynir')) {
+      tutucular('tabak', 2 + yukS('tabak'), 1120, 640, 100, MTC.tabak(''), 52);
+      kaynaklar(1120, 130, [['peynir', 'taban', 'tabak', 0], var_('zeytin') && ['zeytin', 'ek', 'tabak', 0, 'peynir'], var_('domates') && ['domates', 'ek', 'tabak', 0, 'peynir']]);
+    } else kapali(1120, 6);
+    // bal kaymak
+    if (var_('kaymak')) {
+      tutucular('kase', 1 + yukS('kase'), 1465, 640, 82, MTC.kase(''), 44);
+      kaynaklar(1465, 84, [['kaymak', 'taban', 'kase', 0], ['bal', 'ek', 'kase', 0, 'kaymak'], var_('ceviz') && ['ceviz', 'ek', 'kase', 0, 'kaymak']], 0.82);
+    } else kapali(1465, 12, 0.8);
+    hudKur();
+    goster('oyun');
+    if (lv.yeni.length) { const u = lv.yeni[lv.yeni.length - 1]; ucanYazi(800, 380, T('mt.yeni') + ': ' + urunAd(u), '#fff', 54); }
+    return true;
+  }
+  function etiket(x, y, txt, boy) { const t = S('text', { x, y, 'text-anchor': 'middle', 'font-size': boy || 22, 'font-weight': 600, fill: '#5b4630', class: 'mt-yazi' }, L.ist); t.textContent = txt; return t; }
+  function kapali(x, vardiya, s) {
+    const g = grp(L.ist, x, 700, MTC.tahta(240, 150) + '<g transform="translate(0,-18) scale(1.6)">' + MTC.kilit() + '</g>', s || 1);
+    const t = S('text', { y: 52, 'text-anchor': 'middle', 'font-size': 24, 'font-weight': 600, fill: '#fff4dc', class: 'mt-yazi' }, g);
+    t.textContent = T('mt.kilitli', vardiya);
+    g.setAttribute('opacity', 0.75);
+  }
+  function tutucular(tur, n, cx, y, aralik, bos, r) {
+    for (let k = 0; k < n; k++) {
+      const x = cx + (k - (n - 1) / 2) * aralik, g = grp(L.ist, x, y, ''), h = { tur, i: k, g, x, y, item: null, faz: -1 };
+      S('g', null, g).innerHTML = bos;
+      h.fx = S('g', null, g); h.ic = S('g', null, g);
+      if (tur === 'tava') h.halka = S('circle', { r: 56, fill: 'none', stroke: '#f2a93b', 'stroke-width': 8, 'stroke-linecap': 'round', 'stroke-dasharray': 351.9, 'stroke-dashoffset': 351.9, transform: 'rotate(-90)', opacity: 0 }, g);
+      dokun(g, r, () => tutucuTik(h));
+      K[tur].push(h);
+    }
+  }
+  function kaynaklar(cx, aralik, liste, s) {
+    const l = liste.filter(Boolean);
+    l.forEach((q, k) => {
+      const x = cx + (k - (l.length - 1) / 2) * aralik, g = grp(L.ist, x, 800, MTC.kaynak[q[0]](), s || 1), src = { id: q[0], tip: q[1], liste: K[q[2]], pis: q[3], taban: q[4] || q[0], g, x, y: 800 };
+      dokun(g, 0, () => (src.tip === 'taban' ? tabanTik(src) : ekTik(src)), [aralik / (s || 1) - 6, 124]);
+      etiket(x, 872, kaynakAd(q[0]), s ? 20 : 22);
+      K.kaynak[q[0]] = src;
+    });
+  }
+
+  // ---------------------------------------------------------------- gösterge
+  function hudKur() {
+    const g = L.hud, lv = K.lv, olcek = lv.hedef[2] * 1.12;
+    S('rect', { x: 20, y: 12, width: 1560, height: 64, rx: 18, fill: '#17283a', opacity: 0.9 }, g);
+    const y1 = S('text', { x: 46, y: 55, 'font-size': 32, 'font-weight': 800, fill: '#f6ead2', class: 'mt-yazi' }, g); y1.textContent = T('mt.vardiya', lv.i + 1);
+    K.hMis = S('text', { x: 300, y: 54, 'font-size': 26, 'font-weight': 600, fill: '#a8c5d6', class: 'mt-yazi' }, g);
+    S('rect', { x: 520, y: 36, width: 520, height: 18, rx: 9, fill: '#0b1622' }, g);
+    K.hBar = S('rect', { x: 520, y: 36, width: 0, height: 18, rx: 9, fill: '#f2b824' }, g);
+    K.hYildiz = lv.hedef.map((h) => grp(g, 520 + (520 * h) / olcek, 45, MTC.yildiz(false), 0.85));
+    K.hOlcek = olcek;
+    grp(g, 1082, 44, MTC.para(1), 1);
+    K.hCiro = S('text', { x: 1112, y: 56, 'font-size': 34, 'font-weight': 800, fill: '#f2b824', class: 'mt-yazi' }, g);
+    K.hKombo = S('text', { x: 1380, y: 55, 'text-anchor': 'middle', 'font-size': 28, 'font-weight': 800, fill: '#ff8a5c', class: 'mt-yazi' }, g);
+    const d = grp(g, 1540, 44, '<circle r="24" fill="#f6ead2"/><rect x="-9" y="-11" width="6" height="22" rx="2" fill="#17283a"/><rect x="3" y="-11" width="6" height="22" rx="2" fill="#17283a"/>');
+    const h = S('circle', { r: 28, fill: 'transparent', class: 'mt-dokun' }, d);
+    h.addEventListener('pointerdown', (e) => { e.preventDefault(); durdur(); });
+    hudYaz();
+  }
+  function hudYaz() {
+    const lv = K.lv;
+    K.hMis.textContent = T('mt.misafirSay', Math.min(lv.n, K.doyan + K.giden), lv.n);
+    if (K.hudCiro !== K.ciro) {
+      K.hudCiro = K.ciro;
+      K.hCiro.textContent = api.paraYaz(K.ciro) + ' ₺';
+      K.hBar.setAttribute('width', (520 * Math.min(1, K.ciro / K.hOlcek)).toFixed(1));
+      lv.hedef.forEach((h, k) => { const g = K.hYildiz[k], dolu = K.ciro >= h; if (dolu !== !!g._dolu) { g._dolu = dolu; g.innerHTML = MTC.yildiz(dolu); if (dolu) { zipla(g, 1.9); api.ses('yildiz'); } } });
+    }
+    K.hKombo.textContent = K.kombo > 1 && K.t - K.sonTamam < 6 ? T('mt.kombo', K.kombo) : '';
+  }
+
+  // ---------------------------------------------------------------- misafirler
+  const bosKoltuk = () => K.koltuk.indexOf(null);
+  function musteriGel(sip) {
+    const k = bosKoltuk(), x = K.kx[k], max = K.lv.sabir * K.sabirK * (sip.tip === 'aceleci' ? 0.72 : sip.tip === 'dede' ? 1.3 : 1) * (1 + 0.24 * (sip.kalem.length - 1));
+    const g = grp(L.musteri, x + (k < K.koltuk.length / 2 ? -160 : 160), 268, MTC.musteri(sip.gorunum), 1.15);
+    g._h.x = x; g._t.o = 0; yaz(g);
+    const c = { sip, k, g, yuz: g.querySelector('.mt-yuz'), biyik: MTC.gorunum[sip.gorunum % 8].biyik, kalem: sip.kalem.map((key) => ({ key, ok: false, yolda: false, g: null })), max, pat: max, mood: 0, st: 'gel', bob: Math.random() * 6 };
+    K.koltuk[k] = c; K.mus.push(c); K.sonGelis = K.t;
+    tw(g, { x, o: 1 }, 0.45, 'out', () => { if (c.st === 'gel') { c.st = 'bekle'; balonKur(c); } });
+    api.ses('gel');
+  }
+  function balonKur(c) {
+    const n = c.kalem.length, x = K.kx[c.k] + 122, h = n * 78 + 18, b = grp(L.balon, x, 262, '');
+    b.innerHTML = '<path d="M-50 0L-70 12L-50 24Z" fill="#fff" stroke="#23303f" stroke-width="3"/><rect x="-50" y="' + -h / 2 + '" width="100" height="' + h + '" rx="22" fill="#fff" stroke="#23303f" stroke-width="3"/><rect x="-52" y="2" width="6" height="20" fill="#fff"/>';
+    c.kalem.forEach((q, i) => { q.g = grp(b, 0, (i - (n - 1) / 2) * 78, MTC.yemek(q.key, 'mt-s' + (++sayac)), 0.6); });
+    c.balon = b; zipla(b, 0.3);
+    const s = grp(L.balon, K.kx[c.k] - 104, 306, '<rect x="-9" y="-70" width="18" height="140" rx="9" fill="#23303f" opacity="0.35"/><rect class="mt-sb" x="-6" y="-67" width="12" height="134" rx="6" fill="#3fae5a"/><g transform="translate(0,-88) scale(1.5)">' + MTC.kalp() + '</g>');
+    c.sabirG = s; c.sb = s.querySelector('.mt-sb');
+  }
+  function yuzYaz(c, m) { if (c.mood !== m) { c.mood = m; c.yuz.innerHTML = MTC.yuz(m, c.biyik); } }
+  function musteriGit(c, mutlu) {
+    c.st = 'git';
+    yuzYaz(c, mutlu ? 3 : 2);
+    if (c.balon) { const b = c.balon; tw(b, { s: 0, o: 0 }, 0.18, 'in', () => b.remove()); }
+    if (c.sabirG) c.sabirG.remove();
+    const yon = c.k < K.koltuk.length / 2 ? -1 : 1;
+    tw(c.g, { x: c.g._t.x + yon * 180, o: 0 }, 0.5, 'in', () => { c.g.remove(); K.mus.splice(K.mus.indexOf(c), 1); }, mutlu ? 0.45 : 0.15);
+  }
+  // Hazır yemeği isteyen misafire gönder. Birden çok isteyen varsa sabrı en az kalan alır.
+  function servis(key, x, y) {
+    let best = null, bc = null;
+    for (const c of K.mus) {
+      if (c.st !== 'bekle') continue;
+      const q = c.kalem.find((v) => v.key === key && !v.ok && !v.yolda);
+      if (q && (!bc || c.pat / c.max < bc.pat / bc.max)) { best = q; bc = c; }
+    }
+    if (!best) return false;
+    best.yolda = true;
+    const c = bc, q = best, i = c.kalem.indexOf(q), u = grp(L.ucan, x, y, MTC.yemek(key, 'mt-u' + (++sayac)));
+    tw(u, { x: c.balon._t.x, y: c.balon._t.y + (i - (c.kalem.length - 1) / 2) * 78, s: 0.6 }, 0.26, 'out', () => {
+      u.remove(); q.yolda = false; q.ok = true;
+      q.g.setAttribute('opacity', 0.4);
+      zipla(grp(c.balon, 24, q.g._t.y + 18, MTC.tik()), 0.2);
+      c.pat = Math.min(c.max, c.pat + c.max * 0.12);
+      if (c.st === 'bekle' && c.kalem.every((v) => v.ok)) tamam(c);
+    }, 0, 70);
+    api.ses('servis');
+    return true;
+  }
+  function tamam(c) {
+    let tutar = 0;
+    for (const q of c.kalem) tutar += MT_FIYAT[q.key];
+    if (c.sip.tip === 'turist') tutar = Math.round(tutar * 1.15);
+    const bahsis = mtR5(tutar * (c.sip.tip === 'aceleci' ? 0.45 : 0.3) * (c.pat / c.max));
+    K.kombo = K.t - K.sonTamam < 6 ? K.kombo + 1 : 1; K.sonTamam = K.t; K.enKombo = Math.max(K.enKombo, K.kombo);
+    const prim = Math.min(5, K.kombo - 1) * 2, v = tutar + bahsis + prim;
+    K.doyan++;
+    if (K.kombo > 1) { ucanYazi(K.kx[c.k], 190, T('mt.kombo', K.kombo), '#ff8a5c', 40); api.ses('kombo'); } else api.ses('mutlu');
+    musteriGit(c, true);
+    const g = grp(L.para, K.kx[c.k], 448, MTC.para(v)), p = { para: true, v, g, t: 0, k: c.k };
+    const t = S('text', { y: -22, 'text-anchor': 'middle', 'font-size': 26, 'font-weight': 800, fill: '#fff', stroke: '#23303f', 'stroke-width': 5, 'paint-order': 'stroke', class: 'mt-yazi' }, g);
+    t.textContent = v + ' ₺';
+    S('circle', { r: 46, fill: 'transparent', class: 'mt-dokun' }, g).addEventListener('pointerdown', (e) => { e.preventDefault(); if (K && !K.durdu) topla(p); });
+    zipla(g, 0.2);
+    K.koltuk[c.k] = p;
+  }
+  function topla(p) {
+    if (K.koltuk[p.k] !== p) return;
+    K.koltuk[p.k] = null; K.ciro += p.v;
+    ucanYazi(p.g._t.x, 410, '+' + p.v + ' ₺');
+    tw(p.g, { x: 1082, y: 44, s: 0.5, o: 0.2 }, 0.4, 'in', () => p.g.remove());
+    api.ses('para');
+  }
+
+  // ---------------------------------------------------------------- dokunma kuralları
+  const yanik = (it) => it.pis > 0 && it.t >= it.pis + MT_YAN;
+  const pisti = (it) => it.t >= it.pis;
+  function icCiz(h) {
+    const it = h.item;
+    if (!it) { h.ic.innerHTML = ''; h.fx.innerHTML = ''; if (h.halka) h.halka.setAttribute('opacity', 0); return; }
+    const p = it.pis ? Math.min(1, it.t / it.pis) : 1, y = yanik(it), ek = (s) => it.ek.indexOf(s) >= 0;
+    h.ic.innerHTML = it.taban === 'yumurta' ? MTC.yumurta(p, y) + (ek('sucuk') ? MTC.sucuk() : '') : it.taban === 'murtuga' ? MTC.murtuga(p, y)
+      : it.taban === 'peynir' ? MTC.peynir() + (ek('zeytin') ? MTC.zeytin() : '') + (ek('domates') ? MTC.domates() : '') : MTC.kaymak() + (ek('bal') ? MTC.bal() : '') + (ek('ceviz') ? MTC.ceviz() : '');
+    if (h.tur === 'tava') h.fx.innerHTML = y ? MTC.duman() : p < 1 ? MTC.alev() : MTC.buhar();
+  }
+  // Bekleyen misafirlerin henüz karşılanmamış istekleri
+  function istekler() { const m = {}; for (const c of K.mus) if (c.st === 'bekle') for (const q of c.kalem) if (!q.ok && !q.yolda) m[q.key] = (m[q.key] || 0) + 1; return m; }
+  function tabanTik(src) {
+    const h = src.liste.find((q) => !q.item);
+    zipla(src.g, 0.88);
+    if (!h) { for (const q of src.liste) salla(q.g); ucanYazi(src.x, src.y - 80, T('mt.yerYok'), '#ff8a5c', 28); api.ses('yok'); return; }
+    h.item = { taban: src.id, ek: [], t: 0, pis: src.pis }; h.faz = -1;
+    icCiz(h); zipla(h.g, 0.85); api.ses('koy');
+  }
+  function ekTik(src) {
+    const aday = src.liste.filter((h) => h.item && h.item.taban === src.taban && h.item.ek.indexOf(src.id) < 0 && !yanik(h.item));
+    zipla(src.g, 0.88);
+    if (!aday.length) { salla(src.g); ucanYazi(src.x, src.y - 80, T('mt.once', kaynakAd(src.taban)), '#ff8a5c', 28); api.ses('yok'); return; }
+    // En işe yarayan tutucuyu seç: sonuç bir siparişi tam karşılıyorsa o; şu hâliyle istenen bir yemeği bozmamaya çalış.
+    const ist = istekler(), anahtarlar = Object.keys(ist);
+    let best = aday[0], bp = -9;
+    for (const h of aday) {
+      const once = mtAnahtar(h.item), sonra = mtAnahtar({ taban: h.item.taban, ek: h.item.ek.concat(src.id) }), parca = sonra.split('+');
+      const p = (ist[sonra] ? 4 : anahtarlar.some((a) => parca.every((x) => a.split('+').indexOf(x) >= 0)) ? 2 : 0) - (ist[once] ? 1 : 0);
+      if (p > bp) { bp = p; best = h; }
+    }
+    best.item.ek.push(src.id);
+    icCiz(best); zipla(best.g, 0.88); api.ses('koy');
+  }
+  function at(h) { h.item = null; h.faz = -1; icCiz(h); zipla(h.g, 0.8); api.ses('cop'); zipla(K.copG, 1.2); }
+  function tutucuTik(h) {
+    const it = h.item;
+    if (!it) { if (K.cop) copKapat(); return; }
+    if (K.cop) { at(h); copKapat(); return; }
+    if (yanik(it)) { at(h); return; }
+    if (!pisti(it)) { salla(h.g); api.ses('yok'); return; }
+    const key = mtAnahtar(it);
+    if (!MT_FIYAT[key] || !servis(key, h.x, h.y)) { salla(h.g); ucanYazi(h.x, h.y - 78, T(MT_FIYAT[key] ? 'mt.istekYok' : 'mt.eksik'), '#ff8a5c', 28); api.ses('yok'); return; }
+    h.item = null; h.faz = -1; icCiz(h);
+  }
+  function cayTik(b) {
+    if (!b.dolu) { salla(b.g); api.ses('yok'); return; }
+    if (!servis('cay', b.x, b.y)) { salla(b.g); ucanYazi(b.x, b.y - 70, T('mt.istekYok'), '#ff8a5c', 28); api.ses('yok'); return; }
+    b.dolu = false; b.t = 0; b.rect.setAttribute('y', 30);
+  }
+  function ekmekTik() {
+    const e = K.ekmek;
+    if (e.n < 1 || !servis('ekmek', e.x, e.y - 20)) { salla(e.g); if (e.n > 0) ucanYazi(e.x, e.y - 80, T('mt.istekYok'), '#ff8a5c', 28); api.ses('yok'); return; }
+    e.n--; e.ic.innerHTML = MTC.sepet(e.n);
+  }
+  function copTik() { K.cop = !K.cop; K.copG._h.s = K.cop ? 1.05 : 0.85; zipla(K.copG, 0.9); K.copG.setAttribute('class', K.cop ? 'mt-cop-acik' : ''); api.ses('koy'); }
+  function copKapat() { if (K.cop) copTik(); }
+
+  // ---------------------------------------------------------------- ipucu (yeni ürün getiren vardiyanın ilk oynanışında)
+  function ipucuBul() {
+    for (const p of K.koltuk) if (p && p.para && p.t > 0.6) return [p.g._t.x, 448, T('mt.ip.para')];
+    const hepsi = K.tava.concat(K.tabak, K.kase), ist = istekler();
+    for (const h of hepsi) if (h.item && yanik(h.item)) return [h.x, h.y, T('mt.ip.yandi')];
+    for (const h of hepsi) if (h.item && pisti(h.item) && ist[mtAnahtar(h.item)]) return [h.x, h.y, T('mt.ip.hazir')];
+    if (ist.cay) { const b = K.cay.find((q) => q.dolu); if (b) return [b.x, b.y, T('mt.ip.cay')]; }
+    if (ist.ekmek && K.ekmek && K.ekmek.n > 0) return [K.ekmek.x, K.ekmek.y - 10, T('mt.ip.ekmek')];
+    for (const key of Object.keys(ist)) {
+      const p = key.split('+'), taban = p[0], src = K.kaynak[taban];
+      if (!src) continue;
+      const var_ = src.liste.filter((h) => h.item && h.item.taban === taban && !yanik(h.item));
+      if (var_.some((h) => mtAnahtar(h.item) === key)) continue;
+      const eksik = var_.find((h) => h.item.ek.every((e) => p.indexOf(e) > 0));
+      if (!eksik) { if (src.liste.some((h) => !h.item)) return [src.x, src.y, T('mt.ip.taban', kaynakAd(taban))]; continue; }
+      const ek = p.slice(1).find((e) => eksik.item.ek.indexOf(e) < 0);
+      if (ek && K.kaynak[ek]) return [K.kaynak[ek].x, K.kaynak[ek].y, T('mt.ip.ek', kaynakAd(ek))];
+    }
+    return null;
+  }
+  function ipucuYaz() {
+    const ip = ipucuBul(), imza = ip ? ip.join('|') : '';
+    if (imza === K.ipImza) return;
+    K.ipImza = imza;
+    if (K.ip) { K.ip.remove(); K.ip = null; }
+    if (!ip) return;
+    const w = Math.max(150, ip[2].length * 13 + 44), x = clamp(ip[0], w / 2 + 12, 1588 - w / 2), g = grp(L.ust, x, ip[1] - 108, '');
+    g.innerHTML = '<path d="M' + (ip[0] - x - 14) + ' 22L' + (ip[0] - x) + ' 44L' + (ip[0] - x + 14) + ' 22Z" fill="#17283a"/><rect x="' + -w / 2 + '" y="-24" width="' + w + '" height="48" rx="24" fill="#17283a" stroke="#f2b824" stroke-width="3"/>';
+    const t = S('text', { y: 8, 'text-anchor': 'middle', 'font-size': 24, 'font-weight': 700, fill: '#fff', class: 'mt-yazi' }, g);
+    t.textContent = ip[2];
+    g.setAttribute('pointer-events', 'none');
+    K.ip = g;
+  }
+
+  // ---------------------------------------------------------------- döngü
+  function tick(dt) {
+    if (!K) return;
+    if (K.durdu) return;
+    dt = Math.min(dt, 0.1);
+    twAdim(dt);
+    if (K.bitti) return;
+    K.t += dt;
+    const lv = K.lv, sira = lv.sip;
+    // geliş: planlanan aralık kadar bekle; salon boşsa sıradaki misafir hemen gelir
+    if (K.sn < sira.length && bosKoltuk() >= 0) {
+      const ara = K.sn ? sira[K.sn].at - sira[K.sn - 1].at : sira[0].at;
+      if (K.t - K.sonGelis >= ara || (K.sn > 0 && K.mus.length === 0 && K.t - K.sonGelis > 1.2)) musteriGel(sira[K.sn++]);
+    }
+    for (const c of K.mus) {
+      if (c.st !== 'bekle') continue;
+      if (!c.kalem.some((q) => q.yolda)) c.pat -= dt;
+      const f = c.pat / c.max;
+      c.sb.setAttribute('height', (134 * Math.max(0, f)).toFixed(1)); c.sb.setAttribute('y', (67 - 134 * Math.max(0, f)).toFixed(1));
+      c.sb.setAttribute('fill', f > 0.55 ? '#3fae5a' : f > 0.25 ? '#f2a93b' : '#e2493b');
+      yuzYaz(c, f > 0.55 ? 0 : f > 0.25 ? 1 : 2);
+      c.g._t.y = 268 + Math.sin(K.t * (f < 0.25 ? 9 : 2.2) + c.bob) * (f < 0.25 ? 2.5 : 1.5); yaz(c.g);
+      if (c.pat <= 0) { K.giden++; K.kombo = 0; K.koltuk[c.k] = null; musteriGit(c, false); api.ses('gitti'); }
+    }
+    for (const p of K.koltuk) if (p && p.para && (p.t += dt) > 4.5) topla(p);
+    let pisen = 0;
+    for (const h of K.tava) {
+      const it = h.item;
+      if (!it) continue;
+      it.t += dt;
+      const faz = it.t < it.pis ? Math.floor((3 * it.t) / it.pis) : it.t < it.pis + MT_UYARI ? 3 : it.t < it.pis + MT_YAN ? 4 : 5;
+      if (faz < 3) pisen++;
+      if (faz !== h.faz) {
+        h.faz = faz; icCiz(h);
+        if (faz === 3) { api.ses('hazir'); zipla(h.g, 1.12); }
+        if (faz === 5) { api.ses('yandi'); K.yanan++; }
+        h.halka.setAttribute('stroke', faz < 3 ? '#f2a93b' : faz === 3 ? '#3fae5a' : '#e2493b');
+      }
+      h.halka.setAttribute('stroke-dashoffset', (faz < 3 ? 351.9 * (1 - it.t / it.pis) : faz === 4 ? 351.9 * ((it.t - it.pis - MT_UYARI) / (MT_YAN - MT_UYARI)) : 0).toFixed(1));
+      h.halka.setAttribute('opacity', faz === 5 ? 0 : faz === 4 ? (0.55 + 0.45 * Math.sin(K.t * 14)).toFixed(2) : 1);
+    }
+    api.cizirti(pisen);
+    for (const b of K.cay) {
+      if (b.dolu) continue;
+      b.t += dt / K.demSure;
+      b.rect.setAttribute('y', (30 - 60 * Math.min(1, b.t)).toFixed(1));
+      if (b.t >= 1) { b.dolu = true; zipla(b.g, 1.15); api.ses('cay'); }
+    }
+    if (K.ekmek && K.ekmek.n < 3 && (K.ekmek.t += dt) > 2.6) { K.ekmek.t = 0; K.ekmek.n++; K.ekmek.ic.innerHTML = MTC.sepet(K.ekmek.n); }
+    if (K.ipucuAcik && (K.ipT -= dt) <= 0) { K.ipT = 0.25; ipucuYaz(); }
+    if (K.ip) { K.ip._t.y = K.ip._h.y + Math.sin(K.t * 5) * 5; yaz(K.ip); }
+    hudYaz();
+    if (K.sn >= sira.length && K.mus.length === 0 && K.koltuk.every((p) => !p)) { if ((K.bitisT += dt) > 0.7) bitir(); }
+  }
+
+  // ---------------------------------------------------------------- bitiş, duraklatma
+  function panoAc(cls) { pano.hidden = false; pano.innerHTML = ''; return el('div', 'mt-pano-ic ' + cls, '', pano); }
+  function bitir() {
+    K.bitti = true; api.cizirti(0);
+    const lv = K.lv, y = K.ciro >= lv.hedef[2] ? 3 : K.ciro >= lv.hedef[1] ? 2 : K.ciro >= lv.hedef[0] ? 1 : 0, eski = kayit.yildiz[lv.i] || 0;
+    const yevmiye = Math.round(K.ciro * MT_PAY), prim = Math.max(0, y - eski) * MT_PRIM;
+    yukle();
+    kayit.yildiz[lv.i] = Math.max(eski, y); kayit.enIyi[lv.i] = Math.max(kayit.enIyi[lv.i] || 0, K.ciro); kaydet();
+    api.kazan(yevmiye + prim);
+    K.sonuc = { yildiz: y, ciro: K.ciro, yevmiye, prim };
+    const p = panoAc('mt-sonuc');
+    el('div', 'mt-kart-alt', T('mt.vardiya', lv.i + 1), p);
+    const ys = el('div', 'mt-yildizlar', '', p);
+    for (let k = 0; k < 3; k++) { const s = el('span', k < y ? 'dolu' : '', '', ys); s.style.animationDelay = 0.25 + k * 0.3 + 's'; s.innerHTML = ikon(MTC.yildiz(k < y), 72, '-24 -24 48 48'); }
+    el('h2', 'mt-baslik', TA('mt.sonucBaslik')[y], p);
+    const tb = el('div', 'mt-dokum', '', p);
+    const satir = (a, b, cls) => { const r = el('div', cls || '', '', tb); el('span', '', a, r); el('b', '', b, r); };
+    satir(T('mt.s.ciro'), api.paraYaz(K.ciro) + ' ₺');
+    satir(T('mt.s.misafir'), K.doyan + ' / ' + lv.n);
+    satir(T('mt.s.kombo'), '×' + K.enKombo);
+    satir(T('mt.s.yevmiye'), '+' + api.paraYaz(yevmiye) + ' ₺', 'mt-vurgu');
+    if (prim) satir(T('mt.s.prim'), '+' + prim + ' ₺', 'mt-vurgu');
+    if (y < 3) el('p', 'mt-not', T('mt.s.sonraki', api.paraYaz(lv.hedef[y])), p);
+    const d = el('div', 'mt-sira', '', p), hikaye = y > 0 && api.hikaye();
+    if (hikaye) dugme('mt-birincil', T('sonuc.hikayeDevam'), d, () => { kapat(); api.hikayeDevam(); }, 'mt-hikaye');
+    if (y > 0 && lv.i < 19 && kayit.erzak > 0) dugme(hikaye ? 'mt-ikincil' : 'mt-birincil', T('mt.sonraki'), d, () => { secili = lv.i + 1; baslat(secili); }, 'mt-sonraki');
+    if (kayit.erzak > 0) dugme(y > 0 ? 'mt-ikincil' : 'mt-birincil', T('mt.tekrar'), d, () => baslat(lv.i), 'mt-tekrar');
+    dugme('mt-ikincil', T('mt.salon'), d, () => { K = null; goster('hub'); hubCiz(); }, 'mt-salon');
+    if (kayit.erzak < 1) el('p', 'mt-not mt-uyari', T('mt.erzakGerek'), p);
+    api.ses(y > 0 ? 'bitti' : 'gitti');
+    const ilk = d.querySelector('button'); if (ilk) ilk.focus();
+  }
+  function durdur() {
+    if (!K || K.bitti) return;
+    if (K.durdu) { K.durdu = false; pano.hidden = true; return; }
+    K.durdu = true; api.cizirti(0);
+    const p = panoAc('mt-durdu');
+    el('h2', 'mt-baslik', T('mt.durdu'), p);
+    const d = el('div', 'mt-sira', '', p);
+    dugme('mt-birincil', T('mt.devam'), d, durdur, 'mt-devam').focus();
+    dugme('mt-ikincil', T('mt.birak'), d, () => { K = null; goster('hub'); hubCiz(); }, 'mt-birak');
+  }
+  function ac() { yukle(); K = null; kok.hidden = false; goster('hub'); hubCiz(); }
+  function kapat() { K = null; tws = []; api.cizirti(0); kok.hidden = true; pano.hidden = true; }
+  function tus(code) {
+    if (!K) { if (code === 'Escape') api.cik(); return; }
+    if (code === 'Escape' || code === 'KeyP') durdur();
+    else if (code === 'Space' && !K.durdu && !K.bitti) for (const p of K.koltuk) if (p && p.para) topla(p);
+  }
+  return {
+    ac, kapat, tick, tus, baslat,
+    yenile() { if (!kok.hidden && !K) hubCiz(); },
+    sifirla() { api.store.del('mutfak'); yukle(); },
+    erzakEkle(n) { yukle(); kayit.erzak += n; kaydet(); return kayit.erzak; },
+    ozet() { yukle(); return { vardiya: kayit.yildiz.filter((y) => y > 0).length, yildiz: toplamYildiz(), erzak: kayit.erzak }; },
+    // sınama: durum ve dokunma eylemleri (tarayıcı konsolundan ve otomatik oyuncudan)
+    get K() { return K; }, get kayit() { return kayit; }, seviye: mtSeviye,
+    eylem: { cay: (i) => cayTik(K.cay[i]), ekmek: () => ekmekTik(), kaynak: (id) => { const s = K.kaynak[id]; if (s.tip === 'taban') tabanTik(s); else ekTik(s); }, tutucu: (tur, i) => tutucuTik(K[tur][i]), para: (k) => { const p = K.koltuk[k]; if (p && p.para) topla(p); }, cop: copTik },
+  };
+}
+
+'use strict';
+// =====================================================================
 // OYUN — sahne, döngü, yarışlar, gösterge, mini harita, ses, menü
 // =====================================================================
 (function () {
@@ -2445,8 +3650,10 @@ function makeCat() {
     { id: 'iskele', bolge: 'van', ad: 'İskele Sprinti', alt: 'Melen Caddesi, kalenin kuzey yüzü, Van Gölü iskelesi', laps: 1, ai: 4, zemin: 'Asfalt' },
     // üç tekerli bisikletle yük taşıma: Eski Van yolunda al, 700 m ötede teslim et; kazanç kasaya girer
     { id: 'yuk-tasima', bolge: 'van', ozel: 'servis', yuk: true, arac: 'trike', rota: 'eski-van', markerS: 30, al: 60, birak: 760, madalya: [6.6, 5.2, 3.6], odeme: 250, laps: 1, ai: 0, solo: true, zemin: 'Toprak' },
-    // Van kahvaltısı: mutfakta beş tabak, malzemeler doğru sırayla; kazanç kasaya girer (araba gerektirmez)
+    // Van kahvaltısı: kahvaltı salonu vardiyaları (src/mutfak.js); yevmiye kasaya girer, araba gerektirmez
     { id: 'kahvalti', bolge: 'van', ozel: 'pisir', arac: 'yok', rota: 'eski-van', nokta: [961, 91], odeme: 300, laps: 1, ai: 0, solo: true, zemin: 'Asfalt' },
+    // erzak: kahvaltı salonunun kilerini doldurur; yalnız salon ekranından başlar (menüde ve haritada görünmez)
+    { id: 'erzak', bolge: 'van', ozel: 'servis', yuk: true, erzak: true, gizli: true, arac: 'trike', rota: 'iskele', laps: 1, ai: 0, solo: true, zemin: 'Asfalt' },
     { id: 'tirmanis', bolge: 'van', ad: 'Kale Tırmanışı', alt: 'Batı ucundan sırta çık, burçtaki bayrağa ulaş', laps: 1, ai: 0, solo: true, zemin: 'Kaya' },
     { id: 'abali-yolu', bolge: 'abali', ad: 'Abalı Yolu', alt: 'Ana yoldan köyün içinden kayak merkezine tırmanış', laps: 1, ai: 3, zemin: 'Asfalt' },
     { id: 'pist-inisi', bolge: 'abali', ad: 'Pist İnişi', alt: 'Zirve istasyonundan zikzaklarla aşağı, kar üstünde', laps: 1, ai: 2, zemin: 'Kar' },
@@ -2629,6 +3836,7 @@ function makeCat() {
     scene.add(player.mesh);
     const rc = [['#1d6fb8', 'Tuşba', 'sedan'], ['#e8c33a', 'Erek', 'hatch'], ['#2f9a5a', 'Edremit', 'sedan'], ['#7a3fa8', 'Gevaş', 'hatch']];
     rivals = rc.map(([c, n, st], i) => { const r = makeCar(c, false, n, st); Object.defineProperty(r, 'name', { get: () => TA('rakip')[i] }); r.mesh.visible = false; scene.add(r.mesh); return r; });
+    trafficInit(scene, 14);
     gate1 = makeGate(); gate2 = makeGate();
     beacon1 = beam(8, 26, LIN('#22c3d6'), 0.3); beacon2 = beam(8, 10, LIN('#22c3d6'), 0.14);
     await loadRegion('van');
@@ -2651,7 +3859,7 @@ function makeCat() {
         $('load-baslik').textContent = T('yukleniyor', Rg.ad); $('load').hidden = false;
         gate1.visible = gate2.visible = beacon1.visible = beacon2.visible = false;
         for (const r of rivals) r.mesh.visible = false;
-        cars = [player];
+        cars = [player]; trafficClear();
         await say(Rg.msg[0]);
         scene.remove(world);
         world.traverse((o) => {
@@ -2669,6 +3877,7 @@ function makeCat() {
       terrTex = buildTerrain(world, buildGroundCanvas(), maxAniso).textures;
       await say(T('yuk.yol', ROADS.length));
       buildRoads(world);
+      buildTrafficNet(); trafikHedef();
       await say(T('yuk.bina', D.buildings.length.toLocaleString(LOCALE[LANG])));
       buildBuildings(world, maxAniso);
       await say(Rg.msg[1]);
@@ -2724,7 +3933,7 @@ function makeCat() {
   }
   function buildMarkers() {
     for (const ev of EVENTS) {
-      if (ev.bolge !== REGION.id) continue;
+      if (ev.bolge !== REGION.id || ev.gizli) continue;
       const p = ev.nokta ? nearRoad(ev.nokta[0], ev.nokta[1]) : routePoint(ev.R, ev.markerS || 2);
       const m = beam(3, 70, LIN(ev.ozel ? '#22c3d6' : '#f2a93b'), 0.42, world);
       const x = p.x, z = p.z;
@@ -2823,7 +4032,9 @@ function makeCat() {
         g.strokeStyle = 'rgba(34,195,214,0.6)'; g.lineWidth = 3 * u * dpr; g.stroke();
       }
       dot(G.goal.x, G.goal.z, 6.5, '#f2a93b'); dot(G.goal.x, G.goal.z, 3, '#0b1622');
+      for (const tc of TRF.act) dot(tc.x, tc.z, 2.6, '#9fb0bd');
     } else {
+      for (const tc of TRF.act) dot(tc.x, tc.z, 2.6, '#9fb0bd');
       for (const m of evMarkers) dot(m.x, m.z, 5.5, '#f2a93b');
       for (const ct of cats) if (!ct.got) dot(ct.x, ct.z, 3.2, '#f6f3ec');
     }
@@ -2933,11 +4144,7 @@ function makeCat() {
     keys[e.code] = true;
     initAudio();
     if (G.state === 'talk') { if (e.code === 'Enter' || e.code === 'Space' || e.code === 'NumpadEnter') nextLine(); return; }
-    if (G.state === 'cook') {   // 1–9, 0, -, = malzemeler; Q W E misafirler; X tezgâhı boşalt
-      const d = /^(Digit|Numpad)([0-9])$/.exec(e.code), k = d ? (+d[2] + 9) % 10 : e.code === 'Minus' ? 10 : e.code === 'Equal' ? 11 : -1, m = ['KeyQ', 'KeyW', 'KeyE'].indexOf(e.code);
-      if (k >= 0) tapIngredient(k); else if (m >= 0) tapCustomer(m); else if (e.code === 'KeyX') $('mutfak-cop').click(); else if (e.code === 'Escape') showMenu(false);
-      return;
-    }
+    if (G.state === 'cook') { MUTFAK.tus(e.code); if (e.code === 'Space') e.preventDefault(); return; }
     if (G.state === 'menu' || G.state === 'result') {
       if (e.code === 'Escape' && !$('ayarlar').hidden) closeSettings();
       else if (e.code === 'Escape' && G.state === 'menu' && G.resume) resume();
@@ -2977,6 +4184,7 @@ function makeCat() {
     list.innerHTML = '';
     let lastRegion = '';
     for (const ev of EVENTS) {
+      if (ev.gizli) continue;
       if (ev.bolge !== lastRegion) {
         lastRegion = ev.bolge;
         const h = document.createElement('div'); h.className = 'etiket etk-bolge'; h.textContent = REGIONS[ev.bolge].ad; list.appendChild(h);
@@ -2986,7 +4194,7 @@ function makeCat() {
       const km = (((ev.R ? ev.R.L : ev.len) * ev.laps) / 1000).toFixed(1).replace('.', LANG === 'tr' ? ',' : '.');
       b.innerHTML = '<span class="etk-ad"></span><span class="etk-alt"></span><span class="etk-veri"></span>';
       b.children[0].textContent = ev.ad; b.children[1].textContent = ev.alt;
-      b.children[2].textContent = ev.ozel === 'pisir' ? T('pisir.veri') + (ev.best ? ' · ' + T('etk.enIyi', fmt(ev.best)) : '') : km + ' ' + T('etk.km') + ' · ' + ev.zemin + (ev.laps > 1 ? ' · ' + T('etk.tur', ev.laps) : '') + ' · ' + (ev.solo ? T('etk.zamanaKarsi') : T('etk.rakip', ev.ai)) + (ev.best ? ' · ' + T('etk.enIyi', fmt(ev.best)) : '');
+      b.children[2].textContent = ev.ozel === 'pisir' ? T('mt.menuVeri', MUTFAK.ozet().vardiya, MUTFAK.ozet().yildiz) : km + ' ' + T('etk.km') + ' · ' + ev.zemin + (ev.laps > 1 ? ' · ' + T('etk.tur', ev.laps) : '') + ' · ' + (ev.solo ? T('etk.zamanaKarsi') : T('etk.rakip', ev.ai)) + (ev.best ? ' · ' + T('etk.enIyi', fmt(ev.best)) : '');
       if (!ev.arac && !owns('car')) { b.classList.add('kilitli'); b.children[2].textContent += ' · ' + T('kilit.kisa'); }
       b.addEventListener('click', async () => { initAudio(); if (!canStart(ev)) return; G.lastStory = 0; await loadRegion(ev.bolge); if (REGION.id === ev.bolge) startEvent(ev); });
       list.appendChild(b);
@@ -2997,7 +4205,7 @@ function makeCat() {
     G.state = 'menu';
     buildMenu();
     $('menu').hidden = false; $('hud').hidden = true; $('sonuc').hidden = true;
-    $('btn-devam').hidden = !G.resume; $('konusma').hidden = true; $('ayarlar').hidden = true; $('mutfak').hidden = true;
+    $('btn-devam').hidden = !G.resume; $('konusma').hidden = true; $('ayarlar').hidden = true; MUTFAK.kapat();
     $('btn-hikaye').textContent = S.i >= STORY.length ? T('menu.hikaye.bastan') : S.i === 0 ? T('menu.hikaye') : T('menu.hikaye.bolum', S.i + 1, STORY[S.i].ad);
     updateAudio(false);
     ($('btn-devam').hidden ? $('btn-hikaye') : $('btn-devam')).focus();
@@ -3024,7 +4232,7 @@ function makeCat() {
   function clearRace() {
     G.race = null; G.goal = null; flashLater = null;
     if (player.ski) setSki(false);
-    $('mutfak').hidden = true;
+    $('mutfak').hidden = true; $('btn-salon').hidden = true;
     if (TUR && TUR.parent) TUR.visible = false;
     for (const r of rivals) r.mesh.visible = false;
     cars = [player];
@@ -3047,9 +4255,10 @@ function makeCat() {
     flash(T('flash.serbest'), T('flash.serbest.alt'));
   }
   function startEvent(ev) {
+    if (ev.erzak) { startErzak(); return; }
     if (ev.ozel === 'servis') { startServis(ev); return; }
     if (ev.ozel === 'pisir') { startCooking(ev); return; }
-    clearRace();
+    clearRace(); trafficClear();
     setVehicle('car');
     G.lastEvent = ev;
     const R = ev.R, laps = ev.laps, cps = makeCps(ev);
@@ -3144,7 +4353,7 @@ function makeCat() {
   }
 
   // ---------------------------------------------------------------- ayarlar
-  const AYAR = Object.assign({ kalite: MOBIL ? 'dusuk' : 'yuksek', oto: true, ses: 100, kamera: 0 }, store.get('ayar', {}));
+  const AYAR = Object.assign({ kalite: MOBIL ? 'dusuk' : 'yuksek', oto: true, ses: 100, kamera: 0, trafik: true }, store.get('ayar', {}));
   if (['dusuk', 'orta', 'yuksek'].indexOf(AYAR.kalite) < 0) AYAR.kalite = 'yuksek';
   AYAR.ses = clamp(+AYAR.ses || 0, 0, 100); AYAR.kamera = clamp(AYAR.kamera | 0, 0, 2);
   G.cam = AYAR.kamera;
@@ -3192,7 +4401,8 @@ function makeCat() {
     if (save) store.set('ayar', AYAR);
     for (const el of document.querySelectorAll('[data-kalite]')) el.setAttribute('aria-pressed', el.getAttribute('data-kalite') === q ? 'true' : 'false');
     for (const el of document.querySelectorAll('[data-kamera]')) el.setAttribute('aria-pressed', +el.getAttribute('data-kamera') === G.cam ? 'true' : 'false');
-    $('ayar-oto').checked = !!AYAR.oto; $('ayar-ses').value = AYAR.ses; $('ayar-ses-n').textContent = AYAR.ses;
+    trafikHedef();
+    $('ayar-oto').checked = !!AYAR.oto; $('ayar-trafik').checked = AYAR.trafik !== false; $('ayar-ses').value = AYAR.ses; $('ayar-ses-n').textContent = AYAR.ses;
   }
   function openSettings() { $('menu').hidden = true; $('ayarlar').hidden = false; $('sifirla-onay').hidden = true; applySettings(false); $('btn-ayar-geri').focus(); }
   function closeSettings() { $('ayarlar').hidden = true; $('menu').hidden = false; $('btn-ayarlar').focus(); }
@@ -3201,13 +4411,14 @@ function makeCat() {
   for (const el of document.querySelectorAll('[data-kalite]')) el.addEventListener('click', () => { AYAR.kalite = el.getAttribute('data-kalite'); applySettings(true); });
   for (const el of document.querySelectorAll('[data-kamera]')) el.addEventListener('click', () => { G.cam = AYAR.kamera = +el.getAttribute('data-kamera'); camSnap = true; applySettings(true); });
   $('ayar-oto').addEventListener('change', () => { AYAR.oto = $('ayar-oto').checked; applySettings(true); });
+  $('ayar-trafik').addEventListener('change', () => { AYAR.trafik = $('ayar-trafik').checked; applySettings(true); });
   $('ayar-ses').addEventListener('input', () => { AYAR.ses = clamp(+$('ayar-ses').value || 0, 0, 100); applySettings(true); });
   $('ayar-ses').addEventListener('change', () => { initAudio(); beep(660, 0.15, 0.3, 'triangle'); });
   $('btn-sifirla').addEventListener('click', () => { $('sifirla-onay').hidden = false; $('btn-sifirla-hayir').focus(); });
   $('btn-sifirla-hayir').addEventListener('click', () => { $('sifirla-onay').hidden = true; });
   $('btn-sifirla-evet').addEventListener('click', () => {
     for (const ev of EVENTS) { ev.best = null; store.del('best.' + ev.id); }
-    store.del('story'); store.del('cats'); store.del('para'); G.para = 0; updateKasa();
+    store.del('story'); store.del('cats'); store.del('para'); G.para = 0; updateKasa(); MUTFAK.sifirla();
     SAHIP = ['trike']; store.set('sahip', SAHIP); updateArac();
     S.i = 0; S.last = null;
     for (const c of cats) c.got = false;
@@ -3373,13 +4584,13 @@ function makeCat() {
         const st = gl.stages[gl.si];
         gl.x = st.x; gl.z = st.z; gl.ad = st.ad;
         beacon1.position.set(st.x, groundH(st.x, st.z) - 0.5, st.z);
-        if (gl.ozel.yuk) player[player.arac].yuk.visible = true; else TUR.visible = false;
+        if (gl.ozel.yuk) { const yk = player[player.arac].yuk; if (yk) yk.visible = true; } else TUR.visible = false;
         hudT = 0;
         flash(T(gl.on + '.bindi'), T(gl.on + '.bindi.alt'), 3);
         return;
       }
       G.goal = null; beacon1.visible = false;
-      if (gl.ozel) finishServis(gl); else storyAdvance();
+      if (gl.ozel && gl.ozel.erzak) finishErzak(gl); else if (gl.ozel) finishServis(gl); else storyAdvance();
     } else if (gl.sure && gl.t > gl.sure) {
       const k = gl.ch.gorev.kayip || [T('kisi.zelal'), T('konusma.sureDoldu')];
       G.goal = null; beacon1.visible = false;
@@ -3430,107 +4641,94 @@ function makeCat() {
     (devam ? $('btn-hikaye-devam') : $('btn-tekrar')).focus();
   }
 
-  // ---------------------------------------------------------------- mutfak: Van kahvaltı salonu vardiyası
-  // Yemek oyunlarının bilinen düzeni: misafirler gelir, sipariş verir, sabırları azalır. Malzemeler tezgâhta birleşir,
-  // sıcak tabaklar ocakta pişer (bekletilirse yanar), tabak doğru misafire verilir. Hızlı servis bahşiş, art arda servis seri getirir.
-  const YEMEK = [[0, 1, 2], [9, 0, 3], [6, 7, 8], [4, 3, 5], [10, 11]], YFIYAT = [60, 60, 45, 50, 25], YPISER = [2.6, 2.6, 0, 0, 1.6];
-  let M = null;
+  // ---------------------------------------------------------------- mutfak: kahvaltı salonu (oyunun kendisi src/mutfak.js içinde)
+  // Burada yalnız bağlantılar durur: ses, kasa, hikâye ve erzak sürüş görevi.
+  const MSES = {
+    servis: [[880, 0.08, 0.2, 'triangle'], [1175, 0.12, 0.18, 'triangle', 0.06]], para: [[1320, 0.07, 0.18, 'square'], [1760, 0.16, 0.16, 'square', 0.06]],
+    yok: [[170, 0.14, 0.2, 'square']], koy: [[520, 0.05, 0.14, 'triangle']], cop: [[240, 0.1, 0.18, 'square']], cay: [[700, 0.05, 0.07, 'sine']],
+    hazir: [[1040, 0.1, 0.22, 'sine'], [1560, 0.2, 0.2, 'sine', 0.09]], yandi: [[140, 0.35, 0.25, 'sawtooth']], gel: [[660, 0.06, 0.1, 'sine'], [880, 0.08, 0.1, 'sine', 0.07]],
+    gitti: [[220, 0.25, 0.2, 'sawtooth'], [165, 0.3, 0.2, 'sawtooth', 0.12]], mutlu: [[988, 0.07, 0.16, 'triangle'], [1319, 0.07, 0.16, 'triangle', 0.07], [1568, 0.14, 0.16, 'triangle', 0.14]],
+    kombo: [[1568, 0.06, 0.2, 'square'], [2093, 0.14, 0.2, 'square', 0.06]], yildiz: [[1047, 0.1, 0.22, 'triangle'], [1568, 0.22, 0.22, 'triangle', 0.08]],
+    bitti: [[784, 0.12, 0.25, 'triangle'], [988, 0.12, 0.25, 'triangle', 0.12], [1175, 0.12, 0.25, 'triangle', 0.24], [1568, 0.4, 0.25, 'triangle', 0.36]],
+  };
+  function mutfakSes(n) { initAudio(); for (const b of MSES[n] || []) beep(b[0], b[1], b[2], b[3], b[4]); }
+  function cizirti(n) {      // sahanda pişen yemek sayısına göre cızırtı
+    if (!A.ctx || A.cizN === n) return;
+    if (!A.ciz) {
+      const src = A.ctx.createBufferSource(), f = A.ctx.createBiquadFilter();
+      src.buffer = A.noise; src.loop = true; f.type = 'highpass'; f.frequency.value = 4200;
+      A.ciz = A.ctx.createGain(); A.ciz.gain.value = 0;
+      src.connect(f); f.connect(A.ciz); A.ciz.connect(A.master); src.start();
+    }
+    A.cizN = n;
+    A.ciz.gain.setTargetAtTime(n > 0 ? 0.028 + 0.012 * Math.min(3, n) : 0, A.ctx.currentTime, 0.1);
+  }
+  const ERZAK_KAP = { trike: 3, motor: 5, car: 8 }, SALON = [961, 91], CARSI = [1379, 136];   // çarşı: salona 410 m, ana cadde üstünde
+  const erzakAraci = () => (owns('car') ? 'car' : bestCargo());
+  const kahvaltiBolumu = () => !!G.lastStory && !!STORY[S.i] && STORY[S.i].gorev.tip === 'ozel' && STORY[S.i].gorev.id === 'kahvalti';
+  const MUTFAK = mutfakKur({
+    T, TA, store, ses: mutfakSes, cizirti, para: () => G.para || 0, paraYaz: para, kazan: addMoney,
+    harca(n) { if ((G.para || 0) < n) return false; addMoney(-n); return true; },
+    cik() { MUTFAK.kapat(); showMenu(false); },
+    erzakGit() { MUTFAK.kapat(); startErzak(); },
+    hikaye: () => kahvaltiBolumu() || paraReady(),
+    hikayeDevam() { if (kahvaltiBolumu()) storyAdvance(); else startStory(); },
+    aracAd: () => T(ARAC_AD[erzakAraci()]), aracKap: () => ERZAK_KAP[erzakAraci()],
+  });
   function startCooking(ev) {
     clearRace();
     G.lastEvent = ev; G.state = 'cook'; G.near = null;
     for (const el of ['menu', 'hud', 'sonuc', 'konusma']) $(el).hidden = true;
-    $('mutfak').hidden = false;
-    M = { ev, t: 0, sure: 90, para: 0, hedef: 300, seri: 0, doyan: 0, giden: 0, tezgah: [], tabak: [null, null], musteri: [null, null, null], gelis: 1.2, n: 0, rnd: rng(Math.floor(G.t * 1000) + 7) };
-    const ad = TA('mutfak.malzeme'), iz = $('mutfak-izgara');
-    iz.innerHTML = '';
-    for (let k = 0; k < 12; k++) {
-      const b = document.createElement('button'); b.type = 'button'; b.id = 'malzeme-' + k; b.textContent = ad[k];
-      b.addEventListener('click', () => tapIngredient(k));
-      iz.appendChild(b);
-    }
-    $('mutfak-tarifler').textContent = YEMEK.map((r, y) => TA('mutfak.yemek')[y] + ': ' + r.map((k) => ad[k]).join(' + ')).join(' · ');
-    renderCook();
+    updateAudio(false);
+    MUTFAK.ac();
   }
-  const plateState = (p) => (p.t < p.pis ? 0 : p.pis > 0 && p.t > p.pis + 8 ? 2 : 1);   // 0 pişiyor, 1 hazır, 2 yandı
-  function tapIngredient(k) {
-    if (G.state !== 'cook' || M.tezgah.indexOf(k) >= 0) return;
-    initAudio();
-    M.tezgah.push(k);
-    const y = YEMEK.findIndex((r) => r.length === M.tezgah.length && r.every((q) => M.tezgah.indexOf(q) >= 0));
-    if (y >= 0) {
-      const slot = M.tabak.indexOf(null);
-      if (slot < 0) { M.tezgah.pop(); beep(170, 0.15, 0.22, 'square'); return; }      // ocak dolu
-      M.tabak[slot] = { y, t: 0, pis: YPISER[y] }; M.tezgah = [];
-      beep(820, 0.1, 0.2, 'triangle');
-    } else if (M.tezgah.length >= 3) { M.tezgah = []; M.seri = 0; beep(170, 0.2, 0.25, 'square'); }   // tarif tutmadı
-    else beep(560, 0.05, 0.14, 'triangle');
+  // Erzak görevi: salondan çarşıya git, yükle, salona dön. Araç büyüdükçe daha çok erzak taşınır; sarsıntı yumurtaları kırar.
+  function startErzak() {
+    const ev = EVENTS.find((e) => e.id === 'erzak');
+    clearRace();
+    G.lastEvent = ev;
+    const arac = erzakAraci(), sl = nearRoad(SALON[0], SALON[1]), cr = nearRoad(CARSI[0], CARSI[1]);
+    setVehicle(arac);
+    placeCar(player, sl.x, sl.z, Math.atan2(cr.x - sl.x, cr.z - sl.z));
+    const a = { x: cr.x, z: cr.z, ad: T('erzak.al') }, b = { x: sl.x, z: sl.z, ad: T('erzak.birak') };
+    G.goal = { stages: [a, b], si: 0, x: a.x, z: a.z, ad: a.ad, t: 0, sure: 0, R: null, ozel: ev, on: 'erzak', konfor: 100, stop: true, yol: 2.6 * Math.hypot(cr.x - sl.x, cr.z - sl.z), carpan: 1, arac };
+    G.state = 'free'; G.near = null;
+    for (const m of evMarkers) m.mesh.visible = false;
+    $('menu').hidden = true; $('sonuc').hidden = true; $('konusma').hidden = true; $('hud').hidden = false; $('yaris').hidden = false; $('ok').hidden = false; $('kedi').hidden = true; $('ipucu').hidden = true;
+    $('yaris-ad').textContent = ev.ad; $('yaris-sira').textContent = '';
+    beacon1.position.set(a.x, groundH(a.x, a.z) - 0.5, a.z); beacon1.visible = true;
+    camSnap = true;
+    flash(T('erzak.basla'), T('erzak.basla.alt'), 3.5);
   }
-  function tapCustomer(i) {
-    if (G.state !== 'cook') return;
-    const c = M.musteri[i];
-    if (!c) return;
-    const slot = M.tabak.findIndex((p) => p && p.y === c.y && plateState(p) === 1);
-    if (slot < 0) { beep(170, 0.15, 0.22, 'square'); return; }
-    const kazanc = Math.round((YFIYAT[c.y] + YFIYAT[c.y] * 0.5 * (c.sabir / c.max)) * (1 + 0.1 * Math.min(5, M.seri)));
-    M.para += kazanc; M.seri++; M.doyan++; M.musteri[i] = null; M.tabak[slot] = null;
-    beep(880, 0.1, 0.25, 'triangle'); beep(1320, 0.18, 0.25, 'triangle', 0.08);
-  }
-  function tapPlate(i) { if (G.state === 'cook' && M.tabak[i]) { M.tabak[i] = null; M.seri = 0; beep(240, 0.1, 0.2, 'square'); } }   // tabağı at
-  function cookTick(dt) {
-    M.t += dt;
-    if (M.t >= M.sure) { finishCooking(); return; }
-    M.gelis -= dt;
-    if (M.gelis <= 0) {
-      const bos = M.musteri.indexOf(null);
-      if (bos >= 0) M.musteri[bos] = { y: Math.floor(M.rnd() * Math.min(5, 2 + Math.floor(M.t / 16))), sabir: 24, max: 24, ad: M.n++ % 6 };
-      M.gelis = Math.max(3.5, 7.5 - M.t / 30) + M.rnd() * 2;
-    }
-    M.musteri.forEach((c, i) => { if (c && (c.sabir -= dt) <= 0) { M.musteri[i] = null; M.giden++; M.seri = 0; beep(150, 0.3, 0.25, 'square'); } });
-    for (const pl of M.tabak) if (pl) pl.t += dt;
-    renderCook();
-  }
-  function renderCook() {
-    const ad = TA('mutfak.malzeme'), ye = TA('mutfak.yemek');
-    $('mutfak-ust').textContent = T('mutfak.vardiya', Math.ceil(M.sure - M.t)) + ' · ' + T('mutfak.kasa', M.para, M.hedef) + (M.seri > 1 ? ' · ' + T('mutfak.seri', M.seri) : '');
-    $('mutfak-sure').style.width = Math.max(0, 100 * (1 - M.t / M.sure)).toFixed(1) + '%';
-    M.musteri.forEach((c, i) => {
-      const el = $('musteri-' + i);
-      el.disabled = !c;
-      el.children[0].textContent = c ? TA('mutfak.misafir')[c.ad] : T('mutfak.bos');
-      el.children[1].textContent = c ? ye[c.y] : '';
-      el.children[2].firstChild.style.width = c ? Math.max(0, (100 * c.sabir) / c.max).toFixed(0) + '%' : '0%';
-      el.classList.toggle('acele', !!c && c.sabir < 7);
-    });
-    M.tabak.forEach((pl, i) => {
-      const el = $('tabak-' + i), st = pl ? plateState(pl) : -1;
-      el.disabled = !pl;
-      el.textContent = pl ? ye[pl.y] + ' · ' + T(st === 0 ? 'mutfak.pisiyor' : st === 1 ? 'mutfak.hazir' : 'mutfak.yanik') : T('mutfak.ocak');
-      el.className = 'tabak' + (st === 1 ? ' hazir' : st === 2 ? ' yanik' : '');
-    });
-    $('mutfak-tezgah').textContent = M.tezgah.length ? M.tezgah.map((k) => ad[k]).join(' + ') : T('mutfak.tezgah');
-    const iz = $('mutfak-izgara').children;
-    for (let k = 0; k < iz.length; k++) iz[k].disabled = M.tezgah.indexOf(k) >= 0;
-  }
-  function finishCooking() {
-    const ev = M.ev, ciro = M.para, ok = ciro >= M.hedef, kazanc = Math.round(ciro * 0.6);   // cironun %60'ı oyuncuya kalır (yük işiyle denge)
-    addMoney(kazanc);
+  function finishErzak(gl) {
+    player.trike.yuk.visible = false; player.motor.yuk.visible = false;
+    const kap = ERZAK_KAP[gl.arac], n = Math.max(1, Math.round((kap * gl.konfor) / 100)), toplam = MUTFAK.erzakEkle(n);
     G.state = 'result';
-    $('mutfak').hidden = true; $('sonuc').hidden = false;
-    $('sonuc-ad').textContent = ev.ad;
-    $('sonuc-baslik').textContent = T(ciro >= M.hedef * 1.8 ? 'sonuc.altin' : ciro >= M.hedef * 1.4 ? 'sonuc.gumus' : ok ? 'sonuc.bronz' : 'mutfak.yandi');
-    $('sonuc-not').textContent = T('sonuc.kazanc', para(kazanc), para(G.para)) + ' · ' + T('mutfak.sonuc', M.doyan, M.giden) + ' · ' + T('mutfak.hedef', para(M.hedef));
+    $('hud').hidden = true; $('sonuc').hidden = false;
+    $('sonuc-ad').textContent = gl.ozel.ad;
+    $('sonuc-baslik').textContent = T(gl.konfor < 50 ? 'erzak.kirildi' : 'erzak.tamam');
+    $('sonuc-not').textContent = T('erzak.sonuc', n, kap, toplam) + ' · ' + T('erzak.konfor', gl.konfor);
     $('sonuc-tablo').innerHTML = '';
-    const devam = (!!G.lastStory && ok) || paraReady();
-    $('btn-hikaye-devam').hidden = !devam;
-    $('btn-tekrar').textContent = T(G.lastStory && !ok ? 'sonuc.tekrarDene' : 'sonuc.tekrar');
-    (devam ? $('btn-hikaye-devam') : $('btn-tekrar')).focus();
+    $('btn-hikaye-devam').hidden = true; $('btn-salon').hidden = false;
+    $('btn-tekrar').textContent = T('sonuc.tekrar');
+    $('btn-salon').focus();
   }
-  for (let i = 0; i < 3; i++) $('musteri-' + i).addEventListener('click', () => tapCustomer(i));
-  for (let i = 0; i < 2; i++) $('tabak-' + i).addEventListener('click', () => tapPlate(i));
-  $('mutfak-cop').addEventListener('click', () => { if (G.state === 'cook') { M.tezgah = []; beep(240, 0.08, 0.18, 'square'); } });
+  $('btn-salon').addEventListener('click', () => startCooking(EVENTS.find((e) => e.id === 'kahvalti')));
 
   // ---------------------------------------------------------------- fizik adımı
   const STEP = 1 / 120;
+  // Trafik: araç sayısı kaliteye ve bölgeye göre. Yarışta yol kapalıdır, trafik çekilir.
+  const TCAM = { x: 0, z: 0, fx: 0, fz: 1 }, _cd = new THREE.Vector3();
+  function trafikHedef() {
+    const n = AYAR.trafik === false ? 0 : AYAR.kalite === 'dusuk' ? 6 : AYAR.kalite === 'orta' ? 10 : 14;
+    TRF.hedef = Math.round((MOBIL ? Math.min(n, 6) : n) * (REGION && REGION.id !== 'van' ? 0.4 : 1));
+    if (!TRF.hedef) trafficClear();
+  }
+  function korna(c) {
+    const v = clamp(1 - Math.sqrt(c.d2) / 90, 0, 1) * 0.15, d = c.hit > 3.5 ? 0.6 : 0.34;
+    if (v < 0.01) return;
+    beep(415, d, v, 'square'); beep(523, d, v * 0.85, 'square');
+  }
   function tick(dt) {
     const r = G.race;
     if (G.state === 'count') {
@@ -3540,7 +4738,7 @@ function makeCat() {
       for (const c of cars) (c.ski ? stepSkier : stepCar)(c, idle, dt);
       return;
     }
-    const pin = G.auto && r ? aiInput(player, r.R, 1, dt) : readInput();
+    const pin = G.auto && (r || G.autoR) ? aiInput(player, r ? r.R : G.autoR, 1, dt) : readInput();   // G.autoR: serbest sürüşte sınama rotası
     const step = player.ski ? stepSkier : stepCar;
     if (r && r.done) { step(player, idle, dt); }
     else { step(player, pin, dt); if (r && !G.auto) advance(player, r.R); }
@@ -3565,6 +4763,10 @@ function makeCat() {
         }
         if (G.auto && player.stuck > 2.5) resetToRoute(player, r.R, 0);
       } else { r.doneT += dt; }
+    }
+    if (!r && TRF.hedef > 0) {
+      trafficTick(dt, player, TCAM);
+      if (TRF.honk) { korna(TRF.honk); TRF.honk = null; }
     }
     if (G.goal && G.state === 'free') goalTick(dt);
     if (player.hit > 4) { thud(player.hit); }
@@ -3757,7 +4959,9 @@ function makeCat() {
       if (G.state === 'race' && G.race.done && G.race.doneT > 2.4) showResult();
     }
     for (const c of cars) (c.ski ? poseSkier : poseCar)(c, dt);
+    if (driving) for (const c of TRF.act) poseCar(c, dt);
     const f = updateCamera(dt);
+    camera.getWorldDirection(_cd); TCAM.x = camera.position.x; TCAM.z = camera.position.z; TCAM.fx = _cd.x; TCAM.fz = _cd.z;
     focus.set(Math.round(f.x / 4) * 4, Math.round(f.y / 4) * 4, Math.round(f.z / 4) * 4);
     sun.target.position.copy(focus); sun.position.copy(focus).addScaledVector(SUN, 420);
     env.sky.position.copy(camera.position);
@@ -3768,7 +4972,7 @@ function makeCat() {
     const pulse = 0.28 + Math.sin(G.t * 4) * 0.08;
     beacon1.material.opacity = pulse;
     for (const ct of cats) if (ct.mesh.visible) ct.mesh.rotation.y = G.t * 1.2;
-    if (G.state === 'cook') cookTick(dt);
+    if (G.state === 'cook') MUTFAK.tick(dt);
     updateDust(dt, driving);
     if (driving) { updateHud(dt); drawMini(); }
     if (driving || G.state === 'result') updateAudio(driving);
@@ -3797,10 +5001,10 @@ function makeCat() {
     G, EVENTS, STORY, S, startStory, nextLine, loadRegion, get bolge() { return REGION.id; }, get player() { return player; }, get cars() { return cars; }, startEvent, startFree, tick,
     sim(sec) { const n = Math.round(sec / STEP); for (let i = 0; i < n; i++) { if (G.state === 'free' || G.state === 'race' || G.state === 'count') tick(STEP); } },
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
-    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, mobil: MOBIL, get mutfak() { return M; }, cookTick, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
+    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, mobil: MOBIL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     ayar: () => ({ kalite: AYAR.kalite, golge: renderer.shadowMap.enabled, golgeBoyu: sun.shadow.mapSize.x, piksel: renderer.getPixelRatio(), ses: AYAR.ses, kazanc: masterGain() }),
     look(x, y, z, tx, ty, tz) { G.state = 'menu'; G.resume = null; G.freeze = [x, y, z, tx, ty, tz]; },
-    bench(n) { const gl = renderer.getContext(), t0 = performance.now(); for (let i = 0; i < n; i++) { renderer.render(scene, camera); gl.finish(); } return { ms: (performance.now() - t0) / n, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }; },
+    bench(n) { const gl = renderer.getContext(), t0 = performance.now(); for (let i = 0; i < n; i++) { renderer.render(scene, camera); gl.finish(); } return { ms: (performance.now() - t0) / n, calls: renderer.info.render.calls, tris: renderer.info.render.triangles, geo: renderer.info.memory.geometries, tex: renderer.info.memory.textures, prog: renderer.info.programs.length }; },
   };
 
   initDust();
