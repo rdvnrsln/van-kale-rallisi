@@ -161,6 +161,21 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
 #ayar-ses-n { font-family: var(--f-baslik); font-weight: 700; font-size: 22px; font-variant-numeric: tabular-nums; min-width: 3ch; }
 .kucuk-dugme { font-size: 16px; padding: 8px 16px 9px; }
 
+/* ---------- mutfak ---------- */
+#mutfak { display: flex; align-items: center; justify-content: center; background: rgba(11, 22, 34, 0.86); overflow-y: auto; touch-action: pan-y; }
+.mutfak-ic { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 12px; }
+.tarif { display: flex; flex-wrap: wrap; gap: 8px; }
+.tarif span { border: 1px solid var(--cizgi); padding: 5px 11px 6px; font-family: var(--f-baslik); font-weight: 600; font-size: 18px; color: var(--soluk); }
+.tarif span.sira { border-color: var(--kehribar); color: var(--kehribar); }
+.tarif span.tamam { background: var(--gol); border-color: var(--gol); color: #062a30; }
+.cubuk { height: 8px; background: rgba(243, 239, 230, 0.14); }
+#mutfak-sure { height: 100%; width: 100%; background: var(--kehribar); }
+.izgara { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.izgara button { background: var(--panel); border: 1px solid var(--cizgi); padding: 14px 6px; min-height: 64px; font-family: var(--f-baslik); font-weight: 600; font-size: 19px; line-height: 1.15; }
+.izgara button:hover { border-color: var(--kehribar); }
+.izgara button:disabled { opacity: 0.35; }
+.izgara button.yanlis { border-color: #ff5a47; color: #ff5a47; }
+
 /* ---------- konuşma ---------- */
 #konusma { display: flex; align-items: flex-end; background: linear-gradient(0deg, rgba(11, 22, 34, 0.94) 0, rgba(11, 22, 34, 0.8) 210px, rgba(11, 22, 34, 0) 430px); }
 .konusma-ic { width: 100%; max-width: 660px; display: flex; flex-direction: column; gap: 8px; padding-bottom: 8px; }
@@ -319,6 +334,17 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
   </div>
 </div>
 
+<div id="mutfak" class="kat" hidden>
+  <div class="mutfak-ic">
+    <div class="etiket konum" id="mutfak-sira"></div>
+    <h2 id="mutfak-yemek" class="ayar-baslik"></h2>
+    <div id="mutfak-tarif" class="tarif"></div>
+    <div class="cubuk"><div id="mutfak-sure"></div></div>
+    <div id="mutfak-izgara" class="izgara"></div>
+    <p class="kucuk" data-i18n="mutfak.ipucu">Tarifteki malzemeleri sırayla seç. Tuşlar: 1–9.</p>
+  </div>
+</div>
+
 <div id="konusma" class="kat" hidden>
   <div class="konusma-ic">
     <div id="konusma-bolum" class="etiket konum"></div>
@@ -368,6 +394,11 @@ const DIL = {
     'menu.kasa': 'Kasa: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · kasa {1} ₺', 'menu.arac': 'Araç', 'arac.araba': 'Araba', 'arac.trike': 'Üç teker',
     'arac.motor': 'Motorlu üç teker', 'kilit.araba': 'Bu etkinlik araba ister. Araba {0} ₺.', 'kilit.kisa': 'araba gerekli',
     'al.yetmez': '{0} ₺ gerekli, kasada {1} ₺ var', 'hikaye.biriktir': '{0} ₺ biriktir', 'hikaye.biriktir.alt': 'Kasada {0} ₺ var. Mavi sütundan yük işi al.', 'ayar.testAc': 'Test: tüm araçları aç',
+    'ev.kahvalti': 'Van Kahvaltısı', 'ev.kahvalti.alt': 'Mutfakta beş tabak: murtuğa, kavut, otlu peynir, bal kaymak, çay. Malzemeleri sırayla seç',
+    'pisir.veri': '5 tabak · süreye karşı · mutfak', 'mutfak.siparis': 'Tabak {0}/{1}', 'mutfak.lezzet': 'Lezzet {0}/100', 'mutfak.yandi': 'Sofra dağıldı',
+    'mutfak.ipucu': 'Tarifteki malzemeleri sırayla seç. Klavyede 1–9 tuşları da çalışır.',
+    'mutfak.malzeme': ['Tereyağı', 'Un', 'Yumurta', 'Bal', 'Kaymak', 'Ceviz', 'Otlu peynir', 'Domates', 'Salatalık', 'Kavut unu', 'Çay', 'Şeker', 'Zeytin', 'Ekmek'],
+    'mutfak.yemek': ['Murtuğa', 'Kavut', 'Otlu peynir tabağı', 'Bal kaymak', 'Çay'],
     'zemin.asfalt': 'Asfalt', 'zemin.toprak': 'Toprak', 'zemin.kaya': 'Kaya', 'zemin.kar': 'Kar',
     'menu.konum': 'İpekyolu · Tuşba — 38,50° K 43,34° D', 'menu.baslik': 'Van <em>Kale</em> Rallisi',
     'menu.tanitim': 'Gerçek Van sokaklarında, kalenin gölgesinde yarış. Göl kıyısından Eski Van’a kadar şehir açık.',
@@ -414,6 +445,9 @@ const DIL = {
       { ad: 'Dönüş', hedef: 'Kedi Evi', konus: [
         ['Halil Usta', 'Arabayı alın terinle aldın, helal olsun. Motorunu ben toparladım, anahtar üstünde.'],
         ['Halil Usta', 'Önce arabayı tanı, şehri hatırla. Dükkâna kadar sür; Kedi Evi’nin karşısındayım.']] },
+      { ad: 'Sofra', konus: [
+        ['Zelal', 'İskeledeki kafile Van kahvaltısı istiyor. Sofrayı önce sen kuracaksın: murtuğa, kavut, otlu peynir, bal kaymak, çay.'],
+        ['Halil Usta', 'Tarifte sıra önemli evlat. Murtuğada önce tereyağı erir, sonra un, en son yumurta. Acele et ama karıştırma.']] },
       { ad: 'Kahvaltı', hedef: 'İskele', konus: [
         ['Zelal', 'Araban oldu, işler büyüdü. Dükkânın hesabı yine de pek iyi değil.'],
         ['Zelal', 'İskelede Tebriz’den gelen bir tur kafilesi kahvaltı bekliyor: otlu peynir, murtuğa, kavut. Soğumadan yetiştirirsen bu ayın kirası çıkar.']],
@@ -475,6 +509,11 @@ const DIL = {
     'menu.kasa': 'Savings: ₺{0}', 'sonuc.kazanc': '+₺{0} · savings ₺{1}', 'menu.arac': 'Vehicle', 'arac.araba': 'Car', 'arac.trike': 'Cargo trike',
     'arac.motor': 'Motor trike', 'kilit.araba': 'This event needs a car. The car costs ₺{0}.', 'kilit.kisa': 'car needed',
     'al.yetmez': 'You need ₺{0}; you have ₺{1}', 'hikaye.biriktir': 'Save ₺{0}', 'hikaye.biriktir.alt': 'You have ₺{0}. Take a cargo job at the blue column.', 'ayar.testAc': 'Test: unlock all vehicles',
+    'ev.kahvalti': 'Van Breakfast', 'ev.kahvalti.alt': 'Five plates in the kitchen: murtuğa, kavut, herb cheese, honey and clotted cream, tea. Pick the ingredients in order',
+    'pisir.veri': '5 plates · against the clock · kitchen', 'mutfak.siparis': 'Plate {0}/{1}', 'mutfak.lezzet': 'Taste {0}/100', 'mutfak.yandi': 'The table fell apart',
+    'mutfak.ipucu': 'Pick the ingredients of the recipe in order. Keys 1–9 also work.',
+    'mutfak.malzeme': ['Butter', 'Flour', 'Egg', 'Honey', 'Clotted cream', 'Walnut', 'Herb cheese', 'Tomato', 'Cucumber', 'Kavut flour', 'Tea', 'Sugar', 'Olives', 'Bread'],
+    'mutfak.yemek': ['Murtuğa', 'Kavut', 'Herb cheese plate', 'Honey and clotted cream', 'Tea'],
     'zemin.asfalt': 'Asphalt', 'zemin.toprak': 'Dirt', 'zemin.kaya': 'Rock', 'zemin.kar': 'Snow',
     'menu.konum': 'İpekyolu · Tuşba — 38.50° N 43.34° E', 'menu.baslik': 'Van <em>Castle</em> Rally',
     'menu.tanitim': 'Race on the real streets of Van, in the shadow of the castle. The city is open from the lake shore to Old Van.',
@@ -521,6 +560,9 @@ const DIL = {
       { ad: 'The Return', hedef: 'the Cat House', konus: [
         ['Halil Usta', 'You paid for the car with your own sweat. Well done. I tuned the engine and the key is in it.'],
         ['Halil Usta', 'First learn the car and remember the city. Drive to the shop; I am across from the Cat House.']] },
+      { ad: 'The Table', konus: [
+        ['Zelal', 'The group at the pier wants a Van breakfast. First you set the table: murtuğa, kavut, herb cheese, honey and clotted cream, tea.'],
+        ['Halil Usta', 'The order matters, son. For murtuğa the butter melts first, then the flour, and the egg goes last. Be quick, but do not mix them up.']] },
       { ad: 'Breakfast', hedef: 'the Pier', konus: [
         ['Zelal', 'You have a car now, and the work is bigger. The books for the shop still do not look good.'],
         ['Zelal', 'A tour group from Tabriz is waiting for breakfast at the pier: herb cheese, murtuğa, kavut. Deliver it warm and this month’s rent is paid.']],
@@ -582,6 +624,11 @@ const DIL = {
     'menu.kasa': 'پس‌انداز: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · پس‌انداز {1} ₺', 'menu.arac': 'وسیله', 'arac.araba': 'خودرو', 'arac.trike': 'سه‌چرخه',
     'arac.motor': 'سه‌چرخه موتوری', 'kilit.araba': 'این مسابقه خودرو می‌خواهد. قیمت خودرو {0} ₺ است.', 'kilit.kisa': 'خودرو لازم است',
     'al.yetmez': '{0} ₺ لازم است؛ در پس‌انداز {1} ₺ داری', 'hikaye.biriktir': '{0} ₺ پس‌انداز کن', 'hikaye.biriktir.alt': 'در پس‌انداز {0} ₺ داری. از ستون آبی کار باربری بگیر.', 'ayar.testAc': 'آزمایش: همه وسیله‌ها را باز کن',
+    'ev.kahvalti': 'صبحانه وان', 'ev.kahvalti.alt': 'پنج بشقاب در آشپزخانه: مورتوغا، کاووت، پنیر سبزی، عسل و سرشیر، چای. مواد را به ترتیب انتخاب کن',
+    'pisir.veri': '5 بشقاب · با زمان · آشپزخانه', 'mutfak.siparis': 'بشقاب {0}/{1}', 'mutfak.lezzet': 'مزه {0}/100', 'mutfak.yandi': 'سفره به هم ریخت',
+    'mutfak.ipucu': 'مواد دستور را به ترتیب انتخاب کن. کلیدهای 1 تا 9 هم کار می‌کنند.',
+    'mutfak.malzeme': ['کره', 'آرد', 'تخم‌مرغ', 'عسل', 'سرشیر', 'گردو', 'پنیر سبزی', 'گوجه', 'خیار', 'آرد کاووت', 'چای', 'شکر', 'زیتون', 'نان'],
+    'mutfak.yemek': ['مورتوغا', 'کاووت', 'بشقاب پنیر سبزی', 'عسل و سرشیر', 'چای'],
     'zemin.asfalt': 'آسفالت', 'zemin.toprak': 'خاکی', 'zemin.kaya': 'سنگ', 'zemin.kar': 'برف',
     'menu.konum': 'ایپک‌یولو · توشبا — 38.50° شمالی، 43.34° شرقی', 'menu.baslik': 'رالی <em>قلعه</em> وان',
     'menu.tanitim': 'در خیابان‌های واقعی وان، زیر سایه قلعه مسابقه بده. شهر از ساحل دریاچه تا وان قدیم باز است.',
@@ -629,6 +676,9 @@ const DIL = {
       { ad: 'بازگشت', hedef: 'خانه گربه', konus: [
         ['خلیل اوستا', 'خودرو را با عرق پیشانی خودت خریدی، آفرین. موتورش را سرحال کردم و سوئیچ رویش است.'],
         ['خلیل اوستا', 'اول خودرو را بشناس و شهر را به یاد بیاور. تا مغازه بران؛ روبه‌روی خانه گربه هستم.']] },
+      { ad: 'سفره', konus: [
+        ['زلال', 'گروهِ اسکله صبحانه وان می‌خواهد. اول سفره را تو می‌چینی: مورتوغا، کاووت، پنیر سبزی، عسل و سرشیر، چای.'],
+        ['خلیل اوستا', 'ترتیب مهم است پسرم. در مورتوغا اول کره آب می‌شود، بعد آرد، آخر سر تخم‌مرغ. عجله کن اما قاطی نکن.']] },
       { ad: 'صبحانه', hedef: 'اسکله', konus: [
         ['زلال', 'حالا خودرو داری و کار بزرگ‌تر شده. حساب مغازه هنوز هم چندان خوب نیست.'],
         ['زلال', 'در اسکله یک گروه گردشگر از تبریز منتظر صبحانه‌اند: پنیر سبزی، مورتوغا و کاووت. اگر پیش از سرد شدن برسانی، کرایه این ماه درمی‌آید.']],
@@ -2373,6 +2423,8 @@ function makeCat() {
     { id: 'iskele', bolge: 'van', ad: 'İskele Sprinti', alt: 'Melen Caddesi, kalenin kuzey yüzü, Van Gölü iskelesi', laps: 1, ai: 4, zemin: 'Asfalt' },
     // üç tekerli bisikletle yük taşıma: Eski Van yolunda al, 700 m ötede teslim et; kazanç kasaya girer
     { id: 'yuk-tasima', bolge: 'van', ozel: 'servis', yuk: true, arac: 'trike', rota: 'eski-van', markerS: 30, al: 60, birak: 760, madalya: [6.6, 5.2, 3.6], odeme: 250, laps: 1, ai: 0, solo: true, zemin: 'Toprak' },
+    // Van kahvaltısı: mutfakta beş tabak, malzemeler doğru sırayla; kazanç kasaya girer (araba gerektirmez)
+    { id: 'kahvalti', bolge: 'van', ozel: 'pisir', arac: 'yok', rota: 'eski-van', nokta: [961, 91], odeme: 300, laps: 1, ai: 0, solo: true, zemin: 'Asfalt' },
     { id: 'tirmanis', bolge: 'van', ad: 'Kale Tırmanışı', alt: 'Batı ucundan sırta çık, burçtaki bayrağa ulaş', laps: 1, ai: 0, solo: true, zemin: 'Kaya' },
     { id: 'abali-yolu', bolge: 'abali', ad: 'Abalı Yolu', alt: 'Ana yoldan köyün içinden kayak merkezine tırmanış', laps: 1, ai: 3, zemin: 'Asfalt' },
     { id: 'pist-inisi', bolge: 'abali', ad: 'Pist İnişi', alt: 'Zirve istasyonundan zikzaklarla aşağı, kar üstünde', laps: 1, ai: 2, zemin: 'Kar' },
@@ -2651,7 +2703,7 @@ function makeCat() {
   function buildMarkers() {
     for (const ev of EVENTS) {
       if (ev.bolge !== REGION.id) continue;
-      const p = routePoint(ev.R, ev.markerS || 2);
+      const p = ev.nokta ? nearRoad(ev.nokta[0], ev.nokta[1]) : routePoint(ev.R, ev.markerS || 2);
       const m = beam(3, 70, LIN(ev.ozel ? '#22c3d6' : '#f2a93b'), 0.42, world);
       const x = p.x, z = p.z;
       m.position.set(x, groundH(x, z) - 0.5, z);
@@ -2845,6 +2897,7 @@ function makeCat() {
     const a = hit(0), b = hit(1), y = hit(3), st = hit(9);
     if (a || st) initAudio();
     if (G.state === 'talk') { if (a) nextLine(); return; }
+    if (G.state === 'cook') return;
     if (G.state === 'menu') { if (!$('ayarlar').hidden) { if (b || st) closeSettings(); } else if (st && G.resume) resume(); else if (a) (G.resume ? resume : startStory)(); return; }
     if (G.state === 'result') { if (a) { const q = $('btn-hikaye-devam').hidden ? $('btn-tekrar') : $('btn-hikaye-devam'); q.click(); } return; }
     if (st) showMenu(true);
@@ -2858,6 +2911,7 @@ function makeCat() {
     keys[e.code] = true;
     initAudio();
     if (G.state === 'talk') { if (e.code === 'Enter' || e.code === 'Space' || e.code === 'NumpadEnter') nextLine(); return; }
+    if (G.state === 'cook') { const d = /^(Digit|Numpad)([1-9])$/.exec(e.code); if (d) { const b = $('mutfak-izgara').children[+d[2] - 1]; if (b) b.click(); } else if (e.code === 'Escape') showMenu(false); return; }
     if (G.state === 'menu' || G.state === 'result') {
       if (e.code === 'Escape' && !$('ayarlar').hidden) closeSettings();
       else if (e.code === 'Escape' && G.state === 'menu' && G.resume) resume();
@@ -2906,7 +2960,7 @@ function makeCat() {
       const km = (((ev.R ? ev.R.L : ev.len) * ev.laps) / 1000).toFixed(1).replace('.', LANG === 'tr' ? ',' : '.');
       b.innerHTML = '<span class="etk-ad"></span><span class="etk-alt"></span><span class="etk-veri"></span>';
       b.children[0].textContent = ev.ad; b.children[1].textContent = ev.alt;
-      b.children[2].textContent = km + ' ' + T('etk.km') + ' · ' + ev.zemin + (ev.laps > 1 ? ' · ' + T('etk.tur', ev.laps) : '') + ' · ' + (ev.solo ? T('etk.zamanaKarsi') : T('etk.rakip', ev.ai)) + (ev.best ? ' · ' + T('etk.enIyi', fmt(ev.best)) : '');
+      b.children[2].textContent = ev.ozel === 'pisir' ? T('pisir.veri') + (ev.best ? ' · ' + T('etk.enIyi', fmt(ev.best)) : '') : km + ' ' + T('etk.km') + ' · ' + ev.zemin + (ev.laps > 1 ? ' · ' + T('etk.tur', ev.laps) : '') + ' · ' + (ev.solo ? T('etk.zamanaKarsi') : T('etk.rakip', ev.ai)) + (ev.best ? ' · ' + T('etk.enIyi', fmt(ev.best)) : '');
       if (!ev.arac && !owns('car')) { b.classList.add('kilitli'); b.children[2].textContent += ' · ' + T('kilit.kisa'); }
       b.addEventListener('click', async () => { initAudio(); if (!canStart(ev)) return; G.lastStory = 0; await loadRegion(ev.bolge); if (REGION.id === ev.bolge) startEvent(ev); });
       list.appendChild(b);
@@ -2917,7 +2971,7 @@ function makeCat() {
     G.state = 'menu';
     buildMenu();
     $('menu').hidden = false; $('hud').hidden = true; $('sonuc').hidden = true;
-    $('btn-devam').hidden = !G.resume; $('konusma').hidden = true; $('ayarlar').hidden = true;
+    $('btn-devam').hidden = !G.resume; $('konusma').hidden = true; $('ayarlar').hidden = true; $('mutfak').hidden = true;
     $('btn-hikaye').textContent = S.i >= STORY.length ? T('menu.hikaye.bastan') : S.i === 0 ? T('menu.hikaye') : T('menu.hikaye.bolum', S.i + 1, STORY[S.i].ad);
     updateAudio(false);
     ($('btn-devam').hidden ? $('btn-hikaye') : $('btn-devam')).focus();
@@ -2944,6 +2998,7 @@ function makeCat() {
   function clearRace() {
     G.race = null; G.goal = null; flashLater = null;
     if (player.ski) setSki(false);
+    $('mutfak').hidden = true;
     if (TUR && TUR.parent) TUR.visible = false;
     for (const r of rivals) r.mesh.visible = false;
     cars = [player];
@@ -2967,6 +3022,7 @@ function makeCat() {
   }
   function startEvent(ev) {
     if (ev.ozel === 'servis') { startServis(ev); return; }
+    if (ev.ozel === 'pisir') { startCooking(ev); return; }
     clearRace();
     setVehicle('car');
     G.lastEvent = ev;
@@ -3145,6 +3201,7 @@ function makeCat() {
       ['Halil Usta', 'Hoş geldin evlat. Yedi yıl oldu. Van aynı Van, yollar biraz daha bozuk, o kadar.'],
       ['Halil Usta', 'Araba hazır, anahtar üstünde. Ama önce şehri hatırla. Dükkâna gel; Kedi Evi’nin karşısındayım.']],
       gorev: { tip: 'git', bas: [2300, 158], hedef: [961, 91], ad: 'Kedi Evi', sure: 0 } },
+    { ad: 'Sofra', konus: [], gorev: { tip: 'ozel', id: 'kahvalti' } },
     { ad: 'Kahvaltı', konus: [
       ['Zelal', 'Demek ustanın yeğeni sensin. Ben Zelal, dükkânın hesabını ben tutuyorum. Hesap da pek iyi değil.'],
       ['Zelal', 'İskelede Tebriz’den gelen bir tur kafilesi kahvaltı bekliyor: otlu peynir, murtuğa, kavut. Soğumadan yetiştirirsen bu ayın kirası çıkar.']],
@@ -3196,6 +3253,7 @@ function makeCat() {
       store.set('sahip', SAHIP);
     }
   }
+  if ((store.get('surum', 1) | 0) < 2) { if (S.i > 4) { S.i = clamp(S.i + 1, 0, STORY.length); store.set('story', S.i); } store.set('surum', 2); }   // Sofra bölümü araya girdi
   const paraReady = () => { const ch = STORY[S.i]; return !!(ch && ch.gorev.tip === 'para' && (G.para || 0) >= ch.gorev.hedef); };
   function nearRoad(x, z) {
     for (let r = 0; r <= 200; r += 12) for (let a = 0; a < 8; a++) {
@@ -3343,6 +3401,76 @@ function makeCat() {
     const devam = !!G.lastStory || paraReady();
     $('btn-hikaye-devam').hidden = !devam;
     $('btn-tekrar').textContent = T('sonuc.tekrar');
+    (devam ? $('btn-hikaye-devam') : $('btn-tekrar')).focus();
+  }
+
+  // ---------------------------------------------------------------- mutfak: Van kahvaltısı
+  // Beş tabak sırayla gelir. Tarifteki malzemeler ızgaradan doğru sırayla seçilir; yanlış seçim ve süre aşımı lezzeti düşürür.
+  const YEMEK = [[0, 1, 2], [9, 0, 3], [6, 7, 8], [4, 3, 5], [10, 11]];   // malzeme sıraları (mutfak.malzeme dizinleri)
+  let M = null;
+  function startCooking(ev) {
+    clearRace();
+    G.lastEvent = ev; G.state = 'cook'; G.near = null;
+    for (const el of ['menu', 'hud', 'sonuc', 'konusma']) $(el).hidden = true;
+    $('mutfak').hidden = false;
+    M = { ev, i: 0, adim: 0, t: 0, sure: 11, lezzet: 100, toplam: 0, rnd: rng(Math.floor(G.t * 1000) + 7) };
+    nextDish();
+  }
+  function nextDish() {
+    if (M.i >= YEMEK.length) { finishCooking(); return; }
+    const tarif = YEMEK[M.i], ad = TA('mutfak.malzeme');
+    M.adim = 0; M.t = 0;
+    $('mutfak-sira').textContent = T('mutfak.siparis', M.i + 1, YEMEK.length) + ' · ' + T('mutfak.lezzet', M.lezzet);
+    $('mutfak-yemek').textContent = TA('mutfak.yemek')[M.i];
+    const tr = $('mutfak-tarif'); tr.innerHTML = '';
+    tarif.forEach((k, n) => { const sp = document.createElement('span'); sp.textContent = n + 1 + '. ' + ad[k]; if (n === 0) sp.className = 'sira'; tr.appendChild(sp); });
+    const set = tarif.slice();
+    while (set.length < 9) { const k = Math.floor(M.rnd() * ad.length); if (set.indexOf(k) < 0) set.push(k); }
+    for (let n = set.length - 1; n > 0; n--) { const j = Math.floor(M.rnd() * (n + 1)), q = set[n]; set[n] = set[j]; set[j] = q; }
+    const iz = $('mutfak-izgara'); iz.innerHTML = '';
+    set.forEach((k, n) => {
+      const b = document.createElement('button'); b.type = 'button'; b.id = 'malzeme-' + n; b.setAttribute('data-k', k); b.textContent = ad[k];
+      b.addEventListener('click', () => tapIngredient(k, b));
+      iz.appendChild(b);
+    });
+  }
+  function tapIngredient(k, b) {
+    if (G.state !== 'cook') return;
+    initAudio();
+    const tarif = YEMEK[M.i], chips = $('mutfak-tarif').children;
+    if (k === tarif[M.adim]) {
+      chips[M.adim].className = 'tamam'; b.disabled = true;
+      beep(700 + M.adim * 120, 0.1, 0.22, 'triangle');
+      if (++M.adim >= tarif.length) { beep(1320, 0.25, 0.25, 'triangle', 0.08); M.i++; nextDish(); } else chips[M.adim].className = 'sira';
+    } else {
+      M.lezzet = Math.max(0, M.lezzet - 12);
+      b.className = 'yanlis'; setTimeout(() => { b.className = ''; }, 350);
+      beep(170, 0.18, 0.25, 'square');
+      $('mutfak-sira').textContent = T('mutfak.siparis', M.i + 1, YEMEK.length) + ' · ' + T('mutfak.lezzet', M.lezzet);
+    }
+  }
+  function cookTick(dt) {
+    M.t += dt; M.toplam += dt;
+    $('mutfak-sure').style.width = Math.max(0, 100 * (1 - M.t / M.sure)).toFixed(1) + '%';
+    if (M.t > M.sure) { M.lezzet = Math.max(0, M.lezzet - 20); beep(170, 0.25, 0.25, 'square'); M.i++; nextDish(); }   // tabak yetişmedi
+  }
+  function finishCooking() {
+    const ev = M.ev, t = M.toplam, lz = M.lezzet;
+    const kazanc = Math.round(ev.odeme * (lz / 100) * (t < 28 ? 1.5 : t < 40 ? 1.2 : 1));
+    addMoney(kazanc);
+    if (lz >= 45 && (!ev.best || t < ev.best)) { ev.best = t; store.set('best.' + ev.id, t); }
+    G.state = 'result';
+    $('mutfak').hidden = true; $('sonuc').hidden = false;
+    $('sonuc-ad').textContent = ev.ad;
+    $('sonuc-baslik').textContent = T(lz >= 85 ? 'sonuc.altin' : lz >= 65 ? 'sonuc.gumus' : lz >= 45 ? 'sonuc.bronz' : 'mutfak.yandi');
+    $('sonuc-not').textContent = T('sonuc.kazanc', para(kazanc), para(G.para)) + ' · ' + T('mutfak.lezzet', lz);
+    const tb = $('sonuc-tablo'); tb.innerHTML = '';
+    const tr = document.createElement('tr'); tr.className = 'ben';
+    for (const v of ['1.', player.name, fmt(t)]) { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); }
+    tb.appendChild(tr);
+    const devam = (!!G.lastStory && lz >= 45) || paraReady();
+    $('btn-hikaye-devam').hidden = !devam;
+    $('btn-tekrar').textContent = T(G.lastStory && lz < 45 ? 'sonuc.tekrarDene' : 'sonuc.tekrar');
     (devam ? $('btn-hikaye-devam') : $('btn-tekrar')).focus();
   }
 
@@ -3585,6 +3713,7 @@ function makeCat() {
     const pulse = 0.28 + Math.sin(G.t * 4) * 0.08;
     beacon1.material.opacity = pulse;
     for (const ct of cats) if (ct.mesh.visible) ct.mesh.rotation.y = G.t * 1.2;
+    if (G.state === 'cook') cookTick(dt);
     updateDust(dt, driving);
     if (driving) { updateHud(dt); drawMini(); }
     if (driving || G.state === 'result') updateAudio(driving);
