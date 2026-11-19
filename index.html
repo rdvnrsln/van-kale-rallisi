@@ -111,6 +111,7 @@ h1 em { font-style: inherit; color: var(--kehribar); }
 .ikincil:hover { border-color: var(--kehribar); color: var(--kehribar); }
 #etkinlikler { display: flex; flex-direction: column; border-bottom: 1px solid var(--cizgi); }
 .bolge-sec { display: flex; flex-direction: column; gap: 6px; }
+.kilitli { opacity: 0.62; }
 .kasa { font-family: var(--f-baslik); font-weight: 700; font-size: 22px; color: var(--kehribar); font-variant-numeric: tabular-nums; }
 .etk-bolge { color: var(--kehribar); padding: 10px 8px 4px; border-top: 1px solid var(--cizgi); }
 .etk { display: grid; gap: 1px; text-align: start; background: transparent; border: 0; border-top: 1px solid var(--cizgi); padding: 10px 8px 11px; }
@@ -235,10 +236,11 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
       </div>
     </div>
     <div class="bolge-sec">
-      <div class="etiket" id="lbl-arac" data-i18n="menu.arac">Serbest sürüş aracı</div>
+      <div class="etiket" id="lbl-arac" data-i18n="menu.arac">Araç</div>
       <div class="seg" role="group" aria-labelledby="lbl-arac">
-        <button type="button" id="arac-araba" data-arac="car" aria-pressed="true" data-i18n="arac.araba">Araba</button>
-        <button type="button" id="arac-trike" data-arac="trike" aria-pressed="false" data-i18n="arac.trike">Üç teker</button>
+        <button type="button" id="arac-trike" data-arac="trike" aria-pressed="true">Üç teker</button>
+        <button type="button" id="arac-motor" data-arac="motor" aria-pressed="false">Motorlu üç teker</button>
+        <button type="button" id="arac-araba" data-arac="car" aria-pressed="false">Araba</button>
       </div>
     </div>
     <div>
@@ -311,6 +313,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
         <div class="ana-dugmeler"><button id="btn-sifirla-evet" class="birincil kucuk-dugme" type="button" data-i18n="ayar.evetSil">Evet, sil</button><button id="btn-sifirla-hayir" class="ikincil kucuk-dugme" type="button" data-i18n="ayar.vazgec">Vazgeç</button></div>
       </div>
       <p class="kucuk" id="sifirla-bitti" hidden data-i18n="ayar.silindi">İlerleme silindi.</p>
+      <div class="ana-dugmeler"><button id="btn-test-ac" class="ikincil kucuk-dugme" type="button" data-i18n="ayar.testAc">Test: tüm araçları aç</button></div>
     </div>
     <div class="ana-dugmeler"><button id="btn-ayar-geri" class="birincil" type="button" data-i18n="ayar.geri">Geri</button></div>
   </div>
@@ -362,7 +365,9 @@ const DIL = {
     'yuk.al': 'Yükü al', 'yuk.birak': 'Teslimat', 'yuk.basla': 'Yük taşıma', 'yuk.basla.alt': 'Mavi sütunda dur, çuvalları yükle',
     'yuk.bindi': 'Yük kasada', 'yuk.bindi.alt': 'Teslimat noktasına sür; çarparsan yük zarar görür', 'yuk.konfor': 'Yük {0}/100',
     'yuk.sarsildi': 'Yük hasar gördü', 'yuk.vardi': 'Yük teslim edildi',
-    'menu.kasa': 'Kasa: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · kasa {1} ₺', 'menu.arac': 'Serbest sürüş aracı', 'arac.araba': 'Araba', 'arac.trike': 'Üç teker',
+    'menu.kasa': 'Kasa: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · kasa {1} ₺', 'menu.arac': 'Araç', 'arac.araba': 'Araba', 'arac.trike': 'Üç teker',
+    'arac.motor': 'Motorlu üç teker', 'kilit.araba': 'Bu etkinlik araba ister. Araba {0} ₺.', 'kilit.kisa': 'araba gerekli',
+    'al.yetmez': '{0} ₺ gerekli, kasada {1} ₺ var', 'hikaye.biriktir': '{0} ₺ biriktir', 'hikaye.biriktir.alt': 'Kasada {0} ₺ var. Mavi sütundan yük işi al.', 'ayar.testAc': 'Test: tüm araçları aç',
     'zemin.asfalt': 'Asfalt', 'zemin.toprak': 'Toprak', 'zemin.kaya': 'Kaya', 'zemin.kar': 'Kar',
     'menu.konum': 'İpekyolu · Tuşba — 38,50° K 43,34° D', 'menu.baslik': 'Van <em>Kale</em> Rallisi',
     'menu.tanitim': 'Gerçek Van sokaklarında, kalenin gölgesinde yarış. Göl kıyısından Eski Van’a kadar şehir açık.',
@@ -397,11 +402,20 @@ const DIL = {
     'rakip': ['Tuşba', 'Erek', 'Edremit', 'Gevaş'],
     'cats': ['İç Kale', 'Kedi Evi', 'Van Müzesi', 'İskele', 'Hüsrevpaşa Camii', 'Ulu Cami', 'Sahil Yolu Kavşağı', 'Höyük', 'Melen Caddesi', 'İskele Caddesi'],
     'story': [
+      { ad: 'Üç teker', konus: [
+        ['Halil Usta', 'Hoş geldin evlat. Yedi yıl oldu. İş yok, para yok; ama babandan kalan üç teker hâlâ avluda duruyor.'],
+        ['Halil Usta', 'Kasasını eski tahtalarla onardım. Çarşıdan çuval taşı, biriktir. Bu şehirde herkes böyle başlar.']] },
+      { ad: 'Motor', konus: [
+        ['Zelal', 'Ben Zelal; ustanın hesabını ben tutarım. Pedalla günde üç sefer yaparsın, motorlu üç tekerle on.'],
+        ['Halil Usta', 'Avluda eski bir motorlu üç teker var. Dokuz yüz lirayı denkleştir, senin olsun.']] },
+      { ad: 'Araba', konus: [
+        ['Halil Usta', 'Motor sana yakıştı. Ama Tuşpa Kupası’na üç tekerle girilmez.'],
+        ['Zelal', 'Ustanın eski arabası üç bin lira. Yükleri motorla taşı, parayı biriktir. Kupanın ödülü dükkânın bir yıllık kirası.']] },
       { ad: 'Dönüş', hedef: 'Kedi Evi', konus: [
-        ['Halil Usta', 'Hoş geldin evlat. Yedi yıl oldu. Van aynı Van, yollar biraz daha bozuk, o kadar.'],
-        ['Halil Usta', 'Araba hazır, anahtar üstünde. Ama önce şehri hatırla. Dükkâna gel; Kedi Evi’nin karşısındayım.']] },
+        ['Halil Usta', 'Arabayı alın terinle aldın, helal olsun. Motorunu ben toparladım, anahtar üstünde.'],
+        ['Halil Usta', 'Önce arabayı tanı, şehri hatırla. Dükkâna kadar sür; Kedi Evi’nin karşısındayım.']] },
       { ad: 'Kahvaltı', hedef: 'İskele', konus: [
-        ['Zelal', 'Demek ustanın yeğeni sensin. Ben Zelal, dükkânın hesabını ben tutuyorum. Hesap da pek iyi değil.'],
+        ['Zelal', 'Araban oldu, işler büyüdü. Dükkânın hesabı yine de pek iyi değil.'],
         ['Zelal', 'İskelede Tebriz’den gelen bir tur kafilesi kahvaltı bekliyor: otlu peynir, murtuğa, kavut. Soğumadan yetiştirirsen bu ayın kirası çıkar.']],
         kayip: ['Zelal', 'Kahvaltı soğudu, kafile başka yere gitti. Bir daha dene; kalenin kuzeyinden geç, yol daha açık.'] },
       { ad: 'Eleme', konus: [
@@ -458,7 +472,9 @@ const DIL = {
     'yuk.al': 'Pick up the load', 'yuk.birak': 'Delivery', 'yuk.basla': 'Cargo run', 'yuk.basla.alt': 'Stop at the blue column and load the sacks',
     'yuk.bindi': 'The load is on', 'yuk.bindi.alt': 'Ride to the delivery point; each crash damages the load', 'yuk.konfor': 'Load {0}/100',
     'yuk.sarsildi': 'The load was damaged', 'yuk.vardi': 'Load delivered',
-    'menu.kasa': 'Savings: ₺{0}', 'sonuc.kazanc': '+₺{0} · savings ₺{1}', 'menu.arac': 'Free roam vehicle', 'arac.araba': 'Car', 'arac.trike': 'Cargo trike',
+    'menu.kasa': 'Savings: ₺{0}', 'sonuc.kazanc': '+₺{0} · savings ₺{1}', 'menu.arac': 'Vehicle', 'arac.araba': 'Car', 'arac.trike': 'Cargo trike',
+    'arac.motor': 'Motor trike', 'kilit.araba': 'This event needs a car. The car costs ₺{0}.', 'kilit.kisa': 'car needed',
+    'al.yetmez': 'You need ₺{0}; you have ₺{1}', 'hikaye.biriktir': 'Save ₺{0}', 'hikaye.biriktir.alt': 'You have ₺{0}. Take a cargo job at the blue column.', 'ayar.testAc': 'Test: unlock all vehicles',
     'zemin.asfalt': 'Asphalt', 'zemin.toprak': 'Dirt', 'zemin.kaya': 'Rock', 'zemin.kar': 'Snow',
     'menu.konum': 'İpekyolu · Tuşba — 38.50° N 43.34° E', 'menu.baslik': 'Van <em>Castle</em> Rally',
     'menu.tanitim': 'Race on the real streets of Van, in the shadow of the castle. The city is open from the lake shore to Old Van.',
@@ -493,11 +509,20 @@ const DIL = {
     'rakip': ['Tuşba', 'Erek', 'Edremit', 'Gevaş'],
     'cats': ['Inner Castle', 'Cat House', 'Van Museum', 'The Pier', 'Hüsrev Pasha Mosque', 'Great Mosque', 'Shore Road Junction', 'The Mound', 'Melen Street', 'İskele Street'],
     'story': [
+      { ad: 'Three Wheels', konus: [
+        ['Halil Usta', 'Welcome back, son. Seven years. No work and no money; but your father’s cargo tricycle is still in the yard.'],
+        ['Halil Usta', 'I fixed the bed with old planks. Carry sacks from the market and save. Everyone in this city starts like this.']] },
+      { ad: 'The Motor', konus: [
+        ['Zelal', 'I am Zelal; I keep the books for the shop. With pedals you do three runs a day. With a motor trike you do ten.'],
+        ['Halil Usta', 'There is an old motor trike in the yard. Bring nine hundred lira and it is yours.']] },
+      { ad: 'The Car', konus: [
+        ['Halil Usta', 'The motor suits you. But nobody enters the Tushpa Cup on three wheels.'],
+        ['Zelal', 'The old car costs three thousand lira. Carry loads with the motor and save. The cup prize is one year of rent for the shop.']] },
       { ad: 'The Return', hedef: 'the Cat House', konus: [
-        ['Halil Usta', 'Welcome back, son. Seven years. Van is the same Van; the roads are a little worse, that is all.'],
-        ['Halil Usta', 'The car is ready and the key is in it. But first, remember the city. Come to the shop; I am across from the Cat House.']] },
+        ['Halil Usta', 'You paid for the car with your own sweat. Well done. I tuned the engine and the key is in it.'],
+        ['Halil Usta', 'First learn the car and remember the city. Drive to the shop; I am across from the Cat House.']] },
       { ad: 'Breakfast', hedef: 'the Pier', konus: [
-        ['Zelal', 'So you are the nephew. I am Zelal. I keep the books for the shop, and the books do not look good.'],
+        ['Zelal', 'You have a car now, and the work is bigger. The books for the shop still do not look good.'],
         ['Zelal', 'A tour group from Tabriz is waiting for breakfast at the pier: herb cheese, murtuğa, kavut. Deliver it warm and this month’s rent is paid.']],
         kayip: ['Zelal', 'The breakfast went cold and the group left. Try again; go north of the castle, the road is clearer.'] },
       { ad: 'Qualifying', konus: [
@@ -554,7 +579,9 @@ const DIL = {
     'yuk.al': 'بار را بردار', 'yuk.birak': 'تحویل', 'yuk.basla': 'باربری', 'yuk.basla.alt': 'کنار ستون آبی بایست و گونی‌ها را بار کن',
     'yuk.bindi': 'بار روی سه‌چرخه است', 'yuk.bindi.alt': 'تا محل تحویل برو؛ هر برخورد به بار آسیب می‌زند', 'yuk.konfor': 'بار {0}/100',
     'yuk.sarsildi': 'بار آسیب دید', 'yuk.vardi': 'بار تحویل شد',
-    'menu.kasa': 'پس‌انداز: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · پس‌انداز {1} ₺', 'menu.arac': 'وسیله رانندگی آزاد', 'arac.araba': 'خودرو', 'arac.trike': 'سه‌چرخه',
+    'menu.kasa': 'پس‌انداز: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · پس‌انداز {1} ₺', 'menu.arac': 'وسیله', 'arac.araba': 'خودرو', 'arac.trike': 'سه‌چرخه',
+    'arac.motor': 'سه‌چرخه موتوری', 'kilit.araba': 'این مسابقه خودرو می‌خواهد. قیمت خودرو {0} ₺ است.', 'kilit.kisa': 'خودرو لازم است',
+    'al.yetmez': '{0} ₺ لازم است؛ در پس‌انداز {1} ₺ داری', 'hikaye.biriktir': '{0} ₺ پس‌انداز کن', 'hikaye.biriktir.alt': 'در پس‌انداز {0} ₺ داری. از ستون آبی کار باربری بگیر.', 'ayar.testAc': 'آزمایش: همه وسیله‌ها را باز کن',
     'zemin.asfalt': 'آسفالت', 'zemin.toprak': 'خاکی', 'zemin.kaya': 'سنگ', 'zemin.kar': 'برف',
     'menu.konum': 'ایپک‌یولو · توشبا — 38.50° شمالی، 43.34° شرقی', 'menu.baslik': 'رالی <em>قلعه</em> وان',
     'menu.tanitim': 'در خیابان‌های واقعی وان، زیر سایه قلعه مسابقه بده. شهر از ساحل دریاچه تا وان قدیم باز است.',
@@ -590,11 +617,20 @@ const DIL = {
     'sira.adlar': ['اول', 'دوم', 'سوم', 'چهارم', 'پنجم'],
     'cats': ['ارگ درونی', 'خانه گربه', 'موزه وان', 'اسکله', 'مسجد خسروپاشا', 'مسجد جامع', 'میدان جاده ساحلی', 'تپه باستانی', 'خیابان ملن', 'خیابان اسکله'],
     'story': [
+      { ad: 'سه‌چرخه', konus: [
+        ['خلیل اوستا', 'خوش آمدی پسرم. هفت سال گذشت. نه کاری هست و نه پولی؛ اما سه‌چرخه پدرت هنوز در حیاط است.'],
+        ['خلیل اوستا', 'کفی‌اش را با تخته‌های کهنه درست کردم. از بازار گونی ببر و پس‌انداز کن. در این شهر همه همین‌طور شروع می‌کنند.']] },
+      { ad: 'موتور', konus: [
+        ['زلال', 'من زلالم؛ حساب مغازه با من است. با رکاب روزی سه بار می‌روی، با سه‌چرخه موتوری ده بار.'],
+        ['خلیل اوستا', 'در حیاط یک سه‌چرخه موتوری کهنه هست. نهصد لیره جور کن، مال تو.']] },
+      { ad: 'خودرو', konus: [
+        ['خلیل اوستا', 'موتور به تو می‌آید. اما با سه‌چرخه کسی وارد جام توشپا نمی‌شود.'],
+        ['زلال', 'خودروی کهنه اوستا سه هزار لیره است. با موتور بار ببر و پس‌انداز کن. جایزه جام، کرایه یک سال مغازه است.']] },
       { ad: 'بازگشت', hedef: 'خانه گربه', konus: [
-        ['خلیل اوستا', 'خوش آمدی پسرم. هفت سال گذشت. وان همان وان است، فقط جاده‌ها کمی خراب‌تر شده.'],
-        ['خلیل اوستا', 'ماشین آماده است و سوئیچ رویش. اما اول شهر را به یاد بیاور. بیا مغازه؛ روبه‌روی خانه گربه هستم.']] },
+        ['خلیل اوستا', 'خودرو را با عرق پیشانی خودت خریدی، آفرین. موتورش را سرحال کردم و سوئیچ رویش است.'],
+        ['خلیل اوستا', 'اول خودرو را بشناس و شهر را به یاد بیاور. تا مغازه بران؛ روبه‌روی خانه گربه هستم.']] },
       { ad: 'صبحانه', hedef: 'اسکله', konus: [
-        ['زلال', 'پس برادرزاده اوستا تویی. من زلالم و حساب مغازه با من است. حساب هم چندان خوب نیست.'],
+        ['زلال', 'حالا خودرو داری و کار بزرگ‌تر شده. حساب مغازه هنوز هم چندان خوب نیست.'],
         ['زلال', 'در اسکله یک گروه گردشگر از تبریز منتظر صبحانه‌اند: پنیر سبزی، مورتوغا و کاووت. اگر پیش از سرد شدن برسانی، کرایه این ماه درمی‌آید.']],
         kayip: ['زلال', 'صبحانه سرد شد و گروه جای دیگری رفت. دوباره تلاش کن؛ از شمال قلعه برو، راه بازتر است.'] },
       { ad: 'مقدماتی', konus: [
@@ -2113,7 +2149,8 @@ function collideCars(cars) {
 
 // ------------------------------------------------------------ üç tekerli yük bisikleti
 // Önde tek, arkada iki teker; önde sepet yok; arkada derme çatma ahşap kasa. Geçimini yük taşıyarak sağlayanların aracı.
-function makeTrikeMesh() {
+// motor = true: motorlu üç teker (yük motosikleti): pedal yok, motor bloğu, depo, egzoz, far, kalın lastik.
+function makeTrikeMesh(motor) {
   const g = new THREE.Group(), R = rng(73);
   const std = (hex, r, m) => new THREE.MeshStandardMaterial({ color: LIN(hex), roughness: r, metalness: m || 0 });
   const red = std('#c4241c', 0.42, 0.3), steel = std('#b4bac1', 0.35, 0.75), dark = std('#141518', 0.85), skin = std('#d9a57e', 0.8), shirt = std('#3a5f8a', 0.85), pants = std('#2b2f38', 0.9);
@@ -2139,7 +2176,15 @@ function makeTrikeMesh() {
   tube([-0.44, WY, AX], [0.44, WY, AX], 0.02, steel);                // arka aks
   box(0.24, 0.07, 0.3, 0, 0.94, -0.06, dark);                        // sele
   const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.012, 16), steel); ring.rotation.z = Math.PI / 2; ring.position.set(0.07, 0.33, 0.08); g.add(ring);
-  box(0.1, 0.02, 0.07, 0.15, 0.2, 0.14, dark); box(0.1, 0.02, 0.07, -0.15, 0.46, 0.02, dark);   // pedallar
+  if (motor) {
+    ring.visible = false;
+    box(0.3, 0.26, 0.34, 0, 0.4, 0.1, std('#3a3d42', 0.5, 0.6));                      // motor bloğu
+    box(0.22, 0.16, 0.42, 0, 0.72, 0.4, red);                                          // yakıt deposu
+    tube([0.16, 0.34, 0.0], [0.2, 0.3, -0.95], 0.03, steel);                           // egzoz
+    const far = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), new THREE.MeshStandardMaterial({ color: LIN('#fff6d8'), emissive: LIN('#ffe9b0'), emissiveIntensity: 0.8 }));
+    far.position.set(0, 0.86, 0.86); g.add(far);
+    box(0.5, 0.03, 0.1, 0, 0.22, 0.12, dark);                                          // ayaklık
+  } else { box(0.1, 0.02, 0.07, 0.15, 0.2, 0.14, dark); box(0.1, 0.02, 0.07, -0.15, 0.46, 0.02, dark); }   // pedallar
   // ahşap kasa: eğri büğrü tahtalar, aralıklı, farklı tonlarda
   const wood = new Bag(), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), bx = new THREE.BoxGeometry(1, 1, 1).toNonIndexed();
   const tones = ['#8a6a45', '#7a5c3b', '#9b7a52', '#6f5335', '#a08460'].map((h) => LIN(h));
@@ -2166,7 +2211,7 @@ function makeTrikeMesh() {
   tube([0.1, 0.98, 0], [0.15, 0.62, 0.3], 0.07, pants); tube([0.15, 0.62, 0.3], [0.15, 0.22, 0.14], 0.055, pants);
   tube([-0.1, 0.98, 0], [-0.15, 0.72, 0.3], 0.07, pants); tube([-0.15, 0.72, 0.3], [-0.15, 0.48, 0.02], 0.055, pants);
   // tekerlekler: ince lastik, teller
-  const tireG = new THREE.TorusGeometry(0.29, 0.026, 6, 22); tireG.rotateY(Math.PI / 2);
+  const tireG = new THREE.TorusGeometry(0.29, motor ? 0.055 : 0.026, 6, 22); tireG.rotateY(Math.PI / 2);
   const spokeG = new THREE.BoxGeometry(0.008, 0.56, 0.008), wheels = [];
   for (const [x, z, front] of [[0, 0.97, 1], [0.44, AX, 0], [-0.44, AX, 0]]) {
     const pivot = new THREE.Group(); pivot.position.set(x, WY, z);
@@ -2420,12 +2465,45 @@ function makeCat() {
   function putTourists(x, z, h) { TUR.position.set(x, groundH(x, z), z); TUR.rotation.y = h; TUR.visible = true; }
   // Araç: araba ya da üç tekerli yük bisikleti (yavaş, pedallı). Yarışlar arabayla, yük işi bisikletle yapılır.
   function setVehicle(kind) {
-    const tr = kind === 'trike', v = tr ? player.trike : player.car;
+    const v = kind === 'trike' ? player.trike : kind === 'motor' ? player.motor : player.car;
     player.mesh.visible = false;
     player.mesh = v.group; player.wheels = v.wheels; player.tail = v.tail;
     player.mesh.visible = !player.ski;
-    player.power = tr ? 4.4 : 10.5; player.vmax = tr ? 9.5 : 62; player.pedal = tr;
-    player.trike.yuk.visible = false;
+    player.power = kind === 'trike' ? 4.4 : kind === 'motor' ? 6.8 : 10.5;
+    player.vmax = kind === 'trike' ? 9.5 : kind === 'motor' ? 19 : 62;
+    player.pedal = kind === 'trike'; player.arac = kind;
+    player.trike.yuk.visible = false; player.motor.yuk.visible = false;
+  }
+  // Araç sahipliği: oyun üç tekerli bisikletle başlar; motorlu üç teker ve araba kasadaki parayla alınır.
+  const FIYAT = { trike: 0, motor: 900, car: 3000 }, ARAC_AD = { trike: 'arac.trike', motor: 'arac.motor', car: 'arac.araba' };
+  let SAHIP = ['trike'];
+  const owns = (k) => SAHIP.indexOf(k) >= 0;
+  const bestCargo = () => (owns('motor') ? 'motor' : 'trike');
+  const para = (n) => n.toLocaleString(LOCALE[LANG]);
+  function buyVehicle(kind) {
+    if (owns(kind)) return true;
+    if ((G.para || 0) < FIYAT[kind]) return false;
+    addMoney(-FIYAT[kind]); SAHIP.push(kind); store.set('sahip', SAHIP);
+    G.aracSecim = kind; updateArac();
+    beep(660, 0.15, 0.3, 'triangle'); beep(880, 0.15, 0.3, 'triangle', 0.14); beep(1320, 0.4, 0.3, 'triangle', 0.28);
+    return true;
+  }
+  function updateArac() {
+    const sec = owns(G.aracSecim) ? G.aracSecim : owns('car') ? 'car' : bestCargo();
+    G.aracSecim = sec;
+    for (const el of document.querySelectorAll('[data-arac]')) {
+      const k = el.getAttribute('data-arac');
+      el.textContent = T(ARAC_AD[k]) + (owns(k) ? '' : ' · ' + para(FIYAT[k]) + ' ₺');
+      el.setAttribute('aria-pressed', k === sec ? 'true' : 'false');
+      el.classList.toggle('kilitli', !owns(k));
+    }
+  }
+  // Yarışlar ve Abalı etkinlikleri araba ister; yük işi bisiklet ya da motorla yapılır.
+  function canStart(ev) {
+    if (ev.arac || owns('car')) return true;
+    $('kasa').textContent = T('kilit.araba', para(FIYAT.car));
+    beep(180, 0.2, 0.25, 'square');
+    return false;
   }
   function addMoney(n) { G.para = Math.max(0, Math.round((G.para || 0) + n)); store.set('para', G.para); updateKasa(); }
   function updateKasa() { $('kasa').textContent = T('menu.kasa', (G.para || 0).toLocaleString(LOCALE[LANG])); }
@@ -2470,7 +2548,8 @@ function makeCat() {
     }
     player = makeCar('#e2572b', true, 'Sen', 'spor');
     player.car = { group: player.mesh, wheels: player.wheels, tail: player.tail };
-    player.trike = makeTrikeMesh(); player.trike.group.visible = false; scene.add(player.trike.group);
+    player.trike = makeTrikeMesh(false); player.trike.group.visible = false; scene.add(player.trike.group);
+    player.motor = makeTrikeMesh(true); player.motor.group.visible = false; scene.add(player.motor.group);
     player.skiMesh = makePerson('#e2572b', { onSkis: true, helmet: '#f3efe6' }); player.skiMesh.visible = false; scene.add(player.skiMesh);
     Object.defineProperty(player, 'name', { get: () => T('sen') });
     scene.add(player.mesh);
@@ -2771,7 +2850,7 @@ function makeCat() {
     if (st) showMenu(true);
     else if (b) respawn();
     else if (y) cycleCam();
-    else if (a && G.near && G.state === 'free' && !G.goal) startEvent(G.near);
+    else if (a && G.near && G.state === 'free' && !G.goal && canStart(G.near)) startEvent(G.near);
   }
   window.addEventListener('keydown', (e) => {
     if (e.code === 'ArrowUp' || e.code === 'ArrowDown' || e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'Space') e.preventDefault();
@@ -2789,7 +2868,7 @@ function makeCat() {
     else if (e.code === 'Escape' || e.code === 'KeyM') showMenu(true);
     else if (e.code === 'KeyN') toggleMute();
     else if (e.code === 'KeyH') { beep(392, 0.35, 0.25, 'square'); beep(494, 0.35, 0.2, 'square'); }
-    else if (e.code === 'Enter' && G.near && !G.goal) { G.lastStory = 0; startEvent(G.near); }
+    else if (e.code === 'Enter' && G.near && !G.goal && canStart(G.near)) { G.lastStory = 0; startEvent(G.near); }
   });
   window.addEventListener('keyup', (e) => { keys[e.code] = false; });
   window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
@@ -2809,7 +2888,7 @@ function makeCat() {
   $('btn-menu').addEventListener('click', () => showMenu(true));
   $('btn-kam').addEventListener('click', () => cycleCam());
   $('btn-don').addEventListener('click', () => respawn());
-  $('ipucu').addEventListener('click', () => { if (G.near && G.state === 'free' && !G.goal) { G.lastStory = 0; startEvent(G.near); } });
+  $('ipucu').addEventListener('click', () => { if (G.near && G.state === 'free' && !G.goal && canStart(G.near)) { G.lastStory = 0; startEvent(G.near); } });
 
   // ---------------------------------------------------------------- menü ve akış
   const fmt = (t) => { const m = Math.floor(t / 60), s = t - m * 60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(2); };
@@ -2828,7 +2907,8 @@ function makeCat() {
       b.innerHTML = '<span class="etk-ad"></span><span class="etk-alt"></span><span class="etk-veri"></span>';
       b.children[0].textContent = ev.ad; b.children[1].textContent = ev.alt;
       b.children[2].textContent = km + ' ' + T('etk.km') + ' · ' + ev.zemin + (ev.laps > 1 ? ' · ' + T('etk.tur', ev.laps) : '') + ' · ' + (ev.solo ? T('etk.zamanaKarsi') : T('etk.rakip', ev.ai)) + (ev.best ? ' · ' + T('etk.enIyi', fmt(ev.best)) : '');
-      b.addEventListener('click', async () => { initAudio(); G.lastStory = 0; await loadRegion(ev.bolge); if (REGION.id === ev.bolge) startEvent(ev); });
+      if (!ev.arac && !owns('car')) { b.classList.add('kilitli'); b.children[2].textContent += ' · ' + T('kilit.kisa'); }
+      b.addEventListener('click', async () => { initAudio(); if (!canStart(ev)) return; G.lastStory = 0; await loadRegion(ev.bolge); if (REGION.id === ev.bolge) startEvent(ev); });
       list.appendChild(b);
     }
   }
@@ -2855,7 +2935,7 @@ function makeCat() {
   }
   $('btn-tekrar').addEventListener('click', () => { startEvent(G.lastEvent); if (G.lastStory && G.race) G.race.story = G.lastStory; });
   $('btn-hikaye').addEventListener('click', () => { initAudio(); startStory(); });
-  $('btn-hikaye-devam').addEventListener('click', () => storyAdvance());
+  $('btn-hikaye-devam').addEventListener('click', () => { if (paraReady() || (STORY[S.i] && STORY[S.i].gorev.tip === 'para')) startStory(); else storyAdvance(); });
   $('btn-konusma').addEventListener('click', () => { initAudio(); nextLine(); });
   $('btn-son-serbest').addEventListener('click', () => startFree(true));
   $('btn-son-menu').addEventListener('click', () => showMenu(false));
@@ -2874,7 +2954,8 @@ function makeCat() {
   }
   function startFree(keepPlace) {
     clearRace();
-    setVehicle(REGION.id === 'van' ? G.aracSecim || 'car' : 'car');
+    updateArac();
+    setVehicle(REGION.id === 'van' || !owns('car') ? G.aracSecim : 'car');
     if (!keepPlace || G.state === 'menu') {
       const ev0 = EVENTS.find((e) => e.bolge === REGION.id), p = routePoint(ev0.R, REGION.id === 'van' ? 330 : ev0.R.L - 260);
       placeCar(player, p.x, p.z, Math.atan2(p.dx, p.dz));
@@ -2997,16 +3078,19 @@ function makeCat() {
     $('btn-ses').textContent = T(G.muted ? 'hud.sesKapali' : 'hud.sesAcik');
     $('load-baslik').textContent = T('yukleniyor', T('bolge.van'));
     placeName = ''; placeAlt = '';
-    updateKasa();
+    updateKasa(); updateArac();
     if (G.state !== 'load') { buildMenu(); $('btn-hikaye').textContent = S.i >= STORY.length ? T('menu.hikaye.bastan') : S.i === 0 ? T('menu.hikaye') : T('menu.hikaye.bolum', S.i + 1, STORY[S.i].ad); }
     if (save) store.set('ayar', AYAR);
   }
   for (const el of document.querySelectorAll('[data-dil]')) el.addEventListener('click', () => applyLang(el.getAttribute('data-dil'), true));
   G.para = store.get('para', 0) | 0;
   for (const el of document.querySelectorAll('[data-arac]')) el.addEventListener('click', () => {
-    G.aracSecim = el.getAttribute('data-arac');
-    for (const q of document.querySelectorAll('[data-arac]')) q.setAttribute('aria-pressed', q === el ? 'true' : 'false');
+    const k = el.getAttribute('data-arac');
+    if (owns(k)) G.aracSecim = k;
+    else if (!buyVehicle(k)) { $('kasa').textContent = T('al.yetmez', para(FIYAT[k]), para(G.para || 0)); beep(180, 0.2, 0.25, 'square'); return; }
+    updateArac();
   });
+  $('btn-test-ac').addEventListener('click', () => { SAHIP = ['trike', 'motor', 'car']; store.set('sahip', SAHIP); updateArac(); $('btn-test-ac').disabled = true; });
   function masterGain() { return G.muted ? 0 : (0.55 * AYAR.ses) / 100; }
   function cycleCam() { G.cam = (G.cam + 1) % 3; camSnap = true; AYAR.kamera = G.cam; store.set('ayar', AYAR); }
   function applySettings(save) {
@@ -3042,6 +3126,7 @@ function makeCat() {
   $('btn-sifirla-evet').addEventListener('click', () => {
     for (const ev of EVENTS) { ev.best = null; store.del('best.' + ev.id); }
     store.del('story'); store.del('cats'); store.del('para'); G.para = 0; updateKasa();
+    SAHIP = ['trike']; store.set('sahip', SAHIP); updateArac();
     S.i = 0; S.last = null;
     for (const c of cats) c.got = false;
     updateCatHud();
@@ -3052,6 +3137,10 @@ function makeCat() {
   // ---------------------------------------------------------------- hikâye: Tuşpa Kupası
   // Altı bölüm. Görev tipleri: 'git' (bir yere ulaş, isteğe bağlı süre) ve 'yaris' (bir yarışı en az 'sira'. bitir).
   const STORY = [
+    // Başlangıç: üç tekerli bisikletle yük taşı, biriktir; önce motorlu üç teker, sonra araba. Yarışlar arabayla açılır.
+    { ad: 'Üç teker', konus: [], gorev: { tip: 'ozel', id: 'yuk-tasima' } },
+    { ad: 'Motor', konus: [], gorev: { tip: 'para', hedef: 900, al: 'motor' } },
+    { ad: 'Araba', konus: [], gorev: { tip: 'para', hedef: 3000, al: 'car' } },
     { ad: 'Dönüş', konus: [
       ['Halil Usta', 'Hoş geldin evlat. Yedi yıl oldu. Van aynı Van, yollar biraz daha bozuk, o kadar.'],
       ['Halil Usta', 'Araba hazır, anahtar üstünde. Ama önce şehri hatırla. Dükkâna gel; Kedi Evi’nin karşısındayım.']],
@@ -3099,6 +3188,15 @@ function makeCat() {
     }
   });
   const S = { i: clamp(store.get('story', 0) | 0, 0, STORY.length), lines: null, li: 0, after: null, last: null };
+  {   // araç sahipliği kaydı; eski kayıt (bisikletli başlangıçtan önce) varsa üç bölüm ileri kaydırılır ve araçlar verilir
+    const kayit = store.get('sahip', null);
+    if (kayit) SAHIP = kayit;
+    else {
+      if (S.i > 0) { SAHIP = ['trike', 'motor', 'car']; S.i = clamp(S.i + 3, 0, STORY.length); store.set('story', S.i); }
+      store.set('sahip', SAHIP);
+    }
+  }
+  const paraReady = () => { const ch = STORY[S.i]; return !!(ch && ch.gorev.tip === 'para' && (G.para || 0) >= ch.gorev.hedef); };
   function nearRoad(x, z) {
     for (let r = 0; r <= 200; r += 12) for (let a = 0; a < 8; a++) {
       const rd = roadAt(x + Math.cos(a * 0.785) * r, z + Math.sin(a * 0.785) * r);
@@ -3130,10 +3228,11 @@ function makeCat() {
     playLine(S.ids && S.ids[S.li]);
   }
   function nextLine() {
-    if (G.state !== 'talk') return;
+    if (G.state !== 'talk' || !S.lines) return;     // sıradaki konuşma hazırlanırken gelen ikinci basış yok sayılır
     if (++S.li < S.lines.length) { renderLine(); return; }
     $('konusma').hidden = true; playLine(null);
-    const f = S.after; S.after = null; f();
+    const f = S.after; S.after = null; S.lines = null;
+    if (f) f();
   }
   async function startStory() {
     if (S.i >= STORY.length) { S.i = 0; store.set('story', 0); S.last = null; }
@@ -3145,15 +3244,23 @@ function makeCat() {
     for (const m of evMarkers) m.mesh.visible = false;
     for (const c of cats) { c.mesh.visible = false; c.beam.visible = false; }
     if (gv.tip === 'git') { const b = gv.bas ? nearRoad(gv.bas[0], gv.bas[1]) : S.last && S.last.bolge === REGION.id ? S.last : nearRoad(961, 91); placeCar(player, b.x, b.z, b.h); }
-    else { const p = routePoint(sev.R, 5); placeCar(player, p.x, p.z, Math.atan2(p.dx, p.dz)); }
+    else if (sev) { const p = routePoint(sev.R, 5); placeCar(player, p.x, p.z, Math.atan2(p.dx, p.dz)); }
     camSnap = true;
     talk(ch.konus, T('konusma.bolum', S.i + 1, STORY.length, ch.ad), () => beginMission(ch), ch.konus.map((_, k) => lineId(S.i, k + 1)));
   }
   function beginMission(ch) {
     const gv = ch.gorev;
+    if (gv.tip === 'para') {     // biriktirme bölümü: para yetiyorsa araç alınır, yetmiyorsa iş yapmaya dönülür
+      if (buyVehicle(gv.al)) { storyAdvance(); return; }
+      G.lastStory = 0;
+      startFree(true);
+      flash(T('hikaye.biriktir', para(gv.hedef)), T('hikaye.biriktir.alt', para(G.para || 0)), 6);
+      return;
+    }
     G.lastStory = gv.tip === 'yaris' ? gv.sira : gv.tip === 'ozel' ? 1 : 0;
     if (gv.tip === 'ozel') { startEvent(EVENTS.find((e) => e.id === gv.id)); return; }
     if (gv.tip === 'yaris') { startEvent(EVENTS.find((e) => e.id === gv.id)); G.race.story = gv.sira; return; }
+    setVehicle(owns('car') ? 'car' : bestCargo());
     const t = gv.hedef === 'zirve' ? { x: SUMMIT.x + 6, z: SUMMIT.z + 4 } : nearRoad(gv.hedef[0], gv.hedef[1]);
     const rt = gv.rota ? EVENTS.find((e) => e.id === gv.rota) : null;
     G.goal = { x: t.x, z: t.z, ad: gv.ad, sure: gv.sure, t: 0, R: rt ? rt.R : null, ch };
@@ -3182,7 +3289,7 @@ function makeCat() {
         const st = gl.stages[gl.si];
         gl.x = st.x; gl.z = st.z; gl.ad = st.ad;
         beacon1.position.set(st.x, groundH(st.x, st.z) - 0.5, st.z);
-        if (gl.ozel.yuk) player.trike.yuk.visible = true; else TUR.visible = false;
+        if (gl.ozel.yuk) player[player.arac].yuk.visible = true; else TUR.visible = false;
         hudT = 0;
         flash(T(gl.on + '.bindi'), T(gl.on + '.bindi.alt'), 3);
         return;
@@ -3199,7 +3306,8 @@ function makeCat() {
   function startServis(ev) {
     clearRace();
     G.lastEvent = ev;
-    setVehicle(ev.arac || 'car');
+    const yukAraci = ev.arac ? bestCargo() : 'car';
+    setVehicle(yukAraci);
     const R = ev.R, on = ev.yuk ? 'yuk' : 'servis', sAl = ev.al || 70, sBirak = ev.birak || R.L - 22;
     let p = routePoint(R, 5); placeCar(player, p.x, p.z, Math.atan2(p.dx, p.dz));
     p = routePoint(R, sAl);
@@ -3207,7 +3315,7 @@ function makeCat() {
     if (!ev.yuk) putTourists(p.x + p.dz * 7, p.z - p.dx * 7, Math.atan2(-p.dz, p.dx));
     p = routePoint(R, sBirak);
     const b = { x: p.x, z: p.z, ad: T(on + '.birak'), kx: p.x + p.dz * 7, kz: p.z - p.dx * 7, kh: Math.atan2(-p.dz, p.dx) };
-    G.goal = { stages: [a, b], si: 0, x: a.x, z: a.z, ad: a.ad, t: 0, sure: 0, R, ozel: ev, on, konfor: 100, stop: true, yol: sBirak - sAl };
+    G.goal = { stages: [a, b], si: 0, x: a.x, z: a.z, ad: a.ad, t: 0, sure: 0, R, ozel: ev, on, konfor: 100, stop: true, yol: sBirak - sAl, carpan: yukAraci === 'motor' ? 1.8 : 1 };
     G.state = 'free'; G.near = null;
     for (const m of evMarkers) m.mesh.visible = false;
     $('menu').hidden = true; $('sonuc').hidden = true; $('konusma').hidden = true; $('hud').hidden = false; $('yaris').hidden = false; $('ok').hidden = false; $('kedi').hidden = true; $('ipucu').hidden = true;
@@ -3218,9 +3326,9 @@ function makeCat() {
   }
   function finishServis(gl) {
     const ev = gl.ozel, st = gl.stages[gl.stages.length - 1], md = ev.madalya, t = gl.t, on = gl.on;
-    if (ev.yuk) player.trike.yuk.visible = false; else putTourists(st.kx, st.kz, st.kh);
-    const yol = ev.yuk ? gl.yol : ev.R.L, gold = yol / md[0], silver = yol / md[1], bronze = yol / md[2];
-    const kazanc = Math.round((ev.odeme || 0) * (t <= gold ? 1.5 : t <= silver ? 1.25 : t <= bronze ? 1 : 0.7) * (gl.konfor / 100));
+    if (ev.yuk) { player.trike.yuk.visible = false; player.motor.yuk.visible = false; } else putTourists(st.kx, st.kz, st.kh);
+    const yol = ev.yuk ? gl.yol : ev.R.L, cp = gl.carpan || 1, gold = yol / (md[0] * cp), silver = yol / (md[1] * cp), bronze = yol / (md[2] * cp);
+    const kazanc = Math.round((ev.odeme || 0) * cp * (t <= gold ? 1.5 : t <= silver ? 1.25 : t <= bronze ? 1 : 0.7) * (gl.konfor / 100));
     addMoney(kazanc);
     if (!ev.best || t < ev.best) { ev.best = t; store.set('best.' + ev.id, t); }
     G.state = 'result';
@@ -3232,9 +3340,10 @@ function makeCat() {
     const tr = document.createElement('tr'); tr.className = 'ben';
     for (const v of ['1.', player.name, fmt(t)]) { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); }
     tb.appendChild(tr);
-    $('btn-hikaye-devam').hidden = !G.lastStory;
+    const devam = !!G.lastStory || paraReady();
+    $('btn-hikaye-devam').hidden = !devam;
     $('btn-tekrar').textContent = T('sonuc.tekrar');
-    (G.lastStory ? $('btn-hikaye-devam') : $('btn-tekrar')).focus();
+    (devam ? $('btn-hikaye-devam') : $('btn-tekrar')).focus();
   }
 
   // ---------------------------------------------------------------- fizik adımı
@@ -3504,7 +3613,7 @@ function makeCat() {
     G, EVENTS, STORY, S, startStory, nextLine, loadRegion, get bolge() { return REGION.id; }, get player() { return player; }, get cars() { return cars; }, startEvent, startFree, tick,
     sim(sec) { const n = Math.round(sec / STEP); for (let i = 0; i < n; i++) { if (G.state === 'free' || G.state === 'race' || G.state === 'count') tick(STEP); } },
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
-    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, mobil: MOBIL, setVehicle, get para() { return G.para; },
+    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, mobil: MOBIL, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     ayar: () => ({ kalite: AYAR.kalite, golge: renderer.shadowMap.enabled, golgeBoyu: sun.shadow.mapSize.x, piksel: renderer.getPixelRatio(), ses: AYAR.ses, kazanc: masterGain() }),
     look(x, y, z, tx, ty, tz) { G.state = 'menu'; G.resume = null; G.freeze = [x, y, z, tx, ty, tz]; },
     bench(n) { const gl = renderer.getContext(), t0 = performance.now(); for (let i = 0; i < n; i++) { renderer.render(scene, camera); gl.finish(); } return { ms: (performance.now() - t0) / n, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }; },
