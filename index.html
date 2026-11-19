@@ -111,6 +111,7 @@ h1 em { font-style: inherit; color: var(--kehribar); }
 .ikincil:hover { border-color: var(--kehribar); color: var(--kehribar); }
 #etkinlikler { display: flex; flex-direction: column; border-bottom: 1px solid var(--cizgi); }
 .bolge-sec { display: flex; flex-direction: column; gap: 6px; }
+.kasa { font-family: var(--f-baslik); font-weight: 700; font-size: 22px; color: var(--kehribar); font-variant-numeric: tabular-nums; }
 .etk-bolge { color: var(--kehribar); padding: 10px 8px 4px; border-top: 1px solid var(--cizgi); }
 .etk { display: grid; gap: 1px; text-align: start; background: transparent; border: 0; border-top: 1px solid var(--cizgi); padding: 10px 8px 11px; }
 .etk:hover, .etk:focus-visible { background: rgba(242, 169, 59, 0.13); }
@@ -218,6 +219,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
     <div class="etiket konum" data-i18n="menu.konum">İpekyolu · Tuşba — 38,50° K 43,34° D</div>
     <h1 data-i18n-html="menu.baslik">Van <em>Kale</em> Rallisi</h1>
     <p class="tanitim" data-i18n="menu.tanitim">Gerçek Van sokaklarında, kalenin gölgesinde yarış. Göl kıyısından Eski Van’a kadar şehir açık.</p>
+    <div id="kasa" class="kasa"></div>
     <div class="ana-dugmeler">
       <button id="btn-devam" class="birincil" type="button" hidden data-i18n="menu.devam">Devam et</button>
       <button id="btn-hikaye" class="birincil" type="button">Hikâye</button>
@@ -230,6 +232,13 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
       <div class="seg" role="group" aria-labelledby="lbl-bolge">
         <button type="button" id="bolge-van" data-bolge="van" aria-pressed="true" data-i18n="bolge.van">Van Kalesi</button>
         <button type="button" id="bolge-abali" data-bolge="abali" aria-pressed="false" data-i18n="bolge.abali">Abalı</button>
+      </div>
+    </div>
+    <div class="bolge-sec">
+      <div class="etiket" id="lbl-arac" data-i18n="menu.arac">Serbest sürüş aracı</div>
+      <div class="seg" role="group" aria-labelledby="lbl-arac">
+        <button type="button" id="arac-araba" data-arac="car" aria-pressed="true" data-i18n="arac.araba">Araba</button>
+        <button type="button" id="arac-trike" data-arac="trike" aria-pressed="false" data-i18n="arac.trike">Üç teker</button>
       </div>
     </div>
     <div>
@@ -349,6 +358,11 @@ const DIL = {
     'servis.al': 'Turistleri al', 'servis.birak': 'Kayak merkezi', 'servis.basla': 'Turist servisi', 'servis.basla.alt': 'Yol kenarındaki grubun yanında dur',
     'servis.bindi': 'Turistler bindi', 'servis.bindi.alt': 'Kayak merkezine çık; çarpma, konfor düşer', 'servis.konfor': 'Konfor {0}/100',
     'servis.sarsildi': 'Yolcular sarsıldı', 'servis.vardi': 'Turistler pistte',
+    'ev.yuk-tasima': 'Yük Taşıma', 'ev.yuk-tasima.alt': 'Üç tekerli bisikletle çuvalları al, Eski Van yolundan teslim et; kazanç kasaya girer',
+    'yuk.al': 'Yükü al', 'yuk.birak': 'Teslimat', 'yuk.basla': 'Yük taşıma', 'yuk.basla.alt': 'Mavi sütunda dur, çuvalları yükle',
+    'yuk.bindi': 'Yük kasada', 'yuk.bindi.alt': 'Teslimat noktasına sür; çarparsan yük zarar görür', 'yuk.konfor': 'Yük {0}/100',
+    'yuk.sarsildi': 'Yük hasar gördü', 'yuk.vardi': 'Yük teslim edildi',
+    'menu.kasa': 'Kasa: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · kasa {1} ₺', 'menu.arac': 'Serbest sürüş aracı', 'arac.araba': 'Araba', 'arac.trike': 'Üç teker',
     'zemin.asfalt': 'Asfalt', 'zemin.toprak': 'Toprak', 'zemin.kaya': 'Kaya', 'zemin.kar': 'Kar',
     'menu.konum': 'İpekyolu · Tuşba — 38,50° K 43,34° D', 'menu.baslik': 'Van <em>Kale</em> Rallisi',
     'menu.tanitim': 'Gerçek Van sokaklarında, kalenin gölgesinde yarış. Göl kıyısından Eski Van’a kadar şehir açık.',
@@ -440,6 +454,11 @@ const DIL = {
     'servis.al': 'Pick up the tourists', 'servis.birak': 'Ski centre', 'servis.basla': 'Tourist shuttle', 'servis.basla.alt': 'Stop next to the group at the roadside',
     'servis.bindi': 'The tourists are in', 'servis.bindi.alt': 'Drive up to the ski centre; each crash lowers comfort', 'servis.konfor': 'Comfort {0}/100',
     'servis.sarsildi': 'A rough ride', 'servis.vardi': 'The tourists are on the piste',
+    'ev.yuk-tasima': 'Cargo Run', 'ev.yuk-tasima.alt': 'Load the sacks on the cargo tricycle and deliver them along the Old Van road; the pay goes to your savings',
+    'yuk.al': 'Pick up the load', 'yuk.birak': 'Delivery', 'yuk.basla': 'Cargo run', 'yuk.basla.alt': 'Stop at the blue column and load the sacks',
+    'yuk.bindi': 'The load is on', 'yuk.bindi.alt': 'Ride to the delivery point; each crash damages the load', 'yuk.konfor': 'Load {0}/100',
+    'yuk.sarsildi': 'The load was damaged', 'yuk.vardi': 'Load delivered',
+    'menu.kasa': 'Savings: ₺{0}', 'sonuc.kazanc': '+₺{0} · savings ₺{1}', 'menu.arac': 'Free roam vehicle', 'arac.araba': 'Car', 'arac.trike': 'Cargo trike',
     'zemin.asfalt': 'Asphalt', 'zemin.toprak': 'Dirt', 'zemin.kaya': 'Rock', 'zemin.kar': 'Snow',
     'menu.konum': 'İpekyolu · Tuşba — 38.50° N 43.34° E', 'menu.baslik': 'Van <em>Castle</em> Rally',
     'menu.tanitim': 'Race on the real streets of Van, in the shadow of the castle. The city is open from the lake shore to Old Van.',
@@ -531,6 +550,11 @@ const DIL = {
     'servis.al': 'گردشگران را سوار کن', 'servis.birak': 'پیست اسکی', 'servis.basla': 'سرویس گردشگران', 'servis.basla.alt': 'کنار گروهِ لب جاده بایست',
     'servis.bindi': 'گردشگران سوار شدند', 'servis.bindi.alt': 'تا پیست اسکی برو؛ هر برخورد راحتی را کم می‌کند', 'servis.konfor': 'راحتی {0}/100',
     'servis.sarsildi': 'مسافران تکان خوردند', 'servis.vardi': 'گردشگران در پیست هستند',
+    'ev.yuk-tasima': 'باربری', 'ev.yuk-tasima.alt': 'گونی‌ها را بار سه‌چرخه کن و از راه وان قدیم تحویل بده؛ مزد به پس‌اندازت می‌رود',
+    'yuk.al': 'بار را بردار', 'yuk.birak': 'تحویل', 'yuk.basla': 'باربری', 'yuk.basla.alt': 'کنار ستون آبی بایست و گونی‌ها را بار کن',
+    'yuk.bindi': 'بار روی سه‌چرخه است', 'yuk.bindi.alt': 'تا محل تحویل برو؛ هر برخورد به بار آسیب می‌زند', 'yuk.konfor': 'بار {0}/100',
+    'yuk.sarsildi': 'بار آسیب دید', 'yuk.vardi': 'بار تحویل شد',
+    'menu.kasa': 'پس‌انداز: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · پس‌انداز {1} ₺', 'menu.arac': 'وسیله رانندگی آزاد', 'arac.araba': 'خودرو', 'arac.trike': 'سه‌چرخه',
     'zemin.asfalt': 'آسفالت', 'zemin.toprak': 'خاکی', 'zemin.kaya': 'سنگ', 'zemin.kar': 'برف',
     'menu.konum': 'ایپک‌یولو · توشبا — 38.50° شمالی، 43.34° شرقی', 'menu.baslik': 'رالی <em>قلعه</em> وان',
     'menu.tanitim': 'در خیابان‌های واقعی وان، زیر سایه قلعه مسابقه بده. شهر از ساحل دریاچه تا وان قدیم باز است.',
@@ -2087,6 +2111,75 @@ function collideCars(cars) {
   }
 }
 
+// ------------------------------------------------------------ üç tekerli yük bisikleti
+// Önde tek, arkada iki teker; önde sepet yok; arkada derme çatma ahşap kasa. Geçimini yük taşıyarak sağlayanların aracı.
+function makeTrikeMesh() {
+  const g = new THREE.Group(), R = rng(73);
+  const std = (hex, r, m) => new THREE.MeshStandardMaterial({ color: LIN(hex), roughness: r, metalness: m || 0 });
+  const red = std('#c4241c', 0.42, 0.3), steel = std('#b4bac1', 0.35, 0.75), dark = std('#141518', 0.85), skin = std('#d9a57e', 0.8), shirt = std('#3a5f8a', 0.85), pants = std('#2b2f38', 0.9);
+  const UPV = new THREE.Vector3(0, 1, 0), dv = new THREE.Vector3();
+  function tube(a, b, r, mat) {
+    dv.set(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+    const len = dv.length(), m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 6), mat);
+    m.position.set((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2);
+    m.quaternion.setFromUnitVectors(UPV, dv.normalize()); m.castShadow = true; g.add(m);
+    return m;
+  }
+  function box(w, h, d, x, y, z, mat) { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.castShadow = true; g.add(m); return m; }
+  const BB = [0, 0.33, 0.08], AX = -0.56, WY = 0.31;
+  tube([0, 0.64, 0.8], [0, 1.02, 0.68], 0.028, red);                 // gidon borusu
+  tube([0, 1.02, 0.68], [0, 1.08, 0.62], 0.02, steel);
+  tube([-0.29, 1.08, 0.6], [0.29, 1.08, 0.6], 0.016, steel);         // gidon (sepet yok)
+  tube([-0.29, 1.08, 0.6], [-0.2, 1.08, 0.6], 0.022, dark); tube([0.2, 1.08, 0.6], [0.29, 1.08, 0.6], 0.022, dark);
+  tube([0, 0.74, 0.76], BB, 0.03, red);                              // alt boru
+  tube([0, 0.6, 0.74], [0, 0.46, 0.02], 0.024, red);                 // alçak üst boru
+  tube(BB, [0, 0.9, -0.04], 0.026, red);                             // sele borusu
+  tube(BB, [0, WY, AX], 0.024, red);                                 // arka taşıyıcı
+  tube([0, 0.9, -0.04], [0, 0.5, AX + 0.3], 0.02, red);
+  tube([-0.44, WY, AX], [0.44, WY, AX], 0.02, steel);                // arka aks
+  box(0.24, 0.07, 0.3, 0, 0.94, -0.06, dark);                        // sele
+  const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.012, 16), steel); ring.rotation.z = Math.PI / 2; ring.position.set(0.07, 0.33, 0.08); g.add(ring);
+  box(0.1, 0.02, 0.07, 0.15, 0.2, 0.14, dark); box(0.1, 0.02, 0.07, -0.15, 0.46, 0.02, dark);   // pedallar
+  // ahşap kasa: eğri büğrü tahtalar, aralıklı, farklı tonlarda
+  const wood = new Bag(), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), bx = new THREE.BoxGeometry(1, 1, 1).toNonIndexed();
+  const tones = ['#8a6a45', '#7a5c3b', '#9b7a52', '#6f5335', '#a08460'].map((h) => LIN(h));
+  function plank(w, h, d, x, y, z, rx, ry, rz) {
+    e.set(rx + (R() - 0.5) * 0.05, ry + (R() - 0.5) * 0.06, rz + (R() - 0.5) * 0.05); q.setFromEuler(e);
+    m4.compose(new THREE.Vector3(x, y, z), q, new THREE.Vector3(w, h, d)); wood.geom(bx, m4, tones[Math.floor(R() * tones.length)]);
+  }
+  const Z0 = -1.08, Z1 = -0.2, ZC = (Z0 + Z1) / 2, ZL = Z1 - Z0, FY = 0.52;
+  for (let i = 0; i < 6; i++) plank(0.14, 0.025, ZL + (R() - 0.5) * 0.06, -0.41 + i * 0.164, FY, ZC, 0, 0, 0);                  // taban tahtaları
+  for (const sx of [-0.47, 0.47]) { plank(0.022, 0.1, ZL, sx, FY + 0.12, ZC, 0, 0, 0); plank(0.022, 0.09, ZL - 0.04, sx, FY + 0.27, ZC, 0, 0, 0.03 * sx); }
+  for (const sz of [Z0, Z1]) { plank(0.94, 0.1, 0.022, 0, FY + 0.12, sz, 0, 0, 0); plank(0.9, 0.09, 0.022, 0, FY + 0.27, sz, 0, 0, 0.02); }
+  for (const sx of [-0.47, 0.47]) for (const sz of [Z0, Z1]) plank(0.045, 0.4, 0.045, sx, FY + 0.17, sz, 0, 0, 0);            // köşe dikmeleri
+  plank(0.05, 0.05, 0.9, -0.3, FY - 0.05, ZC, 0, 0, 0); plank(0.05, 0.05, 0.9, 0.3, FY - 0.05, ZC, 0, 0, 0);                   // kasa kirişleri
+  g.add(wood.mesh(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true }), true));
+  // yük: çuvallar (iş sırasında görünür)
+  const yuk = new THREE.Group(), sackG = new THREE.SphereGeometry(0.2, 8, 6), sackM = std('#c9b58c', 1);
+  [[-0.2, 0.72, -0.8, 1.1], [0.2, 0.72, -0.78, 1], [0, 0.72, -0.45, 1.15], [0.02, 0.98, -0.72, 0.95]].forEach(([x, y, z, k]) => { const m = new THREE.Mesh(sackG, sackM); m.position.set(x, y, z); m.scale.set(k, 0.85 * k, 1.25 * k); m.castShadow = true; yuk.add(m); });
+  yuk.visible = false; g.add(yuk);
+  // sürücü
+  box(0.4, 0.5, 0.24, 0, 1.25, 0.02, shirt).rotation.x = 0.28;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.14, 10, 8), skin); head.position.set(0, 1.62, 0.14); head.castShadow = true; g.add(head);
+  box(0.3, 0.09, 0.3, 0, 1.73, 0.14, dark);                                                                                 // kasket
+  tube([0.19, 1.42, 0.12], [0.24, 1.09, 0.58], 0.045, shirt); tube([-0.19, 1.42, 0.12], [-0.24, 1.09, 0.58], 0.045, shirt);
+  tube([0.1, 0.98, 0], [0.15, 0.62, 0.3], 0.07, pants); tube([0.15, 0.62, 0.3], [0.15, 0.22, 0.14], 0.055, pants);
+  tube([-0.1, 0.98, 0], [-0.15, 0.72, 0.3], 0.07, pants); tube([-0.15, 0.72, 0.3], [-0.15, 0.48, 0.02], 0.055, pants);
+  // tekerlekler: ince lastik, teller
+  const tireG = new THREE.TorusGeometry(0.29, 0.026, 6, 22); tireG.rotateY(Math.PI / 2);
+  const spokeG = new THREE.BoxGeometry(0.008, 0.56, 0.008), wheels = [];
+  for (const [x, z, front] of [[0, 0.97, 1], [0.44, AX, 0], [-0.44, AX, 0]]) {
+    const pivot = new THREE.Group(); pivot.position.set(x, WY, z);
+    const spin = new THREE.Group();
+    spin.add(new THREE.Mesh(tireG, dark));
+    for (let k = 0; k < 5; k++) { const sp = new THREE.Mesh(spokeG, steel); sp.rotation.x = (k * Math.PI) / 5; spin.add(sp); }
+    spin.children[0].castShadow = true;
+    pivot.add(spin); g.add(pivot); wheels.push({ pivot, spin, front });
+  }
+  tube([0.05, 0.64, 0.8], [0.05, WY, 0.97], 0.016, red); tube([-0.05, 0.64, 0.8], [-0.05, WY, 0.97], 0.016, red);             // çatal
+  return { group: g, wheels, tail: new THREE.MeshStandardMaterial(), yuk };
+}
+
 // ------------------------------------------------------------ insan figürü: kayakçı ve turistler
 function makePerson(jacket, opts) {
   opts = opts || {};
@@ -2233,11 +2326,13 @@ function makeCat() {
     { id: 'kale-turu', bolge: 'van', ad: 'Kale Turu', alt: 'Kalenin ve Eski Van’ın çevresinde asfalt tur', laps: 1, ai: 4, zemin: 'Asfalt' },
     { id: 'eski-van', bolge: 'van', ad: 'Eski Van Rallisi', alt: 'Güney uçurumun dibinde, yıkık şehrin toprak yolları', laps: 2, ai: 3, zemin: 'Toprak' },
     { id: 'iskele', bolge: 'van', ad: 'İskele Sprinti', alt: 'Melen Caddesi, kalenin kuzey yüzü, Van Gölü iskelesi', laps: 1, ai: 4, zemin: 'Asfalt' },
+    // üç tekerli bisikletle yük taşıma: Eski Van yolunda al, 700 m ötede teslim et; kazanç kasaya girer
+    { id: 'yuk-tasima', bolge: 'van', ozel: 'servis', yuk: true, arac: 'trike', rota: 'eski-van', markerS: 30, al: 60, birak: 760, madalya: [6.6, 5.2, 3.6], odeme: 250, laps: 1, ai: 0, solo: true, zemin: 'Toprak' },
     { id: 'tirmanis', bolge: 'van', ad: 'Kale Tırmanışı', alt: 'Batı ucundan sırta çık, burçtaki bayrağa ulaş', laps: 1, ai: 0, solo: true, zemin: 'Kaya' },
     { id: 'abali-yolu', bolge: 'abali', ad: 'Abalı Yolu', alt: 'Ana yoldan köyün içinden kayak merkezine tırmanış', laps: 1, ai: 3, zemin: 'Asfalt' },
     { id: 'pist-inisi', bolge: 'abali', ad: 'Pist İnişi', alt: 'Zirve istasyonundan zikzaklarla aşağı, kar üstünde', laps: 1, ai: 2, zemin: 'Kar' },
     // özel etkinlikler: turist servisi (bindir, taşı, indir) ve kayak inişi (sürücü kayakla iner)
-    { id: 'turist-servisi', bolge: 'abali', ozel: 'servis', rota: 'abali-yolu', markerS: 45, madalya: [19, 15, 11], laps: 1, ai: 0, solo: true, zemin: 'Asfalt' },
+    { id: 'turist-servisi', bolge: 'abali', ozel: 'servis', rota: 'abali-yolu', markerS: 45, madalya: [19, 15, 11], odeme: 400, laps: 1, ai: 0, solo: true, zemin: 'Asfalt' },
     { id: 'kayak', bolge: 'abali', ozel: 'kayak', len: 2200, madalya: [17, 13, 9], laps: 1, ai: 0, solo: true, zemin: 'Kar' },
   ];
   const ZK = { Asfalt: 'asfalt', Toprak: 'toprak', Kaya: 'kaya', Kar: 'kar' };
@@ -2323,6 +2418,17 @@ function makeCat() {
     TUR.visible = false; world.add(TUR);
   }
   function putTourists(x, z, h) { TUR.position.set(x, groundH(x, z), z); TUR.rotation.y = h; TUR.visible = true; }
+  // Araç: araba ya da üç tekerli yük bisikleti (yavaş, pedallı). Yarışlar arabayla, yük işi bisikletle yapılır.
+  function setVehicle(kind) {
+    const tr = kind === 'trike', v = tr ? player.trike : player.car;
+    player.mesh.visible = false;
+    player.mesh = v.group; player.wheels = v.wheels; player.tail = v.tail;
+    player.mesh.visible = !player.ski;
+    player.power = tr ? 4.4 : 10.5; player.vmax = tr ? 9.5 : 62; player.pedal = tr;
+    player.trike.yuk.visible = false;
+  }
+  function addMoney(n) { G.para = Math.max(0, Math.round((G.para || 0) + n)); store.set('para', G.para); updateKasa(); }
+  function updateKasa() { $('kasa').textContent = T('menu.kasa', (G.para || 0).toLocaleString(LOCALE[LANG])); }
   function setSki(on) {
     player.ski = on; player.skiMesh.visible = on; player.mesh.visible = !on;
     if (on) { player.pitch = 0; player.roll = 0; player.steer = 0; }
@@ -2363,6 +2469,8 @@ function makeCat() {
       pm.dispose();
     }
     player = makeCar('#e2572b', true, 'Sen', 'spor');
+    player.car = { group: player.mesh, wheels: player.wheels, tail: player.tail };
+    player.trike = makeTrikeMesh(); player.trike.group.visible = false; scene.add(player.trike.group);
     player.skiMesh = makePerson('#e2572b', { onSkis: true, helmet: '#f3efe6' }); player.skiMesh.visible = false; scene.add(player.skiMesh);
     Object.defineProperty(player, 'name', { get: () => T('sen') });
     scene.add(player.mesh);
@@ -2622,7 +2730,7 @@ function makeCat() {
     const f = 46 + rpm * 118 + inp.thr * 6;
     A.o1.frequency.setTargetAtTime(f, t, 0.04); A.o2.frequency.setTargetAtTime(f / 2, t, 0.04);
     A.lp.frequency.setTargetAtTime(380 + rpm * 1400 + inp.thr * 500, t, 0.05);
-    A.eng.gain.setTargetAtTime(driving && !c.ski ? 0.05 + inp.thr * 0.07 + rpm * 0.02 : 0, t, 0.08);
+    A.eng.gain.setTargetAtTime(driving && !c.ski && !c.pedal ? 0.05 + inp.thr * 0.07 + rpm * 0.02 : 0, t, 0.08);
     const asphalt = c.surf && c.surf.id === 0;
     A.skid.gain.setTargetAtTime(driving && !c.air && asphalt ? clamp((c.slip - 3.5) / 9, 0, 0.22) : 0, t, 0.05);
     A.dirt.gain.setTargetAtTime(driving && !c.air && !asphalt ? clamp(sp / 40, 0, 0.3) : 0, t, 0.08);
@@ -2766,6 +2874,7 @@ function makeCat() {
   }
   function startFree(keepPlace) {
     clearRace();
+    setVehicle(REGION.id === 'van' ? G.aracSecim || 'car' : 'car');
     if (!keepPlace || G.state === 'menu') {
       const ev0 = EVENTS.find((e) => e.bolge === REGION.id), p = routePoint(ev0.R, REGION.id === 'van' ? 330 : ev0.R.L - 260);
       placeCar(player, p.x, p.z, Math.atan2(p.dx, p.dz));
@@ -2778,6 +2887,7 @@ function makeCat() {
   function startEvent(ev) {
     if (ev.ozel === 'servis') { startServis(ev); return; }
     clearRace();
+    setVehicle('car');
     G.lastEvent = ev;
     const R = ev.R, laps = ev.laps, cps = makeCps(ev);
     G.race = { ev, R, cps, cpi: 0, t: 0, count: 3.9, lastBeep: 4, done: false, doneT: 0, total: R.loop ? R.L * laps : R.L, place: 1 };
@@ -2887,10 +2997,16 @@ function makeCat() {
     $('btn-ses').textContent = T(G.muted ? 'hud.sesKapali' : 'hud.sesAcik');
     $('load-baslik').textContent = T('yukleniyor', T('bolge.van'));
     placeName = ''; placeAlt = '';
+    updateKasa();
     if (G.state !== 'load') { buildMenu(); $('btn-hikaye').textContent = S.i >= STORY.length ? T('menu.hikaye.bastan') : S.i === 0 ? T('menu.hikaye') : T('menu.hikaye.bolum', S.i + 1, STORY[S.i].ad); }
     if (save) store.set('ayar', AYAR);
   }
   for (const el of document.querySelectorAll('[data-dil]')) el.addEventListener('click', () => applyLang(el.getAttribute('data-dil'), true));
+  G.para = store.get('para', 0) | 0;
+  for (const el of document.querySelectorAll('[data-arac]')) el.addEventListener('click', () => {
+    G.aracSecim = el.getAttribute('data-arac');
+    for (const q of document.querySelectorAll('[data-arac]')) q.setAttribute('aria-pressed', q === el ? 'true' : 'false');
+  });
   function masterGain() { return G.muted ? 0 : (0.55 * AYAR.ses) / 100; }
   function cycleCam() { G.cam = (G.cam + 1) % 3; camSnap = true; AYAR.kamera = G.cam; store.set('ayar', AYAR); }
   function applySettings(save) {
@@ -2925,7 +3041,7 @@ function makeCat() {
   $('btn-sifirla-hayir').addEventListener('click', () => { $('sifirla-onay').hidden = true; });
   $('btn-sifirla-evet').addEventListener('click', () => {
     for (const ev of EVENTS) { ev.best = null; store.del('best.' + ev.id); }
-    store.del('story'); store.del('cats');
+    store.del('story'); store.del('cats'); store.del('para'); G.para = 0; updateKasa();
     S.i = 0; S.last = null;
     for (const c of cats) c.got = false;
     updateCatHud();
@@ -3066,8 +3182,9 @@ function makeCat() {
         const st = gl.stages[gl.si];
         gl.x = st.x; gl.z = st.z; gl.ad = st.ad;
         beacon1.position.set(st.x, groundH(st.x, st.z) - 0.5, st.z);
-        TUR.visible = false; hudT = 0;
-        flash(T('servis.bindi'), T('servis.bindi.alt'), 3);
+        if (gl.ozel.yuk) player.trike.yuk.visible = true; else TUR.visible = false;
+        hudT = 0;
+        flash(T(gl.on + '.bindi'), T(gl.on + '.bindi.alt'), 3);
         return;
       }
       G.goal = null; beacon1.visible = false;
@@ -3082,32 +3199,35 @@ function makeCat() {
   function startServis(ev) {
     clearRace();
     G.lastEvent = ev;
-    const R = ev.R;
+    setVehicle(ev.arac || 'car');
+    const R = ev.R, on = ev.yuk ? 'yuk' : 'servis', sAl = ev.al || 70, sBirak = ev.birak || R.L - 22;
     let p = routePoint(R, 5); placeCar(player, p.x, p.z, Math.atan2(p.dx, p.dz));
-    p = routePoint(R, 70);
-    const a = { x: p.x, z: p.z, ad: T('servis.al') };
-    putTourists(p.x + p.dz * 7, p.z - p.dx * 7, Math.atan2(-p.dz, p.dx));
-    p = routePoint(R, R.L - 22);
-    const b = { x: p.x, z: p.z, ad: T('servis.birak'), kx: p.x + p.dz * 7, kz: p.z - p.dx * 7, kh: Math.atan2(-p.dz, p.dx) };
-    G.goal = { stages: [a, b], si: 0, x: a.x, z: a.z, ad: a.ad, t: 0, sure: 0, R, ozel: ev, konfor: 100, stop: true };
+    p = routePoint(R, sAl);
+    const a = { x: p.x, z: p.z, ad: T(on + '.al') };
+    if (!ev.yuk) putTourists(p.x + p.dz * 7, p.z - p.dx * 7, Math.atan2(-p.dz, p.dx));
+    p = routePoint(R, sBirak);
+    const b = { x: p.x, z: p.z, ad: T(on + '.birak'), kx: p.x + p.dz * 7, kz: p.z - p.dx * 7, kh: Math.atan2(-p.dz, p.dx) };
+    G.goal = { stages: [a, b], si: 0, x: a.x, z: a.z, ad: a.ad, t: 0, sure: 0, R, ozel: ev, on, konfor: 100, stop: true, yol: sBirak - sAl };
     G.state = 'free'; G.near = null;
     for (const m of evMarkers) m.mesh.visible = false;
     $('menu').hidden = true; $('sonuc').hidden = true; $('konusma').hidden = true; $('hud').hidden = false; $('yaris').hidden = false; $('ok').hidden = false; $('kedi').hidden = true; $('ipucu').hidden = true;
     $('yaris-ad').textContent = ev.ad; $('yaris-sira').textContent = '';
     beacon1.position.set(a.x, groundH(a.x, a.z) - 0.5, a.z); beacon1.visible = true;
     camSnap = true;
-    flash(T('servis.basla'), T('servis.basla.alt'), 3.5);
+    flash(T(on + '.basla'), T(on + '.basla.alt'), 3.5);
   }
   function finishServis(gl) {
-    const ev = gl.ozel, st = gl.stages[gl.stages.length - 1], md = ev.madalya, t = gl.t;
-    putTourists(st.kx, st.kz, st.kh);
-    const gold = ev.R.L / md[0], silver = ev.R.L / md[1], bronze = ev.R.L / md[2];
+    const ev = gl.ozel, st = gl.stages[gl.stages.length - 1], md = ev.madalya, t = gl.t, on = gl.on;
+    if (ev.yuk) player.trike.yuk.visible = false; else putTourists(st.kx, st.kz, st.kh);
+    const yol = ev.yuk ? gl.yol : ev.R.L, gold = yol / md[0], silver = yol / md[1], bronze = yol / md[2];
+    const kazanc = Math.round((ev.odeme || 0) * (t <= gold ? 1.5 : t <= silver ? 1.25 : t <= bronze ? 1 : 0.7) * (gl.konfor / 100));
+    addMoney(kazanc);
     if (!ev.best || t < ev.best) { ev.best = t; store.set('best.' + ev.id, t); }
     G.state = 'result';
     $('hud').hidden = true; $('sonuc').hidden = false;
     $('sonuc-ad').textContent = ev.ad;
-    $('sonuc-baslik').textContent = gl.konfor < 50 ? T('servis.sarsildi') : T(t <= gold ? 'sonuc.altin' : t <= silver ? 'sonuc.gumus' : t <= bronze ? 'sonuc.bronz' : 'servis.vardi');
-    $('sonuc-not').textContent = T('servis.konfor', gl.konfor) + ' · ' + T('sonuc.madalyaNot', fmt(gold), fmt(silver), fmt(bronze));
+    $('sonuc-baslik').textContent = gl.konfor < 50 ? T(on + '.sarsildi') : T(t <= gold ? 'sonuc.altin' : t <= silver ? 'sonuc.gumus' : t <= bronze ? 'sonuc.bronz' : on + '.vardi');
+    $('sonuc-not').textContent = T('sonuc.kazanc', kazanc.toLocaleString(LOCALE[LANG]), G.para.toLocaleString(LOCALE[LANG])) + ' · ' + T(on + '.konfor', gl.konfor) + ' · ' + T('sonuc.madalyaNot', fmt(gold), fmt(silver), fmt(bronze));
     const tb = $('sonuc-tablo'); tb.innerHTML = '';
     const tr = document.createElement('tr'); tr.className = 'ben';
     for (const v of ['1.', player.name, fmt(t)]) { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); }
@@ -3296,7 +3416,7 @@ function makeCat() {
       const ang = wrapAngle(Math.atan2(gl.x - c.x, gl.z - c.z) - c.h);
       $('ok-i').style.transform = 'rotate(' + (-ang * 57.2958).toFixed(1) + 'deg)';
       $('yaris-sure').textContent = fmt(gl.sure ? Math.max(0, gl.sure - gl.t) : gl.t);
-      if (hudT <= 0) { $('ok-m').textContent = Math.round(Math.hypot(gl.x - c.x, gl.z - c.z)) + ' m'; $('yaris-tur').textContent = T('hud.hedef', gl.ad) + (gl.konfor !== undefined ? ' · ' + T('servis.konfor', gl.konfor) : ''); }
+      if (hudT <= 0) { $('ok-m').textContent = Math.round(Math.hypot(gl.x - c.x, gl.z - c.z)) + ' m'; $('yaris-tur').textContent = T('hud.hedef', gl.ad) + (gl.konfor !== undefined ? ' · ' + T(gl.on + '.konfor', gl.konfor) : ''); }
     }
     if (hudT > 0) return;
     hudT = 0.2;
@@ -3384,7 +3504,7 @@ function makeCat() {
     G, EVENTS, STORY, S, startStory, nextLine, loadRegion, get bolge() { return REGION.id; }, get player() { return player; }, get cars() { return cars; }, startEvent, startFree, tick,
     sim(sec) { const n = Math.round(sec / STEP); for (let i = 0; i < n; i++) { if (G.state === 'free' || G.state === 'race' || G.state === 'count') tick(STEP); } },
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
-    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, mobil: MOBIL,
+    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, mobil: MOBIL, setVehicle, get para() { return G.para; },
     ayar: () => ({ kalite: AYAR.kalite, golge: renderer.shadowMap.enabled, golgeBoyu: sun.shadow.mapSize.x, piksel: renderer.getPixelRatio(), ses: AYAR.ses, kazanc: masterGain() }),
     look(x, y, z, tx, ty, tz) { G.state = 'menu'; G.resume = null; G.freeze = [x, y, z, tx, ty, tz]; },
     bench(n) { const gl = renderer.getContext(), t0 = performance.now(); for (let i = 0; i < n; i++) { renderer.render(scene, camera); gl.finish(); } return { ms: (performance.now() - t0) / n, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }; },
