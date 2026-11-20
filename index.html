@@ -8091,6 +8091,7 @@ function buildTrees(scene) {
       const x = h.pop[i * 3], z = h.pop[i * 3 + 1], sc = h.pop[i * 3 + 2], y = groundH(x, z) - 0.2;
       p.set(x, y, z); q.setFromAxisAngle(UP, R() * TAU);
       s.set(sc, sc * (0.9 + R() * 0.5), sc); m4.compose(p, q, s); pm.setMatrixAt(i, m4);
+      kirikAgac(x, z, 0.27 * sc);      // gövde katı engel (src/kirik.js); kavak tabanı 0,27 m
       if (AGAC) { if (KAR) c.setHSL(0.36 + R() * 0.04, 0.1, 0.78 + R() * 0.1); else c.setHSL(0.16 + R() * 0.08, 0.22, 0.84 + R() * 0.12); }      // atlas zaten renkli: yalnız hafif ton farkı
       else if (KAR) c.setHSL(0.38 + R() * 0.04, 0.3, 0.3 + R() * 0.08); else c.setHSL(0.2 + R() * 0.06, 0.28, 0.66 + R() * 0.12);
       c.convertSRGBToLinear(); pm.setColorAt(i, c);
@@ -8100,6 +8101,7 @@ function buildTrees(scene) {
       const x = h.rnd[i * 3], z = h.rnd[i * 3 + 1], sc = h.rnd[i * 3 + 2], y = groundH(x, z) - 0.2;
       p.set(x, y, z); q.setFromAxisAngle(UP, R() * TAU);
       s.set(sc, sc * (0.8 + R() * 0.35), sc); m4.compose(p, q, s); rm.setMatrixAt(i, m4);
+      kirikAgac(x, z, 0.3 * sc);      // geniş yapraklı ve çam tabanı 0,3 m
       if (AGAC) c.setHSL(0.16 + R() * 0.1, 0.22, 0.82 + R() * 0.14).convertSRGBToLinear(); else c.setHSL(0.22 + R() * 0.08, 0.28, 0.6 + R() * 0.14).convertSRGBToLinear();
       rm.setColorAt(i, c);
       if (AGAC) liste.push({ tip: KAR ? 'cam' : 'genis', x, z, m4: m4.clone(), renk: c.clone() });
@@ -9024,7 +9026,7 @@ function buildCim(scene, terrTex) {
 // Yapraklar rüzgârla salınır (tepeye doğru artan). Karlı bölgede çam dallarının üstü kar tutar. GLB gelmezse eski kart ağaçları çizilir.
 // =====================================================================
 let AGAC = null, _agSoz = null, AGAC_HAVUZ = null;
-const AGAC_U = { uKam: { value: new THREE.Vector3() }, uZaman: { value: 0 }, uYakin: { value: 120 } };
+const AGAC_U = { uKam: { value: new THREE.Vector3() }, uZaman: { value: 0 }, uYakin: { value: 120 }, uVur: { value: new THREE.Vector4(0, 0, -100, 0) } };      // uVur: son çarpılan ağaç (x, z, zaman, güç)
 function agacYukle() {
   if (!_agSoz) _agSoz = new Promise((ok, red) => {
     if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; }
@@ -9045,13 +9047,16 @@ function agacYukle() {
 // uzak: yakındaki ağacı gizler; yakın: uzaktakini gizler. derinlik: gölge haritası malzemesi (aynı eşik ve salınım).
 function agacYama(sh, uzak) {
   Object.assign(sh.uniforms, AGAC_U);
-  sh.vertexShader = 'uniform vec3 uKam; uniform float uZaman; uniform float uYakin;\n' + sh.vertexShader.replace('#include <begin_vertex>', [
+  sh.vertexShader = 'uniform vec3 uKam; uniform float uZaman; uniform float uYakin; uniform vec4 uVur;\n' + sh.vertexShader.replace('#include <begin_vertex>', [
     '#include <begin_vertex>',
     'vec3 agK = (modelMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;',
     'float agD = distance(agK.xz, uKam.xz);',
     uzak ? 'if (agD < uYakin) transformed = vec3(0.0);' : 'if (agD >= uYakin) transformed = vec3(0.0);',
     'float agS = sin(uZaman * 1.3 + agK.x * 0.05 + agK.z * 0.07) * 0.5 + sin(uZaman * 2.3 + agK.x * 0.11) * 0.25;',
     'transformed.xz += vec2(0.7, 0.5) * agS * 0.0011 * transformed.y * transformed.y;',      // gövde dibinde sıfır, 12 m'de ~10 cm
+    // araç çarpınca sallanma: 1,5 sn'de söner, 12 m'de en çok ~0,5 m
+    'float agV = uVur.w * exp(-max(uZaman - uVur.z, 0.0) * 2.4) * step(distance(agK.xz, uVur.xy), 0.6) * step(uVur.z, uZaman);',
+    'transformed.xz += vec2(sin(uZaman * 13.0), cos(uZaman * 10.0)) * agV * 0.0036 * transformed.y * transformed.y;',
   ].join('\n'));
 }
 function agacMalzeme(uzak) {
@@ -9121,6 +9126,7 @@ function agacHavuzKur(scene, liste) {
 // yere değince küçük sekme; taban araç yönünde biraz kayar. Yavaş değmede (dik hız 1,2–1,6 m/sn altı) öğe duvar gibi durdurur.
 // Çit: çarpılan ray takımı devrilir, iki ucundaki direk çarpma hızıyla eğilir, komşu raylar eğilen direği izler (bükülmüş çit).
 // Ahşap direk devrilince telleri yeni uç noktaya sarkar, yere değen kısım yerde yatar. Yere düşen öğe 45 sn sonra, oyuncu 160 m uzaktayken yerine döner.
+// Ağaç (kurucu: "ağaçların içinden de geçiyor hala"): gövde katı engeldir, yıkılmaz; araç duvara çarpmış gibi durur, ağaç sallanır (src/agac.js uVur).
 // =====================================================================
 const KIRIK = { oge: [], zincir: [], izg: new Map(), aktif: [], ses: [], damga: 0, say: { cit: 0, lamba: 0, direk: 0, isik: 0, levha: 0 } };
 const KIRIK_H = 8, KIRIK_DON = 45, KIRIK_UZAK = 160;
@@ -9140,6 +9146,8 @@ function kirikTek(tur, x, y, z, L, r, parca, ek) {
   const o = Object.assign({ tip: 0, tur, x, y, z, L, r, parca, son: [], durum: 0, th: 0, w: 0, hedef: 0, dx: 0, dz: 1, kay: 0, kayH: 0, t: 0, tel: [], lambaI: -1, lambaX: 0, damga: 0 }, ek);
   KIRIK.oge.push(o); kirikIzg(o, x - r, z - r, x + r, z + r); return o;
 }
+// ağaç gövdesi: katı daire (r: gövde yarıçapı × ölçek)
+function kirikAgac(x, z, r) { const o = { tip: 2, tur: 'agac', x, z, r, durum: 0, damga: 0 }; KIRIK.oge.push(o); kirikIzg(o, x - r, z - r, x + r, z + r); return o; }
 // çit zinciri: P = [{ x, z, g }] direk tabanları; imD/imR direk ve ray örnekli ağları, d0/r0 bu zincirin ilk örnek sırası
 function kirikCit(P, imD, imR, d0, r0) {
   const z = { P: P.map((p, i) => ({ x: p.x, z: p.z, g: p.g, i: d0 + i, th: 0, hedef: 0, dx: 0, dz: 1 })), R: [], imD, imR, kirli: false, t: 0, hx: 0, hz: 0 };
@@ -9221,12 +9229,22 @@ function kirikCarp(c, nfx, nfz) {
       for (const o of h) {
         if (o.durum !== 0 || o.damga === damga) continue;
         let cx, cz, R;
-        if (o.tip === 0) { cx = o.x; cz = o.z; R = CAR_R + o.r; }
+        if (o.tip !== 1) { cx = o.x; cz = o.z; R = CAR_R + o.r; }      // direk ve ağaç: daire; çit rayı: doğru parçası
         else { const ex = o.bx - o.ax, ez = o.bz - o.az, L2 = ex * ex + ez * ez, t = L2 > 0 ? clamp(((px - o.ax) * ex + (pz - o.az) * ez) / L2, 0, 1) : 0; cx = o.ax + ex * t; cz = o.az + ez * t; R = CAR_R; }
         const dx = px - cx, dz = pz - cz, d2 = dx * dx + dz * dz;
         if (d2 >= R * R || d2 < 1e-8) continue;
         o.damga = damga;
         const d = Math.sqrt(d2), nx = dx / d, nz = dz / d, vn = c.vx * nx + c.vz * nz, T = KIRIK_TUR[o.tur];
+        if (o.tip === 2) {      // ağaç: duvar gibi; hız dik bileşeni seker, araç yana döner, ağaç sallanır
+          const pen = R - d; c.x += nx * pen; c.z += nz * pen;
+          if (vn < 0) {
+            c.vx -= nx * vn * 1.25; c.vz -= nz * vn * 1.25; c.vx *= 0.97; c.vz *= 0.97;
+            if (-vn > c.hit) c.hit = -vn;
+            c.h -= (nx * -nfz + nz * nfx) * Math.min(0.06, -vn * 0.005) * (part ? -1 : 1);
+            if (-vn > 2) { AGAC_U.uVur.value.set(o.x, o.z, AGAC_U.uZaman.value, Math.min(1, -vn / 12)); if (-vn > 3) KIRIK.ses.push({ tur: 'agac', v: -vn, x: o.x, z: o.z }); }
+          }
+          continue;
+        }
         if (-vn > T.esik && !(hafif && T.agir)) {      // devril: araç dik hızının bir payını kaybeder
           const sp = Math.hypot(c.vx, c.vz);
           kirikDevir(o, -vn, o.tip === 0 ? c.vx / sp : -nx, o.tip === 0 ? c.vz / sp : -nz);
@@ -12247,7 +12265,7 @@ function mutfakKur(api) {
       env.mountains.userData.y = Rg.dagY;
       const p = routePoint(EVENTS.find((e) => e.bolge === id).R, 60);
       placeCar(player, p.x, p.z, Math.atan2(p.dx, p.dz)); camSnap = true;
-      if (TANI === 'kirik') setTimeout(() => { for (const o of KIRIK.oge) if (o.durum === 0 && Math.hypot((o.tip ? o.ax : o.x) - player.x, (o.tip ? o.az : o.z) - player.z) < 40) kirikDevir(o, 12, -Math.cos(player.h), Math.sin(player.h)); }, 2500);      // tanı: oyuncunun çevresindekileri devir (Safari çizim denetimi)
+      if (TANI === 'kirik') setTimeout(() => { for (const o of KIRIK.oge) if (o.durum === 0 && o.tip !== 2 && Math.hypot((o.tip ? o.ax : o.x) - player.x, (o.tip ? o.az : o.z) - player.z) < 40) kirikDevir(o, 12, -Math.cos(player.h), Math.sin(player.h)); }, 2500);      // tanı: oyuncunun çevresindekileri devir (Safari çizim denetimi)
       G.bolge = id;
       for (const el of document.querySelectorAll('[data-bolge]')) el.setAttribute('aria-pressed', el.getAttribute('data-bolge') === id ? 'true' : 'false');
       if (!first) $('load').hidden = true;
@@ -12428,7 +12446,7 @@ function mutfakKur(api) {
   function kirikSes(e) {
     if (!A.ctx) return;
     const d = Math.hypot(e.x - player.x, e.z - player.z); if (d > 120) return;
-    const t = A.ctx.currentTime, k = clamp(e.v / 14, 0.25, 1) * (1 - d / 120), tahta = e.tur === 'direk';
+    const t = A.ctx.currentTime, k = clamp(e.v / 14, 0.25, 1) * (1 - d / 120), tahta = e.tur === 'direk' || e.tur === 'agac';
     const s = A.ctx.createBufferSource(), f = A.ctx.createBiquadFilter(), g = A.ctx.createGain();
     s.buffer = A.noise; f.type = tahta ? 'lowpass' : 'bandpass'; f.frequency.value = tahta ? 900 : e.tur === 'cit' ? 1300 : 2300; f.Q.value = tahta ? 0.7 : 3;
     g.gain.setValueAtTime(0.55 * k, t); g.gain.exponentialRampToValueAtTime(0.001, t + (tahta ? 0.22 : 0.4));
