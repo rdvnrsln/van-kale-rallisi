@@ -14694,7 +14694,8 @@ function cokKur(o) {
   }
   // kalite basamağı (2 sn'de bir, kare hızına göre)
   function kaliteAdim(fps, driving, now) {
-    if (PERF.tur) { slow = 0; PERF.akici = 0; return; }      // ölçüm turu tek kalitede ölçer
+    // ölçüm turu tek kalitede ölçer; menü, yükleme ve sürüş başı (ısınma) kaliteyi düşürmez (21 Kas: Android'de oyun Orta'da açılıp menüdeyken Düşük'e indi)
+    if (PERF.tur || !driving || now <= perfIsinma) { slow = 0; PERF.akici = 0; return; }
     slow = fps < 27 ? slow + 1 : 0;
     if (slow >= 2 && AYAR.oto && AYAR.kalite !== 'dusuk' && (PERF.olcek <= PERF.min + 1e-3 || PERF.cpuDar)) {
       AYAR.kalite = KALITE_SIRA[KALITE_SIRA.indexOf(AYAR.kalite) - 1]; slow = 0; PERF.akici = 0;
@@ -14879,7 +14880,8 @@ function cokKur(o) {
     if (!izT) { izT = 1; IZ.yaz('ilk kare (gölgelendirici derleme) · ' + (REGION ? REGION.id : '') + ' · ' + AYAR.kalite); } else if (izT === 1) { izT = 2; IZ.yaz('ilk kare çizildi · ' + (REGION ? REGION.id : '')); }
     else if (t0 - izT > 5000) { izT = t0; IZ.yaz('oyun · ' + (REGION ? REGION.id : '') + ' · ' + G.state + ' · ' + AYAR.kalite + ' · ' + Math.round(PERF.olcek * 100)); }      // açılış izi: 5 sn'de bir
     {   // menüde (drone çekimi) cihazın tam çözünürlüğü, oyunda kalite ayarının çözünürlüğü × dinamik çarpan (0,05 adımlı: tampon az yeniden kurulur)
-      const pr = G.state === 'menu' && !PERF.tur ? Math.min(window.devicePixelRatio || 1, 2.5) : Math.max(0.5, Math.round(pixelRatio * PERF.olcek * 20) / 20);
+      const pr = G.state === 'menu' && !PERF.tur ? Math.min(window.devicePixelRatio || 1, MOBIL ? 1.5 : 2.5) :      // telefonda menü en çok 1,5 kat: yükleme biter bitmez şehrin tamamı 2,5 katta çiziliyordu; Android'deki grafik kopmasının adayı (21 Kas, doğrulanmadı)
+         Math.max(0.5, Math.round(pixelRatio * PERF.olcek * 20) / 20);
       if (renderer.getPixelRatio() !== pr) { renderer.setPixelRatio(pr); renderer.setSize(window.innerWidth, window.innerHeight, false); PERF.boyut = (PERF.boyut || 0) + 1; }
     }
     if (!PERF.gl) gpuKur();
