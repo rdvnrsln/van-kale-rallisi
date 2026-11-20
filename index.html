@@ -7324,6 +7324,9 @@ function buildStreets(scene, maxAniso) {
     PARCA.bina.push(parca);
   }
   if (cizgiler.p.length) scene.add(cizgiler.mesh(cizMat, false));
+  // Veri kipindeki bölgede (D.detay: kampüs) kuralla üretilen ahşap elektrik direği, teli ve durak konmaz: OSM'de kaydı yok (kurucu kararı, 20 Kas 2026).
+  // Gerçek enerji hatları ve direkleri buildDetay ile OSM'den gelir. Aydınlatma direği ve kaldırım kalır.
+  if (D.detay) { direk.length = 0; durak.length = 0; tel.length = 0; }
   // direk ve durak geometrileri (köşe renkli, tek parça)
   const m4 = new THREE.Matrix4(), kutuG = new THREE.BoxGeometry(1, 1, 1).toNonIndexed(), silG = new THREE.CylinderGeometry(1, 1, 1, 6, 1, true).toNonIndexed();
   const R = (h) => new THREE.Color(h).convertSRGBToLinear();
