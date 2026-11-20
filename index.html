@@ -12545,6 +12545,8 @@ function mutfakKur(api) {
       if (Math.abs(PAD.steer) > Math.abs(inp.steer)) inp.steer = PAD.steer;
       inp.thr = Math.max(inp.thr, PAD.thr); inp.brk = Math.max(inp.brk, PAD.brk); inp.hb = inp.hb || PAD.hb; inp.turbo = inp.turbo || PAD.turbo;
     }
+    // turbo kendi başına tam gaz verir: telefonda turbo düğmesi gazın üstünde, tek başparmak ikisine birden basamaz (20 Kas, simülatörde ölçüldü)
+    if (inp.turbo && !player.ski && (player.arac === 'car' || player.arac === 'motor')) inp.thr = 1;
     return inp;
   }
   // Oyun kolu (Steam ve masaüstü için): sol çubuk direksiyon, RT gaz, LT fren, A el freni / onay, X ya da RB turbo,
