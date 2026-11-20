@@ -6924,6 +6924,33 @@ function buildGroundCanvas() {
   }
   return { color: cv, mask: mc };
 }
+// Arazi eğimi dokusu (değer: −∂h/∂x, −∂h/∂z; 0,8 eğim = tam aralık). RG: 20 m'de yumuşatılmış eğim, arazinin ışık normali olur
+// (SRTM'nin ±1–2 m gürültüsü 20 m'lik üçgenlerde ışığı yamalara bölüyordu; yükseklik değişmez). BA: 60 m'de yumuşatılmış eğim, akış yönü:
+// büyük kabartmanın olukları bu yönde yamaçtan aşağı uzatılır (yön pikselin kendi normalinden alınsaydı her üçgende döner, desen girdap olurdu).
+function akisDokusu() {
+  const nx = dem.nx, nz = dem.nz, gx = new Float32Array(nx * nz), gz = new Float32Array(nx * nz);
+  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+    const k = j * nx + i, l = HG[j * nx + Math.max(0, i - 1)], r = HG[j * nx + Math.min(nx - 1, i + 1)], u = HG[Math.max(0, j - 1) * nx + i], d = HG[Math.min(nz - 1, j + 1) * nx + i];
+    gx[k] = -(r - l) / (2 * dem.step); gz[k] = -(d - u) / (2 * dem.step);
+  }
+  const bulanik = (a, R) => {      // iki geçişli kutu bulanıklığı, iki kez (yaklaşık Gauss): R = 1 → σ ≈ 20 m, R = 3 → σ ≈ 50 m
+    const t = new Float32Array(a.length);
+    for (let tur = 0; tur < 2; tur++) {
+      for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { let s = 0, n = 0; for (let o = -R; o <= R; o++) { const q = i + o; if (q >= 0 && q < nx) { s += a[j * nx + q]; n++; } } t[j * nx + i] = s / n; }
+      for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { let s = 0, n = 0; for (let o = -R; o <= R; o++) { const q = j + o; if (q >= 0 && q < nz) { s += t[q * nx + i]; n++; } } a[j * nx + i] = s / n; }
+    }
+  };
+  const ax = gx.slice(), az = gz.slice();
+  bulanik(gx, 1); bulanik(gz, 1); bulanik(ax, 3); bulanik(az, 3);
+  const veri = new Uint8Array(nx * nz * 4), b8 = (v) => Math.max(0, Math.min(255, 127.5 + v / 0.8 * 127.5));
+  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+    const k = j * nx + i, o = ((nz - 1 - j) * nx + i) * 4;      // dokuda satır 0 alttadır (arazi uv: v = 1 − gj / (nz − 1))
+    veri[o] = b8(gx[k]); veri[o + 1] = b8(gz[k]); veri[o + 2] = b8(ax[k]); veri[o + 3] = b8(az[k]);
+  }
+  const t = new THREE.DataTexture(veri, nx, nz, THREE.RGBAFormat);
+  t.magFilter = t.minFilter = THREE.LinearFilter; t.needsUpdate = true;
+  return t;
+}
 function buildTerrain(scene, groundCanvas, maxAniso) {
   const nx = dem.nx, nz = dem.nz, PX = nx + 2, PZ = nz + 2, FAR = 9000;
   const pos = new Float32Array(PX * PZ * 3), uv = new Float32Array(PX * PZ * 2);
@@ -6948,7 +6975,8 @@ function buildTerrain(scene, groundCanvas, maxAniso) {
   const tex = new THREE.CanvasTexture(groundCanvas.color);
   tex.encoding = THREE.sRGBEncoding; tex.anisotropy = maxAniso;
   const maskTex = new THREE.CanvasTexture(groundCanvas.mask);
-  const mat = terrainPatch(new THREE.MeshStandardMaterial({ map: tex, roughness: 1, metalness: 0 }), maskTex);
+  const akis = akisDokusu();
+  const mat = terrainPatch(new THREE.MeshStandardMaterial({ map: tex, roughness: 1, metalness: 0 }), maskTex, akis);
   const mesh = new THREE.Mesh(geo, mat);
   mesh.receiveShadow = true;
   scene.add(mesh);
@@ -6986,7 +7014,7 @@ function buildTerrain(scene, groundCanvas, maxAniso) {
   const rock = new THREE.Mesh(rg, triplanar(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true }), 'kaya', 'kaya_ust', 0.062, 0.11, 1.0, 1.1, true));
   rock.castShadow = true; rock.receiveShadow = true;
   scene.add(rock);
-  return { mesh, rock, textures: [tex, maskTex] };
+  return { mesh, rock, textures: [tex, maskTex, akis] };
 }
 
 // ------------------------------------------------------------ yollar
@@ -8033,7 +8061,44 @@ function loadTextures(maxAniso) {
   }))).then(() => {
     // Kabartma haritaları: zemin, kaya ve sur. Telefonda kurulmaz (bellek ve dolgu maliyeti).
     if (!MOBIL) for (const [n, guc] of [['cakil', 6], ['kaya', 6], ['kaya_ust', 5], ['sur', 6]]) { const k = kabartmaUret(n, guc, maxAniso); if (k) TEX[n + '_k'] = k; }
+    TEX.makro = makroUret(maxAniso);
   });
+}
+// Büyük ölçekli kabartma (sırt ve oluk), kodla üretilir ve döşenir: 512 × 512, üç katmanlı V vadili gürültü, v ekseni boyunca 2 kat uzun. Arazinin yüksekliğini değiştirmez
+// (araçlar ve oyun gerçek SRTM yüksekliğini kullanır); yalnız ışığı, oyuk karartmasını ve sırtta açılan kayayı verir. Yamaçta aşağı doğru uzatılarak
+// okunur (terrainPatch): oluklar dere yatağı gibi yamaçtan iner. R, G: eğim (kabartma haritası düzeni); B: yükseklik.
+function makroUret(maxAniso) {
+  const N = 512, h = new Float32Array(N * N);
+  const hs = (i, j, o) => { let n = (i * 374761393 + j * 668265263 + o * 2147483647) | 0; n = Math.imul(n ^ (n >>> 13), 1274126177); return ((n ^ (n >>> 16)) >>> 0) / 4294967296; };
+  const gur = (u, v, P, Q, o) => {      // döşenebilir değer gürültüsü: kafes yatayda P, dikeyde Q hücrede sarar
+    const x = u * P, y = v * Q, i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j, sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+    const i0 = ((i % P) + P) % P, j0 = ((j % Q) + Q) % Q, i1 = (i0 + 1) % P, j1 = (j0 + 1) % Q;
+    const a = hs(i0, j0, o), b = hs(i1, j0, o), c = hs(i0, j1, o), d = hs(i1, j1, o);
+    return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy;
+  };
+  let lo = 1e9, hi = -1e9;
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    let u = x / N, v = y / N;
+    u += (gur(u, v, 3, 3, 11) - 0.5) * 0.035;      // oluklar hafif kıvrılır
+    let s = 0, a = 0.5;
+    for (let o = 0; o < 3; o++) { s += Math.abs(gur(u, v, 6 << o, 3 << o, o) * 2 - 1) * a; a *= 0.5; }      // V vadi, yuvarlak sırt; v boyunca 2 kat uzun
+    s += gur(u, v, 4, 4, 20) * 0.2;
+    h[y * N + x] = s; lo = Math.min(lo, s); hi = Math.max(hi, s);
+  }
+  const g = [];
+  for (let y = 0; y < N; y += 4) for (let x = 0; x < N; x += 4) g.push(Math.hypot(h[y * N + (x + 1) % N] - h[y * N + (x + N - 1) % N], h[((y + 1) % N) * N + x] - h[((y + N - 1) % N) * N + x]));
+  g.sort((p, q) => p - q);
+  const k = 0.85 / (g[Math.floor(g.length * 0.95)] || 1);      // eğimin %95'i haritanın aralığına sığar
+  const cv = document.createElement('canvas'); cv.width = cv.height = N;
+  const cx = cv.getContext('2d'), im = cx.createImageData(N, N), d = im.data;
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const dx = (h[y * N + (x + 1) % N] - h[y * N + (x + N - 1) % N]) * k, dy = (h[((y + 1) % N) * N + x] - h[((y + N - 1) % N) * N + x]) * k, i = (y * N + x) * 4;
+    d[i] = Math.max(0, Math.min(255, 127.5 - dx * 127.5)); d[i + 1] = Math.max(0, Math.min(255, 127.5 + dy * 127.5)); d[i + 2] = ((h[y * N + x] - lo) / (hi - lo)) * 255; d[i + 3] = 255;
+  }
+  cx.putImageData(im, 0, 0);
+  const t = new THREE.CanvasTexture(cv);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = Math.min(8, maxAniso);
+  return t;
 }
 // Kabartma (normal) haritası indirilmez: renk dokusunun parlaklığından türetilir (açık = yüksek, komşu fark = eğim).
 // Kırmızı kanal −∂h/∂u, yeşil kanal −∂h/∂v (v yukarı). Kenarlar sarmalıdır: doku tekrar ederken dikiş vermez.
@@ -8199,9 +8264,10 @@ function triplanar(mat, side, top, sSide, sTop, gain, kab, cok) {
 // zemin (bozkır toprağı), çayır, kum-çakıl (yol kenarı, şehir zemini), kar ve sarp yamaçta kaya. Karışım maskesi: R çayır, G kum, B kar;
 // kaya, yüzeyin eğiminden (dünya normali) çıkar. Her doku iki ölçekte okunur: yakında gerçek boyutu, uzakta 7,7 kat büyüğü (tekrar görünmesin).
 // Yakın planda normal haritaları ışığı böler (380 m'de söner). Telefonda tek ölçek ve normal haritası yok.
+// Büyük ölçekte sırt ve oluk (makroUret): yamaçta ışık, oyuk karartması ve sırtta açılan kaya; düz zeminde, yolda ve şehirde yok.
 // Maskede payı olmayan doku okunmaz (dal): kar yalnız Abalı'da, kaya yalnız sarp yamaçta okunur.
 const ARAZI_OLCEK = { zemin: 0.62, cayir: 0.2, kum: 0.42, kayalik: 0.17, kar: 0.3 };      // 1 / metre (doku boyu: 1,6 m, 5 m, 2,4 m, 5,9 m, 3,3 m)
-function terrainPatch(mat, maskTex) {
+function terrainPatch(mat, maskTex, akisTex) {
   const normalVar = !!(TEX.zemin_n && TEX.cayir_n && TEX.kum_n && TEX.kayalik_n && TEX.kar_n);
   const O = ARAZI_OLCEK, f = (v) => v.toFixed(4);
   mat.onBeforeCompile = (sh) => {
@@ -8212,20 +8278,27 @@ function terrainPatch(mat, maskTex) {
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWPos = (modelMatrix * vec4(position, 1.0)).xyz;');
     // Tekrar kırıcı: yakın ölçek iki kez okunur (ikincisi 90° döndürülmüş ve %17 küçük); 22 m'lik gürültü lekeleri ikisini karıştırır.
     // Uzak ölçek 9 kat büyüktür. Telefonda tek örnek.
-    const ust = ['uniform sampler2D maskMap;', 'varying vec3 vWPos;', 'varying vec3 vWNrm;'].concat(PBR.map((n) => 'uniform sampler2D t_' + n + ';'), [
+    sh.uniforms.t_makro = { value: TEX.makro }; sh.uniforms.t_akis = { value: akisTex };
+    const ust = ['uniform sampler2D maskMap;', 'uniform sampler2D t_makro;', 'uniform sampler2D t_akis;', 'varying vec3 vWPos;', 'varying vec3 vWNrm;'].concat(PBR.map((n) => 'uniform sampler2D t_' + n + ';'), [
       'float gurH(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }',
       'float gurultu(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);',
       '  return mix(mix(gurH(i), gurH(i + vec2(1.0, 0.0)), f.x), mix(gurH(i + vec2(0.0, 1.0)), gurH(i + vec2(1.0, 1.0)), f.x), f.y); }',
-      'float tkM; vec2 gDx, gDy;',      // türevler dalın dışında alınır: dal içindeki doku okuması mip seviyesini şaşırmasın
+      'float tkM, tkF; vec2 gDx, gDy;',
+      'void makroOku(vec2 wp, float th, out float h, out vec2 o) {',
+      '  vec2 d = vec2(cos(th), sin(th)), p = vec2(-d.y, d.x), u = vec2(dot(wp, p), dot(wp, d) * 0.65);',
+      '  vec4 A = texture2D(t_makro, u / 240.0), B = texture2D(t_makro, u / 95.0 + 0.31);',
+      '  h = A.b * 0.65 + B.b * 0.35 - 0.5; vec2 n = (A.xy * 2.0 - 1.0) * 0.65 + (B.xy * 2.0 - 1.0) * 0.35;',
+      '  o = p * n.x + d * n.y * 0.65; }',      // türevler dalın dışında alınır: dal içindeki doku okuması mip seviyesini şaşırmasın
       'vec4 oku(sampler2D t, vec2 p, float s, bool don, vec2 o) { return don ? textureGrad(t, vec2(p.y, -p.x) * s + o, vec2(gDx.y, -gDx.x) * s, vec2(gDy.y, -gDy.x) * s) : textureGrad(t, p * s + o, gDx * s, gDy * s); }',
     ], MOBIL ? ['vec3 ornek(sampler2D t, vec2 p, float s, float k) { return oku(t, p, s * 0.3, false, vec2(0.0)).rgb; }']
       : ['vec3 ornek(sampler2D t, vec2 p, float s, float k) {',
         '  vec3 a = mix(oku(t, p, s, false, vec2(0.0)).rgb, oku(t, p, s * 0.83, true, vec2(0.43)).rgb, tkM);',
-        '  return mix(a, oku(t, p, s * 0.11, false, vec2(0.37)).rgb, k); }',
+        '  vec3 c = mix(oku(t, p, s * 0.11, false, vec2(0.37)).rgb, oku(t, p, s * 0.087, true, vec2(0.61)).rgb, tkF);',
+        '  return mix(a, c, k); }',
         'vec2 egim(sampler2D t, vec2 p, float s, float k) {',
         '  vec2 a = oku(t, p, s, false, vec2(0.0)).xy * 2.0 - 1.0, b = oku(t, p, s * 0.83, true, vec2(0.43)).xy * 2.0 - 1.0;',
-        '  vec2 c = oku(t, p, s * 0.11, false, vec2(0.37)).xy * 2.0 - 1.0;',
-        '  return mix(mix(a, vec2(-b.y, b.x), tkM), c, k); }']);      // döndürülmüş örneğin eğimi geri döndürülür
+        '  vec2 c = oku(t, p, s * 0.11, false, vec2(0.37)).xy * 2.0 - 1.0, e = oku(t, p, s * 0.087, true, vec2(0.61)).xy * 2.0 - 1.0;',
+        '  return mix(mix(a, vec2(-b.y, b.x), tkM), mix(c, vec2(-e.y, e.x), tkF), k); }']);      // döndürülmüş örneğin eğimi geri döndürülür
     sh.fragmentShader = ust.join('\n') + '\n' + sh.fragmentShader.replace('#include <map_fragment>', [
       '#include <map_fragment>',
       'vec3 msk = texture2D(maskMap, vUv).rgb;',
@@ -8233,25 +8306,39 @@ function terrainPatch(mat, maskTex) {
       'float fY = smoothstep(8.0, 70.0, dcam);',
       'vec2 wp = vWPos.xz; gDx = dFdx(wp); gDy = dFdy(wp);',
       'tkM = smoothstep(0.3, 0.7, gurultu(wp * 0.045) * 0.7 + gurultu(wp * 0.17) * 0.3);',
+      'tkF = smoothstep(0.3, 0.7, gurultu(wp * 0.0071 + 3.1));',
+      'vec4 akT = texture2D(t_akis, vUv); vec2 gIs = (akT.rg * 2.0 - 1.0) * 0.8, mEg = (akT.ba * 2.0 - 1.0) * 0.8; float mE = length(mEg);',      // akisDokusu: ışık eğimi ve akış
+      'vec3 nIs = normalize(vec3(gIs.x, 1.0, gIs.y));',      // arazinin ışık normali (20 m'de yumuşatılmış)
+      // oluk yönü yamaç aşağısıdır; dört sabit yönden (0°, 45°, 90°, 135°) en yakın ikisi okunur ve açıya göre karıştırılır
+      'float mA = mod(atan(mEg.y, mEg.x), 3.14159265) / 0.78539816, mW = smoothstep(0.25, 0.75, fract(mA)), mH, mH1; vec2 mOb, mO1;',      // dar geçiş: çapraz tarama olmasın
+      'makroOku(wp, floor(mA) * 0.78539816, mH, mOb); makroOku(wp, (floor(mA) + 1.0) * 0.78539816, mH1, mO1);',
+      'mH = mix(mH, mH1, mW); mOb = mix(mOb, mO1, mW);',      // mH: sırt +, oluk −; mOb: eğim (dünya xz)
+      'float mK = smoothstep(0.05, 0.3, mE) * (1.0 - msk.g);',      // yalnız yamaçta; yol, kum ve şehir zemininde yok
       'vec3 dZ = ornek(t_zemin, wp, ' + f(O.zemin) + ', fY) / ' + glv3(TEX_AVG.zemin) + ';',
       'vec3 dC = vec3(1.0), dU = vec3(1.0), dS = vec3(1.0), dK = vec3(1.0);',
       'if (msk.r > 0.004) dC = ornek(t_cayir, wp, ' + f(O.cayir) + ', fY) / ' + glv3(TEX_AVG.cayir) + ';',
       'if (msk.g > 0.004) dU = ornek(t_kum, wp, ' + f(O.kum) + ', fY) / ' + glv3(TEX_AVG.kum) + ';',
       'if (msk.b > 0.004) dS = ornek(t_kar, wp, ' + f(O.kar) + ', fY) / ' + glv3(TEX_AVG.kar) + ';',
       // sarp yamaç: 26°–44° arası kayaya döner; geçiş gürültüyle kırılır (düz çizgi olmasın)
-      'float rk = smoothstep(0.90, 0.72, vWNrm.y + (tkM - 0.5) * 0.08) * step(0.0, vWPos.y - 0.3);',
+      'float rk = smoothstep(0.90, 0.72, nIs.y + (tkM - 0.5) * 0.08 - mH * 0.2 * mK) * step(0.0, vWPos.y - 0.3);',      // sırtta kaya daha erken açılır
       'if (rk > 0.004) dK = ornek(t_kayalik, wp, ' + f(O.kayalik) + ', fY) / ' + glv3(TEX_AVG.kayalik) + ';',
       'vec3 det = mix(dZ, dC, msk.r);',
       'det = mix(det, dU, msk.g);',
       'det = mix(det, mix(vec3(1.0), dS, 0.3), msk.b);',      // kar: leke rengi zayıf, kabartmayı normal haritası verir
       'det = mix(det, dK, rk);',
       'det = mix(vec3(1.0), det, 1.1);',
-      'det = mix(det, vec3(1.0), smoothstep(900.0, 3200.0, dcam) * 0.65);',
-      'diffuseColor.rgb *= clamp(det, 0.04, 3.0) * mix(0.92, 0.82, rk);',
+      'det = mix(det, vec3(1.0), smoothstep(100.0, 700.0, dcam) * 0.85);',      // uzakta doku tekrarı görünmesin: ayrıntı söner, yerine büyük leke
+      'det *= 1.0 + (texture2D(t_makro, wp / 520.0 + 0.17).b - 0.5) * 0.22 * (1.0 - msk.b);',
+      'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.16, 0.145, 0.13), rk * msk.b * 0.85);',      // karlı yamaçta açılan kaya koyu
+      'diffuseColor.rgb *= clamp(det, 0.04, 3.0) * mix(0.92, 0.82, rk) * (1.0 + mH * 0.5 * mK);',      // oluk koyu, sırt açık
     ].join('\n')).replace('#include <roughnessmap_fragment>', [
       '#include <roughnessmap_fragment>',
       'roughnessFactor = mix(roughnessFactor, 0.58, msk.b * (1.0 - rk));',      // kar ıslak-parlak değil ama toprak kadar mat da değil
     ].join('\n'));
+    const makroNormal = [
+      'vec3 kwn = nIs;',      // köşe normali yerine yumuşatılmış eğim
+      'vec2 mO = mOb * mK * 0.6;',      // büyük kabartma: ışık uzakta da bölünür
+    ];
     if (normalVar) {
       for (const n of PBR) sh.uniforms['n_' + n] = { value: TEX[n + '_n'] };
       sh.fragmentShader = PBR.map((n) => 'uniform sampler2D n_' + n + ';').join('\n') + '\n' + sh.fragmentShader.replace('#include <normal_fragment_maps>', [
@@ -8265,10 +8352,15 @@ function terrainPatch(mat, maskTex) {
         'kd = mix(kd, kS * 0.8, msk.b);',
         'kd = mix(kd, kK * 1.5, rk);',
         'kd *= 1.0 - smoothstep(60.0, 380.0, dcam);',
-        'vec3 kwn = inverseTransformDirection(normal, viewMatrix);',
-        'kwn = normalize(kwn + vec3(kd.x, 0.0, kd.y));',
+      ].concat(makroNormal, [
+        'kwn = normalize(kwn + vec3(kd.x + mO.x, 0.0, kd.y + mO.y));',
         'normal = normalize((viewMatrix * vec4(kwn, 0.0)).xyz);',
-      ].join('\n'));
+      ]).join('\n'));
+    } else {
+      sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_maps>', ['#include <normal_fragment_maps>'].concat(makroNormal, [
+        'kwn = normalize(kwn + vec3(mO.x, 0.0, mO.y));',
+        'normal = normalize((viewMatrix * vec4(kwn, 0.0)).xyz);',
+      ]).join('\n'));
     }
   };
   mat.customProgramCacheKey = () => 'arazi-pbr-' + (normalVar ? 'n' : '') + (MOBIL ? 'm' : '');
