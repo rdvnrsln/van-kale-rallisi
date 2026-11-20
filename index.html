@@ -23,6 +23,10 @@ body {
   overflow: hidden; overscroll-behavior: none; -webkit-user-select: none; user-select: none; touch-action: none;
 }
 #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+.gl-hata { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-top: 16px; }
+.gl-kod { font-size: 12px; color: var(--soluk); font-variant-numeric: tabular-nums; word-break: break-word; }
+.gl-kayip { position: fixed; left: 50%; top: 40%; transform: translateX(-50%); z-index: 50; background: rgba(8, 14, 22, 0.86); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; padding: 14px 18px; max-width: 86vw; text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.gl-kayip[hidden] { display: none; }
 .kat {
   position: fixed; inset: 0; box-sizing: border-box;
   padding-block: calc(14px + env(safe-area-inset-top, 0px)) calc(14px + env(safe-area-inset-bottom, 0px));
@@ -6156,7 +6160,10 @@ THREE.GLTFLoader = GLTFLoader;
 // =====================================================================
 const DIL = {
   tr: {
-    'webgl': 'Bu tarayıcıda WebGL açılamadı. Oyun için WebGL destekli bir tarayıcı gerekir.',
+    'webgl.yok': 'Bu tarayıcı 3B grafik (WebGL) desteklemiyor. Oyunu Chrome, Safari ya da Firefox’un güncel sürümüyle açın.',
+    'webgl.kapali': 'Tarayıcı 3B grafiği şu an açmadı. Çoğu zaman şu çözer: öbür sekmeleri kapatın, tarayıcıyı tamamen kapatıp yeniden açın. Tarayıcı ayarlarında donanım hızlandırma açık olmalı.',
+    'webgl.eski': 'Bu cihazın grafik birimi WebGL 2’yi desteklemiyor; oyun WebGL 2 gerektirir.',
+    'webgl.dene': 'Yeniden dene', 'webgl.koptu': 'Grafik bağlantısı koptu, geri getiriliyor…', 'webgl.koptuYenile': 'Grafik geri gelmedi.', 'webgl.yenile': 'Sayfayı yenile',
     'yukleniyor': '{0} yükleniyor', 'acilis': 'Harita açılıyor', 'hata': 'Yükleme hatası: {0}',
     'yuk.doku': 'Dokular: asfalt, bozkır, kireçtaşı', 'yuk.yol': 'Yollar: {0} yol parçası', 'yuk.bina': 'Yapılar: {0} bina',
     'bolge.van': 'Van Kalesi', 'bolge.abali': 'Abalı', 'bolge.kampus': 'Kampüs',
@@ -6303,7 +6310,10 @@ const DIL = {
   },
 
   en: {
-    'webgl': 'WebGL did not start in this browser. The game needs a browser with WebGL support.',
+    'webgl.yok': 'This browser does not support 3D graphics (WebGL). Open the game in a current version of Chrome, Safari or Firefox.',
+    'webgl.kapali': 'The browser did not start 3D graphics. This usually fixes it: close other tabs, then quit the browser fully and open it again. Hardware acceleration must be on in the browser settings.',
+    'webgl.eski': 'The graphics chip of this device does not support WebGL 2. The game needs WebGL 2.',
+    'webgl.dene': 'Try again', 'webgl.koptu': 'The graphics connection was lost. Restoring…', 'webgl.koptuYenile': 'The graphics did not come back.', 'webgl.yenile': 'Reload the page',
     'yukleniyor': 'Loading {0}', 'acilis': 'Opening the map', 'hata': 'Loading error: {0}',
     'yuk.doku': 'Textures: asphalt, steppe, limestone', 'yuk.yol': 'Roads: {0} segments', 'yuk.bina': 'Buildings: {0}',
     'bolge.van': 'Van Castle', 'bolge.abali': 'Abalı', 'bolge.kampus': 'Campus',
@@ -6450,7 +6460,10 @@ const DIL = {
   },
 
   fa: {
-    'webgl': 'WebGL در این مرورگر باز نشد. برای بازی به مرورگری با پشتیبانی WebGL نیاز است.',
+    'webgl.yok': 'این مرورگر از گرافیک سه‌بعدی (WebGL) پشتیبانی نمی‌کند. بازی را با نسخهٔ جدید Chrome، Safari یا Firefox باز کنید.',
+    'webgl.kapali': 'مرورگر الان گرافیک سه‌بعدی را باز نکرد. معمولاً این کار درستش می‌کند: زبانه‌های دیگر را ببندید، مرورگر را کامل ببندید و دوباره باز کنید. «شتاب سخت‌افزاری» در تنظیمات مرورگر باید روشن باشد.',
+    'webgl.eski': 'پردازندهٔ گرافیکی این دستگاه از WebGL 2 پشتیبانی نمی‌کند؛ بازی به WebGL 2 نیاز دارد.',
+    'webgl.dene': 'دوباره امتحان کنید', 'webgl.koptu': 'اتصال گرافیک قطع شد؛ در حال بازگرداندن…', 'webgl.koptuYenile': 'گرافیک برنگشت.', 'webgl.yenile': 'بارگیری دوبارهٔ صفحه',
     'yukleniyor': 'در حال بارگذاری {0}', 'acilis': 'نقشه باز می‌شود', 'hata': 'خطای بارگذاری: {0}',
     'yuk.doku': 'بافت‌ها: آسفالت، استپ، سنگ آهک', 'yuk.yol': 'راه‌ها: {0} قطعه', 'yuk.bina': 'ساختمان‌ها: {0}',
     'bolge.van': 'قلعه وان', 'bolge.abali': 'آبالی', 'bolge.kampus': 'پردیس دانشگاه',
@@ -11350,13 +11363,55 @@ function mutfakKur(api) {
 // =====================================================================
 (function () {
   const $ = (id) => document.getElementById(id);
-  const canvas = $('gl');
-  let renderer;
-  try {
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-  } catch (e) {
-    $('load-text').textContent = T('webgl');
-    return;
+  // Grafik bağlamı (20 Kas 2026; kurucu Android'de "WebGL açılamadı" gördü). Kalite düşürülmeden sırayla denenir: önce yüksek performans,
+  // sonra varsayılan güç profili; kenar yumuşatma yalnız son iki denemede kapanır. Her deneme temiz bir tuvalde yapılır (başarısız getContext
+  // tuvali bağlamaz ama bazı tarayıcılar bağlar). Oyun WebGL 2 ister (doku dizisi, texelFetch, textureGrad). Açılmazsa neden ve çözüm yazılır.
+  // Sınama: ?webgl=yok | kapali | eski (hata ekranı), ?webgl=ilkred (ilk iki deneme reddedilir, üçüncüsü açılır).
+  const glSina = (location.search.match(/[?&]webgl=([a-z]+)/) || [])[1] || '';
+  let canvas = $('gl'), renderer, GLB = { deneme: -1, neden: '' };
+  {
+    const denemeler = [
+      { antialias: true, powerPreference: 'high-performance' }, { antialias: true, powerPreference: 'default' },
+      { antialias: false, powerPreference: 'default' }, { antialias: false, powerPreference: 'low-power' },
+    ];
+    const var2 = typeof WebGL2RenderingContext !== 'undefined' && glSina !== 'eski' && glSina !== 'yok' && glSina !== 'kapali';
+    for (let i = 0; i < denemeler.length && var2 && !renderer; i++) {
+      const cv = i === 0 ? canvas : document.createElement('canvas');
+      let gl = null;
+      try { gl = glSina === 'ilkred' && i < 2 ? null : cv.getContext('webgl2', Object.assign({ alpha: false, depth: true, stencil: false, failIfMajorPerformanceCaveat: false }, denemeler[i])); } catch (e) { gl = null; }
+      if (!gl) continue;
+      try { renderer = new THREE.WebGLRenderer(Object.assign({ canvas: cv, context: gl }, denemeler[i])); } catch (e) { renderer = null; continue; }
+      if (cv !== canvas) { cv.id = 'gl'; cv.setAttribute('aria-label', canvas.getAttribute('aria-label') || ''); canvas.replaceWith(cv); canvas = cv; }
+      GLB.deneme = i;
+    }
+    if (!renderer) {
+      let var1 = false;
+      if (glSina !== 'yok' && glSina !== 'kapali') try { var1 = !!document.createElement('canvas').getContext('webgl'); } catch (e) { var1 = false; }
+      GLB.neden = glSina === 'yok' || typeof WebGLRenderingContext === 'undefined' ? 'yok' : var1 ? 'eski' : 'kapali';
+      const ua = navigator.userAgent, tarayici = (ua.match(/(SamsungBrowser|EdgA|OPR|Firefox|CriOS|Chrome|Version)\/[\d.]+/) || [''])[0], sistem = (ua.match(/(Android [\d.]+|iPhone OS [\d_]+|Mac OS X [\d_]+|Windows NT [\d.]+)/) || [''])[0];
+      document.documentElement.lang = LANG; document.documentElement.dir = LANG === 'fa' ? 'rtl' : 'ltr';      // hata ekranı dil ayarından önce çıkar: büyük harf ve yön dile uysun
+      $('load-baslik').textContent = T('yukleniyor', T('bolge.van'));
+      $('load-text').textContent = T('webgl.' + GLB.neden);
+      const ek = document.createElement('div'); ek.className = 'gl-hata';
+      const dug = document.createElement('button'); dug.type = 'button'; dug.className = 'birincil'; dug.textContent = T('webgl.dene'); dug.addEventListener('click', () => location.reload());
+      const kod = document.createElement('div'); kod.className = 'gl-kod'; kod.textContent = 'webgl2: ' + (var2 ? 'red' : 'yok') + ' · webgl1: ' + (var1 ? 'var' : 'yok') + ' · ' + [tarayici, sistem].filter(Boolean).join(' · ');
+      ek.append(dug, kod); $('load').appendChild(ek);
+      return;
+    }
+  }
+  // Bağlam kaybı (grafik belleği dolunca): three.js kaybı önler ve geri gelince yeniden kurar; oyuncuya durum yazılır, 8 sn'de dönmezse yenileme önerilir.
+  {
+    let kayipT = 0;
+    const not = document.createElement('div'); not.className = 'gl-kayip'; not.hidden = true; document.body.appendChild(not);
+    canvas.addEventListener('webglcontextlost', () => {
+      not.hidden = false; not.textContent = T('webgl.koptu');
+      clearTimeout(kayipT);
+      kayipT = setTimeout(() => {
+        not.textContent = T('webgl.koptuYenile') + ' ';
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'birincil'; b.textContent = T('webgl.yenile'); b.addEventListener('click', () => location.reload()); not.appendChild(b);
+      }, 8000);
+    });
+    canvas.addEventListener('webglcontextrestored', () => { clearTimeout(kayipT); not.hidden = true; });
   }
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -12984,6 +13039,7 @@ function mutfakKur(api) {
     sim(sec) { const n = Math.round(sec / STEP); for (let i = 0; i < n; i++) { if (G.state === 'free' || G.state === 'race' || G.state === 'count') tick(STEP); } },
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
     wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
+    gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
     cevre: () => cevreKaynak,      // gündüz ortam ışığının kaynağı: 'hdri' ya da 'gok' (dosya gelmediyse)
     ayar: () => ({ kalite: AYAR.kalite, golge: renderer.shadowMap.enabled, golgeBoyu: sun.shadow.mapSize.x, piksel: renderer.getPixelRatio(), ses: AYAR.ses, kazanc: masterGain() }),
     // grafik kıyası için sabit kamera noktaları: Kale Turu rotasında dört yer, biri de kaleye tepeden bakış
