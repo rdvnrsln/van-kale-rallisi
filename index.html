@@ -6696,7 +6696,7 @@ const TAU = Math.PI * 2;
 // Tanı: ?tani=<anahtar> arazi gölgelendiricisinin bir ara değerini ışıksız basar (msk, boya, det, dz, ds, dk, rk, isik, nrm). Yalnız sınama içindir.
 const TANI = (location.search.match(/[?&]tani=([a-z]+)/) || [])[1] || '';
 // ?tani=hata: konsol hatalarını ve yakalanmamış istisnaları ekrana yazar (Safari/iPhone'da konsol görülemiyor). ?tani=kirik de yazar.
-if (TANI === 'hata' || TANI === 'kirik') {
+if (TANI === 'hata' || TANI === 'kirik' || TANI === 'kedi') {
   const yaz = (m) => { let el = document.getElementById('tani-hata'); if (!el) { el = document.createElement('pre'); el.id = 'tani-hata'; el.style.cssText = 'position:fixed;left:0;top:0;right:0;max-height:70vh;overflow:auto;z-index:99999;margin:0;padding:6px;background:rgba(0,0,0,.85);color:#ff8;font:10px/1.25 monospace;white-space:pre-wrap;pointer-events:none'; (document.body || document.documentElement).appendChild(el); } el.textContent += String(m).slice(0, 900) + '\n---\n'; };
   const ce = console.error.bind(console), cw = console.warn.bind(console);
   console.error = (...a) => { yaz('E ' + a.join(' ')); ce(...a); };
@@ -7423,7 +7423,7 @@ function kaldirimda(x, z) {
 }
 function buildStreets(scene, maxAniso) {
   KALD = null; YAYA_YOL.length = 0;
-  if (KAR) return { kaldirim: 0, lamba: 0, direk: 0, durak: 0 };
+  if (KAR) return { kaldirim: 0, lamba: 0, kaleLamba: 0, direk: 0, durak: 0 };
   const HC = 60, gx = Math.ceil((XMAX - XMIN) / HC) + 1, gz = Math.ceil((ZMAX - ZMIN) / HC) + 1, yog = new Uint16Array(gx * gz);
   for (const b of D.buildings) { const i = Math.floor((b[3] - XMIN) / HC), j = Math.floor((b[4] - ZMIN) / HC); if (i >= 0 && j >= 0 && i < gx && j < gz) yog[j * gx + i]++; }
   // Yerleşke içinde ana yollar (bulvar, halka yol) bina az olsa da kaldırımlı ve aydınlatmalı sayılır. OSM'de lit/sidewalk etiketi yok: varsayım.
@@ -7525,6 +7525,35 @@ function buildStreets(scene, maxAniso) {
       }
     }
   }
+  // Kale çevresi aydınlatması (kurucu, 20 Kas 2026: "gece sürüşünde kalede aydınlatma direkleri olsun ama fazla değil"). Kaleyi çevreleyen asfalt
+  // yollarda, kale sınırına 120 m'den yakın kesimlerde; lambalar birbirinden (ve şehir lambalarından) en az 70 m uzak, en çok 12. OSM'de kaydı yok:
+  // kurucunun isteğiyle eklenen kural ürünüdür. Şehir lambasıyla aynı direk; gece ampul, ışık havuzu ve en yakın ikisi gerçek ışık.
+  let kaleLamba = 0;
+  if (CASTLE && CASTLE.length > 2) {
+    const kaleUzak = (x, z) => {
+      if (pip(x, z, CASTLE)) return 0;
+      let d = 1e9;
+      for (let i = 0, j = CASTLE.length - 1; i < CASTLE.length; j = i++) {
+        const a = CASTLE[j], b = CASTLE[i], ex = b.x - a.x, ez = b.z - a.z, L2 = ex * ex + ez * ez || 1, t = clamp(((x - a.x) * ex + (z - a.z) * ez) / L2, 0, 1);
+        d = Math.min(d, Math.hypot(x - a.x - ex * t, z - a.z - ez * t));
+      }
+      return d;
+    };
+    const uzak = (x, z) => { for (let i = 0; i < lamba.length; i += 4) if ((lamba[i] - x) ** 2 + (lamba[i + 2] - z) ** 2 < 70 * 70) return false; return true; };
+    let side = 1;
+    for (const r of ROADS) {
+      if (r.cls > 6 || kaleLamba >= 12) continue;
+      const pts = r.pts, n = pts.length, hw = r.w / 2; let acc = 70;
+      for (let i = 1; i < n - 1 && kaleLamba < 12; i++) {
+        acc += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z);
+        if (acc < 70) continue;
+        const a = pts[i - 1], c = pts[i + 1]; let tx = c.x - a.x, tz = c.z - a.z; const L = Math.hypot(tx, tz) || 1; tx /= L; tz /= L;
+        const nx = tz * side, nz = -tx * side, x = pts[i].x + nx * (hw + 0.8), z = pts[i].z + nz * (hw + 0.8), dk = kaleUzak(x, z);
+        if (dk < 3 || dk > 120 || baskaYol(x, z) || wallDist(x, z) < 0.6 || baseH(x, z) < 0.5 || !uzak(x, z)) continue;
+        lamba.push(x, groundH(x, z) + 0.02, z, Math.atan2(-nx, -nz)); kaleLamba++; acc = 0; side = -side;
+      }
+    }
+  }
   for (const [key, ch] of chunks) {
     const ij = key.split('_'), parca = { x: XMIN + (+ij[0] + 0.5) * KP, z: ZMIN + (+ij[1] + 0.5) * KP, r: KP * 0.74, mesh: [] };
     if (ch.k.p.length) { const m = ch.k.mesh(kalMat, false); scene.add(m); parca.mesh.push(m); }
@@ -7590,7 +7619,7 @@ function buildStreets(scene, maxAniso) {
     PARCA.agac.push(parca);
   }
   for (let i = 0; i < lamba.length; i += 4) GECE.lamba.push(lamba[i] + Math.sin(lamba[i + 3]) * 1.5, lamba[i + 1] + 6.8, lamba[i + 2] + Math.cos(lamba[i + 3]) * 1.5);
-  return { kaldirim: Math.round(kaldirimM), lamba: lamba.length / 4, direk: direk.length / 4, durak: durak.length / 4 };
+  return { kaldirim: Math.round(kaldirimM), lamba: lamba.length / 4, kaleLamba, direk: direk.length / 4, durak: durak.length / 4 };
 }
 
 // ------------------------------------------------------------ kale surları, burçlar, bayrak, Eski Van kalıntıları
@@ -8566,7 +8595,7 @@ function terrainPatch(mat, maskTex, akisTex) {
   const normalVar = !!(TEX.zemin_n && TEX.cayir_n && TEX.kum_n && TEX.kayalik_n && TEX.kar_n && TEX.hava_n);
   // Doku birimi sınırı 16 (renk, maske, 6 renk + 5 normal, oluk, eğim, ortam, gölge). Bölgeye göre derlenir: karlı bölgede çayır, öbürlerinde kar okunmaz
   // (maskede payı yok). Okunmayan doku derleyicide düşer ve birim tutmaz; hava katmanına yer böyle açıldı (20 Kas akşam).
-  const K = KAR, TA = ['msk', 'boya', 'det', 'dz', 'ds', 'dk', 'rk', 'isik', 'nrm'].indexOf(TANI) >= 0 ? TANI : '';      // hata, kirik: arazi tanısı değil
+  const K = KAR, TA = ['msk', 'boya', 'det', 'dz', 'ds', 'dk', 'rk', 'isik', 'nrm'].indexOf(TANI) >= 0 ? TANI : '';      // hata, kirik, kedi: arazi tanısı değil
   const O = ARAZI_OLCEK, f = (v) => v.toFixed(4);
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.maskMap = { value: maskTex }; sh.uniforms.uKontras = ARAZI_U.uKontras;
@@ -9349,6 +9378,173 @@ function kirikAdim(dt, oy) {
     if (kirikDus(o, dt)) kirikTekYaz(o);
     else if (o.t > KIRIK_DON && (o.x - oy.x) ** 2 + (o.z - oy.z) ** 2 > KIRIK_UZAK * KIRIK_UZAK) { kirikGeriKoy(o); A.splice(n, 1); }
   }
+}
+
+'use strict';
+// =====================================================================
+// VAN KEDİSİ (20 Kas 2026; kurucu: "van kedisi çok kötü"). Blender modeli: tools/blender/kedi.py → model/kedi/kedi.glb (tek derili ağ + iskelet).
+// Bembeyaz yarı uzun tüy kabuk katmanlarıyla çizilir: deri ağı N kez kopyalanır, her katman deri normali boyunca dışarı itilir, tel tel gürültüyle
+// kırpılır; kökte koyu (tüyün kendi gölgesi), uçta açık; uçlar hafif sarkar. Tüy boyu kemiğe göre: kuyruk gür, göğüs ve yaka uzun, baş kısa, kulak çok kısa,
+// burunda yok. Uzakta yalnız deri katmanı çizilir.
+// Gözler (Van kedisinin simgesi): biri mavi, biri kehribar; dikey yarık göz bebeği, parlak (gözler göz kemiklerine bağlıdır). Beyaz bıyıklar.
+// Canlandırma kodla: kuyruk dalgası, nefes, kulak seğirmesi, göz kırpma; oyuncu yaklaşınca başını ona çevirir. Toplanınca miyavlar.
+// =====================================================================
+let KEDI = null, _kdSoz = null;
+function kediYukle() {
+  if (!_kdSoz) _kdSoz = new Promise((ok, red) => {
+    if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; }
+    new THREE.GLTFLoader().load('model/kedi/kedi.glb', (g) => {
+      const ag = g.scene.getObjectByName('kedi_ag') || (() => { let m = null; g.scene.traverse((o) => { if (o.isSkinnedMesh && !m) m = o; }); return m; })();
+      if (!ag) { red(new Error('kedi ağı yok')); return; }
+      KEDI = { sahne: g.scene }; ok(KEDI);
+    }, undefined, red);
+  });
+  return _kdSoz;
+}
+const KEDI_KAT = 14, KEDI_TUY = 0.013;      // kabuk sayısı, tüy boyu (m; kuyrukta bunun 1,8 katı, yakada 1,4)
+// tüy boyu: kemik ağırlıklarından (kuyruk, göğüs, baş, kulak) ve renkten (pembe burun ve kulak içi tüysüz)
+function kediTuyBoyu(geo, kemikAd) {
+  const n = geo.attributes.position.count, si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight, col = geo.attributes.color, b = new Float32Array(n);
+  const boy = (ad) => (ad.indexOf('kuyruk') === 0 ? 1.8 : ad === 'gogus' ? 1.4 : ad === 'govde' ? 0.9 : ad === 'bas' ? 0.5 : ad.indexOf('kulak') === 0 ? 0.25 : ad === 'kok' ? 0.55 : 0.9);
+  for (let i = 0; i < n; i++) {
+    let s = 0;
+    const W = [sw.getX(i), sw.getY(i), sw.getZ(i), sw.getW(i)], I = [si.getX(i), si.getY(i), si.getZ(i), si.getW(i)], top = W[0] + W[1] + W[2] + W[3] || 1;
+    for (let k = 0; k < 4; k++) if (W[k] > 0) s += (W[k] / top) * boy(kemikAd[I[k]] || '');
+    if (col) { const r = col.getX(i), g = col.getY(i); if (r - g > 0.12) s *= 0.08; if (r < 0.3) s = 0; }      // pembe (burun, kulak içi) ve koyu (ağız) tüysüz
+    b[i] = s;
+  }
+  return b;
+}
+// kabuklu geometri: katman 0 deri, 1..N-1 tüy
+function kediKabuk(geo, tuy, ilk, son) {
+  const g = new THREE.BufferGeometry(), n = geo.attributes.position.count, idx = geo.index.array, L = son - ilk;
+  for (const ad of ['position', 'normal', 'color', 'skinIndex', 'skinWeight']) {
+    const a = geo.attributes[ad]; if (!a) continue;
+    const C = a.array.constructor, it = a.itemSize, out = new C(a.array.length * L);
+    for (let k = 0; k < L; k++) out.set(a.array, k * a.array.length);
+    g.setAttribute(ad, new THREE.BufferAttribute(out, it, a.normalized));
+  }
+  const kat = new Float32Array(n * L), tb = new Float32Array(n * L);
+  for (let k = 0; k < L; k++) { kat.fill((ilk + k) / (KEDI_KAT - 1), k * n, (k + 1) * n); tb.set(tuy, k * n); }
+  g.setAttribute('katman', new THREE.BufferAttribute(kat, 1)); g.setAttribute('tuyBoy', new THREE.BufferAttribute(tb, 1));
+  const I = new (n * L > 65535 ? Uint32Array : Uint16Array)(idx.length * L);
+  for (let k = 0; k < L; k++) for (let j = 0; j < idx.length; j++) I[k * idx.length + j] = idx[j] + k * n;
+  g.setIndex(new THREE.BufferAttribute(I, 1));
+  return g;
+}
+function kediMalzeme(kabuk) {
+  const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.92, metalness: 0, envMapIntensity: 0.7 });
+  m.name = kabuk ? 'kedi-tuy' : 'kedi';
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uTuy = { value: KEDI_TUY };
+    sh.vertexShader = 'attribute float katman; attribute float tuyBoy; uniform float uTuy; varying float vKat; varying vec3 vKp;\n' + sh.vertexShader.replace('#include <begin_vertex>', [
+      '#include <begin_vertex>',
+      'float tb = katman * uTuy * tuyBoy;',
+      'transformed += normalize(normal) * tb;',
+      'transformed.y -= katman * katman * tb * 0.45;',      // uçlar biraz sarkar
+      'vKat = katman; vKp = position * 950.0;',            // tel hücresi ~1 mm (bağ duruşunda: canlanınca kaymaz)
+    ].join('\n'));
+    sh.fragmentShader = 'varying float vKat; varying vec3 vKp;\nfloat kdH(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }\n' + sh.fragmentShader.replace('#include <color_fragment>', [
+      '#include <color_fragment>',
+      kabuk ? 'vec3 kc = floor(vKp), kf = fract(vKp) - 0.5; float kr = kdH(kc); if (kr < pow(vKat, 1.35) * 0.95 || length(kf) > 0.78 - vKat * 0.4) discard;' : '',
+      'diffuseColor.rgb *= mix(0.87, 1.03, smoothstep(0.0, 0.6, vKat)) * (0.97 + 0.04 * kdH(floor(vKp * 0.2)));',      // kök biraz koyu (tüyün gölgesi), uç açık
+    ].join('\n'));
+  };
+  m.customProgramCacheKey = () => 'kedi-' + (kabuk ? 't' : 'd');
+  return m;
+}
+// göz: dikey yarık göz bebeği, renkli iris, parlak kubbe (yerel +z ileri)
+function kediGoz(renk) {
+  const m = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.05, metalness: 0 });
+  m.name = 'kedi-goz';
+  const c = new THREE.Color(renk).convertSRGBToLinear();
+  m.onBeforeCompile = (sh) => {      // renk tekdüze değişkende: iki göz aynı derlenmiş programı paylaşır (kod aynı), renk ayrı kalır
+    sh.uniforms.uIris = { value: c };
+    sh.vertexShader = 'varying vec3 vGp;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvGp = normalize(position);');
+    sh.fragmentShader = 'varying vec3 vGp; uniform vec3 uIris;\n' + sh.fragmentShader.replace('#include <color_fragment>', [
+      '#include <color_fragment>',
+      'vec2 q = vGp.xy; float d = length(q);',
+      'float isin = 0.75 + 0.25 * sin(atan(q.y, q.x) * 23.0) * 0.5;',
+      'vec3 iris = uIris * mix(1.25, 0.55, d) * isin;',
+      'float bebek = step(abs(q.x), 0.11 * sqrt(max(0.0, 1.0 - q.y * q.y / 0.5)));',
+      'diffuseColor.rgb = vGp.z > 0.0 ? mix(iris, vec3(0.01), bebek) : vec3(0.02);',
+    ].join('\n'));
+  };
+  return m;
+}
+const _kd = { q: new THREE.Quaternion(), q2: new THREE.Quaternion(), v: new THREE.Vector3(), m: new THREE.Matrix4(), Y: new THREE.Vector3(0, 1, 0) };
+// bir kedi: kök grup döndürülür; dönüş açısı yon (oyun yönü: +z ileri)
+function kediKur(yon) {
+  const kok = figurKopya(KEDI.sahne, 'kedi');
+  let deri = null; kok.traverse((o) => { if (o.isSkinnedMesh && !deri) deri = o; });
+  const kemik = {}; kok.traverse((o) => { if (o.isBone) kemik[o.name] = o; });
+  const kemikAd = deri.skeleton.bones.map((b) => b.name);
+  if (!KEDI.geo) {      // kabuk geometrileri bir kez kurulur, kediler paylaşır
+    const tuy = kediTuyBoyu(deri.geometry, kemikAd);
+    KEDI.geo = { deri: kediKabuk(deri.geometry, tuy, 0, 1), tuy: kediKabuk(deri.geometry, tuy, 1, KEDI_KAT), mDeri: kediMalzeme(false), mTuy: kediMalzeme(true) };
+    KEDI.geo.mGoz = [kediGoz('#3aa6dc'), kediGoz('#e3a12c')];
+  }
+  deri.geometry = KEDI.geo.deri; deri.material = KEDI.geo.mDeri; deri.castShadow = true; deri.receiveShadow = true;
+  const tuy = new THREE.SkinnedMesh(KEDI.geo.tuy, KEDI.geo.mTuy); tuy.bind(deri.skeleton, deri.bindMatrix); tuy.frustumCulled = false; tuy.receiveShadow = true;
+  deri.parent.add(tuy); deri.frustumCulled = false;
+  const g = new THREE.Group(); g.add(kok); g.rotation.y = yon; g.scale.setScalar(1.15);      // iri erkek Van kedisi
+  g.updateMatrixWorld(true);
+  // gözler ve bıyıklar baş kemiğine bağlanır; dinlenme duruşunda modelin önüne bakacak biçimde döndürülür
+  const bas = kemik.bas, gozler = [];
+  for (const [ad, i] of [['goz_L', 0], ['goz_R', 1]]) {
+    const gk = kemik[ad]; if (!gk) continue;
+    const e = new THREE.Mesh(new THREE.SphereGeometry(0.0098, 18, 14), KEDI.geo.mGoz[i]);
+    gk.add(e); gk.getWorldQuaternion(_kd.q); g.getWorldQuaternion(_kd.q2); e.quaternion.copy(_kd.q).invert().multiply(_kd.q2);
+    e.position.set(0, 0, -0.0045).applyQuaternion(e.quaternion); gozler.push(e);      // göz çukuruna gömülü (yüzden taşmaz)
+  }
+  if (bas) {      // bıyık: iki yanda beşer, ağızlıktan dışa ve hafif aşağı kıvrık
+    const P = [], ici = new THREE.Vector3(); bas.getWorldQuaternion(_kd.q); g.getWorldQuaternion(_kd.q2);
+    const don = _kd.q.clone().invert().multiply(_kd.q2), kokM = new THREE.Matrix4();
+    for (const sx of [1, -1]) for (let k = 0; k < 5; k++) {
+      const y0 = 0.262 + k * 0.0032 - 0.008, x0 = sx * 0.014, z0 = 0.118, L = 0.085 + (k % 2) * 0.012, ay = (k - 2) * 0.09;
+      let px = x0, py = y0, pz = z0;
+      for (let s = 1; s <= 4; s++) {
+        const u = s / 4, nx = x0 + sx * L * u * Math.cos(ay * 0.5), ny = y0 + L * u * Math.sin(ay) - 0.012 * u * u, nz = z0 - 0.02 * u;
+        P.push(px, py, pz, nx, ny, nz); px = nx; py = ny; pz = nz;
+      }
+    }
+    // model uzayındaki noktalar baş kemiği uzayına
+    bas.updateMatrixWorld(true); kokM.copy(bas.matrixWorld).invert().multiply(kok.matrixWorld);
+    for (let i = 0; i < P.length; i += 3) { ici.set(P[i], P[i + 1], P[i + 2]).applyMatrix4(kokM); P[i] = ici.x; P[i + 1] = ici.y; P[i + 2] = ici.z; }
+    const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
+    const bm = new THREE.LineBasicMaterial({ color: 0xf4f2ec, transparent: true, opacity: 0.85 }); bm.name = 'kedi-biyik';
+    const by = new THREE.LineSegments(bg, bm); by.frustumCulled = false; bas.add(by);
+  }
+  // canlandırma: her kemiğin dinlenme dönüşü ve model yukarısının kemik uzayındaki karşılığı
+  const dinlen = {}, yukari = {}, sag = {};
+  g.updateMatrixWorld(true);
+  for (const ad in kemik) {
+    const b = kemik[ad]; dinlen[ad] = b.quaternion.clone();
+    b.getWorldQuaternion(_kd.q); const ters = _kd.q.clone().invert(); g.getWorldQuaternion(_kd.q2);
+    yukari[ad] = new THREE.Vector3(0, 1, 0).applyQuaternion(_kd.q2).applyQuaternion(ters).normalize();
+    sag[ad] = new THREE.Vector3(1, 0, 0).applyQuaternion(_kd.q2).applyQuaternion(ters).normalize();
+  }
+  return { g, tuy, kemik, dinlen, yukari, sag, gozler, faz: Math.random() * 10, kirp: 2 + Math.random() * 3, kulakT: 3 + Math.random() * 4, bakis: 0, egik: 0 };
+}
+// kare adımı: d2 kameraya uzaklığın karesi; oyuncu (x, z) yakınsa baş ona döner
+function kediAdim(k, dt, t, kx, kz, d2) {
+  k.tuy.visible = d2 < 45 * 45;
+  if (d2 > 90 * 90) return;
+  const K = k.kemik, ph = t + k.faz;
+  const don = (ad, eksen, a, ek) => { const b = K[ad]; if (!b) return; _kd.q.setFromAxisAngle(eksen[ad], a); b.quaternion.copy(k.dinlen[ad]).multiply(_kd.q); if (ek) b.quaternion.multiply(ek); };
+  for (let i = 1; i <= 5; i++) don('kuyruk_' + i, k.yukari, Math.sin(ph * 1.7 - i * 0.7) * (0.06 + i * 0.035));      // kuyruk dalgası: uca doğru büyür
+  if (K.gogus) { const s = 1 + 0.018 * Math.sin(ph * 2.3); K.gogus.scale.set(s, 1 + 0.01 * Math.sin(ph * 2.3), s); }
+  // baş: oyuncu 14 m içindeyse ona döner (±70°), yoksa ağır ağır etrafa bakar
+  const gx = kx - k.g.position.x, gz = kz - k.g.position.z, yak = gx * gx + gz * gz < 14 * 14;
+  const hedef = yak ? clamp(wrapAngle(Math.atan2(gx, gz) - k.g.rotation.y), -1.2, 1.2) : Math.sin(ph * 0.23) * 0.5;
+  k.bakis += (hedef - k.bakis) * Math.min(1, dt * (yak ? 4 : 1.2));
+  k.egik += ((yak ? -0.12 : Math.sin(ph * 0.31) * 0.08) - k.egik) * Math.min(1, dt * 2);
+  if (K.bas) { _kd.q2.setFromAxisAngle(k.sag.bas, k.egik); don('bas', k.yukari, k.bakis, _kd.q2); }
+  // kulak seğirmesi ve göz kırpma
+  k.kulakT -= dt; const sg = k.kulakT < 0.18 ? Math.sin((k.kulakT / 0.18) * Math.PI) * 0.35 : 0; if (k.kulakT < 0) k.kulakT = 3 + Math.random() * 5;
+  don('kulak_L', k.sag, sg); don('kulak_R', k.sag, k.kulakT > 2 ? 0 : sg * 0.6);
+  k.kirp -= dt; const ac = k.kirp < 0.13 ? 0.12 : 1; if (k.kirp < 0) k.kirp = 2.5 + Math.random() * 4;
+  for (const e of k.gozler) e.scale.y = ac;
 }
 
 'use strict';
@@ -12240,6 +12436,7 @@ function mutfakKur(api) {
     gate1 = makeGate(); gate2 = makeGate();
     beacon1 = beam(8, 26, LIN('#22c3d6'), 0.3); beacon2 = beam(8, 10, LIN('#22c3d6'), 0.14);
     await agacYukle().catch(() => null);      // ağaç modelleri gelmezse kart ağaçları çizilir
+    await kediYukle().catch(() => null);      // Van kedisi modeli gelmezse eski heykelcik
     await loadRegion('van');
     buildMenu();
     applySettings(false);
@@ -12311,6 +12508,7 @@ function mutfakKur(api) {
       env.mountains.userData.y = Rg.dagY;
       const p = routePoint(EVENTS.find((e) => e.bolge === id).R, 60);
       placeCar(player, p.x, p.z, Math.atan2(p.dx, p.dz)); camSnap = true;
+      if (TANI === 'kedi') setTimeout(() => { const ct = cats[1]; if (!ct) return; const g = ct.mesh, y = g.rotation.y + 0.2, x = g.position.x + Math.sin(y) * 1.1, z = g.position.z + Math.cos(y) * 1.1, gy = groundH(g.position.x, g.position.z); G.freeze = [x, gy + 0.34, z, g.position.x, gy + 0.27, g.position.z]; G.state = 'menu'; $('hud').hidden = true; }, 2500);      // tanı: Safari'de kediye yakından bak
       if (TANI === 'kirik') setTimeout(() => { for (const o of KIRIK.oge) if (o.durum === 0 && o.tip !== 2 && Math.hypot((o.tip ? o.ax : o.x) - player.x, (o.tip ? o.az : o.z) - player.z) < 40) kirikDevir(o, 12, -Math.cos(player.h), Math.sin(player.h)); }, 2500);      // tanı: oyuncunun çevresindekileri devir (Safari çizim denetimi)
       G.bolge = id;
       for (const el of document.querySelectorAll('[data-bolge]')) el.setAttribute('aria-pressed', el.getAttribute('data-bolge') === id ? 'true' : 'false');
@@ -12369,13 +12567,15 @@ function mutfakKur(api) {
       [-1036, 655, 1], [-500, -318, 0], [2866, 190, 1], [2990, -600, 1]];
     const found = store.get('cats', []);
     spots.forEach((s, i) => {
-      const p = s[2] ? roadside(s[0], s[1]) : { x: s[0], z: s[1] };
-      const m = makeCat();
+      const p = s[2] ? roadside(s[0], s[1]) : { x: s[0], z: s[1] }, rd = roadAt(p.x, p.z);
+      const yon = (rd ? Math.atan2(rd.px - p.x, rd.pz - p.z) : i * 2.1) + Math.sin(i * 3.7) * 0.5;      // yola dönük oturur
+      const k = KEDI ? kediKur(yon) : null, m = k ? k.g : makeCat();      // Blender modeli gelmezse eski heykelcik
       m.position.set(p.x, groundH(p.x, p.z), p.z);
       const got = found.indexOf(i) >= 0;
       m.visible = !got; world.add(m);
       const b = beam(1.3, 22, LIN('#f6f3ec'), 0.3, world); b.position.copy(m.position); b.visible = !got;
-      cats.push({ i, x: p.x, z: p.z, mesh: m, beam: b, got });
+      cats.push({ i, x: p.x, z: p.z, mesh: m, beam: b, got, kedi: k });
+      if (k) m.visible = true;      // canlı kedi toplandıktan sonra da yerinde oturur; ışık sütunu söner
     });
     updateCatHud();
   }
@@ -12498,6 +12698,16 @@ function mutfakKur(api) {
     g.gain.setValueAtTime(0.55 * k, t); g.gain.exponentialRampToValueAtTime(0.001, t + (tahta ? 0.22 : 0.4));
     s.connect(f); f.connect(g); g.connect(A.master); s.start(t, Math.random()); s.stop(t + 0.45);
     if (!tahta && e.tur !== 'cit') { beep(520 + Math.random() * 60, 0.5, 0.12 * k, 'triangle'); beep(1370 + Math.random() * 90, 0.35, 0.06 * k, 'triangle', 0.01); }
+  }
+  // miyav: testere dişi ses iki biçimleyici süzgeçten; perde 520 → 790 → 430 Hz (kedi toplanınca)
+  function miyav() {
+    if (!A.ctx) return;
+    const t = A.ctx.currentTime, o = A.ctx.createOscillator(), f1 = A.ctx.createBiquadFilter(), f2 = A.ctx.createBiquadFilter(), g = A.ctx.createGain();
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(520, t); o.frequency.linearRampToValueAtTime(790, t + 0.16); o.frequency.exponentialRampToValueAtTime(430, t + 0.62);
+    f1.type = 'bandpass'; f1.Q.value = 6; f1.frequency.setValueAtTime(900, t); f1.frequency.linearRampToValueAtTime(1500, t + 0.2); f1.frequency.linearRampToValueAtTime(800, t + 0.6);
+    f2.type = 'bandpass'; f2.Q.value = 8; f2.frequency.value = 2600;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.32, t + 0.05); g.gain.setValueAtTime(0.28, t + 0.4); g.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+    o.connect(f1); o.connect(f2); f1.connect(g); f2.connect(g); g.connect(A.master); o.start(t); o.stop(t + 0.72);
   }
   function thud(v) {
     if (!A.ctx) return;
@@ -12692,7 +12902,7 @@ function mutfakKur(api) {
     gate1.visible = gate2.visible = beacon1.visible = beacon2.visible = false;
     $('yaris').hidden = true; $('ok').hidden = true; $('mesaj').textContent = ''; $('kedi').hidden = cats.length === 0;
     for (const m of evMarkers) m.mesh.visible = true;
-    for (const c of cats) { c.mesh.visible = !c.got; c.beam.visible = !c.got; }
+    for (const c of cats) { c.mesh.visible = c.kedi ? true : !c.got; c.beam.visible = !c.got; }
   }
   function startFree(keepPlace) {
     clearRace();
@@ -13211,7 +13421,7 @@ function mutfakKur(api) {
     const gece = geceN > 0.04;
     for (const m of GECE.mesh) m.visible = gece && m.userData.parca.v !== false;
     // kedi heykelcikleri 12 ağdır: uzaktayken yalnız ışık sütunu görünür
-    for (const ct of cats) if (ct.beam.visible) ct.mesh.visible = !ct.got && (ct.x - cx) ** 2 + (ct.z - cz) ** 2 < 260 * 260;
+    if (!G.race && !G.goal) for (const ct of cats) ct.mesh.visible = (ct.kedi || !ct.got) && (ct.x - cx) ** 2 + (ct.z - cz) ** 2 < 260 * 260;
   }
   // ---------------------------------------------------------------- gün vakti: gündüz (0), gün batımı (1), gece (2)
   // Ara değerler yumuşak geçiştir. "Döngü" seçiliyken vakit kendiliğinden ilerler. Gece: ay ışığı, yıldızlı gök, sokak lambaları, ışıklı pencereler, farlar.
@@ -13656,7 +13866,7 @@ function mutfakKur(api) {
       }
       for (const ct of cats) {
         if (ct.got || (ct.x - c.x) ** 2 + (ct.z - c.z) ** 2 > 30) continue;
-        ct.got = true; ct.mesh.visible = false; ct.beam.visible = false;
+        ct.got = true; if (!ct.kedi) ct.mesh.visible = false; ct.beam.visible = false; miyav();
         store.set('cats', cats.filter((q) => q.got).map((q) => q.i));
         updateCatHud();
         beep(880, 0.12, 0.25, 'sine'); beep(1320, 0.12, 0.25, 'sine', 0.1); beep(1760, 0.3, 0.25, 'sine', 0.2);
@@ -13724,7 +13934,7 @@ function mutfakKur(api) {
     if (castle) castle.flag.rotation.y = 0.5 + Math.sin(G.t * 1.9) * 0.22;
     const pulse = 0.28 + Math.sin(G.t * 4) * 0.08;
     beacon1.material.opacity = pulse;
-    for (const ct of cats) if (ct.mesh.visible) ct.mesh.rotation.y = G.t * 1.2;
+    for (const ct of cats) if (ct.mesh.visible) { if (ct.kedi) kediAdim(ct.kedi, dt, G.t, player.x, player.z, (ct.x - camera.position.x) ** 2 + (ct.z - camera.position.z) ** 2); else ct.mesh.rotation.y = G.t * 1.2; }
     if (G.state === 'cook') MUTFAK.tick(dt);
     updateDust(dt, driving);
     if (driving) { updateHud(dt); drawMini(); }
@@ -13757,6 +13967,8 @@ function mutfakKur(api) {
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
     wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
+    kediler: () => cats.map((c) => ({ canli: !!c.kedi, gorunur: c.mesh.visible, got: c.got })),
+    kediNesne: (i) => cats[i] && cats[i].kedi,
     tus: (k, v) => { keys[k] = !!v; }, girisGec: () => girisBitir(), get giris() { return GIRIS ? { t: GIRIS.t, dur: GIRIS.dur } : null; },
     get yerYazi() { return yerYazi ? { L: yerYazi.L, ad: yerYazi.ad, opak: yerYazi.mesh.material.opacity } : null; }, viraj: () => Object.assign({}, virajAdim(player, G.race)), rotaEgrilik,
     kirik: () => ({ oge: KIRIK.oge.length, zincir: KIRIK.zincir.length, aktif: KIRIK.aktif.length, say: Object.assign({}, KIRIK.say) }),      // yıkılabilir çit ve direkler
