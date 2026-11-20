@@ -431,8 +431,9 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
         <button type="button" id="kalite-dusuk" data-kalite="dusuk" aria-pressed="false" data-i18n="ayar.dusuk">Düşük</button>
         <button type="button" id="kalite-orta" data-kalite="orta" aria-pressed="false" data-i18n="ayar.orta">Orta</button>
         <button type="button" id="kalite-yuksek" data-kalite="yuksek" aria-pressed="true" data-i18n="ayar.yuksek">Yüksek</button>
+        <button type="button" id="kalite-ultra" data-kalite="ultra" aria-pressed="false" data-i18n="ayar.ultra">Ultra</button>
       </div>
-      <p class="kucuk" data-i18n="ayar.kaliteNot">Düşük: gölge yok, tam piksel. Orta: yumuşak gölge. Yüksek: keskin gölge, yüksek çözünürlük.</p>
+      <p class="kucuk" data-i18n="ayar.kaliteNot">Düşük: gölge yok, tam piksel. Orta: yumuşak gölge. Yüksek: keskin gölge, yüksek çözünürlük. Ultra: daha keskin ve geniş gölge, daha çok ayrıntılı ağaç, daha uzak görüş; güçlü ekran kartı ister.</p>
       <label class="onay"><input type="checkbox" id="ayar-oto" checked> <span data-i18n="ayar.oto">Kare hızı düşerse kaliteyi kendiliğinden düşür</span></label>
     </div>
     <div class="ayar">
@@ -6258,8 +6259,8 @@ const DIL = {
     'zone.kale': 'Van Kalesi', 'zone.eski': 'Eski Van', 'zone.kiyi': 'Van Gölü kıyısı', 'zone.cevre': 'Kale çevresi', 'zone.sokaklari': '{0} sokakları', 'zone.arazi': 'Arazi',
     'zone.ipekyolu': 'İpekyolu · Van', 'zone.mahalle': '{0} Mahallesi · Van', 'zone.gevas': 'Gevaş · Van', 'zone.kayakMerkezi': 'Abalı Kayak Merkezi',
     'zone.koyu': '{0} köyü', 'zone.pistYolu': 'Pist yolu', 'zone.kayakYolu': 'Kayak yolu', 'zone.artos': 'Artos yamacı',
-    'ayar.baslik': 'Ayarlar', 'ayar.dil': 'Dil', 'ayar.kalite': 'Grafik kalitesi', 'ayar.dusuk': 'Düşük', 'ayar.orta': 'Orta', 'ayar.yuksek': 'Yüksek',
-    'ayar.kaliteNot': 'Düşük: gölge yok, tam piksel. Orta: yumuşak gölge. Yüksek: keskin gölge, yüksek çözünürlük.',
+    'ayar.baslik': 'Ayarlar', 'ayar.dil': 'Dil', 'ayar.kalite': 'Grafik kalitesi', 'ayar.dusuk': 'Düşük', 'ayar.orta': 'Orta', 'ayar.yuksek': 'Yüksek', 'ayar.ultra': 'Ultra',
+    'ayar.kaliteNot': 'Düşük: gölge yok, tam piksel. Orta: yumuşak gölge. Yüksek: keskin gölge, yüksek çözünürlük. Ultra: daha keskin ve geniş gölge, daha çok ayrıntılı ağaç, daha uzak görüş; güçlü ekran kartı ister.',
     'ayar.oto': 'Kare hızı düşerse kaliteyi kendiliğinden düşür', 'ayar.sehir': 'Şehir', 'ayar.vakit': 'Gün vakti', 'ayar.dongu': 'Döngü', 'ayar.gunduz': 'Gündüz', 'ayar.gunbatimi': 'Gün batımı', 'ayar.gece': 'Gece', 'ayar.vakitNot': 'Döngüde gündüz, gün batımı ve gece sırayla gelir. Sürerken T tuşu vakti değiştirir.', 'ayar.trafik': 'Şehir trafiği: yollarda araçlar dolaşsın', 'ayar.ses': 'Ses düzeyi', 'ayar.kamera': 'Kamera', 'ayar.yakin': 'Yakın', 'ayar.uzak': 'Uzak', 'ayar.surucu': 'Sürücü',
     'ayar.ekran': 'Ekran', 'ayar.tamEkran': 'Tam ekranı aç ya da kapat', 'ayar.tamEkranNot': 'F11 ya da Alt+Enter', 'ayar.kayit': 'Kayıt', 'ayar.sifirla': 'İlerlemeyi sıfırla',
     'ayar.sifirlaNot': 'Hikâye ilerlemesi, en iyi süreler ve bulunan kediler silinir. Geri alınamaz.', 'ayar.evetSil': 'Evet, sil', 'ayar.vazgec': 'Vazgeç', 'ayar.silindi': 'İlerleme silindi.', 'ayar.geri': 'Geri',
@@ -6408,8 +6409,8 @@ const DIL = {
     'zone.kale': 'Van Castle', 'zone.eski': 'Old Van', 'zone.kiyi': 'Lake Van shore', 'zone.cevre': 'Around the castle', 'zone.sokaklari': '{0} streets', 'zone.arazi': 'Off road',
     'zone.ipekyolu': 'İpekyolu · Van', 'zone.mahalle': '{0} · Van', 'zone.gevas': 'Gevaş · Van', 'zone.kayakMerkezi': 'Abalı Ski Centre',
     'zone.koyu': '{0} village', 'zone.pistYolu': 'Piste track', 'zone.kayakYolu': 'Ski road', 'zone.artos': 'Artos slope',
-    'ayar.baslik': 'Settings', 'ayar.dil': 'Language', 'ayar.kalite': 'Graphics quality', 'ayar.dusuk': 'Low', 'ayar.orta': 'Medium', 'ayar.yuksek': 'High',
-    'ayar.kaliteNot': 'Low: no shadows, native pixels. Medium: soft shadows. High: sharp shadows, high resolution.',
+    'ayar.baslik': 'Settings', 'ayar.dil': 'Language', 'ayar.kalite': 'Graphics quality', 'ayar.dusuk': 'Low', 'ayar.orta': 'Medium', 'ayar.yuksek': 'High', 'ayar.ultra': 'Ultra',
+    'ayar.kaliteNot': 'Low: no shadows, native pixels. Medium: soft shadows. High: sharp shadows, high resolution. Ultra: sharper and wider shadows, more detailed trees, longer view distance; needs a strong graphics card.',
     'ayar.oto': 'Lower the quality automatically when the frame rate drops', 'ayar.sehir': 'City', 'ayar.vakit': 'Time of day', 'ayar.dongu': 'Cycle', 'ayar.gunduz': 'Day', 'ayar.gunbatimi': 'Sunset', 'ayar.gece': 'Night', 'ayar.vakitNot': 'The cycle runs through day, sunset and night. While driving, the T key changes the time of day.', 'ayar.trafik': 'City traffic: cars drive on the roads', 'ayar.ses': 'Volume', 'ayar.kamera': 'Camera', 'ayar.yakin': 'Near', 'ayar.uzak': 'Far', 'ayar.surucu': 'Driver',
     'ayar.ekran': 'Display', 'ayar.tamEkran': 'Toggle full screen', 'ayar.tamEkranNot': 'F11 or Alt+Enter', 'ayar.kayit': 'Save data', 'ayar.sifirla': 'Reset progress',
     'ayar.sifirlaNot': 'This deletes story progress, best times and found cats. It cannot be undone.', 'ayar.evetSil': 'Yes, delete', 'ayar.vazgec': 'Cancel', 'ayar.silindi': 'Progress deleted.', 'ayar.geri': 'Back',
@@ -6558,8 +6559,8 @@ const DIL = {
     'zone.kale': 'قلعه وان', 'zone.eski': 'وان قدیم', 'zone.kiyi': 'ساحل دریاچه وان', 'zone.cevre': 'پیرامون قلعه', 'zone.sokaklari': 'کوچه‌های {0}', 'zone.arazi': 'بیرون جاده',
     'zone.ipekyolu': 'ایپک‌یولو · وان', 'zone.mahalle': 'محله {0} · وان', 'zone.gevas': 'گواش · وان', 'zone.kayakMerkezi': 'پیست اسکی آبالی',
     'zone.koyu': 'روستای {0}', 'zone.pistYolu': 'راه پیست', 'zone.kayakYolu': 'جاده پیست', 'zone.artos': 'دامنه آرتوس',
-    'ayar.baslik': 'تنظیمات', 'ayar.dil': 'زبان', 'ayar.kalite': 'کیفیت گرافیک', 'ayar.dusuk': 'کم', 'ayar.orta': 'متوسط', 'ayar.yuksek': 'زیاد',
-    'ayar.kaliteNot': 'کم: بدون سایه. متوسط: سایه نرم. زیاد: سایه دقیق و وضوح بالا.',
+    'ayar.baslik': 'تنظیمات', 'ayar.dil': 'زبان', 'ayar.kalite': 'کیفیت گرافیک', 'ayar.dusuk': 'کم', 'ayar.orta': 'متوسط', 'ayar.yuksek': 'زیاد', 'ayar.ultra': 'اولترا',
+    'ayar.kaliteNot': 'کم: بدون سایه. متوسط: سایه نرم. زیاد: سایه دقیق و وضوح بالا. اولترا: سایه دقیق‌تر و گسترده‌تر، درختان پرجزئیات بیشتر، دید دورتر؛ کارت گرافیک قوی می‌خواهد.',
     'ayar.oto': 'اگر سرعت فریم افت کرد، کیفیت خودکار کم شود', 'ayar.sehir': 'شهر', 'ayar.vakit': 'زمان روز', 'ayar.dongu': 'چرخه', 'ayar.gunduz': 'روز', 'ayar.gunbatimi': 'غروب', 'ayar.gece': 'شب', 'ayar.vakitNot': 'در چرخه، روز و غروب و شب پشت سر هم می‌آیند. هنگام رانندگی کلید T زمان روز را عوض می‌کند.', 'ayar.trafik': 'ترافیک شهر: خودروها در خیابان‌ها حرکت کنند', 'ayar.ses': 'بلندی صدا', 'ayar.kamera': 'دوربین', 'ayar.yakin': 'نزدیک', 'ayar.uzak': 'دور', 'ayar.surucu': 'راننده',
     'ayar.ekran': 'صفحه', 'ayar.tamEkran': 'تمام‌صفحه را باز یا بسته کن', 'ayar.tamEkranNot': 'F11 یا Alt+Enter', 'ayar.kayit': 'داده‌های ذخیره‌شده', 'ayar.sifirla': 'پاک کردن پیشرفت',
     'ayar.sifirlaNot': 'پیشرفت داستان، بهترین زمان‌ها و گربه‌های پیداشده پاک می‌شود. این کار برگشت‌پذیر نیست.', 'ayar.evetSil': 'بله، پاک کن', 'ayar.vazgec': 'انصراف', 'ayar.silindi': 'پیشرفت پاک شد.', 'ayar.geri': 'بازگشت',
@@ -6651,6 +6652,15 @@ const TAU = Math.PI * 2;
 // Telefon: dokunmatik ve küçük ekran. Büyük dokular yarıya iner, kalite düşük başlar (ayarlardan yükseltilebilir).
 // Tanı: ?tani=<anahtar> arazi gölgelendiricisinin bir ara değerini ışıksız basar (msk, boya, det, dz, ds, dk, rk, isik, nrm). Yalnız sınama içindir.
 const TANI = (location.search.match(/[?&]tani=([a-z]+)/) || [])[1] || '';
+// ?tani=hata: konsol hatalarını ve yakalanmamış istisnaları ekrana yazar (Safari/iPhone'da konsol görülemiyor)
+if (TANI === 'hata') {
+  const yaz = (m) => { let el = document.getElementById('tani-hata'); if (!el) { el = document.createElement('pre'); el.id = 'tani-hata'; el.style.cssText = 'position:fixed;left:0;top:0;right:0;max-height:70vh;overflow:auto;z-index:99999;margin:0;padding:6px;background:rgba(0,0,0,.85);color:#ff8;font:10px/1.25 monospace;white-space:pre-wrap;pointer-events:none'; (document.body || document.documentElement).appendChild(el); } el.textContent += String(m).slice(0, 900) + '\n---\n'; };
+  const ce = console.error.bind(console), cw = console.warn.bind(console);
+  console.error = (...a) => { yaz('E ' + a.join(' ')); ce(...a); };
+  console.warn = (...a) => { yaz('W ' + a.join(' ')); cw(...a); };
+  window.addEventListener('error', (e) => yaz('X ' + e.message + ' @' + e.lineno + ':' + e.colno));
+  window.addEventListener('unhandledrejection', (e) => yaz('P ' + (e.reason && e.reason.stack || e.reason)));
+}
 const MOBIL = /[?&]mobil=1/.test(location.search) || !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches && Math.min(window.screen.width, window.screen.height, window.innerWidth) < 900);      // ?mobil=1: telefon kipini masaüstünde sınamak için
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -8104,33 +8114,76 @@ function buildSky(scene, sunDir) {
   sky.renderOrder = -10;
   scene.add(sky);
   // ufuk dağları: Erek (doğu), Süphan (kuzeybatı, gölün karşısı), Artos (güneybatı)
-  const grp = new THREE.Group(), SNOW = new THREE.Color(0.9, 0.92, 0.96);
-  // Kaya dokusundan ayrıntı haritası: dağların düz renkli yamaçlarına kaya damarı ve gölge verir (yeni dosya gerekmez)
-  let ayrinti = null;
-  if (TEX.kaya && TEX.kaya.image && TEX.kaya.image.width > 8) {
-    const cv = document.createElement('canvas'); cv.width = cv.height = 256;
-    const g2 = cv.getContext('2d'); g2.drawImage(TEX.kaya.image, 0, 0, 256, 256);
-    const im = g2.getImageData(0, 0, 256, 256), dd = im.data;
-    let top = 0;
-    for (let i = 0; i < dd.length; i += 4) top += dd[i] + dd[i + 1] + dd[i + 2];
-    const ort = top / (dd.length / 4);
-    for (let i = 0; i < dd.length; i += 4) { const k = clamp(0.84 + ((dd[i] + dd[i + 1] + dd[i + 2]) / ort - 1) * 0.5, 0.55, 1) * 255; dd[i] = dd[i + 1] = dd[i + 2] = k; }
-    g2.putImageData(im, 0, 0);
-    ayrinti = new THREE.CanvasTexture(cv); ayrinti.wrapS = ayrinti.wrapT = THREE.RepeatWrapping; ayrinti.repeat.set(16, 4);
-  }
+  // Gölgelendirici (20 Kas 2026 gece): güneşten Lambert ışığı ve gökten dolgu; kaya deseni ve sırtlar 3B gürültüden (doku yok, uzama yok);
+  // kar sınırı gürültüyle kırılır, dik yerde kar tutmaz; hava perspektifi: uzaklıkla ufuk rengine karışır ve doygunluk kaybeder.
+  // ton: gün vaktine göre genel çarpan (oyun.js vakitUygula); ufuk: sis rengi (aynı nesne, kendiliğinden güncel).
+  const grp = new THREE.Group();
+  const DAG_U = { gunes: { value: sunDir }, ton: { value: new THREE.Color(1, 1, 1) }, ufuk: { value: scene.fog ? scene.fog.color : new THREE.Color(0.6, 0.71, 0.79) } };
+  const dagMat = new THREE.ShaderMaterial({
+    uniforms: DAG_U, fog: false,
+    vertexShader: [
+      'attribute float aKar; attribute float aTon; varying float vKar; varying float vTon; varying vec3 vW; varying vec3 vN; varying vec3 vL; varying float vSeed;',
+      'void main(){ vKar = aKar; vTon = aTon; vL = position; vSeed = fract(modelMatrix[3].x * 0.00037 + modelMatrix[3].z * 0.00051) * 40.0;',
+      '  vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * viewMatrix * w; }',
+    ].join('\n'),
+    fragmentShader: [
+      'uniform vec3 gunes; uniform vec3 ton; uniform vec3 ufuk; varying float vKar; varying float vTon; varying vec3 vW; varying vec3 vN; varying vec3 vL; varying float vSeed;',
+      'float h3(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }',
+      'float n3(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);',
+      '  return mix(mix(mix(h3(i), h3(i + vec3(1,0,0)), f.x), mix(h3(i + vec3(0,1,0)), h3(i + vec3(1,1,0)), f.x), f.y),',
+      '             mix(mix(h3(i + vec3(0,0,1)), h3(i + vec3(1,0,1)), f.x), mix(h3(i + vec3(0,1,1)), h3(i + vec3(1,1,1)), f.x), f.y), f.z); }',
+      // piksel boyuna göre sönen oktavlar: uzakta ince oyuk titreşmez (fw: girdinin piksel başına değişimi)
+      'float sirtA(vec3 p, float fw){ float s = 0.0, a = 0.5, f = 1.0; for (int i = 0; i < 4; i++){ float k = 1.0 - smoothstep(0.22, 0.55, fw * f); s += a * mix(0.5, 1.0 - abs(n3(p) * 2.0 - 1.0), k); p = p * 2.1 + 3.7; f *= 2.1; a *= 0.5; } return s; }',
+      'float fbmA(vec3 p, float fw){ float s = 0.0, a = 0.5, f = 1.0; for (int i = 0; i < 5; i++){ float k = 1.0 - smoothstep(0.22, 0.55, fw * f); s += a * mix(0.5, n3(p), k); p = p * 2.03 + 7.1; f *= 2.03; a *= 0.5; } return s; }',
+      'void main(){',
+      '  vec3 p = vW - cameraPosition;',      // dağ halkası kamerayla gider: desen halkanın yerel konumundan
+      // yamaçtan aşağı inen oyuklar: dağın kendi ekseni etrafındaki açıyla (yerel konum) — oyuklar tepeden eteğe uzanır
+      // yön vektörüyle (açı değil: dikiş yok); oyuk eni eteğinde ~1,2 km, boyu yamaç boyunca ~6 km; tepeye doğru oyuklar birleşir
+      '  vec2 dr = normalize(vL.xz + 1e-3);',
+      '  vec3 q = vec3(dr * 5.7, vL.y / 1800.0 + vSeed);',
+      '  q.xy += (n3(vec3(dr * 2.0, vL.y / 700.0 + vSeed * 1.7)) - 0.5) * 0.22;',      // hafif kıvrım
+      '  vec3 q2 = vec3(dr * 11.0, vL.y / 900.0 + vSeed + 3.0);',
+      '  float hS = sirtA(q, length(fwidth(q))), hD = fbmA(q2, length(fwidth(q2)));',
+      '  float hA = smoothstep(0.25, 0.75, n3(vec3(dr * 1.6, vL.y / 1600.0 + vSeed + 9.0)));',
+      '  hS = mix(0.5, hS, 0.3 + 0.7 * hA);',
+      '  float hb = hS * 300.0 + hD * 30.0;',
+      '  vec3 dx = dFdx(vW), dy = dFdy(vW); float bx = dFdx(hb), by = dFdy(hb);',
+      '  vec3 n = normalize(vN); vec3 r1 = cross(dy, n), r2 = cross(n, dx); float det = dot(dx, r1);',
+      '  vec3 grad = sign(det) * (bx * r1 + by * r2); n = normalize(abs(det) * n - grad * 0.55);',      // türev kabartması (three perturbNormalArb ile aynı)
+      // kaya rengi: koyu volkanik kahve-gri, katmanlar
+      '  vec3 kaya = mix(vec3(0.16, 0.145, 0.14), vec3(0.34, 0.29, 0.24), hD) * (0.55 + 0.8 * hS) * vTon;',
+      '  float egim = 1.0 - n.y;',
+      '  float kar = smoothstep(0.55, 0.72, vKar + (hS - 0.5) * 0.45 + (hD - 0.5) * 0.3) * (1.0 - smoothstep(0.42, 0.66, egim));',      // kar oyukta daha aşağı iner, sırtta erir
+      '  vec3 alb = mix(kaya, vec3(0.86, 0.88, 0.92), kar);',
+      '  float lam = max(dot(n, normalize(gunes)), 0.0);',
+      '  vec3 isik = vec3(1.0, 0.94, 0.84) * lam * 1.15 + mix(vec3(0.36, 0.34, 0.3), vec3(0.52, 0.6, 0.72), n.y * 0.5 + 0.5) * 0.55;',
+      '  vec3 c = alb * isik * ton;',
+      // hava perspektifi: mesafe ve yükseklikle ufuk rengine; doygunluk düşer
+      '  float d = length(p), hz = 1.0 - exp(-d / 24000.0);',
+      '  hz = clamp(hz * mix(1.0, 0.72, smoothstep(0.0, 2200.0, vW.y)), 0.0, 1.0);',
+      '  float gri = dot(c, vec3(0.3, 0.55, 0.15)); c = mix(c, vec3(gri), hz * 0.4);',
+      '  c = mix(c, ufuk, hz * 0.72);',
+      '  gl_FragColor = vec4(c, 1.0);',
+      '#include <tonemapping_fragment>',
+      '#include <encodings_fragment>',
+      '}',
+    ].join('\n'),
+  });
+  dagMat.name = 'ufuk-dag';
   function mountain(x, z, r, h, snow, seed) {
-    const g = new THREE.ConeGeometry(r, h, 72, 18), pos = g.attributes.position, col = [], c = new THREE.Color();
+    const g = new THREE.ConeGeometry(r, h, 96, 24), pos = g.attributes.position, kar = [], ton = [];
     for (let i = 0; i < pos.count; i++) {
       const y = pos.getY(i) + h / 2, a = Math.atan2(pos.getZ(i), pos.getX(i));
       const k = 1 + (vnoise(a * 2.2 + seed, y / 300) - 0.5) * 0.5 + (vnoise(a * 8 + seed * 3, y / 140) - 0.5) * 0.2 + Math.abs(Math.sin(a * 6 + seed * 1.7)) * 0.07 * (1 - y / h);
       pos.setX(i, pos.getX(i) * k); pos.setZ(i, pos.getZ(i) * k);
       if (y > 1) pos.setY(i, pos.getY(i) + (vnoise(a * 3 + seed * 2, y / 200) - 0.5) * h * 0.14);
-      const t = y / h, sn = smooth(snow - 0.12, snow + 0.08, t + (vnoise(a * 5, seed) - 0.5) * 0.2);
-      c.setRGB(lerp(0.40, 0.31, t), lerp(0.49, 0.39, t), lerp(0.60, 0.53, t)).lerp(SNOW, sn);
-      col.push(c.r, c.g, c.b);
+      const t = y / h;
+      kar.push(smooth(snow - 0.2, snow + 0.12, t));      // gölgelendiricide gürültüyle kırılır
+      ton.push(0.85 + vnoise(a * 4 + seed, seed) * 0.3);
     }
-    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-    const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, fog: false, map: ayrinti }));
+    g.setAttribute('aKar', new THREE.Float32BufferAttribute(kar, 1)); g.setAttribute('aTon', new THREE.Float32BufferAttribute(ton, 1));
+    g.computeVertexNormals();
+    const m = new THREE.Mesh(g, dagMat);
     m.position.set(x, h / 2 - 60, z);
     grp.add(m);
   }
@@ -8162,6 +8215,34 @@ const TEX_AVG = {
   kaya: [0.21, 0.09, 0.033], kaya_ust: [0.23, 0.143, 0.082], sur: [0.238, 0.198, 0.132], siva: [0.407, 0.366, 0.35], beton: [0.093, 0.094, 0.089],
   gok: [0.33, 0.44, 0.62],     // gökyüzü fotoğrafı (Poly Haven, kloofendal_38d_partly_cloudy_puresky, CC0): zirveden ufkun 11° altına
 };
+// Sis (20 Kas 2026 gece): doğrusal sis yerine yükseklikli üstel sis ve güneş yönünde ışık saçılması; bütün sisli malzemelerde geçerli.
+// Yoğunluk gölün düzeyinde en yüksek, 260 m'de yarıya iner: alçak ova ve göl puslu, yüksek yamaç ve dağ daha net. fogNear/fogFar (kalite ayarı)
+// başlangıç ve ölçeği verir. Işıklı malzemelerde güneşe bakan yönde sis güneşin rengini alır (gece ay ışığıyla zayıflar).
+THREE.ShaderChunk.fog_pars_vertex = '#ifdef USE_FOG\n\tvarying float vFogDepth;\n\tvarying vec3 vFogPos;\n#endif';
+THREE.ShaderChunk.fog_vertex = '#ifdef USE_FOG\n\tvFogDepth = - mvPosition.z;\n\tvFogPos = mvPosition.xyz;\n#endif';
+THREE.ShaderChunk.fog_pars_fragment = '#ifdef USE_FOG\n\tuniform vec3 fogColor;\n\tvarying float vFogDepth;\n\tvarying vec3 vFogPos;\n\t#ifdef FOG_EXP2\n\t\tuniform float fogDensity;\n\t#else\n\t\tuniform float fogNear;\n\t\tuniform float fogFar;\n\t#endif\n#endif';
+THREE.ShaderChunk.fog_fragment = [
+  '#ifdef USE_FOG',
+  '\tfloat fogD = length( vFogPos );',
+  '\tvec3 fogDirW = normalize( ( vec4( vFogPos / max( fogD, 1e-3 ), 0.0 ) * viewMatrix ).xyz );',      // görüş yönü (dünya)
+  '\t#ifdef FOG_EXP2',
+  '\t\tfloat fogFactor = 1.0 - exp( - fogDensity * fogDensity * fogD * fogD );',
+  '\t#else',
+  '\t\tfloat fogY0 = cameraPosition.y, fogDy = fogDirW.y * fogD, fogH = 260.0;',
+  '\t\tfloat fogOrt = abs( fogDy ) > 1.0 ? fogH * ( exp( - max( fogY0, 0.0 ) / fogH ) - exp( - max( fogY0 + fogDy, 0.0 ) / fogH ) ) / fogDy : exp( - max( fogY0, 0.0 ) / fogH );',
+  '\t\tfloat fogYol = max( fogD - fogNear, 0.0 );',
+  '\t\tfloat fogFactor = clamp( 1.0 - exp( - fogYol * ( 1.35 / max( fogFar - fogNear, 1.0 ) ) * clamp( fogOrt, 0.12, 1.0 ) ), 0.0, 0.96 );',
+  '\t#endif',
+  '\tvec3 fogRenk = fogColor;',
+  '\t#if defined( STANDARD ) && NUM_DIR_LIGHTS > 0',
+  '\t\tvec3 fogGunV = directionalLights[ 0 ].direction;',      // görüş uzayında ışığa doğru
+  '\t\tfloat fogS = pow( max( dot( normalize( vFogPos ), fogGunV ), 0.0 ), 7.0 );',
+  '\t\tfogRenk = mix( fogColor, fogColor * 0.55 + directionalLights[ 0 ].color * 0.32, fogS * 0.75 );',
+  '\t#endif',
+  '\tgl_FragColor.rgb = mix( gl_FragColor.rgb, fogRenk, fogFactor );',
+  '#endif',
+].join('\n');
+
 const PBR = ['zemin', 'cayir', 'kum', 'kayalik', 'kar', 'hava'];      // hava: aerial_ground_rock, 20 m'lik drone taraması (bozkırın orta-uzak katmanı)
 const glv3 = (a) => 'vec3(' + a.map((x) => x.toFixed(4)).join(', ') + ')';
 
@@ -8396,7 +8477,7 @@ function terrainPatch(mat, maskTex, akisTex) {
   const normalVar = !!(TEX.zemin_n && TEX.cayir_n && TEX.kum_n && TEX.kayalik_n && TEX.kar_n && TEX.hava_n);
   // Doku birimi sınırı 16 (renk, maske, 6 renk + 5 normal, oluk, eğim, ortam, gölge). Bölgeye göre derlenir: karlı bölgede çayır, öbürlerinde kar okunmaz
   // (maskede payı yok). Okunmayan doku derleyicide düşer ve birim tutmaz; hava katmanına yer böyle açıldı (20 Kas akşam).
-  const K = KAR;
+  const K = KAR, TA = TANI === 'hata' ? '' : TANI;      // hata: yalnız ekrana hata yazar, arazi tanısı değil
   const O = ARAZI_OLCEK, f = (v) => v.toFixed(4);
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.maskMap = { value: maskTex };
@@ -8418,6 +8499,20 @@ function terrainPatch(mat, maskTex, akisTex) {
       '  h = A.b * 0.65 + B.b * 0.35 - 0.5; vec2 n = (A.xy * 2.0 - 1.0) * 0.65 + (B.xy * 2.0 - 1.0) * 0.35;',
       '  o = p * n.x + d * n.y * 0.65; }',      // türevler dalın dışında alınır: dal içindeki doku okuması mip seviyesini şaşırmasın
       'vec4 oku(sampler2D t, vec2 p, float s, bool don, vec2 o) { return don ? textureGrad(t, vec2(p.y, -p.x) * s + o, vec2(gDx.y, -gDx.x) * s, vec2(gDy.y, -gDy.x) * s) : textureGrad(t, p * s + o, gDx * s, gDy * s); }',
+      // Sarp yamaçta kaya üç eksenden yansıtılır (yukarıdan, x'ten, z'den); ağırlık yüzey normaline göre. Yukarıdan tek yansıtma dik yamaçta dokuyu uzatıyordu.
+      // Uzakta 8,5 kat büyük ikinci örnekle karışır (tekrar görünmesin). Türevler dalın dışında alınır (gP, gQ).
+      'vec3 gP, gQ;',
+      'vec4 okuG(sampler2D t, vec2 p, vec2 dx, vec2 dy, float s, vec2 o) { return textureGrad(t, p * s + o, dx * s, dy * s); }',
+      'vec3 ucAg(vec3 n) { vec3 b = pow(abs(n), vec3(4.0)); return b / (b.x + b.y + b.z); }',
+      'vec3 kayaRenk(sampler2D t, vec3 w, vec3 n, float s, float k) {',
+      '  vec3 b = ucAg(n), a = vec3(0.0), c = vec3(0.0);',
+      '  a = okuG(t, w.xz, gP.xz, gQ.xz, s, vec2(0.0)).rgb * b.y + okuG(t, w.zy, gP.zy, gQ.zy, s, vec2(0.31)).rgb * b.x + okuG(t, w.xy, gP.xy, gQ.xy, s, vec2(0.57)).rgb * b.z;',
+      '  if (k > 0.01) { float s2 = s * 0.118; c = okuG(t, w.xz, gP.xz, gQ.xz, s2, vec2(0.13)).rgb * b.y + okuG(t, w.zy, gP.zy, gQ.zy, s2, vec2(0.44)).rgb * b.x + okuG(t, w.xy, gP.xy, gQ.xy, s2, vec2(0.71)).rgb * b.z; }',
+      '  return mix(a, c, k); }',
+      'vec3 kayaEgim(sampler2D t, vec3 w, vec3 n, float s) {',      // her düzlemin teğet normali dünya eksenine taşınır
+      '  vec3 b = ucAg(n);',
+      '  vec2 ky = okuG(t, w.xz, gP.xz, gQ.xz, s, vec2(0.0)).xy * 2.0 - 1.0, kx = okuG(t, w.zy, gP.zy, gQ.zy, s, vec2(0.31)).xy * 2.0 - 1.0, kz = okuG(t, w.xy, gP.xy, gQ.xy, s, vec2(0.57)).xy * 2.0 - 1.0;',
+      '  return vec3(0.0, kx.y, kx.x) * b.x + vec3(ky.x, 0.0, ky.y) * b.y + vec3(kz.x, kz.y, 0.0) * b.z; }',
     ], MOBIL ? ['vec3 ornek(sampler2D t, vec2 p, float s, float k) { return oku(t, p, s * 0.3, false, vec2(0.0)).rgb; }', 'vec3 havaRenk(vec2 p) { return oku(t_hava, p, 0.05, false, vec2(0.0)).rgb; }']
       : ['vec3 yakin(sampler2D t, vec2 p, float s) { return mix(oku(t, p, s, false, vec2(0.0)).rgb, oku(t, p, s * 0.83, true, vec2(0.43)).rgb, tkM); }',
         // drone taraması üç ölçekte (20 m, 32 m dönük, 73 m) okunur; geçişler 48 m ve 110 m'lik gürültüyle: karo ızgarası yukarıdan seçilmesin
@@ -8439,7 +8534,7 @@ function terrainPatch(mat, maskTex, akisTex) {
       'vec3 msk = texture2D(maskMap, vUv).rgb;',
       'float dcam = length(vWPos - cameraPosition);',
       'float fY = smoothstep(8.0, 70.0, dcam);',
-      'vec2 wp = vWPos.xz; gDx = dFdx(wp); gDy = dFdy(wp);',
+      'vec2 wp = vWPos.xz; gDx = dFdx(wp); gDy = dFdy(wp); gP = dFdx(vWPos); gQ = dFdy(vWPos);',
       'tkM = smoothstep(0.3, 0.7, gurultu(wp * 0.045) * 0.7 + gurultu(wp * 0.17) * 0.3);',
       'tkF = smoothstep(0.3, 0.7, gurultu(wp * 0.0071 + 3.1));',
     ].concat([
@@ -8463,7 +8558,8 @@ function terrainPatch(mat, maskTex, akisTex) {
       K ? 'if (msk.b > 0.004) dS = ornek(t_kar, wp, ' + f(O.kar) + ', fY) / ' + glv3(TEX_AVG.kar) + ';' : '',
       // sarp yamaç: 26°–44° arası kayaya döner; geçiş gürültüyle kırılır (düz çizgi olmasın)
       'float rk = smoothstep(0.90, 0.72, nIs.y + (tkM - 0.5) * 0.08 - mH * 0.2 * mK) * step(0.0, vWPos.y - 0.3);',      // sırtta kaya daha erken açılır
-      'if (rk > 0.004) dK = ornek(t_kayalik, wp, ' + f(O.kayalik) + ', fY) / ' + glv3(TEX_AVG.kayalik) + ';',
+      'vec3 nKaya = normalize(mix(vWNrm, nIs, 0.5));',
+      'if (rk > 0.004) dK = kayaRenk(t_kayalik, vWPos, nKaya, ' + f(O.kayalik) + ', fY) / ' + glv3(TEX_AVG.kayalik) + ';',
       'vec3 det = mix(dZ, dC, msk.r);',
       'det = mix(det, dU, msk.g);',
       'det = mix(det, mix(vec3(1.0), dS, 0.3), msk.b);',      // kar: leke rengi zayıf, kabartmayı normal haritası verir
@@ -8474,13 +8570,13 @@ function terrainPatch(mat, maskTex, akisTex) {
       'det *= 1.0 + ((texture2D(t_makro, wp / 520.0 + 0.17).b - 0.5) * 0.3 + (texture2D(t_makro, wp / 160.0 + 0.53).b - 0.5) * 0.18) * (1.0 - msk.b);',      // iki ölçekte leke: ova tek düze görünmesin
       'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.16, 0.145, 0.13), rk * msk.b * 0.85);',      // karlı yamaçta açılan kaya koyu
       'diffuseColor.rgb *= clamp(det, 0.04, 3.0) * mix(0.92, 0.82, rk) * (1.0 + mH * 0.5 * mK);',      // oluk koyu, sırt açık
-      TANI ? 'vec3 taniRenk = ' + ({ msk: 'msk', boya: 'taniBoya', det: 'clamp(det, 0.0, 3.0) * 0.33', dz: 'dZ * 0.5', ds: 'dS * 0.5', dk: 'dK * 0.5', rk: 'vec3(rk)', isik: 'vec3(0.0)', nrm: 'nIs * 0.5 + 0.5' }[TANI] || 'vec3(1.0, 0.0, 1.0)') + ';' : '',
-      TANI === 'isik' ? 'diffuseColor.rgb = vec3(0.7);' : '',
+      TA ? 'vec3 taniRenk = ' + ({ msk: 'msk', boya: 'taniBoya', det: 'clamp(det, 0.0, 3.0) * 0.33', dz: 'dZ * 0.5', ds: 'dS * 0.5', dk: 'dK * 0.5', rk: 'vec3(rk)', isik: 'vec3(0.0)', nrm: 'nIs * 0.5 + 0.5' }[TA] || 'vec3(1.0, 0.0, 1.0)') + ';' : '',
+      TA === 'isik' ? 'diffuseColor.rgb = vec3(0.7);' : '',
     ]).join('\n')).replace('#include <roughnessmap_fragment>', [
       '#include <roughnessmap_fragment>',
       'roughnessFactor = mix(roughnessFactor, 0.58, msk.b * (1.0 - rk));',      // kar ıslak-parlak değil ama toprak kadar mat da değil
     ].join('\n'));
-    if (TANI && TANI !== 'isik') sh.fragmentShader = sh.fragmentShader.replace('#include <output_fragment>', '#include <output_fragment>\n\tgl_FragColor = vec4(taniRenk, 1.0);');
+    if (TA && TA !== 'isik') sh.fragmentShader = sh.fragmentShader.replace('#include <output_fragment>', '#include <output_fragment>\n\tgl_FragColor = vec4(taniRenk, 1.0);');
     const makroNormal = [
       'vec3 kwn = nIs;',      // köşe normali yerine yumuşatılmış eğim
       'vec2 mO = mOb * mK * 0.6;',      // büyük kabartma: ışık uzakta da bölünür
@@ -8493,13 +8589,13 @@ function terrainPatch(mat, maskTex, akisTex) {
         K ? '' : 'if (msk.r > 0.004) kC = egim(n_cayir, wp, ' + f(O.cayir) + ', fY);',
         'if (msk.g > 0.004) kU = egim(n_kum, wp, ' + f(O.kum) + ', fY);',
         K ? 'if (msk.b > 0.004) kS = egim(n_kar, wp, ' + f(O.kar) + ', fY);' : '',
-        'if (rk > 0.004) kK = egim(n_kayalik, wp, ' + f(O.kayalik) + ', fY);',
+        'vec3 kK3 = vec3(0.0); if (rk > 0.004) kK3 = kayaEgim(n_kayalik, vWPos, nKaya, ' + f(O.kayalik) + ') * (1.0 - smoothstep(60.0, 700.0, dcam));',
         'vec2 kd = mix(mix(kZ, kC, msk.r), kU, msk.g);',
         'kd = mix(kd, kS * 0.8, msk.b);',
-        'kd = mix(kd, kK * 1.5, rk);',
+        'kd *= 1.0 - rk;',
         'kd *= 1.0 - smoothstep(60.0, mix(380.0, 1100.0, wB), dcam);',      // drone taramasının kabartması daha uzağa kadar
       ].concat(makroNormal, [
-        'kwn = normalize(kwn + vec3(kd.x + mO.x, 0.0, kd.y + mO.y));',
+        'kwn = normalize(kwn + vec3(kd.x + mO.x, 0.0, kd.y + mO.y) + kK3 * rk * 1.5);',
         'normal = normalize((viewMatrix * vec4(kwn, 0.0)).xyz);',
       ]).join('\n'));
     } else {
@@ -8509,7 +8605,7 @@ function terrainPatch(mat, maskTex, akisTex) {
       ]).join('\n'));
     }
   };
-  mat.customProgramCacheKey = () => 'arazi-pbr-' + (normalVar ? 'n' : '') + (MOBIL ? 'm' : '') + (K ? 'k' : '') + TANI;
+  mat.customProgramCacheKey = () => 'arazi-pbr-' + (normalVar ? 'n' : '') + (MOBIL ? 'm' : '') + (K ? 'k' : '') + TA;
   return mat;
 }
 
@@ -8756,6 +8852,26 @@ const CIM_GOVDE = [
   'vCim = cimZ * cimF * mix(vec3(1.0), vec3(1.14, 1.05, 0.8), cimT * (1.0 - 0.6 * cimM.r)) * mix(0.5, 1.12, cimT) * (0.86 + aOb.w * 0.28);',
 ].join('\n');
 
+// Taş ve çakıl (20 Kas 2026 gece): zemin örtüsünün parçası, çim gibi kamerayla kayan 44 m'lik yama. Öbek merkezleri çevresinde 4–12 çakıl, arada
+// tek tük iri taş. Bozkırda sık, çayırda seyrek; yol, kaldırım, beton saha (maske G), kar, su ve 0,5 m altı yok. Rengi altındaki zeminden, kaya
+// fotoğrafıyla. Yeri gölgelendiricide bulunur (CPU yükü yok). Yüksek ve ULTRA kalitede açık.
+const TAS_GOVDE = [
+  'vec2 cimK = uKam.xz;',
+  'vec2 tC = cimK + mod(aOb.xy - cimK + 0.5 * uP, uP) - 0.5 * uP;',
+  'vec2 tR = tC + aYap.xy;',
+  'float tD = distance(tC, cimK);',
+  'vec2 tE; float tH = cimYuk(tR, tE);',
+  'vec2 tUv = vec2((tR.x - uDem.x) / uDunya.x, 1.0 - (tR.y - uDem.y) / uDunya.y);',
+  'vec3 tM = textureLod(tMaske, tUv, 0.0).rgb, tZ = textureLod(tRenk, tUv, 0.0).rgb;',
+  'float tYog = mix(1.0, 0.3, tM.r) * (1.0 - smoothstep(0.1, 0.3, tM.g)) * (1.0 - tM.b) * step(0.5, tH);',
+  'float tS = step(aOb.z, tYog) * (1.0 - smoothstep(uDis.x, uDis.y, tD)) * aYap.w;',
+  'float tc = cos(aYap.z), ts = sin(aYap.z);',
+  'vec3 tP = vec3(position.x * tc - position.z * ts, position.y, position.x * ts + position.z * tc) * tS;',
+  'vec3 objectNormal = vec3(normal.x * tc - normal.z * ts, normal.y, normal.x * ts + normal.z * tc);',
+  'vec3 tasPos = vec3(tR.x, tH - tS * 0.3, tR.y) + tP;',      // üçte biri toprağa gömülü
+  'vTas = mix(tZ * 1.05, vec3(0.6, 0.54, 0.46), 0.45) * (0.7 + aOb.w * 0.5);',      // sıcak kireçtaşı-bazalt arası; zeminden kopuk mavi gri değil
+].join('\n');
+
 function buildCim(scene, terrTex) {
   if (KAR || MOBIL || !terrTex || terrTex.length < 2) return null;
   const yuk = new THREE.DataTexture(HG, dem.nx, dem.nz, THREE.RedFormat, THREE.FloatType);       // süzgeçsiz; texelFetch ile okunur
@@ -8812,11 +8928,47 @@ function buildCim(scene, terrTex) {
     scene.add(m);
     yamalar.push({ m, yaprak: g.instanceCount });
   });
+  // taş ve çakıl yaması
+  let tasM = null, tasSay = 0;
+  if (TEX.kayalik) {
+    const tg = new THREE.IcosahedronGeometry(1, 1), tp = tg.attributes.position, v = new THREE.Vector3();
+    for (let i = 0; i < tp.count; i++) { v.fromBufferAttribute(tp, i); const k = 0.72 + vnoise(v.x * 2.3 + 3.1, v.z * 2.1 + v.y * 1.7) * 0.56; tp.setXYZ(i, v.x * k, v.y * k * 0.58, v.z * k * 0.86); }
+    tg.computeVertexNormals();
+    const g = new THREE.InstancedBufferGeometry(); g.index = tg.index;
+    for (const ad of ['position', 'normal', 'uv']) g.setAttribute(ad, tg.attributes[ad]);
+    const R = rng(311), P = 44, ob = [], yap = [];
+    for (let o = 0; o < P * P * 0.12; o++) {      // öbek merkezleri: 8 m²'ye bir
+      const cx = R() * P, cz = R() * P, esik = R(), ton = R(), n = 4 + Math.floor(R() * 9), yay = 0.3 + R() * 0.5;
+      for (let k = 0; k < n; k++) {
+        const a = R() * TAU, rr = Math.sqrt(R()) * yay, buyuk = k === 0 && R() < 0.25;
+        ob.push(cx, cz, esik, ton);
+        yap.push(Math.cos(a) * rr, Math.sin(a) * rr, R() * TAU, buyuk ? 0.18 + R() * 0.24 : 0.035 + R() * 0.085);
+      }
+    }
+    g.setAttribute('aOb', new THREE.InstancedBufferAttribute(new Float32Array(ob), 4));
+    g.setAttribute('aYap', new THREE.InstancedBufferAttribute(new Float32Array(yap), 4));
+    g.instanceCount = tasSay = ob.length / 4;
+    const U = Object.assign({ uP: { value: P }, uDis: { value: new THREE.Vector2(16, 21) } }, ortak);
+    const mat = new THREE.MeshStandardMaterial({ map: TEX.kayalik, roughness: 0.95, metalness: 0, envMapIntensity: 0.55 });
+    mat.name = 'tas';
+    mat.onBeforeCompile = (sh) => {
+      Object.assign(sh.uniforms, U);
+      sh.vertexShader = CIM_VERT.replace('varying vec3 vCim;', 'varying vec3 vTas;') + '\n' + sh.vertexShader
+        .replace('#include <beginnormal_vertex>', TAS_GOVDE)
+        .replace('#include <begin_vertex>', 'vec3 transformed = tasPos;');
+      sh.fragmentShader = 'varying vec3 vTas;\n' + sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n\tdiffuseColor.rgb = vTas * (diffuseColor.rgb / ' + glv3(TEX_AVG.kayalik) + ') * 0.55;');
+    };
+    mat.customProgramCacheKey = () => 'tas';
+    tasM = new THREE.Mesh(g, mat);
+    tasM.frustumCulled = false; tasM.receiveShadow = true; tasM.castShadow = false;
+    scene.add(tasM);
+  }
   return {
     doku: yuk,
     yaprak: yamalar.reduce((s, y) => s + y.yaprak, 0),
+    tas: tasSay,
     adim(kamera, t) { ortak.uKam.value.copy(kamera.position); ortak.uZaman.value = t; },
-    kalite(q) { yamalar[0].m.visible = q !== 'dusuk'; yamalar[1].m.visible = q === 'yuksek'; },
+    kalite(q) { yamalar[0].m.visible = q !== 'dusuk'; yamalar[1].m.visible = q === 'yuksek' || q === 'ultra'; if (tasM) tasM.visible = q === 'yuksek' || q === 'ultra'; },
   };
 }
 
@@ -12347,7 +12499,8 @@ function mutfakKur(api) {
 
   // ---------------------------------------------------------------- ayarlar
   const AYAR = Object.assign({ kalite: MOBIL ? 'dusuk' : 'yuksek', oto: true, ses: 100, kamera: 0, trafik: true, vakit: 'dongu' }, store.get('ayar', {}));
-  if (['dusuk', 'orta', 'yuksek'].indexOf(AYAR.kalite) < 0) AYAR.kalite = 'yuksek';
+  if (['dusuk', 'orta', 'yuksek', 'ultra'].indexOf(AYAR.kalite) < 0 || (MOBIL && AYAR.kalite === 'ultra')) AYAR.kalite = 'yuksek';
+  if (MOBIL) $('kalite-ultra').hidden = true;      // telefonda 4096 gölge haritası belleği zorlar
   AYAR.ses = clamp(+AYAR.ses || 0, 0, 100); AYAR.kamera = clamp(AYAR.kamera | 0, 0, 2);
   G.cam = AYAR.kamera;
   // Dil: sayfadaki sabit metinler data-i18n ile, dinamik metinler T() ile gelir. Farsça sağdan sola yazılır.
@@ -12381,8 +12534,11 @@ function mutfakKur(api) {
   function cycleCam() { G.cam = (G.cam + 1) % 3; camSnap = true; AYAR.kamera = G.cam; store.set('ayar', AYAR); }
   function applySettings(save) {
     const q = AYAR.kalite, dpr = window.devicePixelRatio || 1;
-    pixelRatio = q === 'dusuk' ? 1 : q === 'orta' ? Math.min(dpr, 1.25) : Math.min(dpr, 2);
-    const shadows = q !== 'dusuk', size = q === 'yuksek' ? 2048 : 1024;
+    // ULTRA: 1080p ekranda 1,5 kat örnekleme (kenar yumuşar), 4096 gölge haritası ve 340 m gölge alanı (yüksekte 2048 ve 240 m: metre başına
+    // 1,6 kat ayrıntı, yarıçap 1,4 kat), 200 m ayrıntılı ağaç (yüksekte 120), daha uzak sis ve ağaç parçası.
+    pixelRatio = q === 'dusuk' ? 1 : q === 'orta' ? Math.min(dpr, 1.25) : q === 'ultra' ? Math.min(Math.max(dpr, 1.5), 2.5) : Math.min(dpr, 2);
+    const shadows = q !== 'dusuk', size = q === 'ultra' ? 4096 : q === 'yuksek' ? 2048 : 1024, alan = q === 'ultra' ? 170 : 120;
+    if (sc.right !== alan) { sc.left = -alan; sc.right = alan; sc.top = alan; sc.bottom = -alan; sc.updateProjectionMatrix(); }
     if (renderer.shadowMap.enabled !== shadows) {
       renderer.shadowMap.enabled = shadows; sun.castShadow = shadows;
       scene.traverse((o) => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => { m.needsUpdate = true; }); });
@@ -12399,7 +12555,7 @@ function mutfakKur(api) {
     for (const el of document.querySelectorAll('[data-vakit]')) el.setAttribute('aria-pressed', el.getAttribute('data-vakit') === AYAR.vakit ? 'true' : 'false');
     trafikHedef();
     if (CIM) CIM.kalite(q);
-    AGAC_U.uYakin.value = MOBIL ? 40 : q === 'dusuk' ? 0 : q === 'orta' ? 70 : 120;      // yakın düzey ağaç yarıçapı
+    AGAC_U.uYakin.value = MOBIL ? 40 : q === 'dusuk' ? 0 : q === 'orta' ? 70 : q === 'ultra' ? 200 : 120;      // yakın düzey ağaç yarıçapı
     { const g = GORUS[q] || GORUS.yuksek; scene.fog.near = g.sis[0]; scene.fog.far = g.sis[1]; parcaGorunur(0, true); }
     $('ayar-oto').checked = !!AYAR.oto; $('ayar-trafik').checked = AYAR.trafik !== false; $('ayar-ses').value = AYAR.ses; $('ayar-ses-n').textContent = AYAR.ses;
   }
@@ -12720,7 +12876,7 @@ function mutfakKur(api) {
   // Trafik: araç sayısı kaliteye ve bölgeye göre. Yarışta yol kapalıdır, trafik çekilir.
   const TCAM = { x: 0, z: 0, fx: 0, fz: 1 }, _cd = new THREE.Vector3();
   // Kaliteye göre görüş: sis yakınlaşır, uzak ağaç ve bina parçaları çizilmez. Sis rengi ufukla aynı olduğu için kesilme görünmez.
-  const GORUS = { dusuk: { sis: [450, 3800], agac: 1300, bina: 2400 }, orta: { sis: [600, 5600], agac: 2300, bina: 3800 }, yuksek: { sis: [700, 7600], agac: 4200, bina: 1e9 } };
+  const GORUS = { dusuk: { sis: [450, 3800], agac: 1300, bina: 2400 }, orta: { sis: [600, 5600], agac: 2300, bina: 3800 }, yuksek: { sis: [700, 7600], agac: 4200, bina: 1e9 }, ultra: { sis: [850, 9500], agac: 6500, bina: 1e9 } };
   let parcaT = 0;
   function parcaGorunur(dt, zorla) {
     parcaT -= dt;
@@ -12767,7 +12923,7 @@ function mutfakKur(api) {
       const u = env.sky.material.uniforms;
       u.ufuk.value.copy(scene.fog.color); u.ton.value.setRGB(L(A.ton[0], B.ton[0]), L(A.ton[1], B.ton[1]), L(A.ton[2], B.ton[2])); u.gece.value = L(A.gece, B.gece);
       u.gunesOyun.value = Math.asin(SUN.y);
-      for (const m of env.mountains.children) m.material.color.setRGB(L(A.dag[0], B.dag[0]), L(A.dag[1], B.dag[1]), L(A.dag[2], B.dag[2]));
+      for (const m of env.mountains.children) { const t = m.material.uniforms ? m.material.uniforms.ton.value : m.material.color; t.setRGB(L(A.dag[0], B.dag[0]), L(A.dag[1], B.dag[1]), L(A.dag[2], B.dag[2])); }
     }
     geceN = L(A.n, B.n);
     for (const m of GECE.cephe) m.emissiveIntensity = geceN * 0.95;
@@ -13112,7 +13268,7 @@ function mutfakKur(api) {
       const fps = fpsN / fpsT; G.fps = fps; fpsT = 0; fpsN = 0;
       slow = fps < 27 ? slow + 1 : 0;
       if (slow >= 2 && AYAR.oto && AYAR.kalite !== 'dusuk') {
-        AYAR.kalite = AYAR.kalite === 'yuksek' ? 'orta' : 'dusuk'; slow = 0;
+        AYAR.kalite = AYAR.kalite === 'ultra' ? 'yuksek' : AYAR.kalite === 'yuksek' ? 'orta' : 'dusuk'; slow = 0;
         applySettings(true);
       }
     }
@@ -13131,8 +13287,9 @@ function mutfakKur(api) {
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
     wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
+    sahne: () => scene,      // teşhis: katman gizleyip tek başına bakmak için
     cevre: () => cevreKaynak,      // gündüz ortam ışığının kaynağı: 'hdri' ya da 'gok' (dosya gelmediyse)
-    ayar: () => ({ kalite: AYAR.kalite, golge: renderer.shadowMap.enabled, golgeBoyu: sun.shadow.mapSize.x, piksel: renderer.getPixelRatio(), ses: AYAR.ses, kazanc: masterGain() }),
+    ayar: () => ({ kalite: AYAR.kalite, golge: renderer.shadowMap.enabled, golgeBoyu: sun.shadow.mapSize.x, golgeAlan: sc.right * 2, agacYakin: AGAC_U.uYakin.value, sis: scene.fog.far, piksel: renderer.getPixelRatio(), ses: AYAR.ses, kazanc: masterGain() }),
     // grafik kıyası için sabit kamera noktaları: Kale Turu rotasında dört yer, biri de kaleye tepeden bakış
     olcumNoktalari() {
       const R = EVENTS[0].R, out = [];
