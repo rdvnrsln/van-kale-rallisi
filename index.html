@@ -13642,8 +13642,16 @@ function cokKur(o) {
   }
 
   // ---------------------------------------------------------------- ayarlar
-  const AYAR = Object.assign({ kalite: MOBIL ? 'dusuk' : 'yuksek', oto: true, ses: 100, kamera: 0, trafik: true, vakit: 'dongu', kontras: 0 }, store.get('ayar', {}));
-  if (['dusuk', 'orta', 'yuksek', 'ultra'].indexOf(AYAR.kalite) < 0 || (MOBIL && AYAR.kalite === 'ultra')) AYAR.kalite = 'yuksek';
+  const AYAR = Object.assign({ kalite: MOBIL ? 'orta' : 'yuksek', oto: true, ses: 100, kamera: 0, trafik: true, vakit: 'dongu', kontras: 0 }, store.get('ayar', {}));
+  if (['dusuk', 'orta', 'yuksek', 'ultra'].indexOf(AYAR.kalite) < 0) AYAR.kalite = MOBIL ? 'orta' : 'yuksek';
+  if (MOBIL && AYAR.kalite === 'ultra') AYAR.kalite = 'yuksek';
+  // Telefonda başlangıç kalitesi (21 Kas 2026, kurucu: "Orta, Yüksek'e çıksın"): Orta'da açılır; 30 sn akıcı giderse kendiliğinden Yüksek'e çıkar
+  // (kaliteSecim = yuksek; kaliteAdim), zorlanırsa önce çözünürlük, sonra kalite iner. İlk iPhone ölçümü (Plus/Pro Max sınıfı) Yüksek'te 58–60 fps.
+  // Eski varsayılan Düşük'te kalmış telefonlar bir kez Orta'ya alınır (ks: kalite ayarının sürümü); Düşük'ü elle seçen (ks 2 sonrası) korunur.
+  if (AYAR.ks !== 2) {
+    if (MOBIL && AYAR.kalite === 'dusuk' && (!AYAR.kaliteSecim || AYAR.kaliteSecim === 'dusuk')) { AYAR.kalite = 'orta'; AYAR.kaliteSecim = 'yuksek'; }
+    AYAR.ks = 2;
+  }
   if (MOBIL) $('kalite-ultra').hidden = true;      // telefonda 4096 gölge haritası belleği zorlar
   AYAR.ses = clamp(+AYAR.ses || 0, 0, 100); AYAR.kamera = clamp(AYAR.kamera | 0, 0, 2); AYAR.kontras = clamp(AYAR.kontras | 0, 0, 2);
   G.cam = AYAR.kamera;
@@ -14561,7 +14569,7 @@ function cokKur(o) {
   // Gösterge: ?tani=perf ya da Ayarlar → Performans göstergesi. Ölçüm turu (~60 sn): Van'da beş sabit bakış, Van'da ve Abalı'da otomatik sürüş.
   // ?tani=perf&agir=N: zayıf ekran kartı benzetimi (her karede görünmez, N adımlık tam ekran gölgelendirici; yük piksel sayısıyla büyür).
   const KALITE_SIRA = ['dusuk', 'orta', 'yuksek', 'ultra'];
-  if (KALITE_SIRA.indexOf(AYAR.kaliteSecim) < 0) AYAR.kaliteSecim = AYAR.kalite;
+  if (KALITE_SIRA.indexOf(AYAR.kaliteSecim) < 0) AYAR.kaliteSecim = MOBIL && AYAR.kalite === 'orta' ? 'yuksek' : AYAR.kalite;      // telefonda Orta'dan Yüksek'e çıkılabilir
   const PERF = {
     olcek: 1, min: 0.6, tavan: 1, tavanT: 0, hedefMs: 1000 / 60, kilitT: -1e9, kilitSure: 10000, kilitMs: 0, deneme: null, iyi: 0, sonCik: -1e9, cikOnce: 1,
     N: 900, i: 0, n: 0, aralik: new Float32Array(900), cpu: new Float32Array(900), gpu: new Float32Array(900),
