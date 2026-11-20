@@ -6919,7 +6919,13 @@ function buildGroundCanvas() {
     const h = baseH(x, z);
     const sl = Math.hypot(baseH(x + 12, z) - h, baseH(x, z + 12) - h) / 12;
     const n = vnoise(x / 110, z / 110) * 0.6 + vnoise(x / 27, z / 27) * 0.4;
-    let r = lerp(176, 152, n), gg = lerp(156, 146, n), b = lerp(108, 94, n);     // bozkır
+    let r = lerp(170, 142, n), gg = lerp(152, 134, n), b = lerp(106, 90, n);     // bozkır
+    {   // geniş ölçekli ton lekeleri (200–600 m): kuru ot (sarı), zeytin yeşili ot, çıplak koyu toprak; bozkır tek düze bej görünmesin
+      const m1 = vnoise(x / 420 + 7.3, z / 420 - 2.1), m2 = vnoise(x / 190 - 4.4, z / 190 + 9.7);
+      const ot = smooth(0.4, 0.68, m1) * 0.75, toprak = smooth(0.48, 0.76, m2) * 0.6;
+      r = lerp(r, 120, ot); gg = lerp(gg, 124, ot); b = lerp(b, 80, ot);
+      r = lerp(r, 124, toprak); gg = lerp(gg, 104, toprak); b = lerp(b, 76, toprak);
+    }
     const wet = smooth(11, 2, h) * 0.75;                                          // göl kıyısı çayırı
     r = lerp(r, 124, wet); gg = lerp(gg, 148, wet); b = lerp(b, 88, wet);
     const dry = smooth(70, 180, h);                                               // doğudaki kuru yamaçlar
@@ -6947,15 +6953,16 @@ function buildGroundCanvas() {
     if (close) g.closePath();
   }
   // Eski Van: yıkık şehrin solgun toprağı
-  if (D.eskivan) { path(D.eskivan, 0, true); g.fillStyle = 'rgba(190,170,132,0.55)'; g.fill(); }
-  const fills = ['#6f9a4c', '#86a65c', '#4f9650', '#62893f', null, '#4d7a3a', '#8e9a70', '#6c9a82', '#7c7c7e', '#b3a98f'];
-  const farm = ['#a9a35c', '#8ea456', '#bcab68', '#9aaa62', '#c4b476', '#7f9a4e'];
+  if (D.eskivan) { path(D.eskivan, 0, true); g.fillStyle = 'rgba(190,170,132,0.28)'; g.fill(); }
+  // Alan renkleri kasımdaki Van'ın soluk tonları (kurucu 20 Kas: "FIFA çimi gibi"); yeşil yalnız spor sahasında belirgin. Tarlalar hasat sonrası anız ve sürülmüş toprak.
+  const fills = ['#768a50', '#86905a', '#5e8a4a', '#6f7d4a', null, '#5a6a42', '#8a8a6c', '#71866a', '#7c7c7e', '#b3a98f'];
+  const farm = ['#b0a274', '#9c9468', '#b7a87a', '#a29566', '#c0ad80', '#8f8a62'];
   if (D.piste) { path(D.piste, 0, true); g.fillStyle = 'rgba(250,252,255,0.85)'; g.fill(); }   // hazırlanmış pist
   if (!KAR) D.areas.forEach((a, idx) => {
     path(a, 1, true);
     g.fillStyle = a[0] === 4 ? farm[idx % farm.length] : fills[a[0]];
     g.globalAlpha = a[0] === 4 ? 0.8 : 0.92; g.fill(); g.globalAlpha = 1;
-    if (a[0] === 4) { g.strokeStyle = 'rgba(90,80,50,0.35)'; g.lineWidth = 1.2; g.stroke(); }
+    if (a[0] === 4) { g.strokeStyle = 'rgba(90,80,50,0.16)'; g.lineWidth = 1; g.stroke(); }
     if (a[0] === 2) { g.strokeStyle = 'rgba(255,255,255,0.75)'; g.lineWidth = 1.2; g.stroke(); }
   });
   // şehir zemini: binaların çevresi gri-bej
@@ -6967,7 +6974,7 @@ function buildGroundCanvas() {
   for (const r of D.roads) {
     if (r[0] === 8) continue;
     path(r, 4, false);
-    g.strokeStyle = KAR ? 'rgba(198,202,210,0.95)' : r[0] === 7 ? 'rgba(150,128,96,0.9)' : 'rgba(128,122,110,0.95)';
+    g.strokeStyle = KAR ? 'rgba(198,202,210,0.95)' : r[0] === 7 ? 'rgba(146,132,108,0.85)' : 'rgba(128,122,110,0.95)';
     g.lineWidth = (r[2] + (r[0] <= 3 ? 5 : 3)) * s; g.stroke();
   }
   // karışım maskesi: R çimen, G çakıl ve şehir zemini (ikisi de yoksa bozkır toprağı)
@@ -7151,7 +7158,10 @@ function buildRoads(scene) {
     mesh.receiveShadow = true; scene.add(mesh);
   };
   add(asph, new THREE.MeshStandardMaterial({ map: TEX.asfalt, normalMap: TEX.asfalt_n, normalScale: new THREE.Vector2(0.9, 0.9), vertexColors: true, roughness: 0.86, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }));
-  add(dirt, new THREE.MeshStandardMaterial({ map: TEX.cakil, vertexColors: true, roughness: 1, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }));
+  const dirtM = new THREE.MeshStandardMaterial({ map: TEX.cakil, vertexColors: true, roughness: 1, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+  dirtM.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n\tdiffuseColor.rgb = mix(vec3(dot(diffuseColor.rgb, vec3(0.3, 0.5, 0.2))) * vec3(1.06, 1.0, 0.9), diffuseColor.rgb, 0.35) * 0.95;'); };      // kırmızımsı çakıl soluk gri-kahveye (patika kırmızı çizgi gibi görünmesin)
+  dirtM.customProgramCacheKey = () => 'toprak-yol';
+  add(dirt, dirtM);
   const marks = M.mesh(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 }), false);
   scene.add(marks);
 }
@@ -8126,7 +8136,8 @@ const TEX = {};
 const TEX_AVG = {
   asfalt: [0.104, 0.102, 0.09], cakil: [0.287, 0.158, 0.073],
   // PBR takımları (Poly Haven, CC0; tools/doku-pbr.py): renk (AO işlenmiş) + OpenGL normal haritası. Telefonda yarı boy, normalsiz.
-  zemin: [0.219, 0.179, 0.105], cayir: [0.084, 0.061, 0.014], kum: [0.246, 0.136, 0.063], kayalik: [0.206, 0.129, 0.074], kar: [0.188, 0.188, 0.193],
+  // zemin: withered_grass (kurumuş bozkır), çayır: grass_ground (20 Kas akşam)
+  zemin: [0.317, 0.226, 0.150], cayir: [0.119, 0.090, 0.037], kum: [0.246, 0.136, 0.063], kayalik: [0.206, 0.129, 0.074], kar: [0.188, 0.188, 0.193],
   kaya: [0.21, 0.09, 0.033], kaya_ust: [0.23, 0.143, 0.082], sur: [0.238, 0.198, 0.132], siva: [0.407, 0.366, 0.35], beton: [0.093, 0.094, 0.089],
   gok: [0.33, 0.44, 0.62],     // gökyüzü fotoğrafı (Poly Haven, kloofendal_38d_partly_cloudy_puresky, CC0): zirveden ufkun 11° altına
 };
@@ -8359,7 +8370,7 @@ function triplanar(mat, side, top, sSide, sTop, gain, kab, cok) {
 // Yakın planda normal haritaları ışığı böler (380 m'de söner). Telefonda tek ölçek ve normal haritası yok.
 // Büyük ölçekte sırt ve oluk (makroUret): yamaçta ışık, oyuk karartması ve sırtta açılan kaya; düz zeminde, yolda ve şehirde yok.
 // Maskede payı olmayan doku okunmaz (dal): kar yalnız Abalı'da, kaya yalnız sarp yamaçta okunur.
-const ARAZI_OLCEK = { zemin: 0.62, cayir: 0.2, kum: 0.42, kayalik: 0.17, kar: 0.3 };      // 1 / metre (doku boyu: 1,6 m, 5 m, 2,4 m, 5,9 m, 3,3 m)
+const ARAZI_OLCEK = { zemin: 0.5, cayir: 0.4, kum: 0.42, kayalik: 0.17, kar: 0.3 };      // 1 / metre (doku boyu: 2 m, 2,5 m, 2,4 m, 5,9 m, 3,3 m; Poly Haven'ın gerçek ölçüsü)
 function terrainPatch(mat, maskTex, akisTex) {
   const normalVar = !!(TEX.zemin_n && TEX.cayir_n && TEX.kum_n && TEX.kayalik_n && TEX.kar_n);
   const O = ARAZI_OLCEK, f = (v) => v.toFixed(4);
@@ -8424,7 +8435,7 @@ function terrainPatch(mat, maskTex, akisTex) {
       'det = mix(det, dK, rk);',
       'det = mix(vec3(1.0), det, 1.1);',
       'det = mix(det, vec3(1.0), smoothstep(100.0, 700.0, dcam) * 0.85);',      // uzakta doku tekrarı görünmesin: ayrıntı söner, yerine büyük leke
-      'det *= 1.0 + (texture2D(t_makro, wp / 520.0 + 0.17).b - 0.5) * 0.22 * (1.0 - msk.b);',
+      'det *= 1.0 + ((texture2D(t_makro, wp / 520.0 + 0.17).b - 0.5) * 0.3 + (texture2D(t_makro, wp / 160.0 + 0.53).b - 0.5) * 0.18) * (1.0 - msk.b);',      // iki ölçekte leke: ova tek düze görünmesin
       'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.16, 0.145, 0.13), rk * msk.b * 0.85);',      // karlı yamaçta açılan kaya koyu
       'diffuseColor.rgb *= clamp(det, 0.04, 3.0) * mix(0.92, 0.82, rk) * (1.0 + mH * 0.5 * mK);',      // oluk koyu, sırt açık
       TANI ? 'vec3 taniRenk = ' + ({ msk: 'msk', boya: 'taniBoya', det: 'clamp(det, 0.0, 3.0) * 0.33', dz: 'dZ * 0.5', ds: 'dS * 0.5', dk: 'dK * 0.5', rk: 'vec3(rk)', isik: 'vec3(0.0)', nrm: 'nIs * 0.5 + 0.5' }[TANI] || 'vec3(1.0, 0.0, 1.0)') + ';' : '',
@@ -8662,12 +8673,13 @@ function cepheDiziMat(dz) {
 // yalnız kamera konumunu ve zamanı yazar. Yüksek kalitede iki yama, ortada yalnız yakın yama; düşük kalitede ve telefonda çim yok.
 // =====================================================================
 const CIM_YAMA = [
-  { P: 36, obek: 4.4, yaprak: [12, 20], en: [0.028, 0.045], boy: 1.0, ic: [0, 0], dis: [13, 17.5], kat: [0, 0.3, 0.58, 0.82] },
-  { P: 120, obek: 0.9, yaprak: [6, 10], en: [0.1, 0.15], boy: 1.1, ic: [12, 16.5], dis: [44, 57], kat: [0, 0.45] },
+  { P: 36, obek: 8, yaprak: [5, 10], yay: 0.34, en: [0.022, 0.04], boy: 1.0, ic: [0, 0], dis: [13, 17.5], kat: [0, 0.3, 0.58, 0.82] },
+  { P: 120, obek: 1.5, yaprak: [5, 9], yay: 0.45, en: [0.08, 0.13], boy: 1.05, ic: [12, 16.5], dis: [44, 57], kat: [0, 0.45] },
 ];
 
 const CIM_VERT = [
   'uniform highp sampler2D tYuk; uniform vec4 uDem; uniform vec2 uDemN; uniform sampler2D tRenk; uniform sampler2D tMaske; uniform vec2 uDunya;',
+  'uniform sampler2D tZd; uniform sampler2D tCd; uniform vec3 uZort; uniform vec3 uCort; uniform vec2 uDol;',      // zemin ve çayır fotoğrafı: yaprak rengi altındaki zeminden
   'uniform vec3 uKam; uniform float uZaman; uniform float uP; uniform vec2 uIc; uniform vec2 uDis; uniform float uBoy;',
   'attribute vec4 aOb; attribute vec4 aYap; attribute vec4 aEk;',
   'varying vec3 vCim;',
@@ -8693,7 +8705,7 @@ const CIM_GOVDE = [
   // yoğunluk: çayır 1, bozkır 0,3; kum-beton-yol (G), kar (B), su ve kıyı, 36°'den sarp yamaç sıfır
   'float cimYog = mix(0.55, 1.0, cimM.r) * (1.0 - smoothstep(0.12, 0.35, cimM.g)) * (1.0 - cimM.b) * smoothstep(0.78, 0.86, cimNy) * step(0.5, cimH);',
   'float cimSol = (uIc.y > 0.0 ? smoothstep(uIc.x, uIc.y, cimD) : 1.0) * (1.0 - smoothstep(uDis.x, uDis.y, cimD));',      // yama kenarında yaprak yere çekilir
-  'float cimBoy = step(aOb.z, cimYog) * cimSol * uBoy * aYap.w * mix(0.3, 0.52, cimM.r);',
+  'float cimBoy = step(aOb.z, cimYog) * cimSol * uBoy * aYap.w * mix(0.2, 0.4, cimM.r) * (0.55 + fract(aOb.w * 7.13) * 0.9);',
   'float cimT = position.y;',
   'vec2 cimYon = vec2(cos(aYap.z), sin(aYap.z));',
   'vec2 cimEgik = vec2(cos(aEk.y), sin(aEk.y)) * aEk.x;',
@@ -8703,7 +8715,9 @@ const CIM_GOVDE = [
   // ışık normali: çoğu yukarı (yaprak zeminle aynı ışığı alsın, arka yüz kararmasın), biraz yaprak yüzüne doğru
   'vec3 objectNormal = normalize(mix(vec3(-cimYon.y, 0.0, cimYon.x), normalize(vec3(-cimE.x, 1.0, -cimE.y)), 0.72));',
   // renk: kökte koyu (gölgede kalan alt kısım), uçta açık; bozkırda uç kurur (sarı), çayırda daha az; öbekten öbeğe ±%16
-  'vCim = cimZ * mix(vec3(1.0), vec3(1.16, 1.06, 0.78), cimT * (1.0 - 0.65 * cimM.r)) * mix(0.42, 1.14, cimT) * (0.84 + aOb.w * 0.32);',
+  'vec3 cimFz = textureLod(tZd, cimC * uDol.x, 3.0).rgb / uZort, cimFc = textureLod(tCd, cimC * uDol.y, 3.0).rgb / uCort;',
+  'vec3 cimF = clamp(mix(cimFz, cimFc, cimM.r), 0.55, 1.6);',
+  'vCim = cimZ * cimF * mix(vec3(1.0), vec3(1.14, 1.05, 0.8), cimT * (1.0 - 0.6 * cimM.r)) * mix(0.5, 1.12, cimT) * (0.86 + aOb.w * 0.28);',
 ].join('\n');
 
 function buildCim(scene, terrTex) {
@@ -8714,6 +8728,8 @@ function buildCim(scene, terrTex) {
     tYuk: { value: yuk }, uDem: { value: new THREE.Vector4(dem.x0, dem.z0, dem.step, 0) }, uDemN: { value: new THREE.Vector2(dem.nx, dem.nz) },
     tRenk: { value: terrTex[0] }, tMaske: { value: terrTex[1] }, uDunya: { value: new THREE.Vector2((dem.nx - 1) * dem.step, (dem.nz - 1) * dem.step) },
     uKam: { value: new THREE.Vector3() }, uZaman: { value: 0 },
+    tZd: { value: TEX.zemin }, tCd: { value: TEX.cayir }, uZort: { value: new THREE.Vector3(...TEX_AVG.zemin) }, uCort: { value: new THREE.Vector3(...TEX_AVG.cayir) },
+    uDol: { value: new THREE.Vector2(ARAZI_OLCEK.zemin * 0.13, ARAZI_OLCEK.cayir * 0.13) },      // uzak ölçek: öbek boyunda renk lekesi
   };
   const yamalar = [];
   CIM_YAMA.forEach((Y, k) => {
@@ -8728,7 +8744,7 @@ function buildCim(scene, terrTex) {
     for (let o = 0; o < nOb; o++) {
       const cx = R() * Y.P, cz = R() * Y.P, r1 = R(), r2 = R(), n = Y.yaprak[0] + Math.floor(R() * (Y.yaprak[1] - Y.yaprak[0] + 1));
       for (let b = 0; b < n; b++) {
-        const a = R() * TAU, rr = Math.sqrt(R()) * 0.22;
+        const a = R() * TAU, rr = Math.sqrt(R()) * Y.yay;
         ob.push(cx, cz, r1, r2);
         yap.push(Math.cos(a) * rr, Math.sin(a) * rr, R() * TAU, 0.6 + R() * 0.55);
         ek.push(0.12 + R() * 0.45, a + (R() - 0.5) * 0.8, lerp(Y.en[0], Y.en[1], R()), 0);      // eğilme dışa doğru
