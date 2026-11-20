@@ -6773,6 +6773,7 @@ function setRegion(data) {
   CASTLE = pairs(D.castle || []); computeRock();
   ROADS = readRoads(); indexRoads();
   WG = makeGrid(32); WSEG = [];
+  PARCA.agac.length = 0; PARCA.bina.length = 0;
   WORLD_W = (dem.nx - 1) * dem.step; WORLD_H = (dem.nz - 1) * dem.step;
   SUMMIT.x = SUMMIT.z = SUMMIT.y = 0;
 }
@@ -6980,6 +6981,8 @@ function buildRoads(scene) {
   scene.add(marks);
 }
 
+// Uzaklığa göre gizlenebilen dünya parçaları (ağaç hücreleri, bina parçaları). Bölge kurulurken dolar; src/oyun.js her çeyrek saniyede görünürlüğü ayarlar.
+const PARCA = { agac: [], bina: [] };
 // ------------------------------------------------------------ binalar
 const POIS = [];
 function buildBuildings(scene, maxAniso) {
@@ -7055,10 +7058,13 @@ function buildBuildings(scene, maxAniso) {
       m4.makeScale(1.1, 4.6, 1.1).setPosition(mx, base + mh + 2.3, mz); ch.f.geom(cone, m4, domeCol);
     }
   }
-  for (const ch of chunks.values()) {
-    ch.w.forEach((bg, k) => { if (bg.p.length) scene.add(bg.mesh(wallMats[k], true)); });
-    if (ch.f.p.length) scene.add(ch.f.mesh(flatMat, true));
-    if (ch.s.p.length) scene.add(ch.s.mesh(stoneMat, true));
+  for (const [key, ch] of chunks) {
+    const ij = key.split('_'), parca = { x: XMIN + (+ij[0] + 0.5) * 520, z: ZMIN + (+ij[1] + 0.5) * 520, r: 380, mesh: [] };
+    const ekle = (m) => { scene.add(m); parca.mesh.push(m); };
+    ch.w.forEach((bg, k) => { if (bg.p.length) ekle(bg.mesh(wallMats[k], true)); });
+    if (ch.f.p.length) ekle(ch.f.mesh(flatMat, true));
+    if (ch.s.p.length) ekle(ch.s.mesh(stoneMat, true));
+    PARCA.bina.push(parca);
   }
 }
 
@@ -7286,26 +7292,52 @@ function buildTrees(scene) {
   };
   const leafDepth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: leafTex, alphaTest: 0.42, side: THREE.DoubleSide });
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), c = new THREE.Color(), UP = new THREE.Vector3(0, 1, 0);
-  const nP = pop.length / 3, nR = rnd.length / 3;
-  const trunks = new THREE.InstancedMesh(trunkG, trunkM, nP + nR);
-  const pm = new THREE.InstancedMesh(popG, leafM, nP), rm = new THREE.InstancedMesh(rndG, leafM, nR);
-  for (let i = 0; i < nP; i++) {
-    const x = pop[i * 3], z = pop[i * 3 + 1], sc = pop[i * 3 + 2], y = groundH(x, z) - 0.2;
-    p.set(x, y, z); q.setFromAxisAngle(UP, R() * TAU);
-    s.set(sc, sc * (0.9 + R() * 0.5), sc); m4.compose(p, q, s); pm.setMatrixAt(i, m4);
-    if (KAR) c.setHSL(0.38 + R() * 0.04, 0.3, 0.3 + R() * 0.08); else c.setHSL(0.2 + R() * 0.06, 0.28, 0.66 + R() * 0.12);
-    c.convertSRGBToLinear(); pm.setColorAt(i, c);
-    s.set(sc, 3.2 * sc, sc); m4.compose(p, q, s); trunks.setMatrixAt(i, m4);
+  // Ağaçlar 400 m'lik hücrelere bölünür: her hücre kendi sınır küresiyle görüş alanı dışında (ve gölge kutusu dışında) çizilmez.
+  // Geometri tamponları hücreler arasında paylaşılır; yalnız sınır küresi hücreye özeldir.
+  const HUCRE = 400, hucreler = new Map();
+  const dagit = (arr, tip) => {
+    for (let i = 0; i < arr.length; i += 3) {
+      const key = Math.floor(arr[i] / HUCRE) + '_' + Math.floor(arr[i + 1] / HUCRE);
+      let h = hucreler.get(key);
+      if (!h) hucreler.set(key, (h = { pop: [], rnd: [] }));
+      h[tip].push(arr[i], arr[i + 1], arr[i + 2]);
+    }
+  };
+  dagit(pop, 'pop'); dagit(rnd, 'rnd');
+  const paylas = (g, kure) => { const q = new THREE.BufferGeometry(); q.setIndex(g.index); for (const k in g.attributes) q.setAttribute(k, g.attributes[k]); q.boundingSphere = kure; return q; };
+  let toplam = 0;
+  for (const h of hucreler.values()) {
+    const nP = h.pop.length / 3, nR = h.rnd.length / 3, kutu = new THREE.Box3();
+    for (const arr of [h.pop, h.rnd]) for (let i = 0; i < arr.length; i += 3) { const y = groundH(arr[i], arr[i + 1]); p.set(arr[i], y, arr[i + 1]); kutu.expandByPoint(p); p.y = y + 15 * arr[i + 2]; kutu.expandByPoint(p); }
+    const kure = kutu.getBoundingSphere(new THREE.Sphere()); kure.radius += 6;
+    const trunks = new THREE.InstancedMesh(paylas(trunkG, kure), trunkM, nP + nR);
+    const pm = nP ? new THREE.InstancedMesh(paylas(popG, kure), leafM, nP) : null, rm = nR ? new THREE.InstancedMesh(paylas(rndG, kure), leafM, nR) : null;
+    for (let i = 0; i < nP; i++) {
+      const x = h.pop[i * 3], z = h.pop[i * 3 + 1], sc = h.pop[i * 3 + 2], y = groundH(x, z) - 0.2;
+      p.set(x, y, z); q.setFromAxisAngle(UP, R() * TAU);
+      s.set(sc, sc * (0.9 + R() * 0.5), sc); m4.compose(p, q, s); pm.setMatrixAt(i, m4);
+      if (KAR) c.setHSL(0.38 + R() * 0.04, 0.3, 0.3 + R() * 0.08); else c.setHSL(0.2 + R() * 0.06, 0.28, 0.66 + R() * 0.12);
+      c.convertSRGBToLinear(); pm.setColorAt(i, c);
+      s.set(sc, 3.2 * sc, sc); m4.compose(p, q, s); trunks.setMatrixAt(i, m4);
+    }
+    for (let i = 0; i < nR; i++) {
+      const x = h.rnd[i * 3], z = h.rnd[i * 3 + 1], sc = h.rnd[i * 3 + 2], y = groundH(x, z) - 0.2;
+      p.set(x, y, z); q.setFromAxisAngle(UP, R() * TAU);
+      s.set(sc, sc * (0.8 + R() * 0.35), sc); m4.compose(p, q, s); rm.setMatrixAt(i, m4);
+      c.setHSL(0.22 + R() * 0.08, 0.28, 0.6 + R() * 0.14).convertSRGBToLinear(); rm.setColorAt(i, c);
+      s.set(sc * 1.3, 2.4 * sc, sc * 1.3); m4.compose(p, q, s); trunks.setMatrixAt(nP + i, m4);
+    }
+    const parca = { x: kure.center.x, z: kure.center.z, r: kure.radius, mesh: [] };
+    for (const m of [pm, rm, trunks]) {
+      if (!m) continue;
+      m.castShadow = true; m.receiveShadow = false; m.frustumCulled = true;   // three 0.149 InstancedMesh'te elemeyi kapalı başlatır; sınır küresi hücreye özel olduğu için açılabilir
+      if (m !== trunks) m.customDepthMaterial = leafDepth;
+      scene.add(m); parca.mesh.push(m);
+    }
+    PARCA.agac.push(parca);
+    toplam += nP + nR;
   }
-  for (let i = 0; i < nR; i++) {
-    const x = rnd[i * 3], z = rnd[i * 3 + 1], sc = rnd[i * 3 + 2], y = groundH(x, z) - 0.2;
-    p.set(x, y, z); q.setFromAxisAngle(UP, R() * TAU);
-    s.set(sc, sc * (0.8 + R() * 0.35), sc); m4.compose(p, q, s); rm.setMatrixAt(i, m4);
-    c.setHSL(0.22 + R() * 0.08, 0.28, 0.6 + R() * 0.14).convertSRGBToLinear(); rm.setColorAt(i, c);
-    s.set(sc * 1.3, 2.4 * sc, sc * 1.3); m4.compose(p, q, s); trunks.setMatrixAt(nP + i, m4);
-  }
-  for (const m of [pm, rm, trunks]) { m.castShadow = true; m.receiveShadow = false; m.frustumCulled = false; if (m !== trunks) m.customDepthMaterial = leafDepth; scene.add(m); }
-  return nP + nR;
+  return toplam;
 }
 
 // ------------------------------------------------------------ göl, gök, dağlar
@@ -10365,6 +10397,7 @@ function mutfakKur(api) {
     for (const el of document.querySelectorAll('[data-kalite]')) el.setAttribute('aria-pressed', el.getAttribute('data-kalite') === q ? 'true' : 'false');
     for (const el of document.querySelectorAll('[data-kamera]')) el.setAttribute('aria-pressed', +el.getAttribute('data-kamera') === G.cam ? 'true' : 'false');
     trafikHedef();
+    { const g = GORUS[q] || GORUS.yuksek; scene.fog.near = g.sis[0]; scene.fog.far = g.sis[1]; parcaGorunur(0, true); }
     $('ayar-oto').checked = !!AYAR.oto; $('ayar-trafik').checked = AYAR.trafik !== false; $('ayar-ses').value = AYAR.ses; $('ayar-ses-n').textContent = AYAR.ses;
   }
   function openSettings() { $('menu').hidden = true; $('ayarlar').hidden = false; $('sifirla-onay').hidden = true; applySettings(false); $('btn-ayar-geri').focus(); }
@@ -10682,6 +10715,22 @@ function mutfakKur(api) {
   const STEP = 1 / 120;
   // Trafik: araç sayısı kaliteye ve bölgeye göre. Yarışta yol kapalıdır, trafik çekilir.
   const TCAM = { x: 0, z: 0, fx: 0, fz: 1 }, _cd = new THREE.Vector3();
+  // Kaliteye göre görüş: sis yakınlaşır, uzak ağaç ve bina parçaları çizilmez. Sis rengi ufukla aynı olduğu için kesilme görünmez.
+  const GORUS = { dusuk: { sis: [450, 3800], agac: 1300, bina: 2400 }, orta: { sis: [600, 5600], agac: 2300, bina: 3800 }, yuksek: { sis: [700, 7600], agac: 4200, bina: 1e9 } };
+  let parcaT = 0;
+  function parcaGorunur(dt, zorla) {
+    parcaT -= dt;
+    if (parcaT > 0 && !zorla) return;
+    parcaT = 0.25;
+    const g = GORUS[AYAR.kalite] || GORUS.yuksek, cx = camera.position.x, cz = camera.position.z;
+    for (const tur of ['agac', 'bina']) {
+      const lim = g[tur];
+      for (const pr of PARCA[tur]) {
+        const v = Math.hypot(pr.x - cx, pr.z - cz) < lim + pr.r;
+        if (pr.v !== v) { pr.v = v; for (const m of pr.mesh) m.visible = v; }
+      }
+    }
+  }
   function trafikHedef() {
     const n = AYAR.trafik === false ? 0 : AYAR.kalite === 'dusuk' ? 6 : AYAR.kalite === 'orta' ? 10 : 14;
     TRF.hedef = Math.round((MOBIL ? Math.min(n, 6) : n) * (REGION && REGION.id !== 'van' ? 0.4 : 1));
@@ -10776,14 +10825,20 @@ function mutfakKur(api) {
         }
       }
     }
+    let canli = 0;
     for (let i = 0; i < DUST.n; i++) {
       if (DUST.life[i] <= 0) continue;
+      canli++;
       DUST.life[i] = Math.max(0, DUST.life[i] - dt / 1.15);
       DUST.pos[i * 3] += DUST.vel[i * 3] * dt; DUST.pos[i * 3 + 1] += DUST.vel[i * 3 + 1] * dt; DUST.pos[i * 3 + 2] += DUST.vel[i * 3 + 2] * dt;
       DUST.vel[i * 3] *= 1 - 1.5 * dt; DUST.vel[i * 3 + 2] *= 1 - 1.5 * dt;
     }
-    const g = DUST.pts.geometry;
-    g.attributes.position.needsUpdate = true; g.attributes.aLife.needsUpdate = true; g.attributes.aCol.needsUpdate = true;
+    DUST.pts.visible = canli > 0;
+    if (canli > 0 || DUST.kirli) {      // parçacık yokken tamponlar ekran kartına yeniden yüklenmez
+      const g = DUST.pts.geometry;
+      g.attributes.position.needsUpdate = true; g.attributes.aLife.needsUpdate = true; g.attributes.aCol.needsUpdate = true;
+      DUST.kirli = canli > 0;
+    }
     DUST.pts.material.uniforms.uScale.value = (renderer.domElement.height * 0.5) / Math.tan((camera.fov * Math.PI) / 360);
   }
 
@@ -10924,6 +10979,7 @@ function mutfakKur(api) {
     for (const c of cars) (c.ski ? poseSkier : poseCar)(c, dt);
     if (driving) for (const c of TRF.act) poseCar(c, dt);
     const f = updateCamera(dt);
+    parcaGorunur(dt, false);
     camera.getWorldDirection(_cd); TCAM.x = camera.position.x; TCAM.z = camera.position.z; TCAM.fx = _cd.x; TCAM.fz = _cd.z;
     focus.set(Math.round(f.x / 4) * 4, Math.round(f.y / 4) * 4, Math.round(f.z / 4) * 4);
     sun.target.position.copy(focus); sun.position.copy(focus).addScaledVector(SUN, 420);
@@ -10967,7 +11023,17 @@ function mutfakKur(api) {
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
     wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, mobil: MOBIL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     ayar: () => ({ kalite: AYAR.kalite, golge: renderer.shadowMap.enabled, golgeBoyu: sun.shadow.mapSize.x, piksel: renderer.getPixelRatio(), ses: AYAR.ses, kazanc: masterGain() }),
-    look(x, y, z, tx, ty, tz) { G.state = 'menu'; G.resume = null; G.freeze = [x, y, z, tx, ty, tz]; },
+    // grafik kıyası için sabit kamera noktaları: Kale Turu rotasında dört yer, biri de kaleye tepeden bakış
+    olcumNoktalari() {
+      const R = EVENTS[0].R, out = [];
+      for (const f of [0.05, 0.3, 0.55, 0.8]) {
+        const p = routePoint(R, R.L * f), x = p.x, z = p.z, dx = p.dx, dz = p.dz;
+        out.push([x - dx * 14, groundH(x, z) + 6, z - dz * 14, x + dx * 40, groundH(x + dx * 40, z + dz * 40) + 2, z + dz * 40]);
+      }
+      out.push([700, 260, 620, 60, 40, 40]);
+      return out;
+    },
+    look(x, y, z, tx, ty, tz) { G.state = 'menu'; G.resume = null; G.freeze = [x, y, z, tx, ty, tz]; parcaT = 0; },
     bench(n) { const gl = renderer.getContext(), t0 = performance.now(); for (let i = 0; i < n; i++) { renderer.render(scene, camera); gl.finish(); } return { ms: (performance.now() - t0) / n, calls: renderer.info.render.calls, tris: renderer.info.render.triangles, geo: renderer.info.memory.geometries, tex: renderer.info.memory.textures, prog: renderer.info.programs.length }; },
   };
 
