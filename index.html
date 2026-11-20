@@ -279,6 +279,33 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
 .seg { display: flex; flex-wrap: wrap; }
 .seg button { background: transparent; border: 1px solid var(--cizgi); margin-inline-end: -1px; padding: 8px 18px 9px; font-family: var(--f-baslik); font-weight: 600; font-size: 18px; letter-spacing: 0.03em; }
 .seg button:hover { color: var(--kehribar); }
+/* performans göstergesi ve ölçüm sonucu (tanı aracı: sade, eş aralıklı yazı) */
+#perf { position: fixed; top: 8px; left: 50%; transform: translateX(-50%); z-index: 30; max-width: calc(100vw - 32px); padding: 6px 10px 7px; border-radius: 8px; background: rgba(11, 22, 34, 0.74); color: #e8eef2; font: 600 12px/1.45 ui-monospace, "SF Mono", Menlo, Consolas, monospace; pointer-events: auto; direction: ltr; }
+#perf[hidden], #perf-sonuc[hidden] { display: none; }
+#perf-y div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.perf-d { display: flex; gap: 6px; margin-top: 5px; }
+.perf-d button { font: 600 12px/1 var(--f-baslik, sans-serif); padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.35); background: rgba(255, 255, 255, 0.06); color: inherit; cursor: pointer; }
+.perf-d button:disabled { opacity: 0.45; cursor: default; }
+#perf-sonuc { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(5, 10, 16, 0.6); }
+#perf-sonuc .kart { width: min(720px, 100%); max-height: calc(100vh - 32px); overflow: auto; padding: 18px 18px 14px; border-radius: 12px; background: #0f1b28; color: #eef2f4; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); }
+#perf-sonuc h2 { margin: 0 0 6px; font-family: var(--f-baslik); font-size: 24px; }
+#perf-sonuc p { margin: 4px 0; font-size: 14px; }
+#perf-sonuc .tablo-kap { overflow-x: auto; margin: 10px 0; }
+#perf-sonuc table { width: 100%; border-collapse: collapse; font: 600 13px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace; direction: ltr; }
+#perf-sonuc th, #perf-sonuc td { padding: 4px 6px; text-align: right; white-space: nowrap; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+#perf-sonuc th:first-child, #perf-sonuc td:first-child { text-align: left; }
+#perf-karar { font-weight: 700; color: var(--kehribar); }
+#perf-sonuc .perf-d button { font-size: 15px; padding: 9px 14px; }
+#perf { pointer-events: none; }      /* yazı dokunuşu geçirir (altındaki düğmeler çalışır); yalnız kendi düğmeleri tıklanır */
+#perf button { pointer-events: auto; }
+@media (max-width: 560px) {      /* telefon: gösterge küçük; tablo ekrana sığar, p99 ve CPU sütunu gizli (Kopyala metninde var) */
+  #perf { font-size: 10px; padding: 4px 8px 5px; }
+  #perf-sonuc .kart { padding: 14px 12px 12px; }
+  #perf-sonuc table { font-size: 11px; }
+  #perf-sonuc th, #perf-sonuc td { padding: 3px 3px; }
+  #perf-sonuc td:first-child { white-space: normal; }
+  #perf-sonuc th:nth-child(4), #perf-sonuc td:nth-child(4), #perf-sonuc th:nth-child(5), #perf-sonuc td:nth-child(5) { display: none; }
+}
 .kasa-nokta { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-inline-end: 8px; vertical-align: -1px; box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.55); }
 .seg button[aria-pressed="true"] { background: var(--kehribar); border-color: var(--kehribar); color: #1a1206; }
 .onay { display: flex; gap: 10px; align-items: center; font-size: 14.5px; }
@@ -360,6 +387,8 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
 <canvas id="gl" aria-label="Van Kalesi çevresinde üç boyutlu yarış sahnesi"></canvas>
 
 <div id="hud" class="kat" hidden>
+  <!-- performans göstergesi (?tani=perf ya da Ayarlar): fps, kare süresi yüzdelikleri, işlemci ve ekran kartı süresi, çizim sayıları, çözünürlük -->
+  <div id="perf" hidden><div id="perf-y"></div><div class="perf-d"><button type="button" id="perf-tur" data-i18n="perf.tur">Ölçüm turu</button><button type="button" id="perf-kapat" aria-label="Kapat" data-i18n-aria="perf.kapat">×</button></div></div>
   <div class="sol-ust">
     <canvas id="mini" width="190" height="190" aria-label="Mini harita" data-i18n-aria="hud.harita"></canvas>
     <div class="yer"><div id="sokak">Van</div><div id="mahalle"></div></div>
@@ -485,6 +514,22 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
   </div>
 </div>
 
+<!-- ölçüm turunun sonucu: oyuncu ekran görüntüsünü gönderir ya da "Kopyala" ile metni yapıştırır -->
+<div id="perf-sonuc" role="dialog" aria-modal="true" aria-labelledby="perf-baslik" hidden>
+  <div class="kart">
+    <h2 id="perf-baslik" data-i18n="perf.sonuc">Ölçüm sonucu</h2>
+    <p id="perf-cihaz"></p>
+    <p id="perf-kalite"></p>
+    <div class="tablo-kap"><table>
+      <thead><tr><th data-i18n="perf.bolum">Bölüm</th><th>fps</th><th>p95 ms</th><th>p99 ms</th><th>CPU ms</th><th>GPU ms</th><th data-i18n="perf.cagri">çağrı</th><th data-i18n="perf.ucgen">üçgen</th><th data-i18n="perf.coz">çöz.</th></tr></thead>
+      <tbody id="perf-tablo"></tbody>
+    </table></div>
+    <p id="perf-karar"></p>
+    <p class="kucuk" data-i18n="perf.not">Bu ekranın görüntüsünü gönder ya da Kopyala'ya basıp metni yapıştır.</p>
+    <div class="perf-d"><button type="button" id="perf-kopyala" data-i18n="perf.kopyala">Kopyala</button><button type="button" id="perf-kapat2" data-i18n="perf.kapat">Kapat</button></div>
+  </div>
+</div>
+
 <div id="sonuc" class="kat" hidden>
   <div class="sonuc-ic">
     <div id="sonuc-ad" class="etiket"></div>
@@ -522,7 +567,8 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
         <button type="button" id="kalite-ultra" data-kalite="ultra" aria-pressed="false" data-i18n="ayar.ultra">Ultra</button>
       </div>
       <p class="kucuk" data-i18n="ayar.kaliteNot">Düşük: gölge yok, tam piksel. Orta: yumuşak gölge. Yüksek: keskin gölge, yüksek çözünürlük. Ultra: daha keskin ve geniş gölge, daha çok ayrıntılı ağaç, daha uzak görüş; güçlü ekran kartı ister.</p>
-      <label class="onay"><input type="checkbox" id="ayar-oto" checked> <span data-i18n="ayar.oto">Kare hızı düşerse kaliteyi kendiliğinden düşür</span></label>
+      <label class="onay"><input type="checkbox" id="ayar-oto" checked> <span data-i18n="ayar.oto">Kare hızı düşerse çözünürlüğü ve kaliteyi kendiliğinden ayarla</span></label>
+      <label class="onay"><input type="checkbox" id="ayar-perf"> <span data-i18n="ayar.perf">Performans göstergesi: kare hızı, çizim sayısı, ölçüm turu</span></label>
     </div>
     <div class="ayar">
       <div class="etiket" id="lbl-kontras" data-i18n="ayar.kontras">Zemin kontrastı</div>
@@ -6298,7 +6344,7 @@ const DIL = {
     'yuk.al': 'Yükü al', 'yuk.birak': 'Teslimat', 'yuk.basla': 'Yük taşıma', 'yuk.basla.alt': 'Mavi sütunda dur, çuvalları yükle',
     'yuk.bindi': 'Yük kasada', 'yuk.bindi.alt': 'Teslimat noktasına sür; çarpma ve sert viraj yüke zarar verir', 'yuk.konfor': 'Yük {0}/100',
     'yuk.sarsildi': 'Yük hasar gördü', 'yuk.vardi': 'Yük teslim edildi',
-    'menu.kasa': 'Kasa: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · kasa {1} ₺', 'menu.arac': 'Araç', 'menu.yukKasasi': 'Yük kasası', 'kasaRenk.ahsap': 'Ahşap', 'kasaRenk.mavi': 'Mavi', 'arac.araba': 'Araba', 'arac.trike': 'Üç teker',
+    'menu.kasa': 'Kasa: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · kasa {1} ₺', 'menu.arac': 'Araç', 'menu.yukKasasi': 'Yük kasası', 'kasaRenk.ahsap': 'Ahşap', 'kasaRenk.mavi': 'Mavi', 'perf.tur': 'Ölçüm turu', 'perf.suruyor': 'Ölçüm turu: {0} · {1} sn', 'perf.cagri': 'çağrı', 'perf.ucgen': 'üçgen', 'perf.kapat': 'Kapat', 'perf.b.sabit': 'Van, sabit bakış', 'perf.b.van': 'Van, sürüş', 'perf.b.abali': 'Abalı, sürüş', 'perf.k60': '60 fps tutuyor (en yavaş bölüm {0} fps)', 'perf.k30': '30 ile 60 fps arası (en yavaş bölüm {0} fps)', 'perf.kZayif': '30 fps altında (en yavaş bölüm {0} fps)', 'perf.yarim': 'Ölçüm turu yarıda kaldı', 'perf.kaliteSatir': 'Kalite: {0} → {1} · çözünürlük {2}', 'perf.kopyala': 'Kopyala', 'perf.kopyalandi': 'Kopyalandı', 'perf.sonuc': 'Ölçüm sonucu', 'perf.bolum': 'Bölüm', 'perf.coz': 'çöz.', 'perf.not': 'Bu ekranın görüntüsünü gönder ya da Kopyala\'ya basıp metni yapıştır.', 'ayar.perf': 'Performans göstergesi: kare hızı, çizim sayısı, ölçüm turu', 'arac.araba': 'Araba', 'arac.trike': 'Üç teker',
     'arac.motor': 'Motorlu üç teker', 'kilit.araba': 'Bu etkinlik araba ister. Araba {0} ₺.', 'kilit.kisa': 'araba gerekli',
     'al.yetmez': '{0} ₺ gerekli, kasada {1} ₺ var', 'hikaye.biriktir': '{0} ₺ biriktir', 'hikaye.biriktir.alt': 'Kasada {0} ₺ var. Mavi sütundan yük işi al.', 'ayar.testAc': 'Test: tüm araçları aç',
     'ev.kahvalti': 'Van Kahvaltısı', 'ev.kahvalti.alt': 'Kahvaltı salonunda vardiya: misafirlerin siparişini hazırla, pişir, sabırları bitmeden servis et',
@@ -6364,7 +6410,7 @@ const DIL = {
     'zone.koyu': '{0} köyü', 'zone.pistYolu': 'Pist yolu', 'zone.kayakYolu': 'Kayak yolu', 'zone.artos': 'Artos yamacı',
     'ayar.baslik': 'Ayarlar', 'ayar.dil': 'Dil', 'ayar.kalite': 'Grafik kalitesi', 'ayar.dusuk': 'Düşük', 'ayar.orta': 'Orta', 'ayar.yuksek': 'Yüksek', 'ayar.ultra': 'Ultra', 'ayar.kontras': 'Zemin kontrastı', 'ayar.kontras0': 'Normal', 'ayar.kontras1': 'Hafif', 'ayar.kontras2': 'Belirgin',
     'ayar.kaliteNot': 'Düşük: gölge yok, tam piksel. Orta: yumuşak gölge. Yüksek: keskin gölge, yüksek çözünürlük. Ultra: daha keskin ve geniş gölge, daha çok ayrıntılı ağaç, daha uzak görüş; güçlü ekran kartı ister.',
-    'ayar.oto': 'Kare hızı düşerse kaliteyi kendiliğinden düşür', 'ayar.sehir': 'Şehir', 'ayar.vakit': 'Gün vakti', 'ayar.dongu': 'Döngü', 'ayar.gunduz': 'Gündüz', 'ayar.gunbatimi': 'Gün batımı', 'ayar.gece': 'Gece', 'ayar.vakitNot': 'Döngüde gündüz, gün batımı ve gece sırayla gelir. Sürerken T tuşu vakti değiştirir.', 'ayar.trafik': 'Şehir trafiği: yollarda araçlar dolaşsın', 'ayar.ses': 'Ses düzeyi', 'ayar.kamera': 'Kamera', 'ayar.yakin': 'Yakın', 'ayar.uzak': 'Uzak', 'ayar.surucu': 'Sürücü',
+    'ayar.oto': 'Kare hızı düşerse çözünürlüğü ve kaliteyi kendiliğinden ayarla', 'ayar.sehir': 'Şehir', 'ayar.vakit': 'Gün vakti', 'ayar.dongu': 'Döngü', 'ayar.gunduz': 'Gündüz', 'ayar.gunbatimi': 'Gün batımı', 'ayar.gece': 'Gece', 'ayar.vakitNot': 'Döngüde gündüz, gün batımı ve gece sırayla gelir. Sürerken T tuşu vakti değiştirir.', 'ayar.trafik': 'Şehir trafiği: yollarda araçlar dolaşsın', 'ayar.ses': 'Ses düzeyi', 'ayar.kamera': 'Kamera', 'ayar.yakin': 'Yakın', 'ayar.uzak': 'Uzak', 'ayar.surucu': 'Sürücü',
     'ayar.ekran': 'Ekran', 'ayar.tamEkran': 'Tam ekranı aç ya da kapat', 'ayar.tamEkranNot': 'F11 ya da Alt+Enter', 'ayar.kayit': 'Kayıt', 'ayar.sifirla': 'İlerlemeyi sıfırla',
     'ayar.sifirlaNot': 'Hikâye ilerlemesi, en iyi süreler ve bulunan kediler silinir. Geri alınamaz.', 'ayar.evetSil': 'Evet, sil', 'ayar.vazgec': 'Vazgeç', 'ayar.silindi': 'İlerleme silindi.', 'ayar.geri': 'Geri',
     'sen': 'Sen', 'kisi.zelal': 'Zelal',
@@ -6455,7 +6501,7 @@ const DIL = {
     'yuk.al': 'Pick up the load', 'yuk.birak': 'Delivery', 'yuk.basla': 'Cargo run', 'yuk.basla.alt': 'Stop at the blue column and load the sacks',
     'yuk.bindi': 'The load is on', 'yuk.bindi.alt': 'Ride to the delivery point; crashes and sharp corners damage the load', 'yuk.konfor': 'Load {0}/100',
     'yuk.sarsildi': 'The load was damaged', 'yuk.vardi': 'Load delivered',
-    'menu.kasa': 'Savings: ₺{0}', 'sonuc.kazanc': '+₺{0} · savings ₺{1}', 'menu.arac': 'Vehicle', 'menu.yukKasasi': 'Cargo box', 'kasaRenk.ahsap': 'Wood', 'kasaRenk.mavi': 'Blue', 'arac.araba': 'Car', 'arac.trike': 'Cargo trike',
+    'menu.kasa': 'Savings: ₺{0}', 'sonuc.kazanc': '+₺{0} · savings ₺{1}', 'menu.arac': 'Vehicle', 'menu.yukKasasi': 'Cargo box', 'kasaRenk.ahsap': 'Wood', 'kasaRenk.mavi': 'Blue', 'perf.tur': 'Benchmark', 'perf.suruyor': 'Benchmark: {0} · {1} s', 'perf.cagri': 'calls', 'perf.ucgen': 'tris', 'perf.kapat': 'Close', 'perf.b.sabit': 'Van, fixed views', 'perf.b.van': 'Van, driving', 'perf.b.abali': 'Abalı, driving', 'perf.k60': 'Holds 60 fps (slowest section {0} fps)', 'perf.k30': 'Between 30 and 60 fps (slowest section {0} fps)', 'perf.kZayif': 'Below 30 fps (slowest section {0} fps)', 'perf.yarim': 'The benchmark was interrupted', 'perf.kaliteSatir': 'Quality: {0} → {1} · resolution {2}', 'perf.kopyala': 'Copy', 'perf.kopyalandi': 'Copied', 'perf.sonuc': 'Benchmark result', 'perf.bolum': 'Section', 'perf.coz': 'res.', 'perf.not': 'Send a screenshot of this screen, or press Copy and paste the text.', 'ayar.perf': 'Performance overlay: frame rate, draw calls, benchmark', 'arac.araba': 'Car', 'arac.trike': 'Cargo trike',
     'arac.motor': 'Motor trike', 'kilit.araba': 'This event needs a car. The car costs ₺{0}.', 'kilit.kisa': 'car needed',
     'al.yetmez': 'You need ₺{0}; you have ₺{1}', 'hikaye.biriktir': 'Save ₺{0}', 'hikaye.biriktir.alt': 'You have ₺{0}. Take a cargo job at the blue column.', 'ayar.testAc': 'Test: unlock all vehicles',
     'ev.kahvalti': 'Van Breakfast', 'ev.kahvalti.alt': 'A shift at the breakfast house: prepare the orders, cook them, and serve before the guests lose patience',
@@ -6521,7 +6567,7 @@ const DIL = {
     'zone.koyu': '{0} village', 'zone.pistYolu': 'Piste track', 'zone.kayakYolu': 'Ski road', 'zone.artos': 'Artos slope',
     'ayar.baslik': 'Settings', 'ayar.dil': 'Language', 'ayar.kalite': 'Graphics quality', 'ayar.dusuk': 'Low', 'ayar.orta': 'Medium', 'ayar.yuksek': 'High', 'ayar.ultra': 'Ultra', 'ayar.kontras': 'Ground contrast', 'ayar.kontras0': 'Normal', 'ayar.kontras1': 'Slight', 'ayar.kontras2': 'Strong',
     'ayar.kaliteNot': 'Low: no shadows, native pixels. Medium: soft shadows. High: sharp shadows, high resolution. Ultra: sharper and wider shadows, more detailed trees, longer view distance; needs a strong graphics card.',
-    'ayar.oto': 'Lower the quality automatically when the frame rate drops', 'ayar.sehir': 'City', 'ayar.vakit': 'Time of day', 'ayar.dongu': 'Cycle', 'ayar.gunduz': 'Day', 'ayar.gunbatimi': 'Sunset', 'ayar.gece': 'Night', 'ayar.vakitNot': 'The cycle runs through day, sunset and night. While driving, the T key changes the time of day.', 'ayar.trafik': 'City traffic: cars drive on the roads', 'ayar.ses': 'Volume', 'ayar.kamera': 'Camera', 'ayar.yakin': 'Near', 'ayar.uzak': 'Far', 'ayar.surucu': 'Driver',
+    'ayar.oto': 'Adjust resolution and quality automatically when the frame rate drops', 'ayar.sehir': 'City', 'ayar.vakit': 'Time of day', 'ayar.dongu': 'Cycle', 'ayar.gunduz': 'Day', 'ayar.gunbatimi': 'Sunset', 'ayar.gece': 'Night', 'ayar.vakitNot': 'The cycle runs through day, sunset and night. While driving, the T key changes the time of day.', 'ayar.trafik': 'City traffic: cars drive on the roads', 'ayar.ses': 'Volume', 'ayar.kamera': 'Camera', 'ayar.yakin': 'Near', 'ayar.uzak': 'Far', 'ayar.surucu': 'Driver',
     'ayar.ekran': 'Display', 'ayar.tamEkran': 'Toggle full screen', 'ayar.tamEkranNot': 'F11 or Alt+Enter', 'ayar.kayit': 'Save data', 'ayar.sifirla': 'Reset progress',
     'ayar.sifirlaNot': 'This deletes story progress, best times and found cats. It cannot be undone.', 'ayar.evetSil': 'Yes, delete', 'ayar.vazgec': 'Cancel', 'ayar.silindi': 'Progress deleted.', 'ayar.geri': 'Back',
     'sen': 'You', 'kisi.zelal': 'Zelal',
@@ -6612,7 +6658,7 @@ const DIL = {
     'yuk.al': 'بار را بردار', 'yuk.birak': 'تحویل', 'yuk.basla': 'باربری', 'yuk.basla.alt': 'کنار ستون آبی بایست و گونی‌ها را بار کن',
     'yuk.bindi': 'بار روی سه‌چرخه است', 'yuk.bindi.alt': 'تا محل تحویل برو؛ برخورد و پیچ تند به بار آسیب می‌زند', 'yuk.konfor': 'بار {0}/100',
     'yuk.sarsildi': 'بار آسیب دید', 'yuk.vardi': 'بار تحویل شد',
-    'menu.kasa': 'پس‌انداز: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · پس‌انداز {1} ₺', 'menu.arac': 'وسیله', 'menu.yukKasasi': 'جعبهٔ بار', 'kasaRenk.ahsap': 'چوبی', 'kasaRenk.mavi': 'آبی', 'arac.araba': 'خودرو', 'arac.trike': 'سه‌چرخه',
+    'menu.kasa': 'پس‌انداز: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · پس‌انداز {1} ₺', 'menu.arac': 'وسیله', 'menu.yukKasasi': 'جعبهٔ بار', 'kasaRenk.ahsap': 'چوبی', 'kasaRenk.mavi': 'آبی', 'perf.tur': 'گشت سنجش', 'perf.suruyor': 'گشت سنجش: {0} · {1} ثانیه', 'perf.cagri': 'فراخوان', 'perf.ucgen': 'مثلث', 'perf.kapat': 'بستن', 'perf.b.sabit': 'وان، نمای ثابت', 'perf.b.van': 'وان، رانندگی', 'perf.b.abali': 'آبالی، رانندگی', 'perf.k60': '60 فریم در ثانیه پایدار است (کندترین بخش {0})', 'perf.k30': 'بین 30 تا 60 فریم در ثانیه (کندترین بخش {0})', 'perf.kZayif': 'زیر 30 فریم در ثانیه (کندترین بخش {0})', 'perf.yarim': 'گشت سنجش نیمه‌کاره ماند', 'perf.kaliteSatir': 'کیفیت: آغاز {0}، پایان {1} · وضوح {2}', 'perf.kopyala': 'کپی', 'perf.kopyalandi': 'کپی شد', 'perf.sonuc': 'نتیجهٔ سنجش', 'perf.bolum': 'بخش', 'perf.coz': 'وضوح', 'perf.not': 'از این صفحه عکس بگیر و بفرست، یا «کپی» را بزن و متن را بچسبان.', 'ayar.perf': 'نشانگر کارایی: سرعت فریم، شمار فراخوان‌ها، گشت سنجش', 'arac.araba': 'خودرو', 'arac.trike': 'سه‌چرخه',
     'arac.motor': 'سه‌چرخه موتوری', 'kilit.araba': 'این مسابقه خودرو می‌خواهد. قیمت خودرو {0} ₺ است.', 'kilit.kisa': 'خودرو لازم است',
     'al.yetmez': '{0} ₺ لازم است؛ در پس‌انداز {1} ₺ داری', 'hikaye.biriktir': '{0} ₺ پس‌انداز کن', 'hikaye.biriktir.alt': 'در پس‌انداز {0} ₺ داری. از ستون آبی کار باربری بگیر.', 'ayar.testAc': 'آزمایش: همه وسیله‌ها را باز کن',
     'ev.kahvalti': 'صبحانه وان', 'ev.kahvalti.alt': 'یک نوبت کار در صبحانه‌خانه: سفارش مهمان‌ها را آماده کن، بپز و پیش از تمام شدن صبرشان سرو کن',
@@ -6678,7 +6724,7 @@ const DIL = {
     'zone.koyu': 'روستای {0}', 'zone.pistYolu': 'راه پیست', 'zone.kayakYolu': 'جاده پیست', 'zone.artos': 'دامنه آرتوس',
     'ayar.baslik': 'تنظیمات', 'ayar.dil': 'زبان', 'ayar.kalite': 'کیفیت گرافیک', 'ayar.dusuk': 'کم', 'ayar.orta': 'متوسط', 'ayar.yuksek': 'زیاد', 'ayar.ultra': 'اولترا', 'ayar.kontras': 'کنتراست زمین', 'ayar.kontras0': 'عادی', 'ayar.kontras1': 'ملایم', 'ayar.kontras2': 'زیاد',
     'ayar.kaliteNot': 'کم: بدون سایه. متوسط: سایه نرم. زیاد: سایه دقیق و وضوح بالا. اولترا: سایه دقیق‌تر و گسترده‌تر، درختان پرجزئیات بیشتر، دید دورتر؛ کارت گرافیک قوی می‌خواهد.',
-    'ayar.oto': 'اگر سرعت فریم افت کرد، کیفیت خودکار کم شود', 'ayar.sehir': 'شهر', 'ayar.vakit': 'زمان روز', 'ayar.dongu': 'چرخه', 'ayar.gunduz': 'روز', 'ayar.gunbatimi': 'غروب', 'ayar.gece': 'شب', 'ayar.vakitNot': 'در چرخه، روز و غروب و شب پشت سر هم می‌آیند. هنگام رانندگی کلید T زمان روز را عوض می‌کند.', 'ayar.trafik': 'ترافیک شهر: خودروها در خیابان‌ها حرکت کنند', 'ayar.ses': 'بلندی صدا', 'ayar.kamera': 'دوربین', 'ayar.yakin': 'نزدیک', 'ayar.uzak': 'دور', 'ayar.surucu': 'راننده',
+    'ayar.oto': 'اگر سرعت فریم افت کرد، وضوح و کیفیت خودکار تنظیم شود', 'ayar.sehir': 'شهر', 'ayar.vakit': 'زمان روز', 'ayar.dongu': 'چرخه', 'ayar.gunduz': 'روز', 'ayar.gunbatimi': 'غروب', 'ayar.gece': 'شب', 'ayar.vakitNot': 'در چرخه، روز و غروب و شب پشت سر هم می‌آیند. هنگام رانندگی کلید T زمان روز را عوض می‌کند.', 'ayar.trafik': 'ترافیک شهر: خودروها در خیابان‌ها حرکت کنند', 'ayar.ses': 'بلندی صدا', 'ayar.kamera': 'دوربین', 'ayar.yakin': 'نزدیک', 'ayar.uzak': 'دور', 'ayar.surucu': 'راننده',
     'ayar.ekran': 'صفحه', 'ayar.tamEkran': 'تمام‌صفحه را باز یا بسته کن', 'ayar.tamEkranNot': 'F11 یا Alt+Enter', 'ayar.kayit': 'داده‌های ذخیره‌شده', 'ayar.sifirla': 'پاک کردن پیشرفت',
     'ayar.sifirlaNot': 'پیشرفت داستان، بهترین زمان‌ها و گربه‌های پیداشده پاک می‌شود. این کار برگشت‌پذیر نیست.', 'ayar.evetSil': 'بله، پاک کن', 'ayar.vazgec': 'انصراف', 'ayar.silindi': 'پیشرفت پاک شد.', 'ayar.geri': 'بازگشت',
     'sen': 'تو', 'kisi.zelal': 'زلال',
@@ -12671,7 +12717,7 @@ function cokKur(o) {
   renderer.toneMappingExposure = 0.98;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  let pixelRatio = Math.min(window.devicePixelRatio || 1, 1.75);
+  let pixelRatio = Math.min(window.devicePixelRatio || 1, 1.75), perfIsinma = 0, perfSurdu = false;      // perfIsinma: ayar değişince 1 sn dinamik çözünürlük beklemesi
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(62, 1, 0.6, 30000);
@@ -13633,6 +13679,7 @@ function cokKur(o) {
     // ULTRA: 1080p ekranda 1,5 kat örnekleme (kenar yumuşar), 4096 gölge haritası ve 340 m gölge alanı (yüksekte 2048 ve 240 m: metre başına
     // 1,6 kat ayrıntı, yarıçap 1,4 kat), 200 m ayrıntılı ağaç (yüksekte 120), daha uzak sis ve ağaç parçası.
     pixelRatio = q === 'dusuk' ? 1 : q === 'orta' ? Math.min(dpr, 1.25) : q === 'ultra' ? Math.min(Math.max(dpr, 1.5), 2.5) : Math.min(dpr, 2);
+    perfIsinma = performance.now() + 1000;
     const shadows = q !== 'dusuk', size = q === 'ultra' ? 4096 : q === 'yuksek' ? 2048 : 1024, alan = q === 'ultra' ? 170 : 120;
     if (sc.right !== alan) { sc.left = -alan; sc.right = alan; sc.top = alan; sc.bottom = -alan; sc.updateProjectionMatrix(); }
     if (renderer.shadowMap.enabled !== shadows) {
@@ -13661,7 +13708,7 @@ function cokKur(o) {
   function closeSettings() { $('ayarlar').hidden = true; $('menu').hidden = false; $('btn-ayarlar').focus(); }
   $('btn-ayarlar').addEventListener('click', () => { initAudio(); openSettings(); });
   $('btn-ayar-geri').addEventListener('click', () => closeSettings());
-  for (const el of document.querySelectorAll('[data-kalite]')) el.addEventListener('click', () => { AYAR.kalite = el.getAttribute('data-kalite'); applySettings(true); });
+  for (const el of document.querySelectorAll('[data-kalite]')) el.addEventListener('click', () => { AYAR.kalite = AYAR.kaliteSecim = el.getAttribute('data-kalite'); applySettings(true); });      // kaliteSecim: kendiliğinden inen kalite en çok buraya geri çıkar
   for (const el of document.querySelectorAll('[data-kamera]')) el.addEventListener('click', () => { G.cam = AYAR.kamera = +el.getAttribute('data-kamera'); camSnap = true; applySettings(true); });
   $('ayar-oto').addEventListener('change', () => { AYAR.oto = $('ayar-oto').checked; applySettings(true); });
   for (const el of document.querySelectorAll('[data-vakit]')) el.addEventListener('click', () => vakitSec(el.getAttribute('data-vakit')));
@@ -14492,15 +14539,257 @@ function cokKur(o) {
     }
   }
 
+  // ---------------------------------------------------------------- performans (20 Kas 2026; kurucu: "M3 Max'teki performans zayıf cihazlarda da
+  // korunmalı; LOD, instancing, dinamik çözünürlük baştan düşünülmeli"). Üç parça: ölçüm, dinamik çözünürlük, ölçüm turu.
+  // Dinamik çözünürlük: PERF.olcek kalite ayarının piksel oranını çarpar (en az %60). 0,5 sn'lik pencerede kırpılmış kare süresi hedefin (60 fps) %12 gerisindeyse
+  // ve darboğaz işlemcide değilse çözünürlük iner (ekran kartı süresi ölçülebiliyorsa ona göre, ölçülemiyorsa %10); 1,5 sn hedef tutunca %5 çıkar.
+  // İniş kareyi hızlandırmadıysa geri alınır (ekran yenilemesine kilitliyse hedef o olur). Çıkış hemen yavaşlatırsa o
+  // düzey 20 sn tavan olur. Kalite basamağı yalnız çözünürlük en alttayken ya da işlemci darboğazında iner (4 sn 27 fps altı); kendiliğinden
+  // indiyse ve 30 sn akıcı giderse oyuncunun seçtiği düzeye doğru bir basamak çıkar (tutmazsa 3 dk denemez). Ayarlar → "kendiliğinden ayarla" kapalıysa çarpan 1.
+  // Ölçüm: son 900 karenin aralığı, işlemci süresi (kare kodu + çizim komutları), ekran kartı süresi (EXT_disjoint_timer_query_webgl2; Safari'de yok).
+  // Gösterge: ?tani=perf ya da Ayarlar → Performans göstergesi. Ölçüm turu (~60 sn): Van'da beş sabit bakış, Van'da ve Abalı'da otomatik sürüş.
+  // ?tani=perf&agir=N: zayıf ekran kartı benzetimi (her karede görünmez, N adımlık tam ekran gölgelendirici; yük piksel sayısıyla büyür).
+  const KALITE_SIRA = ['dusuk', 'orta', 'yuksek', 'ultra'];
+  if (KALITE_SIRA.indexOf(AYAR.kaliteSecim) < 0) AYAR.kaliteSecim = AYAR.kalite;
+  const PERF = {
+    olcek: 1, min: 0.6, tavan: 1, tavanT: 0, hedefMs: 1000 / 60, kilitT: -1e9, kilitSure: 10000, kilitMs: 0, deneme: null, iyi: 0, sonCik: -1e9, cikOnce: 1,
+    N: 900, i: 0, n: 0, aralik: new Float32Array(900), cpu: new Float32Array(900), gpu: new Float32Array(900),
+    w: { t: 0, n: 0, top: 0, cpu: 0, gpuT: 0, gpuN: 0, a: [] }, cpuDar: false, gpuSon: -1, gpuGuven: true, gpuSapma: 0, cagri: 0, ucgen: 0,
+    akici: 0, kaliteCikT: -1e9, kaliteBekle: 0, gl: null, ext: null, sorgu: [], gpuAd: '',
+    goster: TANI === 'perf' || !!AYAR.perf, kutuT: 0, agir: +((location.search.match(/[?&]agir=(\d+)/) || [])[1] || 0), tur: null, sonuc: null,
+  };
+  function gpuKur() {
+    const gl = (PERF.gl = renderer.getContext());
+    try { PERF.ext = typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext ? gl.getExtension('EXT_disjoint_timer_query_webgl2') : null; } catch (e) { PERF.ext = null; }
+  }
+  function gpuBasla() {
+    const gl = PERF.gl, ext = PERF.ext;
+    if (!ext || PERF.sorgu.length > 4) return null;
+    const q = gl.createQuery(); gl.beginQuery(ext.TIME_ELAPSED_EXT, q); return q;
+  }
+  function gpuBitir(q) { if (q) { PERF.gl.endQuery(PERF.ext.TIME_ELAPSED_EXT); PERF.sorgu.push(q); } }
+  function gpuOku() {      // sonuç birkaç kare sonra gelir; sürücü saati bozulduysa (disjoint) atılır
+    const gl = PERF.gl, ext = PERF.ext;
+    if (!ext) return -1;
+    let ms = -1;
+    while (PERF.sorgu.length && gl.getQueryParameter(PERF.sorgu[0], gl.QUERY_RESULT_AVAILABLE)) {
+      const q = PERF.sorgu.shift();
+      if (!gl.getParameter(ext.GPU_DISJOINT_EXT)) ms = gl.getQueryParameter(q, gl.QUERY_RESULT) / 1e6;
+      gl.deleteQuery(q);
+    }
+    return ms;
+  }
+  function gpuAdi() {
+    if (PERF.gpuAd) return PERF.gpuAd;
+    try {
+      const gl = renderer.getContext(), e = gl.getExtension('WEBGL_debug_renderer_info');
+      PERF.gpuAd = String(e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)).replace(/^ANGLE \((.*)\)$/, '$1').replace(/, (Unspecified Version|OpenGL.*|Direct3D.*)$/, '').slice(0, 70);
+    } catch (e) { PERF.gpuAd = '?'; }
+    return PERF.gpuAd;
+  }
+  // zayıf ekran kartı benzetimi: görünmez tam ekran geçiş (alfa 0); döngü sayısı PERF.agir
+  let agirS = null;
+  function agirCiz() {
+    if (!PERF.agir) return;
+    if (!agirS) {
+      const m = new THREE.ShaderMaterial({
+        uniforms: { n: { value: 0 } }, transparent: true, depthTest: false, depthWrite: false,
+        vertexShader: 'void main(){ gl_Position = vec4(position.xy, 0.0, 1.0); }',
+        fragmentShader: 'uniform float n; void main(){ vec2 p = gl_FragCoord.xy; float s = 0.0; for (int i = 0; i < 2000; i++){ if (float(i) >= n) break; s += sin(p.x * 0.013 + s) * cos(p.y * 0.017 - s); } gl_FragColor = vec4(0.0, 0.0, 0.0, step(1e9, s)); }',
+      });
+      const q = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), m); q.frustumCulled = false;
+      agirS = { sahne: new THREE.Scene(), kam: new THREE.Camera(), m }; agirS.sahne.add(q);
+    }
+    agirS.m.uniforms.n.value = Math.min(2000, PERF.agir);
+    renderer.autoClear = false; renderer.render(agirS.sahne, agirS.kam); renderer.autoClear = true;
+  }
+  function perfKayit(ms, cpu, gpu) {
+    if (ms <= 0 || ms >= 200) return;      // 0,2 sn üstü: sekme arka planda ya da yükleme
+    const i = PERF.i;
+    PERF.aralik[i] = ms; PERF.cpu[i] = cpu; PERF.gpu[i] = gpu >= 0 ? gpu : PERF.gpuSon;
+    PERF.i = (i + 1) % PERF.N; PERF.n = Math.min(PERF.N, PERF.n + 1);
+    if (gpu >= 0) PERF.gpuSon = gpu;
+    const w = PERF.w; w.t += ms / 1000; w.n++; w.top += ms; w.cpu += cpu; w.a.push(ms); if (gpu >= 0) { w.gpuT += gpu; w.gpuN++; }
+    const tr = PERF.tur;
+    if (tr && tr.topla) tr.k.push([ms, cpu, PERF.gpuSon, PERF.cagri, PERF.ucgen, PERF.olcek]);
+  }
+  // dinamik çözünürlük ve kalite basamağı (0,5 sn'de bir)
+  function perfAyarla(driving, now) {
+    const w = PERF.w;
+    if (!(w.t >= 0.5 && w.n >= 6) && w.t < 2) return;      // pencere: en az 0,5 sn ve 6 kare (çok yavaş cihazda en çok 2 sn)
+    // kararlar kırpılmış ortalamayla (en yavaş %10 atılır): seyrek takılma (gölgelendirici derleme, çöp toplama) indirmez, sürekli yavaşlık indirir
+    const ort = w.top / w.n, cpu = w.cpu / w.n, a = w.a.sort((x, y) => x - y), m = Math.max(1, Math.floor(a.length * 0.9));
+    let kirp = 0; for (let i = 0; i < m; i++) kirp += a[i]; kirp /= m;
+    const p90 = a[Math.min(a.length - 1, Math.floor(a.length * 0.9))], yayilim = a[Math.floor(a.length * 0.75)] - a[Math.floor(a.length * 0.25)];
+    let gpu = w.gpuN ? w.gpuT / w.gpuN : -1;
+    w.t = w.n = w.top = w.cpu = w.gpuT = w.gpuN = 0; w.a = [];
+    // ekran kartı süresi kare aralığından uzunsa ölçüm güvenilmez (ANGLE Metal'de 61 fps'te 27 ms bildirdi, 20 Kas): üç pencerede bir kapatılır
+    if (gpu > 0 && gpu > ort * 1.05 && ++PERF.gpuSapma >= 3) PERF.gpuGuven = false;
+    if (!PERF.gpuGuven) gpu = -1;
+    PERF.cpuDar = cpu > kirp * 0.75;      // kare süresinin çoğu işlemcide: çözünürlük indirmek işe yaramaz
+    if (!AYAR.oto) { PERF.olcek = 1; PERF.deneme = null; return; }
+    if (!(driving || PERF.tur) || now <= perfIsinma) return;
+    const kilitli = now < PERF.kilitT + PERF.kilitSure, H = Math.max(PERF.hedefMs, kilitli ? PERF.kilitMs : 0);
+    if (PERF.tavan < 1 && now - PERF.tavanT > 20000) { PERF.tavan = Math.min(1, PERF.tavan + 0.05); PERF.tavanT = now; }
+    if (PERF.deneme) {      // son inişin etkisi: kare %7 hızlanmadıysa geri al
+      if (--PERF.deneme.say > 0) return;
+      if (kirp > PERF.deneme.ms * 0.93) {
+        PERF.olcek = PERF.deneme.olcek; PERF.kilitT = now;
+        // kareler düzenli ve 25 ms üstündeyse ekran yenilemesine kilitli sayılır (iPhone düşük güç kipi 30 Hz): hedef o olur, bekleme her seferinde iki katı (en çok 160 sn).
+        // Düzensizse (ölçüm gürültüsü ya da başka darboğaz) hedef değişmez, 5 sn beklenir.
+        if (yayilim < 1.5 && kirp > 25) { PERF.kilitMs = kirp * 1.03; PERF.kilitSure = Math.min(160000, Math.max(20000, PERF.kilitSure * 2)); }
+        else { PERF.kilitMs = 0; PERF.kilitSure = 5000; }
+      } else PERF.kilitSure = 10000;
+      PERF.deneme = null; return;
+    }
+    const yavas = kirp > H * 1.12, hizli = kirp <= H * 1.04 && p90 <= H * 1.3 && (gpu < 0 || gpu < H * 0.6);      // çıkış için yavaş kare de seyrek olmalı
+    if (yavas && !PERF.cpuDar && PERF.olcek > PERF.min + 1e-3 && !kilitli) {
+      if (now - PERF.sonCik < 2500) { PERF.tavan = PERF.cikOnce; PERF.tavanT = now; }      // az önceki çıkış kaldırılamadı
+      const k = gpu > 0 ? clamp((H * 0.8) / gpu, 0.75, 0.92) : kirp > H * 2 ? 0.8 : 0.9;      // hedefin iki katından yavaşsa büyük adım
+      PERF.deneme = { olcek: PERF.olcek, ms: kirp, say: 2 };
+      PERF.olcek = Math.max(PERF.min, PERF.olcek * k); PERF.iyi = 0;
+    } else if (hizli && PERF.olcek < PERF.tavan - 1e-3) {
+      if (++PERF.iyi >= 3) { PERF.cikOnce = PERF.olcek; PERF.sonCik = now; PERF.olcek = Math.min(PERF.tavan, PERF.olcek * 1.05); PERF.iyi = 0; }
+    } else PERF.iyi = 0;
+  }
+  // kalite basamağı (2 sn'de bir, kare hızına göre)
+  function kaliteAdim(fps, driving, now) {
+    slow = fps < 27 ? slow + 1 : 0;
+    if (slow >= 2 && AYAR.oto && AYAR.kalite !== 'dusuk' && (PERF.olcek <= PERF.min + 1e-3 || PERF.cpuDar)) {
+      AYAR.kalite = KALITE_SIRA[KALITE_SIRA.indexOf(AYAR.kalite) - 1]; slow = 0; PERF.akici = 0;
+      if (now - PERF.kaliteCikT < 15000) PERF.kaliteBekle = now + 180000;      // az önce çıkılan basamak kaldırılamadı
+      applySettings(true);
+      return;
+    }
+    const alt = KALITE_SIRA.indexOf(AYAR.kalite) < KALITE_SIRA.indexOf(MOBIL && AYAR.kaliteSecim === 'ultra' ? 'yuksek' : AYAR.kaliteSecim);      // telefonda Ultra yok
+    PERF.akici = AYAR.oto && driving && alt && PERF.olcek >= 0.999 && fps >= 55 && !PERF.cpuDar ? PERF.akici + 2 : 0;
+    if (PERF.akici >= 30 && now > PERF.kaliteBekle) {
+      AYAR.kalite = KALITE_SIRA[KALITE_SIRA.indexOf(AYAR.kalite) + 1]; PERF.akici = 0; PERF.kaliteCikT = now;
+      applySettings(true);
+    }
+  }
+  // son k karenin yüzdelikleri
+  function perfDilim(sn) {
+    const out = [], cpu = [], gpu = [];
+    let t = 0;
+    for (let j = 0; j < PERF.n && t < sn * 1000; j++) { const i = (PERF.i - 1 - j + PERF.N) % PERF.N; out.push(PERF.aralik[i]); cpu.push(PERF.cpu[i]); gpu.push(PERF.gpu[i]); t += PERF.aralik[i]; }
+    return { out, cpu, gpu, t };
+  }
+  function yuzdelik(a, p) { if (!a.length) return 0; const s = Float32Array.from(a).sort(); return s[Math.min(s.length - 1, Math.floor(p * s.length))]; }
+  const ort = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
+  const sayi = (v, d) => (+v).toLocaleString(LOCALE[LANG], { minimumFractionDigits: d, maximumFractionDigits: d });
+  const milyon = (v) => (v >= 1e6 ? sayi(v / 1e6, 2) + ' M' : v >= 1e3 ? sayi(v / 1e3, 0) + ' k' : String(v));
+  const yuzde = (v) => (LANG === 'tr' ? '%' + Math.round(v * 100) : Math.round(v * 100) + '%');      // Türkçede yüzde işareti önde
+  const _cb = new THREE.Vector2();
+  function perfKutu(now) {
+    const el = $('perf');
+    el.hidden = !PERF.goster && !PERF.tur;
+    if (el.hidden || now - PERF.kutuT < 500) return;
+    PERF.kutuT = now;
+    const s = perfDilim(2), u = perfDilim(10), a = ort(s.out), g = PERF.gpuGuven ? s.gpu.filter((v) => v >= 0) : [];      // güvenilmez ölçüm gösterilmez
+    renderer.getDrawingBufferSize(_cb);
+    const tr = PERF.tur, satir = [];
+    if (tr) satir.push(T('perf.suruyor', tr.ad, Math.max(0, Math.ceil(tr.kalan || 0))));
+    satir.push(sayi(a ? 1000 / a : 0, 0) + ' fps · ' + sayi(a, 1) + ' ms · p95 ' + sayi(yuzdelik(u.out, 0.95), 1) + ' · p99 ' + sayi(yuzdelik(u.out, 0.99), 1));
+    satir.push('CPU ' + sayi(ort(s.cpu), 1) + ' ms · GPU ' + (g.length ? sayi(ort(g), 1) + ' ms' : '—') + ' · ' + PERF.cagri + ' ' + T('perf.cagri') + ' · ' + milyon(PERF.ucgen) + ' ' + T('perf.ucgen'));
+    satir.push(_cb.x + '×' + _cb.y + ' (' + yuzde(PERF.olcek) + ') · ' + T('ayar.' + AYAR.kalite) + ' · ' + gpuAdi());
+    const y = $('perf-y');
+    while (y.children.length < satir.length) y.appendChild(document.createElement('div'));
+    while (y.children.length > satir.length) y.removeChild(y.lastChild);
+    satir.forEach((t, i) => { if (y.children[i].textContent !== t) y.children[i].textContent = t; });
+    $('perf-tur').disabled = !!tr;
+  }
+  // Ölçüm turu: aynı yollardan geçtiği için cihazlar arasında karşılaştırılabilir. Araba ile (en ağır araç) yapılır, sonra seçilen araç döner.
+  const bekle = (ms) => new Promise((r) => setTimeout(r, ms));
+  async function perfTuru() {
+    if (PERF.tur || G.loading) return;
+    const tr = (PERF.tur = { k: [], topla: false, ad: '', kalan: 0, bolum: [], iptal: false, kalite0: AYAR.kalite });
+    const surdu = () => !tr.iptal && (G.state === 'free' || G.state === 'race');
+    const topla = async (ad, sn) => {
+      tr.ad = ad; tr.k = [];
+      for (tr.kalan = sn + 1; tr.kalan > sn; tr.kalan -= 0.1) { await bekle(100); if (!surdu()) return; }      // 1 sn ısınma (gölgelendirici derleme, doku yükleme)
+      tr.topla = true;
+      for (; tr.kalan > 0; tr.kalan -= 0.1) { await bekle(100); if (!surdu()) { tr.topla = false; return; } }
+      tr.topla = false;
+      const K = tr.k, ms = K.map((r) => r[0]), sure = ms.reduce((x, y) => x + y, 0) / 1000, gp = PERF.gpuGuven ? K.map((r) => r[2]).filter((v) => v >= 0) : [];
+      tr.bolum.push({ ad, kare: K.length, fps: +(K.length / Math.max(sure, 1e-3)).toFixed(1), p50: +yuzdelik(ms, 0.5).toFixed(1), p95: +yuzdelik(ms, 0.95).toFixed(1), p99: +yuzdelik(ms, 0.99).toFixed(1),
+        cpu: +ort(K.map((r) => r[1])).toFixed(2), gpu: gp.length ? +ort(gp).toFixed(2) : null, cagri: Math.round(ort(K.map((r) => r[3]))), cagriEn: Math.max(0, ...K.map((r) => r[3])),
+        ucgen: Math.round(ort(K.map((r) => r[4]))), olcek: +ort(K.map((r) => r[5])).toFixed(2) });
+    };
+    try {
+      $('perf-sonuc').hidden = true; $('menu').hidden = true;
+      if (REGION.id !== 'van') await loadRegion('van');
+      startFree(); girisBitir(); setVehicle('car');
+      const N = __van.olcumNoktalari().slice(0, 5);      // Kale Turu rotasında dört nokta ve kaleye tepeden bakış
+      for (let j = 0; j < N.length && surdu(); j++) { G.freeze = N[j]; await topla(T('perf.b.sabit') + ' ' + (j + 1) + '/5', 2.4); }
+      const bir = tr.bolum.splice(0), K = bir.length ? { ad: T('perf.b.sabit'), kare: 0, fps: 0, p50: 0, p95: 0, p99: 0, cpu: 0, gpu: null, cagri: 0, cagriEn: 0, ucgen: 0, olcek: 0 } : null;
+      if (K) {      // beş bakış tek satırda: ortalamalar, en kötü yüzdelikler
+        for (const b of bir) { K.kare += b.kare; K.fps += b.fps / bir.length; K.p50 += b.p50 / bir.length; K.p95 = Math.max(K.p95, b.p95); K.p99 = Math.max(K.p99, b.p99); K.cpu += b.cpu / bir.length; if (b.gpu !== null) K.gpu = (K.gpu || 0) + b.gpu / bir.length; K.cagri += b.cagri / bir.length; K.cagriEn = Math.max(K.cagriEn, b.cagriEn); K.ucgen += b.ucgen / bir.length; K.olcek += b.olcek / bir.length; }
+        for (const k of ['fps', 'p50', 'cpu', 'olcek']) K[k] = +K[k].toFixed(k === 'olcek' || k === 'cpu' ? 2 : 1);
+        if (K.gpu !== null) K.gpu = +K.gpu.toFixed(2);
+        K.cagri = Math.round(K.cagri); K.ucgen = Math.round(K.ucgen); tr.bolum.push(K);
+      }
+      G.freeze = null;
+      const surus = async (ad, sn) => {
+        const ev = EVENTS.find((e) => e.bolge === REGION.id && e.R && !e.ozel) || EVENTS.find((e) => e.bolge === REGION.id && e.R);
+        startFree(); girisBitir(); setVehicle('car');
+        const p = routePoint(ev.R, 30); placeCar(player, p.x, p.z, Math.atan2(p.dx, p.dz)); player.ri = 0;
+        G.autoR = ev.R; G.auto = true; camSnap = true;
+        await topla(ad, sn);
+        G.auto = false; G.autoR = null;
+      };
+      if (surdu()) await surus(T('perf.b.van'), 18);
+      if (surdu() && REGIONS.abali) { await loadRegion('abali'); if (REGION.id === 'abali') await surus(T('perf.b.abali'), 15); }
+    } catch (e) { console.warn('ölçüm turu', e); }
+    G.auto = false; G.autoR = null; G.freeze = null;
+    PERF.tur = null;
+    if (G.state === 'free') { setVehicle(G.aracSecim); camSnap = true; }
+    perfSonuc(tr);
+  }
+  function perfSonuc(tr) {
+    renderer.getDrawingBufferSize(_cb);
+    const b = tr.bolum, enKotu = b.length ? Math.min(...b.map((x) => x.fps)) : 0, p95 = b.length ? Math.max(...b.map((x) => x.p95)) : 0;
+    const R = (PERF.sonuc = {
+      surum: 1, tarih: new Date().toISOString(), tamam: !tr.iptal && b.length >= 3,
+      cihaz: { gpu: gpuAdi(), ekran: innerWidth + '×' + innerHeight + ' ×' + (window.devicePixelRatio || 1), cizim: _cb.x + '×' + _cb.y, mobil: MOBIL, tarayici: (navigator.userAgent.match(/Electron\/[\d.]+/) || navigator.userAgent.match(/(CriOS|Edg|Firefox|Chrome|Version)\/[\d.]+/) || ['?'])[0], gpuSaat: !!PERF.ext && PERF.gpuGuven },
+      kalite: { secilen: AYAR.kaliteSecim, bas: tr.kalite0, son: AYAR.kalite, oto: !!AYAR.oto, olcek: +PERF.olcek.toFixed(2) },
+      bolum: b, karar: enKotu >= 55 && p95 <= 28 ? 'perf.k60' : enKotu >= 30 ? 'perf.k30' : 'perf.kZayif',
+    });
+    const tb = $('perf-tablo'); tb.innerHTML = '';
+    for (const x of b) {
+      const tr2 = document.createElement('tr');
+      for (const v of [x.ad, sayi(x.fps, 0), sayi(x.p95, 1), sayi(x.p99, 1), sayi(x.cpu, 1), x.gpu === null ? '—' : sayi(x.gpu, 1), String(x.cagri), milyon(x.ucgen), yuzde(x.olcek)]) { const td = document.createElement('td'); td.textContent = v; tr2.appendChild(td); }
+      tb.appendChild(tr2);
+    }
+    $('perf-cihaz').textContent = R.cihaz.gpu + ' · ' + R.cihaz.ekran + ' · ' + R.cihaz.tarayici;
+    $('perf-kalite').textContent = T('perf.kaliteSatir', T('ayar.' + R.kalite.bas), T('ayar.' + R.kalite.son), yuzde(R.kalite.olcek));
+    $('perf-karar').textContent = R.tamam ? T(R.karar, sayi(enKotu, 0)) : T('perf.yarim');
+    $('perf-kopyala').textContent = T('perf.kopyala');
+    $('perf-sonuc').hidden = false;
+    $('perf-kapat2').focus();
+  }
+  $('perf-tur').addEventListener('click', () => { perfTuru(); });
+  $('perf-kapat').addEventListener('click', () => { PERF.goster = false; AYAR.perf = false; $('ayar-perf').checked = false; store.set('ayar', AYAR); $('perf').hidden = true; });
+  $('perf-kapat2').addEventListener('click', () => { $('perf-sonuc').hidden = true; });
+  $('perf-kopyala').addEventListener('click', async () => {
+    const metin = JSON.stringify(PERF.sonuc, null, 1);
+    try { await navigator.clipboard.writeText(metin); $('perf-kopyala').textContent = T('perf.kopyalandi'); }
+    catch (e) { const t = document.createElement('textarea'); t.value = metin; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); $('perf-kopyala').textContent = T('perf.kopyalandi'); } catch (e2) { /* kopyalanamadı */ } t.remove(); }
+  });
+  $('ayar-perf').checked = PERF.goster;
+  $('ayar-perf').addEventListener('change', () => { AYAR.perf = $('ayar-perf').checked; PERF.goster = AYAR.perf || TANI === 'perf'; store.set('ayar', AYAR); });
+
   // ---------------------------------------------------------------- döngü
   let last = 0, acc = 0, fpsT = 0, fpsN = 0, slow = 0, prevNow = 0;
   const focus = new THREE.Vector3();
   function frame(now) {
     requestAnimationFrame(frame);
-    {   // menüde (drone çekimi) cihazın tam çözünürlüğü, oyunda kalite ayarının çözünürlüğü
-      const pr = G.state === 'menu' ? Math.min(window.devicePixelRatio || 1, 2.5) : pixelRatio;
+    const t0 = performance.now();
+    {   // menüde (drone çekimi) cihazın tam çözünürlüğü, oyunda kalite ayarının çözünürlüğü × dinamik çarpan (0,05 adımlı: tampon az yeniden kurulur)
+      const pr = G.state === 'menu' && !PERF.tur ? Math.min(window.devicePixelRatio || 1, 2.5) : Math.max(0.5, Math.round(pixelRatio * PERF.olcek * 20) / 20);
       if (renderer.getPixelRatio() !== pr) { renderer.setPixelRatio(pr); renderer.setSize(window.innerWidth, window.innerHeight, false); }
     }
+    if (!PERF.gl) gpuKur();
     const dt = Math.min(0.1, (now - last) / 1000);
     last = now; G.t += dt;
     pollPad();
@@ -14557,18 +14846,24 @@ function cokKur(o) {
     if (driving) { updateHud(dt); drawMini(); }
     if (driving || G.state === 'result') updateAudio(driving);
     // mutfak açıkken dünya çizilmez: 3B mutfak kendi sahnesini çizer, salon ekranı ve 2B mutfak tuvali zaten örter
-    if (G.state !== 'cook') renderer.render(scene, camera); else if (MUTFAK.uc()) MUTFAK.ciz(renderer);
-    // kare hızı düşükse gölgeleri ve çözünürlüğü kıs
+    if (G.state !== 'cook') {
+      const q = gpuBasla();
+      renderer.render(scene, camera);
+      PERF.cagri = renderer.info.render.calls; PERF.ucgen = renderer.info.render.triangles;
+      agirCiz(); gpuBitir(q);
+    } else if (MUTFAK.uc()) MUTFAK.ciz(renderer);
+    // ölçüm, dinamik çözünürlük, kalite basamağı (yukarıdaki "performans" bölümü)
     const rawDt = (now - prevNow) / 1000; prevNow = now;
+    perfKayit(rawDt * 1000, performance.now() - t0, gpuOku());
+    if (driving && !perfSurdu) perfIsinma = Math.max(perfIsinma, now + 1500);      // sürüşe geçişte (bölge yükleme, giriş) 1,5 sn bekle
+    perfSurdu = driving;
+    perfAyarla(driving, now);
     if (rawDt < 0.2) { fpsT += rawDt; fpsN++; }      // 0,2 sn üstü kare: sekme arka planda, ölçüme girmez
     if (fpsT > 2) {
       const fps = fpsN / fpsT; G.fps = fps; fpsT = 0; fpsN = 0;
-      slow = fps < 27 ? slow + 1 : 0;
-      if (slow >= 2 && AYAR.oto && AYAR.kalite !== 'dusuk') {
-        AYAR.kalite = AYAR.kalite === 'ultra' ? 'yuksek' : AYAR.kalite === 'yuksek' ? 'orta' : 'dusuk'; slow = 0;
-        applySettings(true);
-      }
+      kaliteAdim(fps, driving, now);
     }
+    perfKutu(now);
   }
   function onResize() {
     const w = window.innerWidth, h = window.innerHeight;
@@ -14587,7 +14882,9 @@ function cokKur(o) {
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
     kediler: () => cats.map((c) => ({ canli: !!c.kedi, gorunur: c.mesh.visible, got: c.got })),
     kediNesne: (i) => cats[i] && cats[i].kedi,
-    tus: (k, v) => { keys[k] = !!v; }, girisGec: () => girisBitir(), get giris() { return GIRIS ? { t: GIRIS.t, dur: GIRIS.dur } : null; },
+    tus: (k, v) => { keys[k] = !!v; }, girisGec: () => girisBitir(),
+    // performans: durum (PERF), ölçüm turu, denetleyiciye yapay kare besleme (sınama: aynı pencere mantığı, gerçek kare gerekmez)
+    perf: PERF, perfTuru, perfBesle(ms, cpu, gpu, n, surus) { const t = performance.now(); for (let i = 0; i < n; i++) { perfKayit(ms, cpu, gpu); perfAyarla(surus !== false, t + i * ms); } return { olcek: +PERF.olcek.toFixed(3), tavan: PERF.tavan, kilit: PERF.kilitT > 0 }; }, get giris() { return GIRIS ? { t: GIRIS.t, dur: GIRIS.dur } : null; },
     get yerYazi() { return yerYazi ? { L: yerYazi.L, ad: yerYazi.ad, opak: yerYazi.mesh.material.opacity } : null; }, viraj: () => Object.assign({}, virajAdim(player, G.race)), rotaEgrilik,
     kirik: () => ({ oge: KIRIK.oge.length, zincir: KIRIK.zincir.length, aktif: KIRIK.aktif.length, say: Object.assign({}, KIRIK.say) }),      // yıkılabilir çit ve direkler
     sahne: () => scene,      // teşhis: katman gizleyip tek başına bakmak için
