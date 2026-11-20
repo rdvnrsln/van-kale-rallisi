@@ -56,6 +56,10 @@ button:focus-visible { outline: 2px solid var(--gol); outline-offset: 2px; }
 .dugmeler { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; pointer-events: auto; }
 .dugmeler button { background: var(--panel); border: 1px solid var(--cizgi); padding: 6px 11px; font-size: 13px; border-radius: 2px; }
 .dugmeler button:hover { border-color: var(--kehribar); color: var(--kehribar); }
+.dugmeler .ikon, .ikon-k { display: none; }
+#yan-cevir { grid-area: 2 / 1 / 3 / 4; align-self: start; justify-self: center; margin-top: 4px; display: flex; align-items: center; gap: 8px; background: var(--panel); padding: 6px 12px; border-radius: 999px; font-size: 13px; }
+#yan-cevir[hidden] { display: none; }
+#yan-cevir svg { width: 20px; height: 20px; flex: none; }
 #mesaj { grid-area: 2 / 1 / 3 / 4; align-self: start; justify-self: center; margin-top: 1vh; text-align: center; text-shadow: 0 3px 18px rgba(0, 0, 0, 0.75); }
 #mesaj b { display: block; font-family: var(--f-baslik); font-style: italic; font-weight: 800; font-size: clamp(34px, 6.4vw, 66px); line-height: 1; letter-spacing: 0.01em; text-transform: uppercase; }
 #mesaj span { display: block; font-size: 16px; margin-top: 4px; }
@@ -70,6 +74,20 @@ button:focus-visible { outline: 2px solid var(--gol); outline-offset: 2px; }
 .dokun-sol { grid-area: 3 / 1; }
 .dokun-sag { grid-area: 3 / 3; justify-self: end; margin-bottom: 96px; }
 @media (pointer: coarse) { .dokun { display: flex; } #ipucu { grid-area: 2 / 1 / 3 / 4; justify-self: center; align-self: end; max-width: 90vw; } }
+/* Dokunmatik gösterge (telefon, tablet): orta alan sahneye kalır, bilgi kenarlarda ve küçük; yazılı düğmeler simge; yer adı yalnız değişince 4 sn görünür.
+   Ses düğmesi gizli (ses Ayarlar'da); yarış adı gizli (başlangıçta ve sonuç ekranında yazılı). */
+@media (pointer: coarse) {
+  .dugmeler { flex-direction: column; flex-wrap: nowrap; gap: 8px; }
+  .dugmeler button { width: 44px; height: 44px; padding: 0; border-radius: 50%; display: grid; place-items: center; background: rgba(11, 22, 34, 0.55); border: 1px solid rgba(243, 239, 230, 0.35); }
+  .dugmeler .ikon { display: block; width: 22px; height: 22px; }
+  .dugmeler .yazi { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+  #btn-ses { display: none; }
+  .yer { opacity: 0; transform: translateY(-6px); transition: opacity 0.5s, transform 0.5s; }
+  .yer.goster { opacity: 1; transform: none; }
+  #yaris-ad { display: none; }
+  .kedi { padding: 4px 10px; align-items: center; gap: 6px; } .kedi .etiket { display: none; } .ikon-k { display: block; width: 16px; height: 16px; color: var(--kehribar); }
+  #kedi-n { font-size: 17px; }
+}
 @media (max-width: 720px) {
   #mini { width: 120px; height: 120px; }
   #sokak { font-size: 17px; } .yer { max-width: 170px; }
@@ -92,8 +110,14 @@ button:focus-visible { outline: 2px solid var(--gol); outline-offset: 2px; }
   h1 { font-size: clamp(40px, 9vh, 64px); } .menu-ic { gap: 10px; } .tanitim { font-size: 15px; }
 }
 @media (max-width: 460px) {
-  .orta-ust { grid-area: 2 / 1 / 3 / 4; align-self: start; align-items: center; }
-  #mesaj { margin-top: 96px; }
+  /* dik telefon: yarış çipi ortaya inmez, üst şeritte harita ile düğmeler arasında durur */
+  .orta-ust { grid-area: 1 / 2; align-self: start; align-items: flex-start; gap: 6px; }
+  #mini { width: 96px; height: 96px; }
+  #yaris { padding: 5px 10px 6px; column-gap: 8px; row-gap: 1px; }
+  #yaris-sira { font-size: 26px; } #yaris-sure { font-size: 17px; } #yaris-tur { font-size: 11px; }
+  #ok { padding: 2px 9px 2px 4px; gap: 4px; } #ok-i { width: 18px; height: 18px; } #ok-m { font-size: 13px; min-width: 40px; }
+  #hiz-n { font-size: 52px; }
+  #mesaj { margin-top: 14vh; }
 }
 
 /* ---------- menü ---------- */
@@ -248,15 +272,17 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
     </div>
   </div>
   <div class="sag-ust">
-    <div class="kedi" id="kedi"><span class="etiket" data-i18n="hud.kedi">Van kedisi</span><span id="kedi-n">0/10</span></div>
+    <div class="kedi" id="kedi"><svg class="ikon-k" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l3.5 4.5h7L19 3v10a7 6.5 0 0 1-14 0z" fill="currentColor"/></svg><span class="etiket" data-i18n="hud.kedi">Van kedisi</span><span id="kedi-n">0/10</span></div>
+    <!-- Dokunmatik ekranda düğmeler yuvarlak simgedir; yazı görünmez ama ekran okuyucu okur (.yazi). Masaüstünde yazılı düğme. -->
     <div class="dugmeler">
-      <button id="btn-menu" type="button" data-i18n="hud.menu">Menü</button>
-      <button id="btn-kam" type="button" data-i18n="hud.kamera">Kamera</button>
-      <button id="btn-don" type="button" data-i18n="hud.yolaDon">Yola dön</button>
-      <button id="btn-ses" type="button" aria-pressed="false">Ses açık</button>
+      <button id="btn-menu" type="button"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5v14M15.5 5v14" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg><span class="yazi" data-i18n="hud.menu">Menü</span></button>
+      <button id="btn-kam" type="button"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3.2l1.8-2.6h6l1.8 2.6H20v11H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="2"/></svg><span class="yazi" data-i18n="hud.kamera">Kamera</span></button>
+      <button id="btn-don" type="button"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.2 12.5a6.8 6.8 0 1 0 2-5.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M4.5 3.8v4.8h4.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="yazi" data-i18n="hud.yolaDon">Yola dön</span></button>
+      <button id="btn-ses" type="button" aria-pressed="false"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4 4 0 0 1 0 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="yazi" id="ses-yazi">Ses açık</span></button>
     </div>
   </div>
   <div id="mesaj" aria-live="polite"></div>
+  <div id="yan-cevir" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 14a9 9 0 0 0 9 7.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9.5 19.5l2.6 2-1.4 2.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="hud.yanCevir">Daha geniş görüş için telefonu yan çevir</span></div>
   <div class="dokun dokun-sol"><button type="button" data-t="l" aria-label="Sola" data-i18n-aria="hud.sola">◀</button><button type="button" data-t="r" aria-label="Sağa" data-i18n-aria="hud.saga">▶</button></div>
   <button id="ipucu" type="button" hidden></button>
   <div class="dokun dokun-sag"><button type="button" data-t="h" data-i18n="hud.el" data-i18n-aria="hud.elFreni">El</button><button type="button" data-t="b" data-i18n="hud.fren">Fren</button><button type="button" data-t="g" data-i18n="hud.gaz">Gaz</button></div>
@@ -6150,7 +6176,7 @@ const DIL = {
     'menu.tuslar': '<b>W A S D</b> ya da <b>ok tuşları</b> sürüş · <b>Boşluk</b> el freni · <b>R</b> yola dön · <b>C</b> kamera · <b>H</b> korna · <b>N</b> ses · <b>M</b> menü. Oyun kolu: sol çubuk, RT gaz, LT fren, A el freni, B yola dön, Y kamera.',
     'menu.kunye': 'Sokaklar, binalar ve surlar: © OpenStreetMap katkıcıları (ODbL). Yükseklik: SRTM, Mapzen arazi karoları. Dokular: Poly Haven (CC0). Kale kayasının biçimi OSM sınırından yeniden kurulmuştur.',
     'etk.km': 'km', 'etk.tur': '{0} tur', 'etk.zamanaKarsi': 'zamana karşı', 'etk.rakip': '{0} rakip', 'etk.enIyi': 'en iyi {0}',
-    'hud.kedi': 'Van kedisi', 'hud.menu': 'Menü', 'hud.kamera': 'Kamera', 'hud.yolaDon': 'Yola dön', 'hud.sesAcik': 'Ses açık', 'hud.sesKapali': 'Ses kapalı',
+    'hud.kedi': 'Van kedisi', 'hud.menu': 'Menü', 'hud.kamera': 'Kamera', 'hud.yolaDon': 'Yola dön', 'hud.sesAcik': 'Ses açık', 'hud.sesKapali': 'Ses kapalı', 'hud.yanCevir': 'Daha geniş görüş için telefonu yan çevir',
     'hud.kmsa': 'km/sa', 'hud.el': 'El', 'hud.fren': 'Fren', 'hud.gaz': 'Gaz', 'hud.tur': 'Tur {0}/{1}', 'hud.nokta': 'Nokta {0}/{1}', 'hud.hedef': 'Hedef: {0}',
     'hud.geri': 'G', 'hud.bos': 'B', 'hud.sola': 'Sola', 'hud.saga': 'Sağa', 'hud.elFreni': 'El freni', 'hud.harita': 'Mini harita',
     'flash.serbest': 'Serbest sürüş', 'flash.serbest.alt': 'Turuncu ışık sütunları yarış başlangıcıdır', 'flash.basla': 'Başla!',
@@ -6297,7 +6323,7 @@ const DIL = {
     'menu.tuslar': '<b>W A S D</b> or <b>arrow keys</b> drive · <b>Space</b> handbrake · <b>R</b> back to road · <b>C</b> camera · <b>H</b> horn · <b>N</b> sound · <b>M</b> menu. Gamepad: left stick, RT throttle, LT brake, A handbrake, B back to road, Y camera.',
     'menu.kunye': 'Streets, buildings and walls: © OpenStreetMap contributors (ODbL). Elevation: SRTM, Mapzen terrain tiles. Textures: Poly Haven (CC0). The shape of the castle rock is rebuilt from the OSM outline.',
     'etk.km': 'km', 'etk.tur': '{0} laps', 'etk.zamanaKarsi': 'time trial', 'etk.rakip': '{0} rivals', 'etk.enIyi': 'best {0}',
-    'hud.kedi': 'Van cats', 'hud.menu': 'Menu', 'hud.kamera': 'Camera', 'hud.yolaDon': 'Back to road', 'hud.sesAcik': 'Sound on', 'hud.sesKapali': 'Sound off',
+    'hud.kedi': 'Van cats', 'hud.menu': 'Menu', 'hud.kamera': 'Camera', 'hud.yolaDon': 'Back to road', 'hud.sesAcik': 'Sound on', 'hud.sesKapali': 'Sound off', 'hud.yanCevir': 'Turn your phone sideways for a wider view',
     'hud.kmsa': 'km/h', 'hud.el': 'Hand', 'hud.fren': 'Brake', 'hud.gaz': 'Gas', 'hud.tur': 'Lap {0}/{1}', 'hud.nokta': 'Gate {0}/{1}', 'hud.hedef': 'Target: {0}',
     'hud.geri': 'R', 'hud.bos': 'N', 'hud.sola': 'Left', 'hud.saga': 'Right', 'hud.elFreni': 'Handbrake', 'hud.harita': 'Mini map',
     'flash.serbest': 'Free roam', 'flash.serbest.alt': 'The orange light columns are race starts', 'flash.basla': 'Go!',
@@ -6444,7 +6470,7 @@ const DIL = {
     'menu.tuslar': '<b>W A S D</b> یا <b>کلیدهای جهت</b> رانندگی · <b>Space</b> ترمز دستی · <b>R</b> بازگشت به جاده · <b>C</b> دوربین · <b>H</b> بوق · <b>N</b> صدا · <b>M</b> منو. دسته بازی: اهرم چپ، RT گاز، LT ترمز، A ترمز دستی، B بازگشت به جاده، Y دوربین.',
     'menu.kunye': 'خیابان‌ها، ساختمان‌ها و باروها: © مشارکت‌کنندگان OpenStreetMap (ODbL). ارتفاع: SRTM، کاشی‌های Mapzen. بافت‌ها: Poly Haven (CC0). شکل صخره قلعه از روی محدوده OSM بازسازی شده است.',
     'etk.km': 'کیلومتر', 'etk.tur': '{0} دور', 'etk.zamanaKarsi': 'با زمان', 'etk.rakip': '{0} رقیب', 'etk.enIyi': 'بهترین {0}',
-    'hud.kedi': 'گربه وان', 'hud.menu': 'منو', 'hud.kamera': 'دوربین', 'hud.yolaDon': 'بازگشت به جاده', 'hud.sesAcik': 'صدا روشن', 'hud.sesKapali': 'صدا خاموش',
+    'hud.kedi': 'گربه وان', 'hud.menu': 'منو', 'hud.kamera': 'دوربین', 'hud.yolaDon': 'بازگشت به جاده', 'hud.sesAcik': 'صدا روشن', 'hud.sesKapali': 'صدا خاموش', 'hud.yanCevir': 'برای دید بازتر، گوشی را افقی بگیرید',
     'hud.kmsa': 'km/h', 'hud.el': 'دستی', 'hud.fren': 'ترمز', 'hud.gaz': 'گاز', 'hud.tur': 'دور {0}/{1}', 'hud.nokta': 'نقطه {0}/{1}', 'hud.hedef': 'مقصد: {0}',
     'hud.geri': 'R', 'hud.bos': 'N', 'hud.sola': 'چپ', 'hud.saga': 'راست', 'hud.elFreni': 'ترمز دستی', 'hud.harita': 'نقشه کوچک',
     'flash.serbest': 'رانندگی آزاد', 'flash.serbest.alt': 'ستون‌های نور نارنجی نقطه شروع مسابقه‌اند', 'flash.basla': 'برو!',
@@ -11891,7 +11917,7 @@ function mutfakKur(api) {
   function toggleMute() {
     G.muted = !G.muted;
     if (A.master) A.master.gain.value = masterGain();
-    $('btn-ses').textContent = T(G.muted ? 'hud.sesKapali' : 'hud.sesAcik');
+    $('ses-yazi').textContent = T(G.muted ? 'hud.sesKapali' : 'hud.sesAcik');
     $('btn-ses').setAttribute('aria-pressed', G.muted ? 'true' : 'false');
   }
   $('btn-ses').addEventListener('click', () => { initAudio(); toggleMute(); });
@@ -12095,7 +12121,7 @@ function mutfakKur(api) {
     for (const el of document.querySelectorAll('[data-i18n-html]')) el.innerHTML = T(el.getAttribute('data-i18n-html'));
     for (const el of document.querySelectorAll('[data-i18n-aria]')) el.setAttribute('aria-label', T(el.getAttribute('data-i18n-aria')));
     for (const el of document.querySelectorAll('[data-dil]')) el.setAttribute('aria-pressed', el.getAttribute('data-dil') === LANG ? 'true' : 'false');
-    $('btn-ses').textContent = T(G.muted ? 'hud.sesKapali' : 'hud.sesAcik');
+    $('ses-yazi').textContent = T(G.muted ? 'hud.sesKapali' : 'hud.sesAcik');
     $('load-baslik').textContent = T('yukleniyor', T('bolge.van'));
     placeName = ''; placeAlt = '';
     updateKasa(); updateArac();
@@ -12695,7 +12721,7 @@ function mutfakKur(api) {
   }
 
   // ---------------------------------------------------------------- gösterge
-  let hudT = 0, placeName = '', placeAlt = '', lastSpeed = -1;
+  let hudT = 0, placeName = '', placeAlt = '', lastSpeed = -1, yerT = 0, yanCevirildi = false;
   let ESKI = null, YERLESKE = null, YERLER = [];      // YERLER: OSM'de adı olan alanlar (hastane, santral, sanayi bölgesi, fakülte binası)
   const _zone = { ad: '', alt: '' };
   function zone(c) {
@@ -12759,7 +12785,13 @@ function mutfakKur(api) {
     hudT = 0.2;
     $('vites').textContent = c.ski ? '·' : c.vf < -0.5 ? T('hud.geri') : Math.abs(c.vf) < 0.5 ? T('hud.bos') : gear;
     const zn = zone(c);
-    if (zn.ad !== placeName) { placeName = zn.ad; $('sokak').textContent = zn.ad; }
+    if (zn.ad !== placeName) {      // dokunmatik ekranda yer adı yalnız değişince 4 sn görünür (CSS .yer.goster)
+      placeName = zn.ad; $('sokak').textContent = zn.ad;
+      const yer = $('sokak').parentNode; yer.classList.add('goster'); clearTimeout(yerT); yerT = setTimeout(() => yer.classList.remove('goster'), 4000);
+    }
+    if (!yanCevirildi && window.matchMedia && window.matchMedia('(pointer: coarse)').matches && window.innerHeight > window.innerWidth * 1.2) {      // dik telefon: bir kez yan çevir önerisi
+      yanCevirildi = true; $('yan-cevir').hidden = false; setTimeout(() => { $('yan-cevir').hidden = true; }, 6000);
+    }
     if (zn.alt !== placeAlt) { placeAlt = zn.alt; $('mahalle').textContent = zn.alt; }
     if (r) {
       if (!r.done) r.place = 1 + rivals.filter((o) => o.mesh.visible && (o.finished || o.prog > player.prog)).length;
