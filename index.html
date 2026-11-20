@@ -79,6 +79,29 @@ button:focus-visible { outline: 2px solid var(--gol); outline-offset: 2px; }
 .dokun button.basili { background: rgba(255, 255, 255, 0.3); border-color: #fff; transform: scale(0.94); }
 .dokun-sol { grid-area: 3 / 1; }
 .dokun-sag { grid-area: 3 / 3; justify-self: end; margin-bottom: 96px; }
+.dokun-turbo { grid-area: 3 / 3; justify-self: end; margin-bottom: 174px; }      /* gaz düğmesinin üstünde */
+#hud.turbosuz .dokun-turbo, #hud.turbosuz #turbo { display: none; }
+#turbo { width: 8px; height: 64px; align-self: flex-end; margin-bottom: 4px; position: relative; overflow: hidden; border: 1.5px solid rgba(255, 255, 255, 0.55); border-radius: 4px; background: rgba(16, 20, 26, 0.25); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12); }
+#turbo-d { position: absolute; left: 0; right: 0; bottom: 0; height: 100%; background: var(--kehribar); }
+#turbo.aktif #turbo-d { background: #6fd8ff; box-shadow: 0 0 10px #6fd8ff; }
+#turbo.aktif { border-color: #6fd8ff; }
+/* viraj uyarısı: ekranın üst üçte birinde, ortada */
+#viraj { grid-area: 2 / 1 / 3 / 4; align-self: start; justify-self: center; margin-top: 6vh; width: 110px; }
+#viraj[hidden] { display: none; }
+#viraj svg { display: block; width: 100%; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55)); }
+#viraj path { fill: none; stroke: #fff; stroke-width: 5.5; stroke-linecap: round; stroke-linejoin: round; }
+#viraj.sag svg { transform: scaleX(-1); }
+#viraj.k2 path { stroke: var(--kehribar); }
+#viraj.k3 path { stroke: #ff4d3a; }
+#viraj .v3 { display: none; } #viraj.k3 .v3 { display: inline; }
+#viraj.k3 svg { animation: viraj-yan 0.42s steps(2, jump-none) infinite; }
+@keyframes viraj-yan { from { opacity: 1; } to { opacity: 0.35; } }
+#viraj .yazi { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+/* giriş çekimi: gösterge gizlenir, altta yalnız geçme ipucu */
+#hud > * { transition: opacity 0.4s; }
+#hud.giris > *:not(#giris-gec) { opacity: 0; }
+#giris-gec { display: none; grid-area: 3 / 1 / 4 / 4; align-self: end; justify-self: center; font-size: 13px; color: rgba(255, 255, 255, 0.8); text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8); margin-bottom: 6px; }
+#hud.giris #giris-gec { display: block; }
 @media (pointer: coarse) { .dokun { display: flex; } #ipucu { grid-area: 2 / 1 / 3 / 4; justify-self: center; align-self: end; max-width: 90vw; } }
 /* Dokunmatik gösterge (telefon, tablet): orta alan sahneye kalır, bilgi kenarlarda ve küçük; yazılı düğmeler simge; yer adı yalnız değişince 4 sn görünür.
    Ses düğmesi gizli (ses Ayarlar'da); yarış adı gizli (başlangıçta ve sonuç ekranında yazılı). */
@@ -113,6 +136,9 @@ button:focus-visible { outline: 2px solid var(--gol); outline-offset: 2px; }
   .dugmeler button { padding: 5px 8px; font-size: 12px; }
   .dokun button { width: 60px; height: 60px; font-size: 15px; }
   .dokun-sag { margin-bottom: 64px; }
+  .dokun-turbo { margin-bottom: 134px; }
+  #turbo { height: 46px; }
+  #viraj { margin-top: 8vh; width: 92px; }
   #mesaj b { font-size: clamp(28px, 6vw, 44px); }
   h1 { font-size: clamp(40px, 9vh, 64px); } .menu-ic { gap: 10px; } .tanitim { font-size: 15px; }
 }
@@ -125,6 +151,7 @@ button:focus-visible { outline: 2px solid var(--gol); outline-offset: 2px; }
   #ok { padding: 2px 9px 2px 4px; gap: 4px; } #ok-i { width: 18px; height: 18px; } #ok-m { font-size: 13px; min-width: 40px; }
   #hiz-n { font-size: 52px; }
   #mesaj { margin-top: 14vh; }
+  #viraj { margin-top: 27vh; width: 90px; }
 }
 
 /* ---------- menü ---------- */
@@ -327,12 +354,17 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
     </div>
   </div>
   <div id="mesaj" aria-live="polite"></div>
+  <!-- viraj uyarısı: klasik yarış oyunlarındaki çift ok; yön ve keskinlik (beyaz, kehribar, kırmızı üç ok) -->
+  <div id="viraj" hidden><svg viewBox="0 0 76 32" aria-hidden="true"><path d="M27 4L15 16l12 12"/><path d="M42 4L30 16l12 12"/><path class="v3" d="M57 4L45 16l12 12"/></svg><span class="yazi" data-i18n="hud.viraj">Viraj</span></div>
+  <div id="giris-gec" data-i18n="hud.gec">Geçmek için dokun ya da bir tuşa bas</div>
   <div id="yan-cevir" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 14a9 9 0 0 0 9 7.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9.5 19.5l2.6 2-1.4 2.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="hud.yanCevir">Daha geniş görüş için telefonu yan çevir</span></div>
   <!-- Dokunmatik kumanda: saydam, ince çerçeveli daireler ve sade simgeler; adlar ekran okuyucuya açık (aria-label). -->
   <div class="dokun dokun-sol"><button type="button" data-t="l" aria-label="Sola" data-i18n-aria="hud.sola"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" data-t="r" aria-label="Sağa" data-i18n-aria="hud.saga"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
   <button id="ipucu" type="button" hidden></button>
   <div class="dokun dokun-sag"><button type="button" data-t="h" aria-label="El freni" data-i18n-aria="hud.elFreni"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M10.2 16.6V7.6h2.9a2.55 2.55 0 0 1 0 5.1h-2.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" data-t="b" aria-label="Fren" data-i18n-aria="hud.fren"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.2" y="7.2" width="15.6" height="10.4" rx="2.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.2 10.4v4M12 10.4v4M15.8 10.4v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button><button type="button" data-t="g" aria-label="Gaz" data-i18n-aria="hud.gaz"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="2.8" width="8" height="18.4" rx="2.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10.6 7.6h2.8M10.6 11.8h2.8M10.6 16h2.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
+  <div class="dokun dokun-turbo"><button type="button" data-t="n" aria-label="Turbo" data-i18n-aria="hud.turbo"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8c.9 3.4 5 5.2 5 10.2a5 5 0 0 1-10 0c0-2.4 1.3-4 2.7-5.1.2 1.9 1.1 2.9 2.3 3.3.3-3.3-1-5.8 0-8.4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button></div>
   <div class="sag-alt">
+    <div id="turbo" role="meter" aria-label="Turbo" data-i18n-aria="hud.turbo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="turbo-d"></div></div>
     <div id="hiz-n">0</div>
     <div class="hiz-yan"><div id="vites">B</div><div class="etiket" data-i18n="hud.kmsa">km/sa</div></div>
   </div>
@@ -391,7 +423,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
     <section class="m-panel m-sayfa" data-panel="yaris" hidden>
       <div class="m-baslik"><button type="button" class="m-yuvarlak" data-panel-git="ana" data-i18n-aria="ayar.geri" aria-label="Geri"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2 data-i18n="menu.yarislar">Yarışlar</h2></div>
       <div id="etkinlikler"></div>
-      <p class="kucuk tus-yardim" data-i18n-html="menu.tuslar"><b>W A S D</b> ya da <b>ok tuşları</b> sürüş · <b>Boşluk</b> el freni · <b>R</b> yola dön · <b>C</b> kamera · <b>H</b> korna · <b>N</b> ses · <b>M</b> menü. Oyun kolu: sol çubuk, RT gaz, LT fren, A el freni, B yola dön, Y kamera.</p>
+      <p class="kucuk tus-yardim" data-i18n-html="menu.tuslar"><b>W A S D</b> ya da <b>ok tuşları</b> sürüş · <b>Shift</b> turbo · <b>Boşluk</b> el freni · <b>R</b> yola dön · <b>C</b> kamera · <b>H</b> korna · <b>N</b> ses · <b>M</b> menü. Oyun kolu: sol çubuk, RT gaz, LT fren, X ya da RB turbo, A el freni, B yola dön, Y kamera.</p>
       <p class="kucuk" data-i18n="menu.kunye">Sokaklar, binalar ve surlar: © OpenStreetMap katkıcıları (ODbL). Yükseklik: SRTM, Mapzen arazi karoları. Dokular: Poly Haven (CC0). Kale kayasının biçimi OSM sınırından yeniden kurulmuştur.</p>
     </section>
   </div>
@@ -6247,7 +6279,8 @@ const DIL = {
     'menu.tanitim': 'Gerçek Van sokaklarında, kalenin gölgesinde yarış. Göl kıyısından Eski Van’a kadar şehir açık.',
     'menu.devam': 'Devam et', 'menu.hikaye': 'Hikâye', 'menu.hikaye.bolum': 'Hikâye · Bölüm {0}: {1}', 'menu.hikaye.bastan': 'Hikâye · baştan',
     'menu.serbest': 'Serbest sürüş', 'menu.ayarlar': 'Ayarlar', 'menu.cikis': 'Çıkış', 'menu.bolgeSec': 'Serbest sürüş bölgesi', 'menu.yarislar': 'Yarışlar', 'menu.sur': 'Sür',
-    'menu.tuslar': '<b>W A S D</b> ya da <b>ok tuşları</b> sürüş · <b>Boşluk</b> el freni · <b>R</b> yola dön · <b>C</b> kamera · <b>H</b> korna · <b>N</b> ses · <b>M</b> menü. Oyun kolu: sol çubuk, RT gaz, LT fren, A el freni, B yola dön, Y kamera.',
+    'hud.turbo': 'Turbo', 'hud.gec': 'Geçmek için dokun ya da bir tuşa bas', 'hud.viraj': 'Viraj',
+    'menu.tuslar': '<b>W A S D</b> ya da <b>ok tuşları</b> sürüş · <b>Shift</b> turbo · <b>Boşluk</b> el freni · <b>R</b> yola dön · <b>C</b> kamera · <b>H</b> korna · <b>N</b> ses · <b>M</b> menü. Oyun kolu: sol çubuk, RT gaz, LT fren, X ya da RB turbo, A el freni, B yola dön, Y kamera.',
     'menu.kunye': 'Sokaklar, binalar ve surlar: © OpenStreetMap katkıcıları (ODbL). Yükseklik: SRTM, Mapzen arazi karoları. Dokular: Poly Haven (CC0). Kale kayasının biçimi OSM sınırından yeniden kurulmuştur.',
     'etk.km': 'km', 'etk.tur': '{0} tur', 'etk.zamanaKarsi': 'zamana karşı', 'etk.rakip': '{0} rakip', 'etk.enIyi': 'en iyi {0}',
     'hud.kedi': 'Van kedisi', 'hud.menu': 'Menü', 'hud.kamera': 'Kamera', 'hud.yolaDon': 'Yola dön', 'hud.sesAcik': 'Ses açık', 'hud.sesKapali': 'Ses kapalı', 'hud.yanCevir': 'Daha geniş görüş için telefonu yan çevir',
@@ -6397,7 +6430,8 @@ const DIL = {
     'menu.tanitim': 'Race on the real streets of Van, in the shadow of the castle. The city is open from the lake shore to Old Van.',
     'menu.devam': 'Continue', 'menu.hikaye': 'Story', 'menu.hikaye.bolum': 'Story · Chapter {0}: {1}', 'menu.hikaye.bastan': 'Story · restart',
     'menu.serbest': 'Free roam', 'menu.ayarlar': 'Settings', 'menu.cikis': 'Quit', 'menu.bolgeSec': 'Free roam region', 'menu.yarislar': 'Races', 'menu.sur': 'Drive',
-    'menu.tuslar': '<b>W A S D</b> or <b>arrow keys</b> drive · <b>Space</b> handbrake · <b>R</b> back to road · <b>C</b> camera · <b>H</b> horn · <b>N</b> sound · <b>M</b> menu. Gamepad: left stick, RT throttle, LT brake, A handbrake, B back to road, Y camera.',
+    'hud.turbo': 'Turbo', 'hud.gec': 'Tap or press any key to skip', 'hud.viraj': 'Bend',
+    'menu.tuslar': '<b>W A S D</b> or <b>arrow keys</b> drive · <b>Shift</b> turbo · <b>Space</b> handbrake · <b>R</b> back to road · <b>C</b> camera · <b>H</b> horn · <b>N</b> sound · <b>M</b> menu. Gamepad: left stick, RT throttle, LT brake, X or RB turbo, A handbrake, B back to road, Y camera.',
     'menu.kunye': 'Streets, buildings and walls: © OpenStreetMap contributors (ODbL). Elevation: SRTM, Mapzen terrain tiles. Textures: Poly Haven (CC0). The shape of the castle rock is rebuilt from the OSM outline.',
     'etk.km': 'km', 'etk.tur': '{0} laps', 'etk.zamanaKarsi': 'time trial', 'etk.rakip': '{0} rivals', 'etk.enIyi': 'best {0}',
     'hud.kedi': 'Van cats', 'hud.menu': 'Menu', 'hud.kamera': 'Camera', 'hud.yolaDon': 'Back to road', 'hud.sesAcik': 'Sound on', 'hud.sesKapali': 'Sound off', 'hud.yanCevir': 'Turn your phone sideways for a wider view',
@@ -6547,7 +6581,8 @@ const DIL = {
     'menu.tanitim': 'در خیابان‌های واقعی وان، زیر سایه قلعه مسابقه بده. شهر از ساحل دریاچه تا وان قدیم باز است.',
     'menu.devam': 'ادامه', 'menu.hikaye': 'داستان', 'menu.hikaye.bolum': 'داستان · فصل {0}: {1}', 'menu.hikaye.bastan': 'داستان · از نو',
     'menu.serbest': 'رانندگی آزاد', 'menu.ayarlar': 'تنظیمات', 'menu.cikis': 'خروج', 'menu.bolgeSec': 'منطقه رانندگی آزاد', 'menu.yarislar': 'مسابقه‌ها', 'menu.sur': 'برو',
-    'menu.tuslar': '<b>W A S D</b> یا <b>کلیدهای جهت</b> رانندگی · <b>Space</b> ترمز دستی · <b>R</b> بازگشت به جاده · <b>C</b> دوربین · <b>H</b> بوق · <b>N</b> صدا · <b>M</b> منو. دسته بازی: اهرم چپ، RT گاز، LT ترمز، A ترمز دستی، B بازگشت به جاده، Y دوربین.',
+    'hud.turbo': 'توربو', 'hud.gec': 'برای رد کردن لمس کنید یا کلیدی بزنید', 'hud.viraj': 'پیچ',
+    'menu.tuslar': '<b>W A S D</b> یا <b>کلیدهای جهت</b> رانندگی · <b>Shift</b> توربو · <b>Space</b> ترمز دستی · <b>R</b> بازگشت به جاده · <b>C</b> دوربین · <b>H</b> بوق · <b>N</b> صدا · <b>M</b> منو. دسته بازی: اهرم چپ، RT گاز، LT ترمز، X یا RB توربو، A ترمز دستی، B بازگشت به جاده، Y دوربین.',
     'menu.kunye': 'خیابان‌ها، ساختمان‌ها و باروها: © مشارکت‌کنندگان OpenStreetMap (ODbL). ارتفاع: SRTM، کاشی‌های Mapzen. بافت‌ها: Poly Haven (CC0). شکل صخره قلعه از روی محدوده OSM بازسازی شده است.',
     'etk.km': 'کیلومتر', 'etk.tur': '{0} دور', 'etk.zamanaKarsi': 'با زمان', 'etk.rakip': '{0} رقیب', 'etk.enIyi': 'بهترین {0}',
     'hud.kedi': 'گربه وان', 'hud.menu': 'منو', 'hud.kamera': 'دوربین', 'hud.yolaDon': 'بازگشت به جاده', 'hud.sesAcik': 'صدا روشن', 'hud.sesKapali': 'صدا خاموش', 'hud.yanCevir': 'برای دید بازتر، گوشی را افقی بگیرید',
@@ -9516,9 +9551,9 @@ function stepCar(c, inp, dt) {
   let vf = c.vx * fx + c.vz * fz, vl = c.vx * rx + c.vz * rz;
   c.brake = inp.brk > 0.1 && vf > 0.8;
   if (!c.air) {
-    const vmax = c.vmax * surf.vk;
+    const vmax = c.vmax * surf.vk * (c.tbAktif ? 1.25 : 1);      // turbo: azami hız %25, itiş 1,9 kat
     let acc = 0;
-    if (inp.thr > 0) acc += inp.thr * c.power * (vf < 0 ? 1.7 : Math.max(0, 1 - vf / vmax));
+    if (inp.thr > 0) acc += inp.thr * c.power * (c.tbAktif ? 1.9 : 1) * (vf < 0 ? 1.7 : Math.max(0, 1 - vf / vmax));
     if (inp.brk > 0) acc -= vf > 0.8 ? inp.brk * 18 : inp.brk * 6.5 * Math.max(0, 1 + vf / 13);
     vf += acc * dt;
     if (inp.stop) vf -= Math.sign(vf) * Math.min(Math.abs(vf), 17 * dt);      // geri vitese geçmeden dur
@@ -12120,8 +12155,8 @@ function mutfakKur(api) {
   const G = { state: 'load', t: 0, race: null, cam: 0, muted: false, auto: false, quality: 2 };
   let player, rivals = [], cars = [], env, castle, waterTex, cats = [], evMarkers = [], gate1, gate2, beacon1, beacon2;
   let REGION = null, world = null, terrTex = [], PISTE = null, CIM = null;
-  const keys = Object.create(null), touch = { l: 0, r: 0, g: 0, b: 0, h: 0 };
-  const inp = { thr: 0, brk: 0, steer: 0, hb: false, stop: false };
+  const keys = Object.create(null), touch = { l: 0, r: 0, g: 0, b: 0, h: 0, n: 0 };
+  const inp = { thr: 0, brk: 0, steer: 0, hb: false, stop: false, turbo: false };
   const idle = { thr: 0, brk: 0, steer: 0, hb: false, stop: true };
 
   // ---------------------------------------------------------------- kurulum
@@ -12227,7 +12262,7 @@ function mutfakKur(api) {
         $('load-baslik').textContent = T('yukleniyor', Rg.ad); $('load').hidden = false;
         gate1.visible = gate2.visible = beacon1.visible = beacon2.visible = false;
         for (const r of rivals) r.mesh.visible = false;
-        cars = [player]; trafficClear();
+        cars = [player]; trafficClear(); GIRIS = null; yerYazi = null;
         await say(Rg.msg[0]);
         scene.remove(world);
         world.traverse((o) => {
@@ -12443,7 +12478,7 @@ function mutfakKur(api) {
       for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
       A.noise = buf;
       const mk = (type, f, q) => { const s = ctx.createBufferSource(); s.buffer = buf; s.loop = true; const fl = ctx.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q; const gn = ctx.createGain(); gn.gain.value = 0; s.connect(fl); fl.connect(gn); gn.connect(A.master); s.start(); return gn; };
-      A.skid = mk('bandpass', 1300, 2.5); A.wind = mk('lowpass', 420, 0.5); A.dirt = mk('bandpass', 260, 0.8);
+      A.skid = mk('bandpass', 1300, 2.5); A.wind = mk('lowpass', 420, 0.5); A.dirt = mk('bandpass', 260, 0.8); A.turbo = mk('bandpass', 2600, 1.4);
     } catch (e) { A.ctx = null; }
   }
   function beep(f, dur, vol, type, delay) {
@@ -12487,6 +12522,15 @@ function mutfakKur(api) {
     A.skid.gain.setTargetAtTime(driving && !c.air && asphalt ? clamp((c.slip - 3.5) / 9, 0, 0.22) : 0, t, 0.05);
     A.dirt.gain.setTargetAtTime(driving && !c.air && !asphalt ? clamp(sp / 40, 0, 0.3) : 0, t, 0.08);
     A.wind.gain.setTargetAtTime(driving ? clamp(sp / 62, 0, 1) * 0.16 : 0, t, 0.1);
+    A.turbo.gain.setTargetAtTime(driving && c.tbAktif ? 0.12 : 0, t, 0.06);      // turbo: tıslama
+  }
+  // turbo açılınca hava hışırtısı (gürültü süzgeci 400 → 2.600 Hz)
+  function turboSes() {
+    if (!A.ctx) return;
+    const t = A.ctx.currentTime, s = A.ctx.createBufferSource(), f = A.ctx.createBiquadFilter(), g = A.ctx.createGain();
+    s.buffer = A.noise; f.type = 'bandpass'; f.Q.value = 1.6; f.frequency.setValueAtTime(400, t); f.frequency.exponentialRampToValueAtTime(2600, t + 0.45);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.4, t + 0.06); g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+    s.connect(f); f.connect(g); g.connect(A.master); s.start(t, Math.random()); s.stop(t + 0.65);
   }
 
   // ---------------------------------------------------------------- girdi
@@ -12496,15 +12540,16 @@ function mutfakKur(api) {
     inp.brk = keys.ArrowDown || keys.KeyS || touch.b ? 1 : 0;
     inp.steer = (r ? 1 : 0) - (l ? 1 : 0);
     inp.hb = !!(keys.Space || touch.h);
+    inp.turbo = !!(keys.ShiftLeft || keys.ShiftRight || touch.n);
     if (PAD.on) {
       if (Math.abs(PAD.steer) > Math.abs(inp.steer)) inp.steer = PAD.steer;
-      inp.thr = Math.max(inp.thr, PAD.thr); inp.brk = Math.max(inp.brk, PAD.brk); inp.hb = inp.hb || PAD.hb;
+      inp.thr = Math.max(inp.thr, PAD.thr); inp.brk = Math.max(inp.brk, PAD.brk); inp.hb = inp.hb || PAD.hb; inp.turbo = inp.turbo || PAD.turbo;
     }
     return inp;
   }
-  // Oyun kolu (Steam ve masaüstü için): sol çubuk direksiyon, RT gaz, LT fren, A el freni / onay,
+  // Oyun kolu (Steam ve masaüstü için): sol çubuk direksiyon, RT gaz, LT fren, A el freni / onay, X ya da RB turbo,
   // B yola dön, Y kamera, Start menü. Karede bir kez okunur.
-  const PAD = { on: false, steer: 0, thr: 0, brk: 0, hb: false, prev: [] };
+  const PAD = { on: false, steer: 0, thr: 0, brk: 0, hb: false, turbo: false, prev: [] };
   function pollPad() {
     let gp = null;
     try { gp = navigator.getGamepads ? Array.from(navigator.getGamepads()).find((q) => q && q.connected) : null; } catch (e) { gp = null; }
@@ -12514,9 +12559,10 @@ function mutfakKur(api) {
     const hit = (i) => { const now = val(i) > 0.5, was = PAD.prev[i]; PAD.prev[i] = now; return now && !was; };
     const ax = gp.axes[0] || 0, dz = 0.12;
     PAD.steer = Math.abs(ax) > dz ? (Math.sign(ax) * (Math.abs(ax) - dz)) / (1 - dz) : val(15) - val(14);
-    PAD.thr = val(7); PAD.brk = val(6); PAD.hb = val(0) > 0.5;
+    PAD.thr = val(7); PAD.brk = val(6); PAD.hb = val(0) > 0.5; PAD.turbo = val(2) > 0.5 || val(5) > 0.5;
     const a = hit(0), b = hit(1), y = hit(3), st = hit(9);
     if (a || st) initAudio();
+    if (GIRIS && (a || b || st)) { girisBitir(); return; }
     if (G.state === 'talk') { if (a) nextLine(); return; }
     if (G.state === 'cook') return;
     if (G.state === 'menu') { if (!$('ayarlar').hidden) { if (b || st) closeSettings(); } else if (st && G.resume) resume(); else if (a) (G.resume ? resume : startStory)(); return; }
@@ -12533,6 +12579,7 @@ function mutfakKur(api) {
     initAudio();
     if (G.state === 'talk') { if (e.code === 'Enter' || e.code === 'Space' || e.code === 'NumpadEnter') nextLine(); return; }
     if (G.state === 'cook') { MUTFAK.tus(e.code); if (e.code === 'Space') e.preventDefault(); return; }
+    if (GIRIS && (G.state === 'free' || G.state === 'count')) { girisBitir(); return; }      // giriş çekimi: her tuş geçer
     if (G.state === 'menu' || G.state === 'result') {
       if (e.code === 'Escape' && !$('ayarlar').hidden) closeSettings();
       else if (e.code === 'Escape' && G.state === 'menu' && G.resume) resume();
@@ -12547,6 +12594,7 @@ function mutfakKur(api) {
     else if (e.code === 'Enter' && G.near && !G.goal && canStart(G.near)) { G.lastStory = 0; startEvent(G.near); }
   });
   window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+  window.addEventListener('pointerdown', () => { if (GIRIS && (G.state === 'free' || G.state === 'count')) girisBitir(); });
   window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
   for (const el of document.querySelectorAll('[data-t]')) {
     const k = el.getAttribute('data-t');
@@ -12648,14 +12696,18 @@ function mutfakKur(api) {
     clearRace();
     updateArac();
     setVehicle(G.aracSecim);      // seçilen araç her bölgede geçerlidir
+    let giris = null;
     if (!keepPlace || G.state === 'menu') {
-      const ev0 = EVENTS.find((e) => e.bolge === REGION.id), p = routePoint(ev0.R, REGION.id === 'van' ? 330 : ev0.R.L - 260);
+      const ev0 = EVENTS.find((e) => e.bolge === REGION.id), s0 = REGION.id === 'van' ? 330 : ev0.R.L - 260, p = routePoint(ev0.R, s0);
       placeCar(player, p.x, p.z, Math.atan2(p.dx, p.dz));
+      giris = [ev0.R, Math.min(s0 + 16, ev0.R.L - 30)];
     }
+    if (player.turbo === undefined) player.turbo = 1;
     G.state = 'free'; G.near = null;
     $('menu').hidden = true; $('sonuc').hidden = true; $('konusma').hidden = true; $('hud').hidden = false;
     camSnap = true;
-    flash(T('flash.serbest'), T('flash.serbest.alt'));
+    if (giris) girisBasla(giris[0], giris[1]);      // drone çekimi ve asfaltta yer adı; "Serbest sürüş" yazısı çekim bitince
+    else flash(T('flash.serbest'), T('flash.serbest.alt'));
   }
   function startEvent(ev) {
     if (ev.erzak) { startErzak(); return; }
@@ -12687,7 +12739,9 @@ function mutfakKur(api) {
     $('ipucu').hidden = true; $('kedi').hidden = true;
     $('yaris-ad').textContent = ev.ad;
     camSnap = true;
+    player.turbo = 1;      // yarış dolu turboyla başlar
     updateBeacons();
+    if (ev.ozel !== 'kayak') girisBasla(R, Math.min(30, R.L * 0.3));      // kayakta asfalt yok: çekim yok
   }
   function updateBeacons() {
     const r = G.race, a = r.cps[r.cpi], b = r.cps[r.cpi + 1];
@@ -13235,8 +13289,92 @@ function mutfakKur(api) {
     if (v < 0.01) return;
     beep(415, d, v, 'square'); beep(523, d, v * 0.85, 'square');
   }
+  // ---------------------------------------------------------------- giriş çekimi ve asfaltta yer adı
+  // Oyun başlarken (serbest sürüş menüden, yarış) drone yolun üstünde boyalı yer adına yüksekten bakar, alçalır ve arabanın arkasına süzülür (5 sn).
+  // Her tuş ya da dokunuş geçer. Yazı yol boyası gibidir (beyaz, aşınmış; karlı bölgede turuncu), rotaya oturur, çekimden sonra silinir: haritada kalıcı öğe değil.
+  const YER_YAZI = { van: 'VAN', abali: 'ABALI', kampus: 'KAMPÜS' };
+  let GIRIS = null, yerYazi = null;
+  function yerYaziKaldir() {
+    if (!yerYazi) return;
+    const m = yerYazi.mesh; if (m.parent) m.parent.remove(m);
+    m.geometry.dispose(); m.material.map.dispose(); m.material.dispose(); yerYazi = null;
+  }
+  function yerYaziKur(R, s0) {
+    yerYaziKaldir();
+    const ad = YER_YAZI[REGION.id] || REGION.id.toUpperCase(), p0 = routePoint(R, s0), rd = roadAt(p0.x, p0.z);
+    const W = clamp(rd ? rd.hw * 2 - 1.4 : 7, 5, 12);      // yolun eni, kenar çizgisinin içinde
+    // tuval: x yolun eni (sürücünün solundan sağına), y yolun boyu (üst = ileri). Harfler boyuna 2,1 kat uzar (yol yazısı gibi).
+    const cv = document.createElement('canvas'), g = cv.getContext('2d'), Rr = rng(53);
+    const font = (getComputedStyle(document.documentElement).getPropertyValue('--f-baslik') || 'sans-serif').trim(), uz = 2.1;
+    cv.width = 1024;
+    g.font = '800 100px ' + font; const gen = g.measureText(ad).width || 300, fs = (100 * cv.width * 0.9) / gen;
+    cv.height = Math.min(2048, Math.round(fs * 0.78 * uz + 120));
+    g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.save(); g.translate(cv.width / 2, cv.height / 2 + fs * 0.04 * uz); g.scale(1, uz); g.font = '800 ' + fs.toFixed(0) + 'px ' + font; g.fillText(ad, 0, 0); g.restore();
+    g.globalCompositeOperation = 'destination-out';      // aşınmış boya: lastik izi şeritleri ve dökülmüş noktalar
+    for (let i = 0; i < 1800; i++) { g.globalAlpha = 0.25 + Rr() * 0.6; const r = 1 + Rr() * 5; g.fillRect(Rr() * cv.width, Rr() * cv.height, r, r * (0.5 + Rr())); }
+    for (const x of [0.3, 0.7]) { g.globalAlpha = 0.16; g.fillRect(cv.width * x - 50, 0, 100, cv.height); }
+    g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+    const L = (W * cv.height) / cv.width, tex = new THREE.CanvasTexture(cv);
+    tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 8;
+    // rotaya oturan ağ: boyda 20, ende 4 bölme; yükseklik yol yüzeyi (buildRoads ile aynı kaldırma) + 4 cm
+    const NY = 20, NX = 4, P = [], U = [], I = [];
+    for (let j = 0; j <= NY; j++) {
+      const v = j / NY, p = routePoint(R, s0 + L * v), rx = -p.dz, rz = p.dx;
+      for (let i = 0; i <= NX; i++) {
+        const u = i / NX, x = p.x + rx * (u - 0.5) * W, z = p.z + rz * (u - 0.5) * W, yr = roadAt(x, z), lift = yr && yr.cls <= 6 ? 0.15 + (6 - yr.cls) * 0.012 : 0.09;
+        P.push(x, groundH(x, z) + lift + 0.04, z); U.push(u, v);
+      }
+    }
+    for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) { const a = j * (NX + 1) + i, b = a + 1, c = a + NX + 1, d = c + 1; I.push(a, c, b, b, c, d); }
+    const geo = new THREE.BufferGeometry(); geo.setIndex(I);
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); geo.computeVertexNormals();
+    const mat = new THREE.MeshStandardMaterial({ map: tex, color: KAR ? 0xff8a2a : 0xf4f2ea, transparent: true, depthWrite: false, roughness: 0.72, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -12, polygonOffsetUnits: -12 });
+    mat.name = 'yer-yazisi';
+    const mesh = new THREE.Mesh(geo, mat); mesh.receiveShadow = true; mesh.renderOrder = 2; world.add(mesh);
+    yerYazi = { mesh, t: 0, L, ad };
+    return L;
+  }
+  function girisBasla(R, s) {
+    player.tbAktif = false;
+    const L = yerYaziKur(R, s);
+    GIRIS = { t: 0, dur: 5, R, s, L };
+    $('hud').classList.add('giris');
+  }
+  function girisBitir() {
+    if (!GIRIS) return;
+    GIRIS = null; camSnap = true;
+    $('hud').classList.remove('giris');
+    if (yerYazi) yerYazi.t = 0;
+    if (G.state === 'free') flash(T('flash.serbest'), T('flash.serbest.alt'));
+  }
+  // turbo: egzoz alevi (iki egzozda üçer parlak leke; araç grubunun arka ucuna bağlı)
+  let alevTex = null;
+  function turboAlev(v) {
+    if (v.alev) return v.alev;
+    if (!alevTex) {
+      const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+      const g = cv.getContext('2d'), gr = g.createRadialGradient(32, 32, 1, 32, 32, 31);
+      gr.addColorStop(0, 'rgba(235,248,255,1)'); gr.addColorStop(0.25, 'rgba(120,200,255,0.95)'); gr.addColorStop(0.55, 'rgba(255,150,60,0.55)'); gr.addColorStop(1, 'rgba(255,90,20,0)');
+      g.fillStyle = gr; g.fillRect(0, 0, 64, 64); alevTex = new THREE.CanvasTexture(cv);
+    }
+    const grp = v.group, q0 = grp.quaternion.clone(), p0 = grp.position.clone();      // arka uç dönüşsüz ölçülür
+    grp.quaternion.identity(); grp.position.set(0, 0, 0); grp.updateMatrixWorld(true);
+    const kutu = new THREE.Box3().setFromObject(grp);
+    grp.quaternion.copy(q0); grp.position.copy(p0); grp.updateMatrixWorld(true);
+    const al = new THREE.Group(), mat = new THREE.SpriteMaterial({ map: alevTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
+    for (const x of v === player.car ? [-0.38, 0.38] : [0.12]) for (let k = 0; k < 3; k++) { const s = new THREE.Sprite(mat); s.position.set(x, kutu.min.y + 0.34, kutu.min.z - 0.1 - k * 0.3); s.userData.k = k; al.add(s); }
+    al.visible = false; grp.add(al); v.alev = al;
+    return al;
+  }
   function tick(dt) {
     const r = G.race;
+    if (GIRIS) {      // giriş çekimi: araçlar bekler, geri sayım çekim bitince başlar
+      GIRIS.t += dt;
+      for (const c of cars) (c.ski ? stepSkier : stepCar)(c, idle, dt);
+      if (GIRIS.t >= GIRIS.dur) girisBitir();
+      return;
+    }
     if (G.state === 'count') {
       r.count -= dt;
       const n = Math.ceil(r.count - 0.9);
@@ -13245,6 +13383,10 @@ function mutfakKur(api) {
       return;
     }
     const pin = G.auto && (r || G.autoR) ? aiInput(player, r ? r.R : G.autoR, 1, dt) : readInput();   // G.autoR: serbest sürüşte sınama rotası
+    // klasik turbo (araba ve motor): Shift / X·RB / alev düğmesi; dolu depo 4,5 sn yeter, boşken 14 sn'de dolar
+    const tbVar = !player.ski && (player.arac === 'car' || player.arac === 'motor') && !(r && r.done);
+    player.tbAktif = tbVar && !!pin.turbo && pin.thr > 0 && player.turbo > 0.01 && !player.air;
+    player.turbo = player.tbAktif ? Math.max(0, player.turbo - dt / 4.5) : Math.min(1, (player.turbo || 0) + dt / 14);
     const step = player.ski ? stepSkier : stepCar;
     if (r && r.done) { step(player, idle, dt); }
     else { step(player, pin, dt); if (r && !G.auto) advance(player, r.R); }
@@ -13337,7 +13479,7 @@ function mutfakKur(api) {
   }
 
   // ---------------------------------------------------------------- kamera
-  const camPos = new THREE.Vector3(), camWant = new THREE.Vector3(), lookAt = new THREE.Vector3();
+  const camPos = new THREE.Vector3(), camWant = new THREE.Vector3(), lookAt = new THREE.Vector3(), _gp = new THREE.Vector3(), _gl = new THREE.Vector3();
   let camH = 0, camSnap = true, orbit = 0.6;
   const SKICAM = { d: 5.6, h: 2.5, la: 1.2 };
   const CAMS = [{ d: 7.8, h: 3.0, la: 1.3 }, { d: 12.5, h: 5.2, la: 1.6 }, { d: -0.55, h: 1.28, la: 1.15 }];
@@ -13370,8 +13512,18 @@ function mutfakKur(api) {
     camera.position.copy(camPos);
     lookAt.set(c.x + Math.sin(c.h) * 5, c.y + m.la, c.z + Math.cos(c.h) * 5);
     camera.lookAt(lookAt);
-    const fov = 60 + Math.min(20, sp * 0.34);
+    const fov = 60 + Math.min(20, sp * 0.34) + (c.tbAktif ? 9 : 0);      // turboda görüş açısı genişler
     if (Math.abs(fov - camera.fov) > 0.05) { camera.fov = lerp(camera.fov, fov, Math.min(1, dt * 3)); camera.updateProjectionMatrix(); }
+    if (GIRIS) {      // giriş: drone yazının arkasından yüksekten bakar, alçalıp yaklaşır, sonra arabanın arkasına süzülür
+      const g = GIRIS, k = clamp(g.t / g.dur, 0, 1), pT = routePoint(g.R, g.s + g.L * 0.5), fx = pT.dx, fz = pT.dz, ty = groundH(pT.x, pT.z);
+      const a = smooth(0, 0.62, k), b = smooth(0.52, 1, k), rx = -fz, rz = fx;
+      const yuk = lerp(23, 11, a), geri = lerp(2, 12, a), yan = lerp(-5, 1.5, a);
+      _gp.set(pT.x - fx * geri + rx * yan, ty + yuk, pT.z - fz * geri + rz * yan);
+      _gl.set(pT.x + fx * 2, ty, pT.z + fz * 2);
+      camera.position.lerpVectors(_gp, camPos, b); camera.position.y += Math.sin(b * Math.PI) * 4;
+      _gl.lerp(lookAt, b); camera.lookAt(_gl);
+      camera.fov = lerp(52, fov, b); camera.updateProjectionMatrix();
+    }
     return c.mesh.position;
   }
 
@@ -13414,8 +13566,48 @@ function mutfakKur(api) {
     else _zone.ad = T('zone.arazi');
     return _zone;
   }
+  // turbo göstergesi: hızın yanında dikey çubuk (araba ve motorda)
+  let tbGos = -1, tbOnce = false;
+  function turboHud(c) {
+    const var_ = !c.ski && (c.arac === 'car' || c.arac === 'motor');
+    $('hud').classList.toggle('turbosuz', !var_);
+    if (!var_) return;
+    const v = Math.round((c.turbo || 0) * 100);
+    if (v !== tbGos) { tbGos = v; $('turbo-d').style.height = v + '%'; $('turbo').setAttribute('aria-valuenow', v); }
+    $('turbo').classList.toggle('aktif', !!c.tbAktif);
+  }
+  // viraj uyarısı (klasik yarış oyunlarındaki çift ok): yarış rotasında önümüzdeki 45–150 m'de (hıza göre) en keskin dönüş.
+  // Yarıçap 90 m altı beyaz, 50 m altı kehribar, 25 m altı kırmızı üç ok. Eğrilik işaretli: artı sağa dönüş (sağ = (−ileri.z, ileri.x)).
+  function rotaEgrilik(R) {
+    if (R.kv) return R.kv;
+    const n = R.n, kv = new Float32Array(n), at = (i) => (R.loop ? ((i % n) + n) % n : clamp(i, 0, n - 1));
+    for (let i = 0; i < n; i++) {
+      const a = at(i - 4), c = at(i + 4), ux = R.x[i] - R.x[a], uz = R.z[i] - R.z[a], wx = R.x[c] - R.x[i], wz = R.z[c] - R.z[i];
+      const la = Math.hypot(ux, uz), lb = Math.hypot(wx, wz), lc = Math.hypot(R.x[c] - R.x[a], R.z[c] - R.z[a]);
+      kv[i] = la * lb * lc > 1e-6 ? (2 * (ux * wz - uz * wx)) / (la * lb * lc) : 0;
+    }
+    return (R.kv = kv);
+  }
+  const VIRAJ = { yon: '', kat: 0 };
+  function virajAdim(c, r) {
+    let yon = '', kat = 0;
+    if (r && !r.done && G.state === 'race' && !c.ski && !GIRIS) {      // geri sayımda gizli
+      const R = r.R, kv = rotaEgrilik(R), ileri = clamp(Math.abs(c.vf) * 2.6, 45, 150);
+      let enK = 0;
+      for (let k = 2; k * 4 <= ileri; k++) { const i = R.loop ? (c.ri + k) % R.n : Math.min(R.n - 1, c.ri + k); if (Math.abs(kv[i]) > Math.abs(enK)) enK = kv[i]; }
+      const yr = 1 / Math.max(Math.abs(enK), 1e-4);
+      kat = yr < 25 ? 3 : yr < 50 ? 2 : yr < 90 ? 1 : 0;
+      yon = kat ? (enK > 0 ? 'sag' : 'sol') : '';
+    }
+    if (kat !== VIRAJ.kat || yon !== VIRAJ.yon) {
+      VIRAJ.kat = kat; VIRAJ.yon = yon;
+      const el = $('viraj'); el.hidden = !kat; el.className = kat ? yon + ' k' + kat : '';
+    }
+    return VIRAJ;
+  }
   function updateHud(dt) {
     const c = player, kmh = Math.round(Math.abs(c.vf) * 3.6);
+    turboHud(c); virajAdim(c, G.race);
     if (kmh !== lastSpeed) { $('hiz-n').textContent = kmh; lastSpeed = kmh; }
     hudT -= dt;
     if (flashT > 0) { flashT -= dt; if (flashT <= 0) $('mesaj').textContent = ''; }
@@ -13512,6 +13704,19 @@ function mutfakKur(api) {
     env.sky.material.uniforms.uTime.value = G.t;
     if (CIM) CIM.adim(camera, G.t);
     kirikAdim(dt, player);      // devrilen çit ve direkler
+    {      // turbo: egzoz alevi ve açılış sesi
+      const v = player[player.arac], tb = !!player.tbAktif && !player.ski;
+      if (v && v.group && (player.arac === 'car' || player.arac === 'motor')) {
+        const al = turboAlev(v); al.visible = tb;
+        if (tb) for (const s of al.children) { const z = (0.62 - s.userData.k * 0.16) * (0.75 + Math.random() * 0.5); s.scale.set(z, z, 1); }
+      }
+      if (tb && !tbOnce) turboSes();
+      tbOnce = tb;
+    }
+    if (yerYazi && !GIRIS) {      // asfalttaki yer adı: çekimden 7 sn sonra 2,5 sn'de silinir (haritada kalıcı değil)
+      yerYazi.t += dt;
+      if (yerYazi.t > 7) { const m = yerYazi.mesh.material; m.opacity = Math.max(0, 1 - (yerYazi.t - 7) / 2.5); if (m.opacity <= 0) yerYaziKaldir(); }
+    }
     if (KIRIK.ses.length) { for (const e of KIRIK.ses) kirikSes(e); KIRIK.ses.length = 0; }
     AGAC_U.uKam.value.copy(camera.position); AGAC_U.uZaman.value = G.t;
     if (castle) castle.flag.rotation.y = 0.5 + Math.sin(G.t * 1.9) * 0.22;
@@ -13550,6 +13755,8 @@ function mutfakKur(api) {
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
     wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
+    tus: (k, v) => { keys[k] = !!v; }, girisGec: () => girisBitir(), get giris() { return GIRIS ? { t: GIRIS.t, dur: GIRIS.dur } : null; },
+    get yerYazi() { return yerYazi ? { L: yerYazi.L, ad: yerYazi.ad, opak: yerYazi.mesh.material.opacity } : null; }, viraj: () => Object.assign({}, virajAdim(player, G.race)), rotaEgrilik,
     kirik: () => ({ oge: KIRIK.oge.length, zincir: KIRIK.zincir.length, aktif: KIRIK.aktif.length, say: Object.assign({}, KIRIK.say) }),      // yıkılabilir çit ve direkler
     sahne: () => scene,      // teşhis: katman gizleyip tek başına bakmak için
     cevre: () => cevreKaynak,      // gündüz ortam ışığının kaynağı: 'hdri' ya da 'gok' (dosya gelmediyse)
