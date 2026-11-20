@@ -10034,7 +10034,7 @@ function poseCar(c, dt) {
 // ------------------------------------------------------------ Blender modelleri: oyuncu figürü ve üç teker
 // Model: yayin/model/arac/ucteker.glb (tools/blender/oyuncu_ucteker.py). Yüklenemezse yukarıdaki kod çizimi kullanılır.
 let _ucSoz = null;
-const UC_SURUM = '2026-11-20k';      // model dosyası değişince artırılır (Safari eski GLB'yi önbellekten verir); 20 Kas: büyük kasa
+const UC_SURUM = '2026-11-21a';      // model dosyası değişince artırılır (Safari eski GLB'yi önbellekten verir); 20 Kas: büyük kasa
 function ucTekerYukle() {
   if (!_ucSoz) _ucSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/arac/ucteker.glb?s=' + UC_SURUM, (g) => ok(g.scene), undefined, red); });
   return _ucSoz;
@@ -10127,6 +10127,8 @@ function makeTrikeGLB(src, motor) {
   }
   al('motor_parca').visible = motor; krank.visible = !motor;
   const yuk = al('yuk'); yuk.visible = false;
+  const yukKahvalti = al('yuk_kahvalti'); if (yukKahvalti) yukKahvalti.visible = false;      // Van kahvaltısı erzakı (erzak işi)
+  const kirikYumurta = al('kirik_yumurta'); if (kirikYumurta) kirikYumurta.removeFromParent();     // yola düşen yumurtanın kopyalanan modeli
   let tail = new THREE.MeshStandardMaterial();
   const stop = al('stop');
   if (stop && stop.isMesh) { stop.material = stop.material.clone(); tail = stop.material; }
@@ -10138,21 +10140,7 @@ function makeTrikeGLB(src, motor) {
   const pedal = { L: al('pedal_L'), R: al('pedal_R') }, tutus = { L: al('yer_tutus_L').position, R: al('yer_tutus_R').position }, ayaklik = { L: al('yer_ayaklik_L').position, R: al('yer_ayaklik_R').position };
   const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), diz = new THREE.Vector3(), dirsek = new THREE.Vector3();
   let th = 0.6, sasT = 0, onceHiz = 0, ay = 0;
-  function anim(c, dt) {
-    const dn = -c.steer * 1.15;
-    gidon.rotation.y = dn;
-    if (!motor) {      // oyuncunun krankı fizikten gelir (itiş nabzı bacakla aynı anda); uzak oyuncuda pedal bayrağından
-      th = c.krank !== undefined ? c.krank : krankAdim(th, c.pedalCev !== undefined ? c.pedalCev : c.vf > 0.5, c.vf || 0, dt);
-      krank.rotation.x = th; pedal.L.rotation.x = -th; pedal.R.rotation.x = -th;
-    }
-    // ayakta pedal: kalça seleden kalkar, gövde öne eğilir, basışla yana sallanır
-    ay += ((c.ayakta ? 1 : 0) - ay) * Math.min(1, dt * 7);
-    if (dt > 0 || ay > 0) {
-      f.govde.position.set(sele.x, sele.y + 0.085 + ay * 0.11, sele.z + ay * 0.07);
-      f.govde.rotation.set(egim + ay * 0.24, 0, ay * 0.09 * Math.cos(th));
-      f.bas.rotation.set(-(egim + ay * 0.24) * 0.75, 0, 0);
-      gqi.setFromEuler(f.govde.rotation).invert();
-    }
+  function oturusIK(dn) {      // ayaklar pedalda (motorluda ayaklıkta), eller gidonda
     for (const yan of ['L', 'R']) {
       const sx = yan === 'L' ? 1 : -1, yon = -sx;
       if (motor) v1.copy(ayaklik[yan]); else v1.set(sx * 0.15, yon * KR * Math.cos(th), yon * KR * Math.sin(th)).add(krank.position);
@@ -10161,10 +10149,89 @@ function makeTrikeGLB(src, motor) {
       v2.copy(tutus[yan]).applyAxisAngle(Y, dn).add(gidon.position);
       ikCoz(f.kol[yan], yerel(v2), dirsek.set(sx * 0.7, -1, -0.35).applyQuaternion(gqi));
     }
+  }
+  // Komik devrilme (21 Kas 2026; ilk oyuncular üç teker modunu komik buldu): devrilince sürücü dış yana savrulur (0,45 sn), sırtüstü yatıp
+  // havada pedal çevirir ve kollarını çırpar, bisiklet doğrulurken seleye geri atlar (0,45 sn). Bu sırada figür sahneye taşınır (dünya uzayında
+  // canlanır), sonra yine bisiklete bağlanır. Uzak oyuncuda devrik bayrağıyla (256) aynısı olur.
+  const dus = { d: 'surus', t: 0, p0: new THREE.Vector3(), q0: new THREE.Quaternion(), p1: new THREE.Vector3(), q1: new THREE.Quaternion(), s: new THREE.Vector3() };
+  function poz(k) {      // 0 oturuş, 1 sırtüstü yatış (gövde arkaya 1,45 rad, kalça yerden 0,17 m, başını kaldırıp ayaklarına bakar)
+    f.govde.position.set(sele.x * (1 - k), lerp(sele.y + 0.085, 0.17, k), lerp(sele.z, 0, k));
+    f.govde.rotation.set(lerp(egim, -1.45, k), 0, 0);
+    f.bas.rotation.set(lerp(-egim * 0.75, 0.6, k), 0, 0);
+    gqi.setFromEuler(f.govde.rotation).invert();
+  }
+  function yatisIK(tt) {      // bacaklar havada hızla pedal çevirir, kollar çırpınır
+    for (const yan of ['L', 'R']) {
+      const sx = yan === 'L' ? 1 : -1, a = tt * 11 + (sx > 0 ? 0 : Math.PI);
+      v1.set(sx * 0.13, 0.62 + 0.13 * Math.cos(a), 0.36 + 0.13 * Math.sin(a));
+      ikCoz(f.bacak[yan], yerel(v1), diz.set(sx * 0.15, 1, 0.3).applyQuaternion(gqi), gqi);
+      v2.set(sx * 0.42, 0.45 + 0.18 * Math.sin(tt * 9 + sx), -0.42 + 0.14 * Math.cos(tt * 7 + sx));
+      ikCoz(f.kol[yan], yerel(v2), dirsek.set(sx, 0.3, 0).applyQuaternion(gqi));
+    }
+  }
+  function sifirla() {      // sürücüyü hemen seleye döndürür (araç değişince, iş bitince)
+    if (dus.d === 'surus') return;
+    t.attach(o); o.position.set(0, 0, 0); o.quaternion.identity(); dus.d = 'surus'; poz(0);
+  }
+  function dusAdim(c, dt) {
+    const devrik = c.devrik > 0 || !!c.devrikUzak;
+    if (dus.d === 'surus') {
+      if (!devrik) { dus.kilit = false; return; }
+      if (dus.kilit || !g.parent || !g.visible) return;      // kilit: geri atladıktan sonra devrik bitene kadar yeniden savrulmaz
+      g.parent.attach(o);
+      dus.p0.copy(o.position); dus.q0.copy(o.quaternion);
+      const s = c.kalkisYon || 1, lx = Math.cos(c.h), lz = -Math.sin(c.h), fx = Math.sin(c.h), fz = Math.cos(c.h);      // dış yan: yerel +x × kalkış yönü
+      const x = c.x + lx * 1.35 * s - fx * 0.25, z = c.z + lz * 1.35 * s - fz * 0.25;
+      dus.p1.set(x, groundH(x, z) + yolUstu(x, z), z);
+      dus.q1.setFromAxisAngle(Y, Math.atan2(-lx * s, -lz * s));      // ayakları bisiklete dönük
+      dus.d = 'ucus'; dus.t = 0;
+    }
+    dus.t += dt;
+    if (dus.d === 'ucus') {
+      const k = Math.min(1, dus.t / 0.45), e = k * k * (3 - 2 * k);
+      o.position.lerpVectors(dus.p0, dus.p1, e); o.position.y += Math.sin(Math.PI * k) * 0.55;
+      o.quaternion.slerpQuaternions(dus.q0, dus.q1, e);
+      poz(e); yatisIK(dus.t);
+      if (k >= 1) { dus.d = 'yatis'; dus.t = 0.45; }
+    } else if (dus.d === 'yatis') {
+      poz(1); yatisIK(dus.t);
+      if (!(c.devrik > 0.55 || c.devrikUzak)) { dus.d = 'atlama'; dus.t = 0; dus.p0.copy(o.position); dus.q0.copy(o.quaternion); }
+    } else {      // atlama: doğrulan bisikletin selesine kavisle
+      const k = Math.min(1, dus.t / 0.45), e = k * k * (3 - 2 * k);
+      t.updateWorldMatrix(true, false); t.matrixWorld.decompose(dus.p1, dus.q1, dus.s);
+      o.position.lerpVectors(dus.p0, dus.p1, e); o.position.y += Math.sin(Math.PI * k) * 0.8;
+      o.quaternion.slerpQuaternions(dus.q0, dus.q1, e);
+      poz(1 - e); oturusIK(-c.steer * 1.15);
+      if (k >= 1) { sifirla(); dus.kilit = true; }
+    }
+  }
+  function anim(c, dt) {
+    const dn = -c.steer * 1.15;
+    gidon.rotation.y = dn;
+    if (!motor) {      // oyuncunun krankı fizikten gelir (itiş nabzı bacakla aynı anda); uzak oyuncuda pedal bayrağından
+      th = c.krank !== undefined ? c.krank : krankAdim(th, c.pedalCev !== undefined ? c.pedalCev : c.vf > 0.5, c.vf || 0, dt);
+      krank.rotation.x = th; pedal.L.rotation.x = -th; pedal.R.rotation.x = -th;
+    }
+    if (dt > 0) dusAdim(c, dt);
+    if (dus.d !== 'surus') { if (dt > 0) yuzAdim(f, 'saskin', dt); return; }
+    // ayakta pedal: kalça seleden kalkar, gövde öne eğilir, basışla yana sallanır
+    ay += ((c.ayakta ? 1 : 0) - ay) * Math.min(1, dt * 7);
+    if (dt > 0 || ay > 0) {
+      f.govde.position.set(sele.x, sele.y + 0.085 + ay * 0.11, sele.z + ay * 0.07);
+      f.govde.rotation.set(egim + ay * 0.24, 0, ay * 0.09 * Math.cos(th));
+      f.bas.rotation.set(-(egim + ay * 0.24) * 0.75, 0, 0);
+      gqi.setFromEuler(f.govde.rotation).invert();
+    }
+    oturusIK(dn);
     if (dt > 0) { const hz = Math.abs(c.vf || 0); if (onceHiz - hz > 3.5 || c.devrik > 0 || c.devrikUzak) sasT = 1.3; else if (sasT > 0) sasT -= dt; onceHiz = hz; yuzAdim(f, sasT > 0 ? 'saskin' : 'notr', dt); }      // ani duruşta (çarpma) ve devrilince şaşırır
   }
   anim({ steer: 0, vf: 0 }, 0);
-  return { group: g, wheels, tail, yuk, anim, iz };
+  return { group: g, wheels, tail, yuk, yukKahvalti, kirikYumurta, anim, iz, sifirla, sur: () => dus.d };
+}
+// yol yüzeyinin araziden yüksekliği (poseCar ile aynı: asfalt 0,15–0,22 m, toprak 0,09 m, kaldırım 0,2 m)
+function yolUstu(x, z) {
+  const rd = roadAt(x, z);
+  return rd && rd.on ? (rd.cls <= 6 ? 0.15 + (6 - rd.cls) * 0.012 : 0.09) : kaldirimda(x, z) ? 0.2 : 0;
 }
 // Kasa rengi (20 Kas 2026; kurucu: "farklı mavi renk seçeneği de olsun"): 'ahsap' doğal tahta, 'mavi' boyalı tahta.
 // Kasa tahtaları GLB'de "ahsap0–4" malzemesindedir; mavi sürüm aynı açık-koyu sırasını korur (her tahta biraz farklı tonda).
@@ -11013,10 +11080,12 @@ function yayaYuru(y, a) {
 // Yüz: duruş işlevleri dt almaz; geçen süre figürün kendi saatinden (y.t) hesaplanır.
 function yayaYuz(y, ifade) { const dt = Math.min(0.1, Math.max(0, y.t - (y.yt === undefined ? y.t : y.yt))); y.yt = y.t; yuzAdim(y.f, ifade, dt); }
 // Ayakta bekleme. durus: 'dur' | 'aski' (çanta askısını tutar) | 'telefon' | 'salla' (el sallar) | 'tasi' (omuzdaki kayağı tutar) | 'urk' (araç yaklaşınca)
+// | 'gul' (üç teker devrilince: bir eli karnında, öbürüyle gösterir, gövdesi gülmekten sarsılır, başı geri)
 function yayaDur(y, durus) {
   const f = y.f, t = y.t, tip = y.tip, gy = 0.938 + 0.004 * Math.sin(t * 1.3);
   f.govde.position.set(0.012 * Math.sin(t * 0.45), gy, 0); f.govde.rotation.set(0.015, 0.05 * Math.sin(t * 0.3), 0.012 * Math.sin(t * 0.45));
   f.bas.rotation.set(durus === 'telefon' ? 0.42 : 0.02, durus === 'telefon' ? -0.12 : 0.25 * Math.sin(t * 0.37 + y.faz), 0);
+  if (durus === 'gul') { const k = Math.sin(t * 17); f.govde.position.y = gy + 0.012 * k; f.govde.rotation.set(-0.1 + 0.035 * k, 0, 0.02 * Math.sin(t * 8.5)); f.bas.rotation.set(-0.28 + 0.06 * k, 0, 0.05 * Math.sin(t * 6)); }
   for (const yan of ['L', 'R']) {
     const sx = yan === 'L' ? 1 : -1;
     ikCoz(f.bacak[yan], _ya.v.set(sx * 0.105, 0.065 - gy, sx * 0.025), _ya.b.set(sx * 0.1, 0.1, 1));
@@ -11026,9 +11095,11 @@ function yayaDur(y, durus) {
     else if (durus === 'salla' && yan === 'L') { v.set(tip.om + 0.16 + 0.1 * Math.sin(t * 7), 0.462 + 0.4, 0.1); b.set(1, -0.5, -0.3); }
     else if (durus === 'tasi' && yan === 'R') { v.set(-tip.om - 0.07, 0.2, 0.0); b.set(-1, -0.4, -0.5); }
     else if (durus === 'urk') { v.set(sx * (tip.om + 0.12), 0.25, 0.22); b.set(sx * 1, -0.5, -0.4); }
+    else if (durus === 'gul' && yan === 'L') { v.set(0.04, -0.02, 0.17); b.set(1, -0.4, -0.2); }      // eli karnında
+    else if (durus === 'gul') { v.set(-0.12, 0.42, 0.5 + 0.02 * Math.sin(t * 17)); b.set(-1, -0.6, -0.2); }      // gösterir
     ikCoz(f.kol[yan], v, b);
   }
-  yayaYuz(y, durus === 'urk' ? 'saskin' : durus === 'salla' ? 'mutlu' : 'notr');
+  yayaYuz(y, durus === 'urk' ? 'saskin' : durus === 'salla' || durus === 'gul' ? 'mutlu' : 'notr');
 }
 // Tezgâh başındaki misafir (kahvaltı salonu). barY, barZ: bar üstünün ve misafir tarafındaki kenarının figür ölçüsündeki yeri.
 // durum: 'idle' (elleri barda bekler) | 'emote-no' (sabırsız: başını sallar, elini açar) | 'emote-yes' (sevinir: başını sallar, el çırpar)
@@ -11137,11 +11208,12 @@ function yayaTick(dt, P) {
     y.t += dt;
     // araç yakında ve hareketliyse dur
     if (d2 < 7 * 7 && pv > 2) y.urk = 1.2; else if (y.urk > 0) y.urk -= dt;
+    if (y.gul > 0) y.gul -= dt;
     let j = y.i + y.yon;
     if (j < 0 || j >= nn) { y.yon = -y.yon; j = y.i + y.yon; y.s = 0; y.bekle = 1 + Math.random() * 2.5; }
     const ax = z[y.i * 3], ay = z[y.i * 3 + 1], az = z[y.i * 3 + 2], bx = z[j * 3], by = z[j * 3 + 1], bz = z[j * 3 + 2];
     const L = Math.hypot(bx - ax, bz - az) || 1, ux = (bx - ax) / L, uz = (bz - az) / L;
-    const yuruyor = y.urk <= 0 && y.bekle <= 0, adim = y.tip.etek ? 0.27 : 0.34;
+    const gulyor = y.gul > 0 && y.gul < y.gulSure, yuruyor = y.urk <= 0 && y.bekle <= 0 && !(y.gul > 0), adim = y.tip.etek ? 0.27 : 0.34;
     if (y.bekle > 0) y.bekle -= dt;
     if (yuruyor) {
       y.s += y.hiz * dt;
@@ -11154,13 +11226,21 @@ function yayaTick(dt, P) {
     const ex = x - P.x, ez = zz - P.z, ed = Math.hypot(ex, ez);
     if (ed < 1.7 && ed > 0.01) { x = P.x + (ex / ed) * 1.7; zz = P.z + (ez / ed) * 1.7; }
     y.x = x; y.z = zz;
-    const hedefH = y.urk > 0 ? Math.atan2(-dx0, -dz0) : Math.atan2(ux, uz);
+    const hedefH = y.urk > 0 || y.gul > 0 ? Math.atan2(-dx0, -dz0) : Math.atan2(ux, uz);      // ürkünce ya da gülünce oyuncuya döner
     y.h += wrapAngle(hedefH - y.h) * Math.min(1, dt * 6);
     y.kok.position.set(x, ay + (by - ay) * u, zz); y.kok.rotation.y = y.h;
     const yakin = d2 < 95 * 95;
-    if (yakin || (y.sira = !y.sira)) { if (yuruyor) yayaYuru(y, adim); else yayaDur(y, y.urk > 0 ? 'urk' : 'dur'); }
+    if (yakin || (y.sira = !y.sira)) { if (yuruyor) yayaYuru(y, adim); else yayaDur(y, gulyor ? 'gul' : y.urk > 0 ? 'urk' : 'dur'); }
     const golge = d2 < 45 * 45;
     if (golge !== y.golge) { y.golge = golge; y.kok.traverse((o) => { if (o.isMesh) o.castShadow = golge; }); }
+  }
+}
+// Üç teker devrilince (21 Kas 2026, komik devrilme): r metre içindeki yayalar durur, oyuncuya döner ve güler (0,2–0,6 sn gecikmeyle, 2,5–3,5 sn).
+function yayaGul(P, r) {
+  for (const y of YAYA.act) {
+    if ((y.x - P.x) ** 2 + (y.z - P.z) ** 2 > r * r) continue;
+    const gec = 0.2 + Math.random() * 0.4, sure = 2.5 + Math.random();
+    y.gul = gec + sure; y.gulSure = sure;      // ilk 'gec' saniye yalnız döner, sonra güler
   }
 }
 function yayaTemizle() { for (const y of YAYA.act) { y.kok.visible = false; YAYA.bos.push(y); } YAYA.act.length = 0; }
@@ -12917,7 +12997,21 @@ function cokKur(o) {
     player.ucTeker = kind !== 'car'; player.esik = kind === 'motor' ? UC.esikMotor : UC.esik; player.iz = v.iz || 0.45;
     player.kalkis = 0; player.devrik = 0; player.devrikA = 0; player.ayakta = false; player.yuklu = false;
     if (player.nefes === undefined) player.nefes = 1;
-    player.trike.yuk.visible = false; player.motor.yuk.visible = false;
+    yukGoster(false); sacikTemizle();
+    if (player.trike.sifirla) player.trike.sifirla();
+    if (player.motor.sifirla) player.motor.sifirla();
+  }
+  // Kasadaki yük: erzak işinde Van kahvaltısı erzakı (yumurta viyolleri, otlu peynir tenekesi, somun, bal, çay, domates), yük işinde çuvallar.
+  function yukGoster(goster, kahvalti) {
+    for (const v of [player.trike, player.motor]) { if (v.yuk) v.yuk.visible = false; if (v.yukKahvalti) v.yukKahvalti.visible = false; }
+    const v = player[player.arac], g = v && ((kahvalti && v.yukKahvalti) || v.yuk);
+    if (goster && g) g.visible = true;
+  }
+  function aktifYuk(v) {
+    v = v || player[player.arac];
+    if (!v) return null;
+    if (v.yukKahvalti && v.yukKahvalti.visible) return v.yukKahvalti;
+    return v.yuk && v.yuk.visible ? v.yuk : null;
   }
   // Araç sahipliği: oyun üç tekerli bisikletle başlar; motorlu üç teker ve araba kasadaki parayla alınır.
   const FIYAT = { trike: 0, motor: 900, car: 3000 }, ARAC_AD = { trike: 'arac.trike', motor: 'arac.motor', car: 'arac.araba' };
@@ -13022,6 +13116,7 @@ function cokKur(o) {
       for (const tur of ['trike', 'motor']) {
         const eski = player[tur], yeni = makeTrikeGLB(src, tur === 'motor');
         yeni.group.visible = eski.group.visible; yeni.yuk.visible = eski.yuk.visible;
+        if (G.goal && G.goal.ozel && G.goal.ozel.erzak && yeni.yukKahvalti && eski.yuk.visible) { yeni.yuk.visible = false; yeni.yukKahvalti.visible = true; }
         scene.remove(eski.group); scene.add(yeni.group); player[tur] = yeni;
         kasaRenk(yeni, player.kasa || 'ahsap');      // seçilen kasa rengi (ahşap ya da mavi)
         if (player.mesh === eski.group) { player.mesh = yeni.group; player.wheels = yeni.wheels; player.tail = yeni.tail; }
@@ -13930,7 +14025,7 @@ function cokKur(o) {
         const st = gl.stages[gl.si];
         gl.x = st.x; gl.z = st.z; gl.ad = st.ad;
         beacon1.position.set(st.x, groundH(st.x, st.z) - 0.5, st.z);
-        if (gl.ozel.yuk) { const yk = player[player.arac].yuk; if (yk) yk.visible = true; } else TUR.visible = false;
+        if (gl.ozel.yuk) yukGoster(true, !!gl.ozel.erzak); else TUR.visible = false;
         hudT = 0;
         flash(T(gl.on + '.bindi'), T(gl.on + '.bindi.alt'), 3);
         return;
@@ -13967,7 +14062,7 @@ function cokKur(o) {
   }
   function finishServis(gl) {
     const ev = gl.ozel, st = gl.stages[gl.stages.length - 1], md = ev.madalya, t = gl.t, on = gl.on;
-    if (ev.yuk) { player.trike.yuk.visible = false; player.motor.yuk.visible = false; } else putTourists(st.kx, st.kz, st.kh);
+    if (ev.yuk) { yukGoster(false); sacikTemizle(); } else putTourists(st.kx, st.kz, st.kh);
     const yol = ev.yuk ? gl.yol : ev.R.L, cp = gl.carpan || 1, gold = yol / (md[0] * cp), silver = yol / (md[1] * cp), bronze = yol / (md[2] * cp);
     const kazanc = Math.round((ev.odeme || 0) * cp * (t <= gold ? 1.5 : t <= silver ? 1.25 : t <= bronze ? 1 : 0.7) * (gl.konfor / 100));
     addMoney(kazanc);
@@ -14058,7 +14153,7 @@ function cokKur(o) {
     flash(T('erzak.basla'), T('erzak.basla.alt'), 3.5);
   }
   function finishErzak(gl) {
-    player.trike.yuk.visible = false; player.motor.yuk.visible = false;
+    yukGoster(false); sacikTemizle();
     const kap = ERZAK_KAP[gl.arac], n = Math.max(1, Math.round((kap * gl.konfor) / 100)), toplam = MUTFAK.erzakEkle(n);
     G.state = 'result';
     $('hud').hidden = true; $('sonuc').hidden = false;
@@ -14274,7 +14369,7 @@ function cokKur(o) {
     player.tbAktif = tbVar && !!pin.turbo && pin.thr > 0 && player.turbo > 0.01 && !player.air;
     player.turbo = player.tbAktif ? Math.max(0, player.turbo - dt / 4.5) : Math.min(1, (player.turbo || 0) + dt / 14);
     nefesAdim(pin, dt, r);
-    player.yuklu = !!(player.ucTeker && player[player.arac].yuk && player[player.arac].yuk.visible);
+    player.yuklu = !!(player.ucTeker && (aktifYuk() || SACIK.parca.length));
     const step = player.ski ? stepSkier : stepCar;
     if (r && r.done) { step(player, idle, dt); }
     else { step(player, pin, dt); if (r && !G.auto) advance(player, r.R); }
@@ -14467,9 +14562,118 @@ function cokKur(o) {
       if (c.nefes <= 0) { c.nefesYok = true; c.ayakta = false; flash(T('uc.nefes'), '', 1.6); }
     } else c.nefes = Math.min(1, c.nefes + dt / (pin.thr > 0 ? 12 : 8));
   }
+  // Komik devrilme: yük saçılır (21 Kas 2026; ilk oyuncular üç teker modunu komik buldu, kurucu: "bunu geliştirmemiz gerek", "Van kahvaltısıyla
+  // ilişkilendirilmeli"). Devrilince kasadaki her parça (çuval ya da kahvaltı erzakı) dış yana savrulur, yere çarpıp seker, bir yüzünün üstüne
+  // yatar. Yumurta viyolü yere sertçe çarpınca yumurtalar kırılır (viyolden yarısı eksilir, yola kırık yumurta düşer). Bisiklet doğrulunca parçalar
+  // kavis çizip kasaya geri uçar. Kırık yumurtalar 40 sn yolda kalır (en çok 24). Ses: teneke tangırtısı, cam tıkırtısı, yumurta çatırtısı, yumuşak düşüş.
+  const SACIK = { parca: [], leke: [], grup: null, v: null, donus: -1 };
+  const _sq = new THREE.Quaternion(), _sv = new THREE.Vector3(), _sb = new THREE.Box3(), _sw = new THREE.Vector3();
+  const _EKSEN = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]].map((a) => new THREE.Vector3(...a)), _YUKARI = new THREE.Vector3(0, 1, 0);
+  function parcaTuru(ad) { return /viyol/.test(ad) ? 'yumurta' : /teneke/.test(ad) ? 'teneke' : /bal/.test(ad) ? 'cam' : /cuval|somun|domates|cay/.test(ad) ? 'yumusak' : 'yumusak'; }
+  function yukSac(v) {
+    const g = aktifYuk(v);
+    if (!g || !g.children.length) return;
+    g.updateWorldMatrix(true, true);
+    const s = player.kalkisYon || 1, lx = Math.cos(player.h), lz = -Math.sin(player.h);      // dış yan (bisikletin yattığı yan)
+    for (const p of g.children) {
+      const k = p.clone(true);
+      k.updateWorldMatrix(false, true); _sb.setFromObject(k); _sb.getSize(_sv);      // yerel boy (klon henüz sahnede değil, dönüşü yok)
+      const ext = [_sv.x, _sv.x, _sv.y, _sv.y, _sv.z, _sv.z], extEn = Math.max(_sv.x, _sv.y, _sv.z) || 1;
+      p.getWorldPosition(k.position); p.getWorldQuaternion(k.quaternion);
+      scene.add(k);
+      const yan = (1.6 + Math.random() * 2.4) * s;
+      SACIK.parca.push({ k, p, vx: player.vx * 0.7 + lx * yan + (Math.random() - 0.5) * 1.6, vy: 2 + Math.random() * 2.6, vz: player.vz * 0.7 + lz * yan + (Math.random() - 0.5) * 1.6,
+        w: new THREE.Vector3((Math.random() - 0.5) * 16, (Math.random() - 0.5) * 9, (Math.random() - 0.5) * 16), tur: parcaTuru(p.name), carpti: false, dur: false, ext, extEn });
+    }
+    g.visible = false; SACIK.grup = g; SACIK.v = v; SACIK.donus = -1;
+  }
+  function sacikSes(tur, hiz) {
+    if (!A.ctx) return;
+    const k = clamp(hiz / 6, 0.25, 1);
+    if (tur === 'teneke') { beep(410 + Math.random() * 60, 0.35, 0.1 * k, 'triangle'); beep(1180 + Math.random() * 90, 0.25, 0.05 * k, 'triangle', 0.01); thud(8 * k); }
+    else if (tur === 'cam') { beep(2400 + Math.random() * 300, 0.16, 0.05 * k, 'sine'); beep(3600, 0.1, 0.025 * k, 'sine', 0.01); }
+    else if (tur === 'yumurta') { for (let i = 0; i < 3; i++) kirikSes({ x: player.x, z: player.z, v: 4 + Math.random() * 3, tur: 'cit' }); }
+    else thud(5 + 6 * k);
+  }
+  function yumurtaKir(pr) {
+    const kaynak = SACIK.v && SACIK.v.kirikYumurta;
+    const yum = []; pr.k.traverse((m) => { if (m.isMesh && /^yumurta/.test(m.name)) yum.push(m); });
+    if (yum.length) yum[Math.floor(Math.random() * yum.length)].visible = false;      // iki yumurta öbeğinden biri gider: viyolün yarısı kırıldı
+    if (!kaynak) return;
+    for (let i = 0; i < 3 + Math.floor(Math.random() * 3); i++) {
+      const x = pr.k.position.x + (Math.random() - 0.5) * 0.9, z = pr.k.position.z + (Math.random() - 0.5) * 0.9, l = kaynak.clone(true);
+      l.position.set(x, groundH(x, z) + yolUstu(x, z) + 0.004, z); l.rotation.y = Math.random() * Math.PI * 2; l.scale.setScalar(0.8 + Math.random() * 0.6);
+      scene.add(l); SACIK.leke.push({ l, t: 40 });
+      if (SACIK.leke.length > 24) scene.remove(SACIK.leke.shift().l);
+    }
+  }
+  function sacikAdim(dt) {
+    for (let i = SACIK.leke.length - 1; i >= 0; i--) { const e = SACIK.leke[i]; e.t -= dt; if (e.t <= 0 || (e.l.position.x - player.x) ** 2 + (e.l.position.z - player.z) ** 2 > 200 * 200) { scene.remove(e.l); SACIK.leke.splice(i, 1); } }
+    if (!SACIK.parca.length) return;
+    // bisiklet doğrulunca (devrik bitti) parçalar kasaya döner: her biri 0,06 sn arayla, 0,7 sn'de kavisle
+    if (SACIK.donus < 0 && !(player.devrik > 0)) SACIK.donus = 0;
+    if (SACIK.donus >= 0) {
+      SACIK.donus += dt;
+      let bitti = true;
+      SACIK.parca.forEach((pr, i) => {
+        const k = clamp((SACIK.donus - i * 0.06) / 0.7, 0, 1);
+        if (k < 1) bitti = false;
+        if (k <= 0) return;
+        if (!pr.p0) { pr.p0 = pr.k.position.clone(); pr.q0 = pr.k.quaternion.clone(); }
+        pr.p.updateWorldMatrix(true, false); pr.p.getWorldPosition(_sv); pr.p.getWorldQuaternion(_sq);
+        const e = k * k * (3 - 2 * k);
+        pr.k.position.lerpVectors(pr.p0, _sv, e); pr.k.position.y += Math.sin(Math.PI * k) * 1.4;
+        pr.k.quaternion.slerpQuaternions(pr.q0, _sq, e);
+      });
+      if (bitti) {
+        const g = SACIK.grup, isteniyor = G.goal && G.goal.ozel && G.goal.ozel.yuk && G.goal.si > 0;
+        sacikTemizle(true);
+        if (g && isteniyor) g.visible = true;
+      }
+      return;
+    }
+    // uçuş: yerçekimi, yere çarpınca seker, sürtünür, bir yüzünün üstüne yatar
+    for (const pr of SACIK.parca) {
+      if (pr.dur) continue;
+      const k = pr.k;
+      pr.vy -= 13 * dt;
+      k.position.x += pr.vx * dt; k.position.y += pr.vy * dt; k.position.z += pr.vz * dt;
+      const wl = pr.w.length();
+      if (wl > 1e-3) { _sq.setFromAxisAngle(_sw.copy(pr.w).divideScalar(wl), wl * dt); k.quaternion.premultiply(_sq); }
+      k.updateWorldMatrix(false, true);
+      _sb.setFromObject(k);
+      const zemin = groundH(k.position.x, k.position.z) + yolUstu(k.position.x, k.position.z);
+      if (_sb.min.y < zemin) {
+        k.position.y += zemin - _sb.min.y;
+        if (pr.vy < 0) {
+          const hiz = -pr.vy;
+          if (!pr.carpti || hiz > 2) { sacikSes(pr.tur, hiz); if (pr.tur === 'yumurta' && !pr.kirik && hiz > 2.5) { pr.kirik = true; yumurtaKir(pr); } }
+          pr.carpti = true;
+          pr.vy = hiz > 1.2 ? hiz * 0.28 : 0;
+          pr.vx *= 0.55; pr.vz *= 0.55; pr.w.multiplyScalar(0.5);
+        }
+        // yerde: en yukarı bakan yerel ekseni dünyanın yukarısına çevir (parça bir yüzünün üstüne yatar)
+        let en = -2, eksen = null, enD = 0;
+        _EKSEN.forEach((a, i) => { const d = _sw.copy(a).applyQuaternion(k.quaternion).dot(_YUKARI), puan = d + 0.6 * (1 - pr.ext[i] / pr.extEn); if (puan > en) { en = puan; eksen = a; enD = d; } });      // ince yönü yukarı bakan (geniş yüzü yerde) eksen öne çıkar
+        _sq.setFromUnitVectors(_sw.copy(eksen).applyQuaternion(k.quaternion), _YUKARI).multiply(k.quaternion);
+        k.quaternion.slerp(_sq, Math.min(1, dt * 6));
+        pr.w.multiplyScalar(Math.max(0, 1 - dt * 5));
+        pr.vx *= Math.max(0, 1 - dt * 3); pr.vz *= Math.max(0, 1 - dt * 3);
+        if (pr.vy === 0 && Math.hypot(pr.vx, pr.vz) < 0.15 && enD > 0.995) pr.dur = true;
+      }
+    }
+  }
+  function sacikTemizle(korunsunLeke) {
+    for (const pr of SACIK.parca) scene.remove(pr.k);
+    SACIK.parca.length = 0; SACIK.grup = null; SACIK.donus = -1;
+    if (!korunsunLeke) { for (const e of SACIK.leke) scene.remove(e.l); SACIK.leke.length = 0; }
+  }
   // Üç teker devrildi: gürültü, uyarı; yük taşınıyorsa yük 35 puan zarar görür
   function devrildi() {
     thud(18); beep(240, 0.3, 0.14, 'square'); beep(170, 0.4, 0.12, 'square', 0.08);
+    G.yavas = 0.75; G.sars = 0.45;      // ağır çekim (gerçek zamanla 0,75 sn, 0,35 hız) ve kamera sarsıntısı
+    yukSac(player[player.arac]);
+    yayaGul(player, 35);      // yakındaki yayalar dönüp güler (src/yaya.js)
     const gl = G.goal;
     if (gl && gl.konfor !== undefined && gl.si > 0) gl.konfor = Math.max(0, gl.konfor - 35);
     hudT = 0;
@@ -14885,7 +15089,9 @@ function cokKur(o) {
       if (renderer.getPixelRatio() !== pr) { renderer.setPixelRatio(pr); renderer.setSize(window.innerWidth, window.innerHeight, false); PERF.boyut = (PERF.boyut || 0) + 1; }
     }
     if (!PERF.gl) gpuKur();
-    const dt = Math.min(0.1, (now - last) / 1000);
+    let dt = Math.min(0.1, (now - last) / 1000);
+    if (G.yavas > 0) { G.yavas -= dt; dt *= 0.35; }      // devrilince kısa ağır çekim
+    if (G.dondur) dt = 0;      // sınama: sahneyi dondurur (görüntü almak için)
     last = now; G.t += dt;
     pollPad();
     const driving = G.state === 'free' || G.state === 'race' || G.state === 'count';
@@ -14906,6 +15112,7 @@ function cokKur(o) {
       if (TUR && TUR.visible && TUR.userData.uye) yayaGrupTick(TUR, dt, (TUR.position.x - player.x) ** 2 + (TUR.position.z - player.z) ** 2 < 60 * 60);
     }
     const f = updateCamera(dt);
+    if (G.sars > 0) { G.sars -= dt; const k = G.sars * 0.35; camera.position.x += (Math.random() - 0.5) * k; camera.position.y += (Math.random() - 0.5) * k; camera.position.z += (Math.random() - 0.5) * k; }
     vakitAdim(dt);
     parcaGorunur(dt, false);
     camera.getWorldDirection(_cd); TCAM.x = camera.position.x; TCAM.z = camera.position.z; TCAM.fx = _cd.x; TCAM.fz = _cd.z;
@@ -14917,6 +15124,7 @@ function cokKur(o) {
     env.sky.material.uniforms.uTime.value = G.t;
     if (CIM) CIM.adim(camera, G.t);
     kirikAdim(dt, player);      // devrilen çit ve direkler
+    sacikAdim(dt);      // devrilince saçılan yük ve yoldaki kırık yumurtalar
     {      // turbo: egzoz alevi ve açılış sesi
       const v = player[player.arac], tb = !!player.tbAktif && !player.ski;
       if (v && v.group && (player.arac === 'car' || player.arac === 'motor')) {
@@ -14979,6 +15187,7 @@ function cokKur(o) {
     kediNesne: (i) => cats[i] && cats[i].kedi,
     tus: (k, v) => { keys[k] = !!v; }, girisGec: () => girisBitir(),
     // performans: durum (PERF), ölçüm turu, denetleyiciye yapay kare besleme (sınama: aynı pencere mantığı, gerçek kare gerekmez)
+    sacik: SACIK,      // komik devrilme: saçılan parçalar ve kırık yumurtalar
     perf: PERF, perfTuru, perfBesle(ms, cpu, gpu, n, surus) { const t = performance.now(); for (let i = 0; i < n; i++) { perfKayit(ms, cpu, gpu); perfAyarla(surus !== false, t + i * ms); } return { olcek: +PERF.olcek.toFixed(3), tavan: PERF.tavan, kilit: PERF.kilitT > 0 }; }, get giris() { return GIRIS ? { t: GIRIS.t, dur: GIRIS.dur } : null; },
     get yerYazi() { return yerYazi ? { L: yerYazi.L, ad: yerYazi.ad, opak: yerYazi.mesh.material.opacity } : null; }, viraj: () => Object.assign({}, virajAdim(player, G.race)), rotaEgrilik,
     kirik: () => ({ oge: KIRIK.oge.length, zincir: KIRIK.zincir.length, aktif: KIRIK.aktif.length, say: Object.assign({}, KIRIK.say) }),      // yıkılabilir çit ve direkler
