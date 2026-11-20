@@ -69,8 +69,10 @@ button:focus-visible { outline: 2px solid var(--gol); outline-offset: 2px; }
 .hiz-yan { display: flex; flex-direction: column; gap: 4px; padding-bottom: 2px; }
 #vites { font-family: var(--f-baslik); font-weight: 700; font-size: 22px; line-height: 1; border: 2px solid var(--yazi); width: 30px; height: 30px; display: grid; place-items: center; }
 .dokun { display: none; pointer-events: auto; gap: 10px; align-self: end; }
-.dokun button { width: 68px; height: 68px; border-radius: 50%; background: rgba(11, 22, 34, 0.6); border: 2px solid rgba(243, 239, 230, 0.5); font-family: var(--f-baslik); font-weight: 700; font-size: 17px; touch-action: none; }
-.dokun button:active { background: var(--kehribar); color: #1a1206; }
+/* minimalist saydam kumanda: neredeyse saydam daire, ince beyaz çerçeve, beyaz simge; karlı zeminde seçilsin diye hafif koyu ton ve gölge */
+.dokun button { width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; padding: 0; background: rgba(16, 20, 26, 0.16); border: 1.5px solid rgba(255, 255, 255, 0.55); color: rgba(255, 255, 255, 0.92); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12); touch-action: none; -webkit-tap-highlight-color: transparent; transition: background 0.08s, border-color 0.08s, transform 0.08s; }
+.dokun .ikon { width: 28px; height: 28px; filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.45)); }
+.dokun button.basili { background: rgba(255, 255, 255, 0.3); border-color: #fff; transform: scale(0.94); }
 .dokun-sol { grid-area: 3 / 1; }
 .dokun-sag { grid-area: 3 / 3; justify-self: end; margin-bottom: 96px; }
 @media (pointer: coarse) { .dokun { display: flex; } #ipucu { grid-area: 2 / 1 / 3 / 4; justify-self: center; align-self: end; max-width: 90vw; } }
@@ -78,7 +80,8 @@ button:focus-visible { outline: 2px solid var(--gol); outline-offset: 2px; }
    Ses düğmesi gizli (ses Ayarlar'da); yarış adı gizli (başlangıçta ve sonuç ekranında yazılı). */
 @media (pointer: coarse) {
   .dugmeler { flex-direction: column; flex-wrap: nowrap; gap: 8px; }
-  .dugmeler button { width: 44px; height: 44px; padding: 0; border-radius: 50%; display: grid; place-items: center; background: rgba(11, 22, 34, 0.55); border: 1px solid rgba(243, 239, 230, 0.35); }
+  .dugmeler button { width: 44px; height: 44px; padding: 0; border-radius: 50%; display: grid; place-items: center; background: rgba(16, 20, 26, 0.2); border: 1.5px solid rgba(255, 255, 255, 0.55); color: rgba(255, 255, 255, 0.92); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12); }
+  .dugmeler .ikon { filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.45)); }
   .dugmeler .ikon { display: block; width: 22px; height: 22px; }
   .dugmeler .yazi { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
   #btn-ses { display: none; }
@@ -121,7 +124,39 @@ button:focus-visible { outline: 2px solid var(--gol); outline-offset: 2px; }
 }
 
 /* ---------- menü ---------- */
-#menu { display: flex; background: linear-gradient(90deg, rgba(11, 22, 34, 0.94) 0, rgba(11, 22, 34, 0.86) 380px, rgba(11, 22, 34, 0) 760px); overflow-y: auto; touch-action: pan-y; }
+#menu { display: flex; flex-direction: column; background: linear-gradient(0deg, rgba(8, 14, 22, 0.92) 0, rgba(8, 14, 22, 0.66) 32%, rgba(8, 14, 22, 0) 62%), linear-gradient(180deg, rgba(8, 14, 22, 0.42) 0, rgba(8, 14, 22, 0) 18%); overflow-y: auto; touch-action: pan-y; }
+#menu .menu-ic { margin: auto 0 0; gap: 0; }
+.m-ust { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); inset-inline-end: max(16px, env(safe-area-inset-right, 0px)); display: flex; gap: 8px; align-items: center; z-index: 2; }
+.m-ust .dil-sec { border-radius: 999px; overflow: hidden; border: 1.5px solid rgba(255, 255, 255, 0.5); background: rgba(16, 20, 26, 0.22); }
+.m-ust .dil-sec button { border: 0; margin: 0; padding: 7px 12px 8px; font-size: 14px; min-width: 40px; background: transparent; }
+.m-ust .dil-sec button[aria-pressed="true"] { background: rgba(255, 255, 255, 0.9); color: #0b1622; }
+.m-yuvarlak { width: 40px; height: 40px; flex: none; border-radius: 50%; display: grid; place-items: center; padding: 0; background: rgba(16, 20, 26, 0.22); border: 1.5px solid rgba(255, 255, 255, 0.55); color: #fff; }
+.m-yuvarlak svg { width: 22px; height: 22px; }
+.m-yuvarlak:hover { border-color: var(--kehribar); color: var(--kehribar); }
+.m-panel { display: flex; flex-direction: column; gap: 14px; }
+.m-panel[hidden] { display: none; }
+.m-dugmeler { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+.m-dugmeler .birincil, .m-sayfa .birincil { width: 100%; padding-block: 14px 15px; border-radius: 6px; }
+.m-ikili { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.m-ikili .ikincil { border-radius: 6px; background: rgba(255, 255, 255, 0.06); border: 1.5px solid rgba(255, 255, 255, 0.55); font-size: 17px; padding-inline: 10px; }
+.m-metin { background: transparent; border: 0; color: var(--soluk); font-size: 14px; padding: 4px; align-self: flex-start; }
+.m-kunye { margin: 2px 0 0; font-size: 11px; color: var(--soluk); }
+.m-sayfa { background: rgba(8, 14, 22, 0.78); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 14px; padding: 14px 16px 16px; max-height: calc(100vh - 120px); overflow-y: auto; }
+.m-baslik { display: flex; align-items: center; gap: 12px; }
+.m-baslik h2 { margin: 0; font-family: var(--f-baslik); font-style: italic; font-weight: 800; font-size: 28px; text-transform: uppercase; letter-spacing: 0.01em; }
+.m-sayfa #etkinlikler { border-bottom: 0; }
+.m-sayfa .seg { gap: 8px; }
+.m-sayfa .seg button { margin: 0; border-radius: 8px; border: 1.5px solid rgba(255, 255, 255, 0.28); background: rgba(255, 255, 255, 0.04); padding: 9px 14px 10px; font-size: 17px; }
+.m-sayfa .seg button[aria-pressed="true"] { background: var(--kehribar); border-color: var(--kehribar); color: #1a1206; }
+@media (pointer: coarse) { .tus-yardim { display: none; } }
+/* geniş ekran (masaüstü, yatay tablet): menü sol altta dar bir sütun, sahne ekranın çoğunu kaplar; perde soldan ve alttan */
+@media (min-width: 900px) {
+  #menu { background: linear-gradient(90deg, rgba(8, 14, 22, 0.82) 0, rgba(8, 14, 22, 0.5) 420px, rgba(8, 14, 22, 0) 760px), linear-gradient(0deg, rgba(8, 14, 22, 0.55) 0, rgba(8, 14, 22, 0) 40%); padding-inline: max(44px, env(safe-area-inset-left, 0px)); padding-bottom: 40px; }
+  #menu h1 { font-size: clamp(56px, 7vw, 84px); }
+  #menu .menu-ic { max-width: 400px; }
+}
+[dir="rtl"] #menu { background: linear-gradient(0deg, rgba(8, 14, 22, 0.92) 0, rgba(8, 14, 22, 0.66) 32%, rgba(8, 14, 22, 0) 62%), linear-gradient(180deg, rgba(8, 14, 22, 0.42) 0, rgba(8, 14, 22, 0) 18%); }
+@media (min-width: 900px) { [dir="rtl"] #menu { background: linear-gradient(270deg, rgba(8, 14, 22, 0.82) 0, rgba(8, 14, 22, 0.5) 420px, rgba(8, 14, 22, 0) 760px), linear-gradient(0deg, rgba(8, 14, 22, 0.55) 0, rgba(8, 14, 22, 0) 40%); } }
 .menu-ic { width: 100%; max-width: 440px; margin-block: auto; display: flex; flex-direction: column; gap: 18px; padding-block: 10px; }
 .konum { color: var(--gol); }
 h1 { margin: 0; font-family: var(--f-baslik); font-style: italic; font-weight: 800; font-size: clamp(52px, 11vw, 92px); line-height: 0.84; letter-spacing: -0.005em; text-transform: uppercase; text-wrap: balance; }
@@ -162,7 +197,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
 :root[lang="fa"] { --f-baslik: "Vazirmatn", "Tahoma", "Arial", sans-serif; --f-govde: "Vazirmatn", "Tahoma", "Arial", sans-serif; }
 :root[lang="fa"] body * { font-style: normal !important; letter-spacing: 0 !important; }
 :root[lang="fa"] h1 { line-height: 1.15; } :root[lang="fa"] #sonuc-baslik, :root[lang="fa"] .ayar-baslik { line-height: 1.2; }
-[dir="rtl"] #menu, [dir="rtl"] #ayarlar { background: linear-gradient(270deg, rgba(11, 22, 34, 0.95) 0, rgba(11, 22, 34, 0.87) 380px, rgba(11, 22, 34, 0) 760px); }
+[dir="rtl"] #ayarlar { background: linear-gradient(270deg, rgba(11, 22, 34, 0.95) 0, rgba(11, 22, 34, 0.87) 380px, rgba(11, 22, 34, 0) 760px); }
 [dir="rtl"] #sonuc { background: linear-gradient(270deg, rgba(11, 22, 34, 0.93) 0, rgba(11, 22, 34, 0.8) 380px, rgba(11, 22, 34, 0.15) 800px); }
 #hud { direction: ltr; }   /* gösterge yerleşimi her dilde aynı: direksiyon solda, gaz sağda */
 .yer, #mesaj, #ipucu, #yaris-ad, #yaris-tur, .kedi { unicode-bidi: plaintext; }
@@ -283,9 +318,10 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
   </div>
   <div id="mesaj" aria-live="polite"></div>
   <div id="yan-cevir" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 14a9 9 0 0 0 9 7.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9.5 19.5l2.6 2-1.4 2.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="hud.yanCevir">Daha geniş görüş için telefonu yan çevir</span></div>
-  <div class="dokun dokun-sol"><button type="button" data-t="l" aria-label="Sola" data-i18n-aria="hud.sola">◀</button><button type="button" data-t="r" aria-label="Sağa" data-i18n-aria="hud.saga">▶</button></div>
+  <!-- Dokunmatik kumanda: saydam, ince çerçeveli daireler ve sade simgeler; adlar ekran okuyucuya açık (aria-label). -->
+  <div class="dokun dokun-sol"><button type="button" data-t="l" aria-label="Sola" data-i18n-aria="hud.sola"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" data-t="r" aria-label="Sağa" data-i18n-aria="hud.saga"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
   <button id="ipucu" type="button" hidden></button>
-  <div class="dokun dokun-sag"><button type="button" data-t="h" data-i18n="hud.el" data-i18n-aria="hud.elFreni">El</button><button type="button" data-t="b" data-i18n="hud.fren">Fren</button><button type="button" data-t="g" data-i18n="hud.gaz">Gaz</button></div>
+  <div class="dokun dokun-sag"><button type="button" data-t="h" aria-label="El freni" data-i18n-aria="hud.elFreni"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M10.2 16.6V7.6h2.9a2.55 2.55 0 0 1 0 5.1h-2.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" data-t="b" aria-label="Fren" data-i18n-aria="hud.fren"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.2" y="7.2" width="15.6" height="10.4" rx="2.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.2 10.4v4M12 10.4v4M15.8 10.4v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button><button type="button" data-t="g" aria-label="Gaz" data-i18n-aria="hud.gaz"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="2.8" width="8" height="18.4" rx="2.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10.6 7.6h2.8M10.6 11.8h2.8M10.6 16h2.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
   <div class="sag-alt">
     <div id="hiz-n">0</div>
     <div class="hiz-yan"><div id="vites">B</div><div class="etiket" data-i18n="hud.kmsa">km/sa</div></div>
@@ -293,45 +329,59 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
 </div>
 
 <div id="menu" class="kat" hidden>
-  <div class="menu-ic">
+  <!-- Ana menü (20 Kas 2026, kurucu: "arayüz çok karışık, modern ve minimalistik olsun"): arka planda drone çekimi; ana ekranda yalnız başlık ve
+       üç eylem; bölge, araç ve yarış listesi alt sayfalarda. Perde yalnız altta, sahne açıkta. -->
+  <div class="m-ust">
     <div class="seg dil-sec" role="group" aria-label="Dil · زبان · Language">
-      <button type="button" id="dil-tr" data-dil="tr" aria-pressed="true" lang="tr">Türkçe</button>
-      <button type="button" id="dil-fa" data-dil="fa" aria-pressed="false" lang="fa">فارسی</button>
-      <button type="button" id="dil-en" data-dil="en" aria-pressed="false" lang="en">English</button>
+      <button type="button" id="dil-tr" data-dil="tr" aria-pressed="true" lang="tr" aria-label="Türkçe">TR</button>
+      <button type="button" id="dil-fa" data-dil="fa" aria-pressed="false" lang="fa" aria-label="فارسی">فا</button>
+      <button type="button" id="dil-en" data-dil="en" aria-pressed="false" lang="en" aria-label="English">EN</button>
     </div>
-    <div class="etiket konum" data-i18n="menu.konum">İpekyolu · Tuşba — 38,50° K 43,34° D</div>
-    <h1 data-i18n-html="menu.baslik">Van <em>Kale</em> Rallisi</h1>
-    <p class="tanitim" data-i18n="menu.tanitim">Gerçek Van sokaklarında, kalenin gölgesinde yarış. Göl kıyısından Eski Van’a kadar şehir açık.</p>
-    <div id="kasa" class="kasa"></div>
-    <div class="ana-dugmeler">
-      <button id="btn-devam" class="birincil" type="button" hidden data-i18n="menu.devam">Devam et</button>
-      <button id="btn-hikaye" class="birincil" type="button">Hikâye</button>
-      <button id="btn-serbest" class="ikincil" type="button" data-i18n="menu.serbest">Serbest sürüş</button>
-      <button id="btn-ayarlar" class="ikincil" type="button" data-i18n="menu.ayarlar">Ayarlar</button>
-      <button id="btn-cikis" class="ikincil" type="button" hidden data-i18n="menu.cikis">Çıkış</button>
-    </div>
-    <div class="bolge-sec">
-      <div class="etiket" id="lbl-bolge" data-i18n="menu.bolgeSec">Serbest sürüş bölgesi</div>
-      <div class="seg" role="group" aria-labelledby="lbl-bolge">
-        <button type="button" id="bolge-van" data-bolge="van" aria-pressed="true" data-i18n="bolge.van">Van Kalesi</button>
-        <button type="button" id="bolge-abali" data-bolge="abali" aria-pressed="false" data-i18n="bolge.abali">Abalı</button>
-        <button type="button" id="bolge-kampus" data-bolge="kampus" aria-pressed="false" data-i18n="bolge.kampus">Kampüs</button>
+    <button id="btn-ayarlar" type="button" class="m-yuvarlak" data-i18n-aria="menu.ayarlar" aria-label="Ayarlar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.00 9.60 L21.43 10.20 L21.43 13.80 L19.00 14.40 L18.65 15.26 L19.94 17.40 L17.40 19.94 L15.26 18.65 L14.40 19.00 L13.80 21.43 L10.20 21.43 L9.60 19.00 L8.74 18.65 L6.60 19.94 L4.06 17.40 L5.35 15.26 L5.00 14.40 L2.57 13.80 L2.57 10.20 L5.00 9.60 L5.35 8.74 L4.06 6.60 L6.60 4.06 L8.74 5.35 L9.60 5.00 L10.20 2.57 L13.80 2.57 L14.40 5.00 L15.26 5.35 L17.40 4.06 L19.94 6.60 L18.65 8.74 Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
+  </div>
+  <div class="menu-ic">
+    <section class="m-panel" data-panel="ana">
+      <div class="etiket konum" data-i18n="menu.konum">İpekyolu · Tuşba — 38,50° K 43,34° D</div>
+      <h1 data-i18n-html="menu.baslik">Van <em>Kale</em> Rallisi</h1>
+      <p class="tanitim" data-i18n="menu.tanitim">Gerçek Van sokaklarında, kalenin gölgesinde yarış. Göl kıyısından Eski Van’a kadar şehir açık.</p>
+      <div id="kasa" class="kasa"></div>
+      <div class="m-dugmeler">
+        <button id="btn-devam" class="birincil" type="button" hidden data-i18n="menu.devam">Devam et</button>
+        <button id="btn-hikaye" class="birincil" type="button">Hikâye</button>
+        <div class="m-ikili">
+          <button id="btn-serbest" class="ikincil" type="button" data-i18n="menu.serbest">Serbest sürüş</button>
+          <button id="btn-yarislar" class="ikincil" type="button" data-i18n="menu.yarislar">Yarışlar</button>
+        </div>
+        <button id="btn-cikis" class="m-metin" type="button" hidden data-i18n="menu.cikis">Çıkış</button>
       </div>
-    </div>
-    <div class="bolge-sec">
-      <div class="etiket" id="lbl-arac" data-i18n="menu.arac">Araç</div>
-      <div class="seg" role="group" aria-labelledby="lbl-arac">
-        <button type="button" id="arac-trike" data-arac="trike" aria-pressed="true">Üç teker</button>
-        <button type="button" id="arac-motor" data-arac="motor" aria-pressed="false">Motorlu üç teker</button>
-        <button type="button" id="arac-araba" data-arac="car" aria-pressed="false">Araba</button>
+      <p class="m-kunye">© OpenStreetMap · SRTM · Poly Haven</p>
+    </section>
+    <section class="m-panel m-sayfa" data-panel="serbest" hidden>
+      <div class="m-baslik"><button type="button" class="m-yuvarlak" data-panel-git="ana" data-i18n-aria="ayar.geri" aria-label="Geri"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2 data-i18n="menu.serbest">Serbest sürüş</h2></div>
+      <div class="bolge-sec">
+        <div class="etiket" id="lbl-bolge" data-i18n="menu.bolgeSec">Serbest sürüş bölgesi</div>
+        <div class="seg" role="group" aria-labelledby="lbl-bolge">
+          <button type="button" id="bolge-van" data-bolge="van" aria-pressed="true" data-i18n="bolge.van">Van Kalesi</button>
+          <button type="button" id="bolge-abali" data-bolge="abali" aria-pressed="false" data-i18n="bolge.abali">Abalı</button>
+          <button type="button" id="bolge-kampus" data-bolge="kampus" aria-pressed="false" data-i18n="bolge.kampus">Kampüs</button>
+        </div>
       </div>
-    </div>
-    <div>
-      <div class="etiket" data-i18n="menu.yarislar">Yarışlar</div>
+      <div class="bolge-sec">
+        <div class="etiket" id="lbl-arac" data-i18n="menu.arac">Araç</div>
+        <div class="seg" role="group" aria-labelledby="lbl-arac">
+          <button type="button" id="arac-trike" data-arac="trike" aria-pressed="true">Üç teker</button>
+          <button type="button" id="arac-motor" data-arac="motor" aria-pressed="false">Motorlu üç teker</button>
+          <button type="button" id="arac-araba" data-arac="car" aria-pressed="false">Araba</button>
+        </div>
+      </div>
+      <button id="btn-sur" class="birincil" type="button" data-i18n="menu.sur">Sür</button>
+    </section>
+    <section class="m-panel m-sayfa" data-panel="yaris" hidden>
+      <div class="m-baslik"><button type="button" class="m-yuvarlak" data-panel-git="ana" data-i18n-aria="ayar.geri" aria-label="Geri"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2 data-i18n="menu.yarislar">Yarışlar</h2></div>
       <div id="etkinlikler"></div>
-    </div>
-    <p class="kucuk" data-i18n-html="menu.tuslar"><b>W A S D</b> ya da <b>ok tuşları</b> sürüş · <b>Boşluk</b> el freni · <b>R</b> yola dön · <b>C</b> kamera · <b>H</b> korna · <b>N</b> ses · <b>M</b> menü. Oyun kolu: sol çubuk, RT gaz, LT fren, A el freni, B yola dön, Y kamera.</p>
-    <p class="kucuk" data-i18n="menu.kunye">Sokaklar, binalar ve surlar: © OpenStreetMap katkıcıları (ODbL). Yükseklik: SRTM, Mapzen arazi karoları. Dokular: Poly Haven (CC0). Kale kayasının biçimi OSM sınırından yeniden kurulmuştur.</p>
+      <p class="kucuk tus-yardim" data-i18n-html="menu.tuslar"><b>W A S D</b> ya da <b>ok tuşları</b> sürüş · <b>Boşluk</b> el freni · <b>R</b> yola dön · <b>C</b> kamera · <b>H</b> korna · <b>N</b> ses · <b>M</b> menü. Oyun kolu: sol çubuk, RT gaz, LT fren, A el freni, B yola dön, Y kamera.</p>
+      <p class="kucuk" data-i18n="menu.kunye">Sokaklar, binalar ve surlar: © OpenStreetMap katkıcıları (ODbL). Yükseklik: SRTM, Mapzen arazi karoları. Dokular: Poly Haven (CC0). Kale kayasının biçimi OSM sınırından yeniden kurulmuştur.</p>
+    </section>
   </div>
 </div>
 
@@ -6172,7 +6222,7 @@ const DIL = {
     'menu.konum': 'İpekyolu · Tuşba — 38,50° K 43,34° D', 'menu.baslik': 'Van <em>Kale</em> Rallisi',
     'menu.tanitim': 'Gerçek Van sokaklarında, kalenin gölgesinde yarış. Göl kıyısından Eski Van’a kadar şehir açık.',
     'menu.devam': 'Devam et', 'menu.hikaye': 'Hikâye', 'menu.hikaye.bolum': 'Hikâye · Bölüm {0}: {1}', 'menu.hikaye.bastan': 'Hikâye · baştan',
-    'menu.serbest': 'Serbest sürüş', 'menu.ayarlar': 'Ayarlar', 'menu.cikis': 'Çıkış', 'menu.bolgeSec': 'Serbest sürüş bölgesi', 'menu.yarislar': 'Yarışlar',
+    'menu.serbest': 'Serbest sürüş', 'menu.ayarlar': 'Ayarlar', 'menu.cikis': 'Çıkış', 'menu.bolgeSec': 'Serbest sürüş bölgesi', 'menu.yarislar': 'Yarışlar', 'menu.sur': 'Sür',
     'menu.tuslar': '<b>W A S D</b> ya da <b>ok tuşları</b> sürüş · <b>Boşluk</b> el freni · <b>R</b> yola dön · <b>C</b> kamera · <b>H</b> korna · <b>N</b> ses · <b>M</b> menü. Oyun kolu: sol çubuk, RT gaz, LT fren, A el freni, B yola dön, Y kamera.',
     'menu.kunye': 'Sokaklar, binalar ve surlar: © OpenStreetMap katkıcıları (ODbL). Yükseklik: SRTM, Mapzen arazi karoları. Dokular: Poly Haven (CC0). Kale kayasının biçimi OSM sınırından yeniden kurulmuştur.',
     'etk.km': 'km', 'etk.tur': '{0} tur', 'etk.zamanaKarsi': 'zamana karşı', 'etk.rakip': '{0} rakip', 'etk.enIyi': 'en iyi {0}',
@@ -6319,7 +6369,7 @@ const DIL = {
     'menu.konum': 'İpekyolu · Tuşba — 38.50° N 43.34° E', 'menu.baslik': 'Van <em>Castle</em> Rally',
     'menu.tanitim': 'Race on the real streets of Van, in the shadow of the castle. The city is open from the lake shore to Old Van.',
     'menu.devam': 'Continue', 'menu.hikaye': 'Story', 'menu.hikaye.bolum': 'Story · Chapter {0}: {1}', 'menu.hikaye.bastan': 'Story · restart',
-    'menu.serbest': 'Free roam', 'menu.ayarlar': 'Settings', 'menu.cikis': 'Quit', 'menu.bolgeSec': 'Free roam region', 'menu.yarislar': 'Races',
+    'menu.serbest': 'Free roam', 'menu.ayarlar': 'Settings', 'menu.cikis': 'Quit', 'menu.bolgeSec': 'Free roam region', 'menu.yarislar': 'Races', 'menu.sur': 'Drive',
     'menu.tuslar': '<b>W A S D</b> or <b>arrow keys</b> drive · <b>Space</b> handbrake · <b>R</b> back to road · <b>C</b> camera · <b>H</b> horn · <b>N</b> sound · <b>M</b> menu. Gamepad: left stick, RT throttle, LT brake, A handbrake, B back to road, Y camera.',
     'menu.kunye': 'Streets, buildings and walls: © OpenStreetMap contributors (ODbL). Elevation: SRTM, Mapzen terrain tiles. Textures: Poly Haven (CC0). The shape of the castle rock is rebuilt from the OSM outline.',
     'etk.km': 'km', 'etk.tur': '{0} laps', 'etk.zamanaKarsi': 'time trial', 'etk.rakip': '{0} rivals', 'etk.enIyi': 'best {0}',
@@ -6466,7 +6516,7 @@ const DIL = {
     'menu.konum': 'ایپک‌یولو · توشبا — 38.50° شمالی، 43.34° شرقی', 'menu.baslik': 'رالی <em>قلعه</em> وان',
     'menu.tanitim': 'در خیابان‌های واقعی وان، زیر سایه قلعه مسابقه بده. شهر از ساحل دریاچه تا وان قدیم باز است.',
     'menu.devam': 'ادامه', 'menu.hikaye': 'داستان', 'menu.hikaye.bolum': 'داستان · فصل {0}: {1}', 'menu.hikaye.bastan': 'داستان · از نو',
-    'menu.serbest': 'رانندگی آزاد', 'menu.ayarlar': 'تنظیمات', 'menu.cikis': 'خروج', 'menu.bolgeSec': 'منطقه رانندگی آزاد', 'menu.yarislar': 'مسابقه‌ها',
+    'menu.serbest': 'رانندگی آزاد', 'menu.ayarlar': 'تنظیمات', 'menu.cikis': 'خروج', 'menu.bolgeSec': 'منطقه رانندگی آزاد', 'menu.yarislar': 'مسابقه‌ها', 'menu.sur': 'برو',
     'menu.tuslar': '<b>W A S D</b> یا <b>کلیدهای جهت</b> رانندگی · <b>Space</b> ترمز دستی · <b>R</b> بازگشت به جاده · <b>C</b> دوربین · <b>H</b> بوق · <b>N</b> صدا · <b>M</b> منو. دسته بازی: اهرم چپ، RT گاز، LT ترمز، A ترمز دستی، B بازگشت به جاده، Y دوربین.',
     'menu.kunye': 'خیابان‌ها، ساختمان‌ها و باروها: © مشارکت‌کنندگان OpenStreetMap (ODbL). ارتفاع: SRTM، کاشی‌های Mapzen. بافت‌ها: Poly Haven (CC0). شکل صخره قلعه از روی محدوده OSM بازسازی شده است.',
     'etk.km': 'کیلومتر', 'etk.tur': '{0} دور', 'etk.zamanaKarsi': 'با زمان', 'etk.rakip': '{0} رقیب', 'etk.enIyi': 'بهترین {0}',
@@ -11917,7 +11967,7 @@ function mutfakKur(api) {
   window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
   for (const el of document.querySelectorAll('[data-t]')) {
     const k = el.getAttribute('data-t');
-    const on = (e) => { e.preventDefault(); touch[k] = 1; initAudio(); }, off = (e) => { e.preventDefault(); touch[k] = 0; };
+    const on = (e) => { e.preventDefault(); touch[k] = 1; el.classList.add('basili'); initAudio(); }, off = (e) => { e.preventDefault(); touch[k] = 0; el.classList.remove('basili'); };      // basılı görünüm sınıfla (iOS'ta :active güvenilmez)
     el.addEventListener('pointerdown', on); el.addEventListener('pointerup', off); el.addEventListener('pointercancel', off); el.addEventListener('pointerleave', off);
     el.addEventListener('contextmenu', (e) => e.preventDefault());
   }
@@ -11961,23 +12011,31 @@ function mutfakKur(api) {
     G.state = 'menu';
     buildMenu();
     $('menu').hidden = false; $('hud').hidden = true; $('sonuc').hidden = true;
-    $('btn-devam').hidden = !G.resume; $('konusma').hidden = true; $('ayarlar').hidden = true; MUTFAK.kapat();
+    $('btn-devam').hidden = !G.resume; $('konusma').hidden = true; $('ayarlar').hidden = true; MUTFAK.kapat(); menuPanel('ana', false);
     $('btn-hikaye').textContent = S.i >= STORY.length ? T('menu.hikaye.bastan') : S.i === 0 ? T('menu.hikaye') : T('menu.hikaye.bolum', S.i + 1, STORY[S.i].ad);
     updateAudio(false);
     ($('btn-devam').hidden ? $('btn-hikaye') : $('btn-devam')).focus();
   }
   function resume() { G.state = G.resume; G.resume = null; $('menu').hidden = true; $('hud').hidden = false; camSnap = true; }
   $('btn-devam').addEventListener('click', () => { initAudio(); resume(); });
-  $('btn-serbest').addEventListener('click', async () => { initAudio(); await loadRegion(G.bolge || REGION.id); startFree(); });
-  // Bölge seçimi hemen uygulanır: o bölge yüklenir ve serbest sürüş orada başlar.
-  // (Eskiden seçim yalnız not ediliyordu; "Devam et" önceki bölgedeki oyunu sürdürdüğü için seçim uygulanmamış görünüyordu.)
+  // Menü sayfaları: ana ekran, serbest sürüş (bölge, araç, Sür), yarışlar (liste). Geri düğmesi ana ekrana döner.
+  function menuPanel(ad, odak) {
+    for (const el of document.querySelectorAll('#menu .m-panel')) el.hidden = el.getAttribute('data-panel') !== ad;
+    if (odak !== false) { const b = document.querySelector('#menu .m-panel[data-panel="' + ad + '"] button:not([hidden])'); if (b) b.focus(); }
+  }
+  for (const el of document.querySelectorAll('[data-panel-git]')) el.addEventListener('click', () => menuPanel(el.getAttribute('data-panel-git')));
+  $('btn-serbest').addEventListener('click', () => { initAudio(); menuPanel('serbest'); });
+  $('btn-yarislar').addEventListener('click', () => { initAudio(); menuPanel('yaris'); });
+  $('btn-sur').addEventListener('click', async () => { initAudio(); await loadRegion(G.bolge || REGION.id); startFree(); });
+  // Bölge seçimi hemen uygulanır: o bölge yüklenir, menü Serbest sürüş sayfasına döner ve arka planda yeni bölgenin drone çekimi görünür; "Sür" başlatır.
+  // (Eskiden seçim yalnız not ediliyordu; "Devam et" önceki bölgedeki oyunu sürdürdüğü için seçim uygulanmamış görünüyordu. Aynı bölgeye dokunmak duraklatılan oyunu bozmaz.)
   for (const el of document.querySelectorAll('[data-bolge]')) el.addEventListener('click', async () => {
     initAudio();
-    const id = el.getAttribute('data-bolge');
+    const id = el.getAttribute('data-bolge'), once = REGION.id;
     G.bolge = id;
     for (const q of document.querySelectorAll('[data-bolge]')) q.setAttribute('aria-pressed', q === el ? 'true' : 'false');
     await loadRegion(id);
-    if (REGION.id === id) startFree();
+    if (REGION.id === id && once !== id) { showMenu(false); menuPanel('serbest'); }
   });
   if (window.masaustu) {   // masaüstü kabuğu (Electron): çıkış düğmesi; F11 tam ekranı kabuk yönetir
     $('btn-cikis').hidden = false;
@@ -12695,7 +12753,7 @@ function mutfakKur(api) {
   const CAMS = [{ d: 7.8, h: 3.0, la: 1.3 }, { d: 12.5, h: 5.2, la: 1.6 }, { d: -0.55, h: 1.28, la: 1.15 }];
   function updateCamera(dt) {
     if (G.freeze) { camera.position.set(G.freeze[0], G.freeze[1], G.freeze[2]); lookAt.set(G.freeze[3], G.freeze[4], G.freeze[5]); camera.lookAt(lookAt); camera.fov = 55; camera.updateProjectionMatrix(); return lookAt; }
-    if (G.state === 'menu' && !G.resume) {
+    if (G.state === 'menu') {      // menüde her zaman bölgenin drone çekimi (duraklatınca da); Devam et kamerayı oyuncuya geri oturtur
       orbit += dt * 0.045;
       const o = REGION.orbit, cx = o.x, cz = o.z, rad = o.r, gy = o.abs ? 0 : groundH(cx, cz);
       const px = cx + Math.cos(orbit) * rad, pz = cz + Math.sin(orbit) * rad * 0.8;
