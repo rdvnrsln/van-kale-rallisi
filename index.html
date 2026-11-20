@@ -6652,8 +6652,8 @@ const TAU = Math.PI * 2;
 // Telefon: dokunmatik ve küçük ekran. Büyük dokular yarıya iner, kalite düşük başlar (ayarlardan yükseltilebilir).
 // Tanı: ?tani=<anahtar> arazi gölgelendiricisinin bir ara değerini ışıksız basar (msk, boya, det, dz, ds, dk, rk, isik, nrm). Yalnız sınama içindir.
 const TANI = (location.search.match(/[?&]tani=([a-z]+)/) || [])[1] || '';
-// ?tani=hata: konsol hatalarını ve yakalanmamış istisnaları ekrana yazar (Safari/iPhone'da konsol görülemiyor)
-if (TANI === 'hata') {
+// ?tani=hata: konsol hatalarını ve yakalanmamış istisnaları ekrana yazar (Safari/iPhone'da konsol görülemiyor). ?tani=kirik de yazar.
+if (TANI === 'hata' || TANI === 'kirik') {
   const yaz = (m) => { let el = document.getElementById('tani-hata'); if (!el) { el = document.createElement('pre'); el.id = 'tani-hata'; el.style.cssText = 'position:fixed;left:0;top:0;right:0;max-height:70vh;overflow:auto;z-index:99999;margin:0;padding:6px;background:rgba(0,0,0,.85);color:#ff8;font:10px/1.25 monospace;white-space:pre-wrap;pointer-events:none'; (document.body || document.documentElement).appendChild(el); } el.textContent += String(m).slice(0, 900) + '\n---\n'; };
   const ce = console.error.bind(console), cw = console.warn.bind(console);
   console.error = (...a) => { yaz('E ' + a.join(' ')); ce(...a); };
@@ -6934,6 +6934,7 @@ function setRegion(data) {
   WG = makeGrid(32); WSEG = [];
   PARCA.agac.length = 0; PARCA.bina.length = 0;
   GECE.cephe.length = 0; GECE.mesh.length = 0; GECE.lamba.length = 0;
+  kirikSifirla();
   WORLD_W = (dem.nx - 1) * dem.step; WORLD_H = (dem.nz - 1) * dem.step;
   SUMMIT.x = SUMMIT.z = SUMMIT.y = 0;
 }
@@ -7511,13 +7512,13 @@ function buildStreets(scene, maxAniso) {
   const havuzG = new THREE.PlaneGeometry(18, 18); havuzG.rotateX(-Math.PI / 2); havuzG.translate(0, -0.11, 1.6);
   const geolar = [[lg.mesh(mobMat, false).geometry, lamba, 8], [dg.mesh(mobMat, false).geometry, direk, 9], [sg.mesh(mobMat, false).geometry, durak, 3]];
   const hucreler = new Map(), HUCRE = 1600, q = new THREE.Quaternion(), UP = new THREE.Vector3(0, 1, 0), p = new THREE.Vector3(), s1 = new THREE.Vector3(1, 1, 1);
-  const hucre = (x, z) => { const key = Math.floor(x / HUCRE) + '_' + Math.floor(z / HUCRE); let h = hucreler.get(key); if (!h) { h = { l: [[], [], []], tel: [], kutu: new THREE.Box3() }; hucreler.set(key, h); } return h; };
-  geolar.forEach((gl, t) => { const a = gl[1]; for (let i = 0; i < a.length; i += 4) { const h = hucre(a[i], a[i + 2]); h.l[t].push(a[i], a[i + 1], a[i + 2], a[i + 3]); h.kutu.expandByPoint(p.set(a[i], a[i + 1], a[i + 2])); h.kutu.expandByPoint(p.set(a[i], a[i + 1] + gl[2], a[i + 2])); } });
+  const hucre = (x, z) => { const key = Math.floor(x / HUCRE) + '_' + Math.floor(z / HUCRE); let h = hucreler.get(key); if (!h) { h = { l: [[], [], []], j: [[], [], []], tel: [], kutu: new THREE.Box3() }; hucreler.set(key, h); } return h; };
+  geolar.forEach((gl, t) => { const a = gl[1]; for (let i = 0; i < a.length; i += 4) { const h = hucre(a[i], a[i + 2]); h.l[t].push(a[i], a[i + 1], a[i + 2], a[i + 3]); h.j[t].push(i / 4); h.kutu.expandByPoint(p.set(a[i], a[i + 1], a[i + 2])); h.kutu.expandByPoint(p.set(a[i], a[i + 1] + gl[2], a[i + 2])); } });
   for (let i = 0; i < tel.length; i += 6) { const h = hucre(tel[i], tel[i + 2]); h.tel.push(tel[i], tel[i + 1], tel[i + 2], tel[i + 3], tel[i + 4], tel[i + 5]); h.kutu.expandByPoint(p.set(tel[i], tel[i + 1], tel[i + 2])); h.kutu.expandByPoint(p.set(tel[i + 3], tel[i + 4], tel[i + 5])); }
   const telMat = new THREE.LineBasicMaterial({ color: 0x1c1c1c }); telMat.name = 'cadde-tel';
   for (const h of hucreler.values()) {
     if (h.kutu.isEmpty()) continue;
-    const kure = h.kutu.getBoundingSphere(new THREE.Sphere()); kure.radius += 3;
+    const kure = h.kutu.getBoundingSphere(new THREE.Sphere()); kure.radius += 9;      // devrilen lamba da kürenin içinde kalsın
     const parca = { x: kure.center.x, z: kure.center.z, r: kure.radius, mesh: [] };
     geolar.forEach((gl, t) => {
       const a = h.l[t], nn = a.length / 4;
@@ -7526,11 +7527,20 @@ function buildStreets(scene, maxAniso) {
       const im = new THREE.InstancedMesh(g, mobMat, nn);
       for (let i = 0; i < nn; i++) { q.setFromAxisAngle(UP, a[i * 4 + 3]); m4.compose(p.set(a[i * 4], a[i * 4 + 1], a[i * 4 + 2]), q, s1); im.setMatrixAt(i, m4); }
       im.castShadow = true; im.frustumCulled = true; scene.add(im); parca.mesh.push(im);
-      if (t === 0) for (const [geo, mat] of [[ampulG, GECE.ampul], [havuzG, GECE.havuz]]) {
-        const gg = new THREE.BufferGeometry(); gg.setIndex(geo.index); for (const k in geo.attributes) gg.setAttribute(k, geo.attributes[k]); gg.boundingSphere = kure;
-        const ig = new THREE.InstancedMesh(gg, mat, nn);
-        for (let i = 0; i < nn; i++) { q.setFromAxisAngle(UP, a[i * 4 + 3]); m4.compose(p.set(a[i * 4], a[i * 4 + 1], a[i * 4 + 2]), q, s1); ig.setMatrixAt(i, m4); }
-        ig.frustumCulled = true; ig.visible = false; ig.userData.parca = parca; scene.add(ig); GECE.mesh.push(ig);
+      if (t === 0) {
+        const son = [];
+        for (const [geo, mat] of [[ampulG, GECE.ampul], [havuzG, GECE.havuz]]) {
+          const gg = new THREE.BufferGeometry(); gg.setIndex(geo.index); for (const k in geo.attributes) gg.setAttribute(k, geo.attributes[k]); gg.boundingSphere = kure;
+          const ig = new THREE.InstancedMesh(gg, mat, nn);
+          for (let i = 0; i < nn; i++) { q.setFromAxisAngle(UP, a[i * 4 + 3]); m4.compose(p.set(a[i * 4], a[i * 4 + 1], a[i * 4 + 2]), q, s1); ig.setMatrixAt(i, m4); }
+          ig.frustumCulled = true; ig.visible = false; ig.userData.parca = parca; scene.add(ig); GECE.mesh.push(ig); son.push(ig);
+        }
+        // çarpınca devrilir (src/kirik.js): lamba, ampulü ve ışık havuzu aynı örnek sırasında; devrilince ampul ve havuz söner
+        for (let i = 0; i < nn; i++) {
+          const x = a[i * 4], y = a[i * 4 + 1], z = a[i * 4 + 2], yon = a[i * 4 + 3], w0 = new THREE.Matrix4();
+          im.getMatrixAt(i, w0);
+          kirikTek('lamba', x, y, z, 7.2, 0.18, [{ im, i, w0 }], { son: son.map((ig) => ({ im: ig, i, w0 })), lambaI: h.j[t][i] * 3, lambaX: x + Math.sin(yon) * 1.5, yon });
+        }
       }
     });
     if (h.tel.length) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(h.tel, 3)); g.boundingSphere = kure; const ln = new THREE.LineSegments(g, telMat); scene.add(ln); parca.mesh.push(ln); }
@@ -7690,6 +7700,8 @@ function buildDetay(scene) {
   const bag = new Bag(), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), UP = new THREE.Vector3(0, 1, 0), va = new THREE.Vector3(), vb = new THREE.Vector3(), vs = new THREE.Vector3(), e3 = new THREE.Euler();
   const kutuG = new THREE.BoxGeometry(1, 1, 1).toNonIndexed(), R = (h) => new THREE.Color(h).convertSRGBToLinear();
   const celik = R('#8f969c'), koyu = R('#4a4f55'), beton = R('#a9a79f'), panel = R('#1c2c4c'), cerceve = R('#b8bcc0'), beyaz = R('#e9e9e4'), gri = R('#6f757b'), pompa = R('#c9ccce'), tel = [];
+  // çarpınca yıkılanlar ayrı örnekli ağlara gider (src/kirik.js): çit, ahşap direk ve teli, trafik ışığı, durak levhası. Yer ve biçim aynı.
+  const yikil = { cit: [], direk: [], telK: [], isik: [], levha: [] };
   // iki nokta arasında çubuk
   const cubuk = (ax, ay, az, bx, by, bz, kal, col) => {
     va.set(bx - ax, by - ay, bz - az); const L = va.length(); if (L < 0.01) return;
@@ -7713,6 +7725,7 @@ function buildDetay(scene) {
       uc.push(nokta);
       if (kuruldu.has(key)) continue;
       kuruldu.add(key);
+      if (kV === 0 && !kapi) { yikil.direk.push({ x: p.x, z: p.z, g, nx, nz, key }); continue; }      // ahşap direk: H 11 m, kol 2,16 m
       if (kV === 0) { cubuk(p.x, g - 0.5, p.z, p.x, g + H, p.z, 0.28, R('#6b5a45')); cubuk(p.x - nx * kol * 1.2, g + H - 0.4, p.z - nz * kol * 1.2, p.x + nx * kol * 1.2, g + H - 0.4, p.z + nz * kol * 1.2, 0.14, R('#6b5a45')); continue; }
       if (kapi) {       // trafo merkezi giriş kapısı: iki ayak, bir kiriş
         for (const o of [-1, 1]) cubuk(p.x + nx * o * 7, g - 0.5, p.z + nz * o * 7, p.x + nx * o * 7, g + H, p.z + nz * o * 7, 0.5, celik);
@@ -7732,6 +7745,7 @@ function buildDetay(scene) {
     }
     for (let i = 0; i < n - 1; i++) {       // teller: iki direk arasında sarkık
       const A = uc[i], B = uc[i + 1], m = Math.min(A.length, B.length), span = Math.hypot(P[i + 1].x - P[i].x, P[i + 1].z - P[i].z), sark = Math.min(14, span * span / 9600);
+      if (kV === 0) { yikil.telK.push({ ka: Math.round(P[i].x) + '_' + Math.round(P[i].z), kb: Math.round(P[i + 1].x) + '_' + Math.round(P[i + 1].z), A: A.slice(0, m), B: B.slice(0, m), sark }); continue; }      // ahşap direk teli: direk devrilince sarkar
       for (let k = 0; k < m; k++) for (let j = 0; j < 10; j++) {
         const u0 = j / 10, u1 = (j + 1) / 10;
         tel.push(lerp(A[k][0], B[k][0], u0), lerp(A[k][1], B[k][1], u0) - sark * 4 * u0 * (1 - u0), lerp(A[k][2], B[k][2], u0), lerp(A[k][0], B[k][0], u1), lerp(A[k][1], B[k][1], u1) - sark * 4 * u1 * (1 - u1), lerp(A[k][2], B[k][2], u1));
@@ -7757,10 +7771,7 @@ function buildDetay(scene) {
   // ---- trafo: düğümde kayıtlı güç trafoları
   for (let i = 0; i < T.trafoKutu.length; i += 2) { const x = T.trafoKutu[i], z = T.trafoKutu[i + 1], g = groundH(x, z); kutu(x, g + 1.9, z, 5.2, 3.8, 3.4, 0, gri); kutu(x, g + 4.3, z, 2.2, 1.0, 1.4, 0, koyu); for (const o of [-1.6, 0, 1.6]) cubuk(x + o, g + 3.8, z + 1.0, x + o, g + 5.6, z + 1.0, 0.22, beyaz); }
   // ---- çitler: direk ve iki ray
-  for (const c of T.cit) {
-    const P = resample(pairs(c), 3);
-    for (let i = 0; i < P.length; i++) { const p = P[i], g = groundH(p.x, p.z); cubuk(p.x, g - 0.2, p.z, p.x, g + 2.0, p.z, 0.08, koyu); if (i) { const o = P[i - 1], go = groundH(o.x, o.z); for (const y of [0.5, 1.2, 1.9]) cubuk(o.x, go + y, o.z, p.x, g + y, p.z, 0.04, celik); } }
-  }
+  for (const c of T.cit) { const P = resample(pairs(c), 3); if (P.length > 1) yikil.cit.push(P.map((p) => ({ x: p.x, z: p.z, g: groundH(p.x, p.z) }))); }      // ağ aşağıda, örnekli
   // ---- helikopter pisti: beton daire ve H işareti
   if (T.helipad.length) {
     const P = pairs(T.helipad); let cx = 0, cz = 0; for (const p of P) { cx += p.x; cz += p.z; } cx /= P.length; cz /= P.length;
@@ -7817,7 +7828,7 @@ function buildDetay(scene) {
   const durakMavi = R('#1c6fb8'), durakSari = R('#f2b824'), camR = R('#9fc3d6');
   for (let i = 0; i < (T.durak || []).length; i += 3) {
     const y = yakinYol(T.durak[i], T.durak[i + 1]), x = y.x, z = y.z, g = groundH(x, z);
-    cubuk(x, g - 0.2, z, x, g + 2.9, z, 0.07, gri); kutu(x, g + 2.6, z, 0.56, 0.5, 0.05, y.yon + Math.PI / 2, durakMavi); kutu(x, g + 2.6, z, 0.34, 0.28, 0.07, y.yon + Math.PI / 2, durakSari);
+    yikil.levha.push({ x, z, g, yon: y.yon + Math.PI / 2 });      // levha direği: örnekli, çarpınca devrilir
     if (y.yolda) durakYolda++;
     if (T.durak[i + 2] && !y.yolda) {       // sığınak levhanın gerisinde (yoldan uzakta), açık yüzü yola bakar; iki yanı da yolsa sığınak konmaz
       const cx = x + y.nx * 1.5 + y.tx * 2.4, cz = z + y.nz * 1.5 + y.tz * 2.4;
@@ -7828,8 +7839,7 @@ function buildDetay(scene) {
   // ---- trafik ışıkları (OSM highway=traffic_signals): direk ve üç gözlü fener, yol kenarında. Işıklar yanmaz; trafik bunlara göre durmaz.
   for (let i = 0; i < (T.isik || []).length; i += 2) {
     const y = yakinYol(T.isik[i], T.isik[i + 1]), x = y.x - y.nx * 0.7, z = y.z - y.nz * 0.7, g = groundH(x, z);
-    cubuk(x, g - 0.2, z, x, g + 4.6, z, 0.12, gri); kutu(x, g + 4.1, z, 0.34, 1.0, 0.3, y.yon, R('#1b1d20'));
-    [['#5a1512', 0.32], ['#5a4a12', 0], ['#124a22', -0.32]].forEach(([c, dy]) => kutu(x - y.tx * 0.16, g + 4.1 + dy, z - y.tz * 0.16, 0.2, 0.2, 0.04, y.yon, R(c)));
+    yikil.isik.push({ x, z, g, yon: y.yon });      // örnekli, çarpınca devrilir; fener yerel -z'de (yolun gidiş yönünün tersi)
   }
   // ---- akaryakıt istasyonları (OSM amenity=fuel düğümü): OSM'de yalnız yeri kayıtlı; biçim tipik değerdir (16 × 10 m sundurma, 5,2 m yükseklik,
   // iki pompa adası, 26 × 18 m beton saha). Sundurma yol kenarına paralel durur; düğüm yola çok yakınsa saha yoldan dışarı itilir.
@@ -7867,6 +7877,37 @@ function buildDetay(scene) {
   const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.62, metalness: 0.28, side: THREE.DoubleSide }); mat.name = 'detay';
   const parca = { x: (XMIN + XMAX) / 2, z: (ZMIN + ZMAX) / 2, r: Math.hypot(XMAX - XMIN, ZMAX - ZMIN) / 2, mesh: [] };
   if (bag.p.length) { const m = bag.mesh(mat, true); scene.add(m); parca.mesh.push(m); }
+  // ---- yıkılabilir öğeler: yerel biçim bir kez kurulur, her öğe bir örnek (src/kirik.js)
+  const yerel = (parcalar) => { const b = new Bag(); for (const [x, y, z, sx, sy, sz, col] of parcalar) { m4.compose(va.set(x, y, z), q.identity(), vs.set(sx, sy, sz)); b.geom(kutuG, m4, col); } return b.mesh(mat, true).geometry; };
+  const ornekli = (geo, n) => { const im = new THREE.InstancedMesh(geo, mat, n); im.castShadow = true; im.receiveShadow = true; im.frustumCulled = false; im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(im); parca.mesh.push(im); return im; };
+  const w0Kur = (x, g, z, yon) => new THREE.Matrix4().compose(va.set(x, g, z), q.setFromEuler(e3.set(0, yon, 0)), vs.set(1, 1, 1));
+  const tekKur = (liste, tur, geo, L, r) => {
+    if (!liste.length) return [];
+    const im = ornekli(geo, liste.length);
+    return liste.map((o, i) => { const w0 = w0Kur(o.x, o.g, o.z, o.yon); im.setMatrixAt(i, w0); return kirikTek(tur, o.x, o.g, o.z, L, r, [{ im, i, w0 }]); });
+  };
+  const ah = R('#6b5a45');
+  for (const d of yikil.direk) d.yon = Math.atan2(-d.nz, d.nx);      // yerel x (kol) hatta dik
+  const direkler = tekKur(yikil.direk, 'direk', yerel([[0, 5.25, 0, 0.28, 11.5, 0.28, ah], [0, 10.6, 0, 2.16, 0.14, 0.14, ah]]), 11, 0.2);
+  tekKur(yikil.isik, 'isik', yerel([[0, 2.2, 0, 0.12, 4.8, 0.12, gri], [0, 4.1, 0, 0.34, 1.0, 0.3, R('#1b1d20')], [0, 4.42, -0.16, 0.2, 0.2, 0.04, R('#5a1512')], [0, 4.1, -0.16, 0.2, 0.2, 0.04, R('#5a4a12')], [0, 3.78, -0.16, 0.2, 0.2, 0.04, R('#124a22')]]), 4.6, 0.16);
+  tekKur(yikil.levha, 'levha', yerel([[0, 1.35, 0, 0.07, 3.1, 0.07, gri], [0, 2.6, 0, 0.56, 0.5, 0.05, durakMavi], [0, 2.6, 0, 0.34, 0.28, 0.07, durakSari]]), 2.9, 0.1);
+  if (yikil.telK.length) {       // ahşap direk telleri: uçları direkle döner
+    const anahtar = new Map(); yikil.direk.forEach((d, i) => anahtar.set(d.key, direkler[i]));
+    let nv = 0; for (const s of yikil.telK) nv += s.A.length * 20;
+    const buf = new THREE.Float32BufferAttribute(new Float32Array(nv * 3), 3); buf.setUsage(THREE.DynamicDrawUsage);
+    let off = 0;
+    for (const t of yikil.telK) {
+      const s = { buf, off, A: t.A, B: t.B, sark: t.sark, oA: anahtar.get(t.ka) || null, oB: anahtar.get(t.kb) || null };
+      off += t.A.length * 20; if (s.oA) s.oA.tel.push(s); if (s.oB && s.oB !== s.oA) s.oB.tel.push(s); kirikTelYaz(s);
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', buf); const tm = new THREE.LineBasicMaterial({ color: 0x23262a }); tm.name = 'detay-tel';
+    const ln = new THREE.LineSegments(g, tm); ln.frustumCulled = false; scene.add(ln); parca.mesh.push(ln);
+  }
+  if (yikil.cit.length) {       // çit: direk 2,2 m (0,2 m gömülü), üç ray 0,5 / 1,2 / 1,9 m
+    let nd = 0, nr = 0; for (const P of yikil.cit) { nd += P.length; nr += P.length - 1; }
+    const imD = ornekli(yerel([[0, 0.9, 0, 0.08, 2.2, 0.08, koyu]]), nd), imR = ornekli(yerel([0.5, 1.2, 1.9].map((y) => [0.5, y, 0, 1, 0.04, 0.04, celik])), nr);
+    let d0 = 0, r0 = 0; for (const P of yikil.cit) { kirikCit(P, imD, imR, d0, r0); d0 += P.length; r0 += P.length - 1; }
+  }
   if (rayBag.p.length) {       // balast ve traversler: tekrar eden doku (kodla boyanır)
     const cv = document.createElement('canvas'); cv.width = 128; cv.height = 64; const g = cv.getContext('2d'), Rr = rng(7);
     g.fillStyle = '#8a8680'; g.fillRect(0, 0, 128, 64);
@@ -8477,7 +8518,7 @@ function terrainPatch(mat, maskTex, akisTex) {
   const normalVar = !!(TEX.zemin_n && TEX.cayir_n && TEX.kum_n && TEX.kayalik_n && TEX.kar_n && TEX.hava_n);
   // Doku birimi sınırı 16 (renk, maske, 6 renk + 5 normal, oluk, eğim, ortam, gölge). Bölgeye göre derlenir: karlı bölgede çayır, öbürlerinde kar okunmaz
   // (maskede payı yok). Okunmayan doku derleyicide düşer ve birim tutmaz; hava katmanına yer böyle açıldı (20 Kas akşam).
-  const K = KAR, TA = TANI === 'hata' ? '' : TANI;      // hata: yalnız ekrana hata yazar, arazi tanısı değil
+  const K = KAR, TA = ['msk', 'boya', 'det', 'dz', 'ds', 'dk', 'rk', 'isik', 'nrm'].indexOf(TANI) >= 0 ? TANI : '';      // hata, kirik: arazi tanısı değil
   const O = ARAZI_OLCEK, f = (v) => v.toFixed(4);
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.maskMap = { value: maskTex };
@@ -9073,6 +9114,181 @@ function agacHavuzKur(scene, liste) {
 
 'use strict';
 // =====================================================================
+// KIRIK — çarpınca yıkılan çit ve direkler (20 Kas 2026; kurucu: "çitlere, direklere çarpınca yıkılmalı").
+// Yıkılan: OSM çitleri (direk + üç ray), sokak lambaları, ahşap elektrik direkleri (OSM'de gerilimi yazılı olmayan hat), trafik ışığı direkleri,
+// durak levhaları. Yıkılmayan: kafes enerji direkleri, haberleşme kuleleri, bina, duvar, sundurma ayakları.
+// Her öğe örnekli ağda (InstancedMesh) bir örnektir. Devrilme: tabandaki yatay eksen çevresinde dönen çubuk (açısal ivme 3g/2L · sin θ),
+// yere değince küçük sekme; taban araç yönünde biraz kayar. Yavaş değmede (dik hız 1,2–1,6 m/sn altı) öğe duvar gibi durdurur.
+// Çit: çarpılan ray takımı devrilir, iki ucundaki direk çarpma hızıyla eğilir, komşu raylar eğilen direği izler (bükülmüş çit).
+// Ahşap direk devrilince telleri yeni uç noktaya sarkar, yere değen kısım yerde yatar. Yere düşen öğe 45 sn sonra, oyuncu 160 m uzaktayken yerine döner.
+// =====================================================================
+const KIRIK = { oge: [], zincir: [], izg: new Map(), aktif: [], ses: [], damga: 0, say: { cit: 0, lamba: 0, direk: 0, isik: 0, levha: 0 } };
+const KIRIK_H = 8, KIRIK_DON = 45, KIRIK_UZAK = 160;
+// tür başına: devrilme eşiği (dik hız, m/sn), araçtan alınan dik hız payı, sarsıntı katsayısı, yalnız araba mı devirir (agir)
+const KIRIK_TUR = {
+  lamba: { esik: 1.6, al: 0.55, sars: 0.7, agir: true }, direk: { esik: 2.2, al: 0.75, sars: 0.9, agir: true }, isik: { esik: 1.6, al: 0.55, sars: 0.7, agir: true },
+  levha: { esik: 1.0, al: 0.18, sars: 0.3 }, cit: { esik: 1.2, al: 0.32, sars: 0.5 },
+};
+function kirikSifirla() { KIRIK.oge.length = 0; KIRIK.zincir.length = 0; KIRIK.izg.clear(); KIRIK.aktif.length = 0; KIRIK.ses.length = 0; for (const k in KIRIK.say) KIRIK.say[k] = 0; }
+function kirikIzg(o, x0, z0, x1, z1) {
+  for (let i = Math.floor(x0 / KIRIK_H); i <= Math.floor(x1 / KIRIK_H); i++) for (let j = Math.floor(z0 / KIRIK_H); j <= Math.floor(z1 / KIRIK_H); j++) {
+    const k = i * 100003 + j; let h = KIRIK.izg.get(k); if (!h) KIRIK.izg.set(k, (h = [])); h.push(o);
+  }
+}
+// tek parça öğe. parca: [{ im, i, w0 }] (w0: duruşun dünya matrisi); son: devrilince sönen/gizlenen örnekler (gece ampulü, ışık havuzu).
+function kirikTek(tur, x, y, z, L, r, parca, ek) {
+  const o = Object.assign({ tip: 0, tur, x, y, z, L, r, parca, son: [], durum: 0, th: 0, w: 0, hedef: 0, dx: 0, dz: 1, kay: 0, kayH: 0, t: 0, tel: [], lambaI: -1, lambaX: 0, damga: 0 }, ek);
+  KIRIK.oge.push(o); kirikIzg(o, x - r, z - r, x + r, z + r); return o;
+}
+// çit zinciri: P = [{ x, z, g }] direk tabanları; imD/imR direk ve ray örnekli ağları, d0/r0 bu zincirin ilk örnek sırası
+function kirikCit(P, imD, imR, d0, r0) {
+  const z = { P: P.map((p, i) => ({ x: p.x, z: p.z, g: p.g, i: d0 + i, th: 0, hedef: 0, dx: 0, dz: 1 })), R: [], imD, imR, kirli: false, t: 0, hx: 0, hz: 0 };
+  for (let k = 1; k < P.length; k++) {
+    const a = P[k - 1], b = P[k];
+    const o = { tip: 1, tur: 'cit', zin: z, k, i: r0 + k - 1, ax: a.x, az: a.z, bx: b.x, bz: b.z, durum: 0, th: 0, w: 0, hedef: 0, dx: 0, dz: 1, kay: 0, kayH: 0, t: 0, damga: 0, L: 1.9 };
+    z.R.push(o); KIRIK.oge.push(o);
+    kirikIzg(o, Math.min(a.x, b.x) - 0.5, Math.min(a.z, b.z) - 0.5, Math.max(a.x, b.x) + 0.5, Math.max(a.z, b.z) + 0.5);
+  }
+  KIRIK.zincir.push(z);
+  for (const p of z.P) kirikDirekYaz(z, p);
+  for (const o of z.R) kirikRayYaz(o);
+  return z;
+}
+
+const _km = new THREE.Matrix4(), _kr = new THREE.Matrix4(), _kt = new THREE.Matrix4(), _kA = new THREE.Matrix4(), _kB = new THREE.Matrix4(), _ka = new THREE.Vector3(), _kv = new THREE.Vector3(), _ks = new THREE.Matrix4().makeScale(0, 0, 0);
+// devrik öğenin dönüşümü: T(taban + kayma) · R(eksen, θ) · T(-taban); eksen = yukarı × düşüş yönü (tepe düşüş yönüne gider)
+function kirikTekM(o, out) {
+  _ka.set(o.dz, 0, -o.dx); if (_ka.lengthSq() < 1e-6) _ka.set(1, 0, 0); _ka.normalize();
+  out.makeRotationAxis(_ka, o.th).multiply(_kt.makeTranslation(-o.x, -o.y, -o.z));
+  out.elements[12] += o.x + o.dx * o.kay; out.elements[13] += o.y; out.elements[14] += o.z + o.dz * o.kay;
+  return out;
+}
+function kirikTekYaz(o) {
+  kirikTekM(o, _km);
+  for (const p of o.parca) { _kr.multiplyMatrices(_km, p.w0); p.im.setMatrixAt(p.i, _kr); p.im.instanceMatrix.needsUpdate = true; }
+  const sondu = o.durum !== 0 || o.th > 0;
+  for (const p of o.son) { p.im.setMatrixAt(p.i, sondu ? _ks : p.w0); p.im.instanceMatrix.needsUpdate = true; }
+  if (o.lambaI >= 0) GECE.lamba[o.lambaI] = sondu ? 1e9 : o.lambaX;      // devrik lamba gerçek ışık adayı olmaz
+  for (const s of o.tel) kirikTelYaz(s);
+}
+function kirikDirekYaz(z, p) {
+  _ka.set(p.dz, 0, -p.dx); if (_ka.lengthSq() < 1e-6) _ka.set(1, 0, 0); _ka.normalize();
+  _km.makeRotationAxis(_ka, p.th); _km.elements[12] = p.x; _km.elements[13] = p.g; _km.elements[14] = p.z;
+  z.imD.setMatrixAt(p.i, _km); z.imD.instanceMatrix.needsUpdate = true;
+}
+// ray takımı: yerel x 0..1 iki direk tabanı arasında (eğimle), y yukarı (iki direğin eğik yukarısının ortalaması), z yatay dik
+function kirikRayYaz(o) {
+  const z = o.zin, A = z.P[o.k - 1], B = z.P[o.k];
+  const Xx = B.x - A.x, Xy = B.g - A.g, Xz = B.z - A.z, L = Math.hypot(Xx, Xz) || 1, nx = -Xz / L, nz = Xx / L;
+  let Ux, Uy, Uz, ox = A.x, oz = A.z;
+  if (o.durum === 0) {
+    const sa = Math.sin(A.th), sb = Math.sin(B.th);
+    Ux = (A.dx * sa + B.dx * sb) / 2; Uy = (Math.cos(A.th) + Math.cos(B.th)) / 2; Uz = (A.dz * sa + B.dz * sb) / 2;
+  } else {
+    const s = Math.sin(o.th); Ux = o.dx * s; Uy = Math.cos(o.th); Uz = o.dz * s; ox += o.dx * o.kay; oz += o.dz * o.kay;
+  }
+  _km.set(Xx, Ux, nx, ox, Xy, Uy, 0, A.g, Xz, Uz, nz, oz, 0, 0, 0, 1);
+  z.imR.setMatrixAt(o.i, _km); z.imR.instanceMatrix.needsUpdate = true;
+}
+// tel açıklığı: iki ucu (devrik direkte uç noktası direkle döner) arasında sarkık; yere değen kısım yerde yatar
+function kirikTelYaz(s) {
+  const a = s.buf.array;
+  if (s.oA) kirikTekM(s.oA, _kA); if (s.oB) kirikTekM(s.oB, _kB);
+  for (let k = 0; k < s.A.length; k++) {
+    _kv.set(s.A[k][0], s.A[k][1], s.A[k][2]); if (s.oA) _kv.applyMatrix4(_kA);
+    const ax = _kv.x, ay = _kv.y, az = _kv.z;
+    _kv.set(s.B[k][0], s.B[k][1], s.B[k][2]); if (s.oB) _kv.applyMatrix4(_kB);
+    const bx = _kv.x, by = _kv.y, bz = _kv.z, sark = s.sark + ((s.oA && s.oA.th) || (s.oB && s.oB.th) ? 1.5 : 0);
+    for (let j = 0; j < 10; j++) {
+      const off = (s.off + k * 20 + j * 2) * 3;
+      for (let e = 0; e < 2; e++) {
+        const u = (j + e) / 10, x = ax + (bx - ax) * u, zz = az + (bz - az) * u;
+        a[off + e * 3] = x; a[off + e * 3 + 1] = Math.max(ay + (by - ay) * u - sark * 4 * u * (1 - u), groundH(x, zz) + 0.05); a[off + e * 3 + 2] = zz;
+      }
+    }
+  }
+  s.buf.needsUpdate = true;
+}
+
+// ---------------------------------------------------------------- çarpışma (stepCar içinden; ön ve arka daire)
+function kirikCarp(c, nfx, nfz) {
+  if (!KIRIK.oge.length || c.vx * c.vx + c.vz * c.vz < 0.04) return;
+  const damga = ++KIRIK.damga, hafif = c.arac === 'trike' || c.arac === 'motor';      // bisiklet ve motor çelik direği devirmez; çit rayı ve levhayı devirir
+  for (let part = 0; part < 2; part++) {
+    const off = part ? -1.25 : 1.25, px = c.x + nfx * off, pz = c.z + nfz * off;
+    for (let i = Math.floor((px - CAR_R) / KIRIK_H); i <= Math.floor((px + CAR_R) / KIRIK_H); i++) for (let j = Math.floor((pz - CAR_R) / KIRIK_H); j <= Math.floor((pz + CAR_R) / KIRIK_H); j++) {
+      const h = KIRIK.izg.get(i * 100003 + j); if (!h) continue;
+      for (const o of h) {
+        if (o.durum !== 0 || o.damga === damga) continue;
+        let cx, cz, R;
+        if (o.tip === 0) { cx = o.x; cz = o.z; R = CAR_R + o.r; }
+        else { const ex = o.bx - o.ax, ez = o.bz - o.az, L2 = ex * ex + ez * ez, t = L2 > 0 ? clamp(((px - o.ax) * ex + (pz - o.az) * ez) / L2, 0, 1) : 0; cx = o.ax + ex * t; cz = o.az + ez * t; R = CAR_R; }
+        const dx = px - cx, dz = pz - cz, d2 = dx * dx + dz * dz;
+        if (d2 >= R * R || d2 < 1e-8) continue;
+        o.damga = damga;
+        const d = Math.sqrt(d2), nx = dx / d, nz = dz / d, vn = c.vx * nx + c.vz * nz, T = KIRIK_TUR[o.tur];
+        if (-vn > T.esik && !(hafif && T.agir)) {      // devril: araç dik hızının bir payını kaybeder
+          const sp = Math.hypot(c.vx, c.vz);
+          kirikDevir(o, -vn, o.tip === 0 ? c.vx / sp : -nx, o.tip === 0 ? c.vz / sp : -nz);
+          c.vx -= nx * vn * T.al; c.vz -= nz * vn * T.al;
+          c.hit = Math.max(c.hit, -vn * T.sars);
+        } else {      // yavaş değme: duvar gibi
+          const pen = R - d; c.x += nx * pen; c.z += nz * pen;
+          if (vn < 0) { c.vx -= nx * vn * 1.1; c.vz -= nz * vn * 1.1; }
+        }
+      }
+    }
+  }
+}
+function kirikDevir(o, v, dx, dz) {
+  o.durum = 1; o.dx = dx; o.dz = dz; o.t = 0; o.th = Math.max(o.th, 0.02);
+  o.w = clamp(v * (o.tip === 0 ? 0.12 : 0.2), 0.3, o.tip === 0 ? 1.6 : 2.5); o.hedef = o.tip === 0 ? 1.5 : 1.48; o.kayH = Math.min(o.tip === 0 ? 2.5 : 1.4, v * (o.tip === 0 ? 0.12 : 0.06));
+  if (o.tip === 0) KIRIK.aktif.push(o);
+  KIRIK.say[o.tur]++;
+  KIRIK.ses.push({ tur: o.tur, v, x: o.tip === 0 ? o.x : (o.ax + o.bx) / 2, z: o.tip === 0 ? o.z : (o.az + o.bz) / 2 });
+  if (o.tip === 1) {      // çit: iki uçtaki direk çarpma hızıyla, komşu direkler daha az eğilir
+    const z = o.zin, eg = clamp(0.12 + v * 0.05, 0.2, 1.35);
+    const egil = (p, h) => { if (!p) return; if (h > p.hedef) { p.hedef = h; p.dx = dx; p.dz = dz; } };
+    egil(z.P[o.k - 1], eg); egil(z.P[o.k], eg); egil(z.P[o.k - 2], eg * 0.3); egil(z.P[o.k + 1], eg * 0.3);
+    z.kirli = true; z.t = 0; z.hx = (o.ax + o.bx) / 2; z.hz = (o.az + o.bz) / 2;
+    if (KIRIK.aktif.indexOf(z) < 0) KIRIK.aktif.push(z);
+  }
+}
+// devrilen çubuğun açısı: yerçekimiyle hızlanır, hedef açıda (yerde) sekip durur
+function kirikDus(o, dt) {
+  if (o.durum !== 1) return false;
+  o.w += (3 * 9.8 / (2 * o.L)) * Math.sin(o.th) * dt; o.th += o.w * dt;
+  o.kay += (o.kayH - o.kay) * Math.min(1, dt * 8);
+  if (o.th >= o.hedef) { o.th = o.hedef; o.w = -o.w * 0.22; if (Math.abs(o.w) < 0.35) { o.w = 0; o.durum = 2; } }
+  return true;
+}
+function kirikGeriKoy(o) {
+  o.durum = 0; o.th = 0; o.w = 0; o.kay = 0; o.kayH = 0; o.t = 0;
+  if (o.tip === 0) kirikTekYaz(o);
+}
+// her kare: devrilenleri canlandır, eskiyen ve uzakta kalanı yerine koy (oy: oyuncu)
+function kirikAdim(dt, oy) {
+  const A = KIRIK.aktif;
+  for (let n = A.length - 1; n >= 0; n--) {
+    const o = A[n];
+    o.t += dt;
+    if (o.P) {      // çit zinciri: direkler hedef eğime yaklaşır, raylar ya düşer ya direkleri izler
+      for (const p of o.P) { p.oy = Math.abs(p.hedef - p.th) > 0.002; if (p.oy) { p.th += (p.hedef - p.th) * Math.min(1, dt * 9); kirikDirekYaz(o, p); } }
+      for (const r of o.R) if (kirikDus(r, dt) || o.P[r.k - 1].oy || o.P[r.k].oy) kirikRayYaz(r);      // yalnız oynayan direğe bağlı ray yeniden yazılır
+      if (o.t > KIRIK_DON && (o.hx - oy.x) ** 2 + (o.hz - oy.z) ** 2 > KIRIK_UZAK * KIRIK_UZAK) {
+        for (const p of o.P) { p.th = p.hedef = 0; kirikDirekYaz(o, p); }
+        for (const r of o.R) { r.durum = 0; r.th = r.w = r.kay = r.kayH = 0; kirikRayYaz(r); }
+        o.kirli = false; A.splice(n, 1);
+      }
+      continue;
+    }
+    if (kirikDus(o, dt)) kirikTekYaz(o);
+    else if (o.t > KIRIK_DON && (o.x - oy.x) ** 2 + (o.z - oy.z) ** 2 > KIRIK_UZAK * KIRIK_UZAK) { kirikGeriKoy(o); A.splice(n, 1); }
+  }
+}
+
+'use strict';
+// =====================================================================
 // ARAÇ — model, arcade fizik, rakip sürücü, rota hazırlığı
 // Yön: h açısı, ileri = (sin h, cos h). Sağa dönüş h'yi azaltır.
 // =====================================================================
@@ -9344,6 +9560,7 @@ function stepCar(c, inp, dt) {
       }
     }
   }
+  kirikCarp(c, nfx, nfz);      // çit ve direk: çarpınca devrilir (src/kirik.js)
   // düşey hareket: tepe ve uçurumda havalanma
   const gy = groundH(c.x, c.z);
   if (c.air) {
@@ -12030,6 +12247,7 @@ function mutfakKur(api) {
       env.mountains.userData.y = Rg.dagY;
       const p = routePoint(EVENTS.find((e) => e.bolge === id).R, 60);
       placeCar(player, p.x, p.z, Math.atan2(p.dx, p.dz)); camSnap = true;
+      if (TANI === 'kirik') setTimeout(() => { for (const o of KIRIK.oge) if (o.durum === 0 && Math.hypot((o.tip ? o.ax : o.x) - player.x, (o.tip ? o.az : o.z) - player.z) < 40) kirikDevir(o, 12, -Math.cos(player.h), Math.sin(player.h)); }, 2500);      // tanı: oyuncunun çevresindekileri devir (Safari çizim denetimi)
       G.bolge = id;
       for (const el of document.querySelectorAll('[data-bolge]')) el.setAttribute('aria-pressed', el.getAttribute('data-bolge') === id ? 'true' : 'false');
       if (!first) $('load').hidden = true;
@@ -12205,6 +12423,17 @@ function mutfakKur(api) {
     o.type = type || 'sine'; o.frequency.value = f;
     g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
     o.connect(g); g.connect(A.master); o.start(t); o.stop(t + dur + 0.05);
+  }
+  // çit ve direk devrilince: metal çınlaması ya da tahta çatırtısı (src/kirik.js olay kuyruğu); uzaklıkla kısılır
+  function kirikSes(e) {
+    if (!A.ctx) return;
+    const d = Math.hypot(e.x - player.x, e.z - player.z); if (d > 120) return;
+    const t = A.ctx.currentTime, k = clamp(e.v / 14, 0.25, 1) * (1 - d / 120), tahta = e.tur === 'direk';
+    const s = A.ctx.createBufferSource(), f = A.ctx.createBiquadFilter(), g = A.ctx.createGain();
+    s.buffer = A.noise; f.type = tahta ? 'lowpass' : 'bandpass'; f.frequency.value = tahta ? 900 : e.tur === 'cit' ? 1300 : 2300; f.Q.value = tahta ? 0.7 : 3;
+    g.gain.setValueAtTime(0.55 * k, t); g.gain.exponentialRampToValueAtTime(0.001, t + (tahta ? 0.22 : 0.4));
+    s.connect(f); f.connect(g); g.connect(A.master); s.start(t, Math.random()); s.stop(t + 0.45);
+    if (!tahta && e.tur !== 'cit') { beep(520 + Math.random() * 60, 0.5, 0.12 * k, 'triangle'); beep(1370 + Math.random() * 90, 0.35, 0.06 * k, 'triangle', 0.01); }
   }
   function thud(v) {
     if (!A.ctx) return;
@@ -13250,6 +13479,8 @@ function mutfakKur(api) {
     waterTex.offset.x = G.t * 0.006; waterTex.offset.y = G.t * 0.004;
     env.sky.material.uniforms.uTime.value = G.t;
     if (CIM) CIM.adim(camera, G.t);
+    kirikAdim(dt, player);      // devrilen çit ve direkler
+    if (KIRIK.ses.length) { for (const e of KIRIK.ses) kirikSes(e); KIRIK.ses.length = 0; }
     AGAC_U.uKam.value.copy(camera.position); AGAC_U.uZaman.value = G.t;
     if (castle) castle.flag.rotation.y = 0.5 + Math.sin(G.t * 1.9) * 0.22;
     const pulse = 0.28 + Math.sin(G.t * 4) * 0.08;
@@ -13287,6 +13518,7 @@ function mutfakKur(api) {
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
     wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
+    kirik: () => ({ oge: KIRIK.oge.length, zincir: KIRIK.zincir.length, aktif: KIRIK.aktif.length, say: Object.assign({}, KIRIK.say) }),      // yıkılabilir çit ve direkler
     sahne: () => scene,      // teşhis: katman gizleyip tek başına bakmak için
     cevre: () => cevreKaynak,      // gündüz ortam ışığının kaynağı: 'hdri' ya da 'gok' (dosya gelmediyse)
     ayar: () => ({ kalite: AYAR.kalite, golge: renderer.shadowMap.enabled, golgeBoyu: sun.shadow.mapSize.x, golgeAlan: sc.right * 2, agacYakin: AGAC_U.uYakin.value, sis: scene.fog.far, piksel: renderer.getPixelRatio(), ses: AYAR.ses, kazanc: masterGain() }),
