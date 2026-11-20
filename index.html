@@ -7137,6 +7137,153 @@ function buildBuildings(scene, maxAniso) {
   }
 }
 
+// ------------------------------------------------------------ cadde ayrıntıları: kaldırım, bordür, kenar çizgisi, aydınlatma, elektrik direği, durak
+// Kaldırım yalnız yerleşim içinde ve başka bir yolun üstüne taşmadığı yerde kurulur (kavşakta kesilir).
+// Direkler ve duraklar 700 m'lik hücrelerde InstancedMesh'tir: görüş alanı ve uzaklığa göre çizilmez (ağaçlarla aynı sınır).
+let KALD = null;      // kaldırım olan yerler (6 m'lik hücreler): araç kaldırıma çıkınca o yükseklikte durur
+function kaldirimda(x, z) {
+  if (!KALD) return false;
+  const i = Math.floor((x - KALD.x0) / 6), j = Math.floor((z - KALD.z0) / 6);
+  return i >= 0 && j >= 0 && i < KALD.nx && j < KALD.nz && KALD.d[j * KALD.nx + i] === 1;
+}
+function buildStreets(scene, maxAniso) {
+  KALD = null;
+  if (KAR) return { kaldirim: 0, lamba: 0, direk: 0, durak: 0 };
+  const HC = 60, gx = Math.ceil((XMAX - XMIN) / HC) + 1, gz = Math.ceil((ZMAX - ZMIN) / HC) + 1, yog = new Uint16Array(gx * gz);
+  for (const b of D.buildings) { const i = Math.floor((b[3] - XMIN) / HC), j = Math.floor((b[4] - ZMIN) / HC); if (i >= 0 && j >= 0 && i < gx && j < gz) yog[j * gx + i]++; }
+  const sehir = (x, z, enAz) => {
+    const i = Math.floor((x - XMIN) / HC), j = Math.floor((z - ZMIN) / HC);
+    let n = 0;
+    for (let b = -1; b <= 1; b++) for (let a = -1; a <= 1; a++) { const ii = i + a, jj = j + b; if (ii >= 0 && jj >= 0 && ii < gx && jj < gz) n += yog[jj * gx + ii]; }
+    return n >= enAz;
+  };
+  KALD = { x0: XMIN, z0: ZMIN, nx: Math.ceil((XMAX - XMIN) / 6) + 1, nz: Math.ceil((ZMAX - ZMIN) / 6) + 1, d: null };
+  KALD.d = new Uint8Array(KALD.nx * KALD.nz);
+  const isaret = (x, z) => { const i = Math.floor((x - XMIN) / 6), j = Math.floor((z - ZMIN) / 6); if (i >= 0 && j >= 0 && i < KALD.nx && j < KALD.nz) KALD.d[j * KALD.nx + i] = 1; };
+  const baskaYol = (x, z) => { const rr = roadAt(x, z); return !!rr && rr.d < rr.hw + 0.3; };
+  const yolY = (cls) => (cls <= 6 ? 0.15 + (6 - cls) * 0.012 : 0.09);
+  // parke taşı dokusu
+  const cv = document.createElement('canvas'); cv.width = cv.height = 256;
+  { const g = cv.getContext('2d'), R = rng(19); g.fillStyle = '#b4aea4'; g.fillRect(0, 0, 256, 256);
+    for (let y = 0; y < 256; y += 16) for (let x = -16; x < 256; x += 32) { const ox = x + ((y / 16) % 2) * 16, k = R(); g.fillStyle = k < 0.09 ? '#a67f6e' : 'rgb(' + (160 + Math.floor(k * 40)) + ',' + (154 + Math.floor(k * 40)) + ',' + (146 + Math.floor(k * 36)) + ')'; g.fillRect(ox + 1, y + 1, 30, 14); }
+    g.fillStyle = '#d2cdc4'; g.fillRect(0, 0, 8, 8); }
+  const parke = new THREE.CanvasTexture(cv); parke.wrapS = parke.wrapT = THREE.RepeatWrapping; parke.anisotropy = Math.min(8, maxAniso); parke.encoding = THREE.sRGBEncoding;
+  const kalMat = new THREE.MeshStandardMaterial({ map: parke, vertexColors: true, roughness: 0.95, side: THREE.DoubleSide });      // iki yüzlü: yolun iki yanında sarım yönü terstir
+  const cizMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 });
+  const chunks = new Map(), ust = new THREE.Color(1, 1, 1), bordur = new THREE.Color(1.25, 1.24, 1.2), beyazC = new THREE.Color('#e9e6dc').convertSRGBToLinear();
+  const chunkOf = (x, z) => { const key = Math.floor((x - XMIN) / 520) + '_' + Math.floor((z - ZMIN) / 520); let c = chunks.get(key); if (!c) { c = { k: new Bag(), c: new Bag() }; chunks.set(key, c); } return c; };
+  const duz = (bag, n) => { for (let i = 0; i < n; i++) bag.u.push(0.01, 0.99); };       // dokunun düz renkli köşesi (bordür, etek)
+  let kaldirimM = 0;
+  const lamba = [], direk = [], durak = [], tel = [];
+  for (const r of ROADS) {
+    if (r.cls > 5 || r.w < 5) continue;
+    const pts = r.pts, n = pts.length, hw = r.w / 2, ws = r.cls <= 3 ? 2.2 : 1.5, lift = yolY(r.cls), enAz = r.cls <= 4 ? 2 : 5;
+    const idx = [0];       // düz gidişte her ikinci nokta atlanır
+    for (let i = 1; i < n - 1; i++) {
+      const a = pts[i - 1], b = pts[i], c = pts[i + 1], d1 = Math.atan2(b.x - a.x, b.z - a.z), d2 = Math.atan2(c.x - b.x, c.z - b.z);
+      if (Math.abs(wrapAngle(d2 - d1)) > 0.05 || i - idx[idx.length - 1] >= 2) idx.push(i);
+    }
+    idx.push(n - 1);
+    const nokta = (i, s, off) => {
+      const a = pts[Math.max(0, i - 1)], c = pts[Math.min(n - 1, i + 1)], p = pts[i];
+      let tx = c.x - a.x, tz = c.z - a.z; const L = Math.hypot(tx, tz) || 1; tx /= L; tz /= L;
+      return { x: p.x + tz * s * off, z: p.z - tx * s * off, nx: tz * s, nz: -tx * s };
+    };
+    for (const s of [1, -1]) {
+      let prev = null, along = 0;
+      for (let q = 0; q < idx.length; q++) {
+        const i = idx[q], I = nokta(i, s, hw - 0.04), O = nokta(i, s, hw + ws), mx = (I.x + O.x) / 2, mz = (I.z + O.z) / 2;
+        if (q > 0) along += Math.hypot(pts[i].x - pts[idx[q - 1]].x, pts[i].z - pts[idx[q - 1]].z);
+        const ok = !baskaYol(mx, mz) && !baskaYol(O.x, O.z) && sehir(mx, mz, enAz) && baseH(mx, mz) > 0.5;
+        const cur = ok ? { ix: I.x, iz: I.z, ox: O.x, oz: O.z, yb: groundH(I.x, I.z) + lift, yi: groundH(I.x, I.z) + lift + 0.14, yo: groundH(O.x, O.z) + 0.06, u: along / 1.6 } : null;      // dış kenar zemine iner: altı boş görünmez, etek yüzü gerekmez
+        if (prev && cur) {
+          const bag = chunkOf(mx, mz).k, v1 = ws / 1.6;
+          bag.quad([prev.ix, prev.yi, prev.iz], [prev.ox, prev.yo, prev.oz], [cur.ox, cur.yo, cur.oz], [cur.ix, cur.yi, cur.iz], ust);
+          bag.u.push(prev.u, 0, prev.u, v1, cur.u, v1, prev.u, 0, cur.u, v1, cur.u, 0);
+          bag.quad([prev.ix, prev.yb, prev.iz], [prev.ix, prev.yi, prev.iz], [cur.ix, cur.yi, cur.iz], [cur.ix, cur.yb, cur.iz], bordur); duz(bag, 6);
+          isaret(mx, mz); isaret((prev.ix + prev.ox) / 2, (prev.iz + prev.oz) / 2); isaret((mx + (prev.ix + prev.ox) / 2) / 2, (mz + (prev.iz + prev.oz) / 2) / 2);
+          kaldirimM += Math.hypot(cur.ix - prev.ix, cur.iz - prev.iz);
+        } else if (prev || cur) {       // uç kapağı
+          const e = prev || cur, bag = chunkOf(e.ix, e.iz).k;
+          bag.tri([e.ix, e.yb, e.iz], [e.ix, e.yi, e.iz], [e.ox, e.yo, e.oz], bordur); duz(bag, 3);
+        }
+        prev = cur;
+      }
+      if (r.cls <= 2) {       // ana caddede kenar çizgisi
+        for (let q = 1; q < idx.length; q++) {
+          const A = nokta(idx[q - 1], s, hw - 0.42), B = nokta(idx[q], s, hw - 0.42), A2 = nokta(idx[q - 1], s, hw - 0.56), B2 = nokta(idx[q], s, hw - 0.56), ya = groundH(A.x, A.z) + lift + 0.035, yb = groundH(B.x, B.z) + lift + 0.035;
+          chunkOf(A.x, A.z).c.quad([A.x, ya, A.z], [A2.x, ya, A2.z], [B2.x, yb, B2.z], [B.x, yb, B.z], beyazC);
+        }
+      }
+    }
+    // sokak mobilyası
+    const h1 = ((r.pts[0].x * 13.7 + r.pts[0].z * 7.3) % 1 + 1) % 1;
+    let acc = h1 * 30, side = h1 < 0.5 ? 1 : -1, accD = 200 + h1 * 200, son = null;
+    for (let i = 1; i < n - 1; i++) {
+      const d = Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z);
+      acc += d; accD += d;
+      if (r.cls <= 4 && acc >= 42) {
+        acc = 0; side = -side;
+        const P = nokta(i, side, hw + 0.55);
+        if (!baskaYol(P.x, P.z) && sehir(P.x, P.z, 2) && wallDist(P.x, P.z) > 0.6 && baseH(P.x, P.z) > 0.5) lamba.push(P.x, groundH(P.x, P.z) + lift + 0.14, P.z, Math.atan2(-P.nx, -P.nz));
+      } else if (r.cls === 5 && acc >= 56) {
+        acc = 0;
+        const P = nokta(i, side, hw + 1.15);
+        if (!baskaYol(P.x, P.z) && sehir(P.x, P.z, 5) && wallDist(P.x, P.z) > 0.6 && baseH(P.x, P.z) > 0.5) {
+          const y = groundH(P.x, P.z) + lift + 0.1;
+          direk.push(P.x, y, P.z, Math.atan2(-P.nz, P.nx));
+          if (son && Math.hypot(son.x - P.x, son.z - P.z) < 72) for (const k of [-0.72, 0.72]) tel.push(son.x + son.nx * k, son.y + 7.95, son.z + son.nz * k, P.x + P.nx * k, y + 7.95, P.z + P.nz * k);
+          son = { x: P.x, y, z: P.z, nx: P.nx, nz: P.nz };
+        } else son = null;
+      }
+      if (r.cls <= 3 && accD >= 420) {
+        const P = nokta(i, 1, hw + 1.25);
+        if (!baskaYol(P.x, P.z) && sehir(P.x, P.z, 3) && wallDist(P.x, P.z) > 2 && baseH(P.x, P.z) > 0.5) { accD = 0; durak.push(P.x, groundH(P.x, P.z) + lift + 0.14, P.z, Math.atan2(-P.nx, -P.nz)); }
+      }
+    }
+  }
+  for (const [key, ch] of chunks) {
+    const ij = key.split('_'), parca = { x: XMIN + (+ij[0] + 0.5) * 520, z: ZMIN + (+ij[1] + 0.5) * 520, r: 380, mesh: [] };
+    if (ch.k.p.length) { const m = ch.k.mesh(kalMat, false); scene.add(m); parca.mesh.push(m); }
+    if (ch.c.p.length) { const m = ch.c.mesh(cizMat, false); scene.add(m); parca.mesh.push(m); }
+    PARCA.bina.push(parca);
+  }
+  // direk ve durak geometrileri (köşe renkli, tek parça)
+  const m4 = new THREE.Matrix4(), kutuG = new THREE.BoxGeometry(1, 1, 1).toNonIndexed(), silG = new THREE.CylinderGeometry(1, 1, 1, 6, 1, true).toNonIndexed();
+  const R = (h) => new THREE.Color(h).convertSRGBToLinear();
+  const parcaEkle = (bag, g, sx, sy, sz, x, y, z, col) => { m4.makeScale(sx, sy, sz).setPosition(x, y, z); bag.geom(g, m4, col); };
+  const lg = new Bag(), dg = new Bag(), sg = new Bag(), gri = R('#7d848b'), koyu = R('#3a3f45'), isik = R('#fff3c4'), ahsap = R('#6b4f36'), camC = R('#9fc3d6'), sari = R('#f2b824'), mavi = R('#1c6fb8'), tahta = R('#9a6a3c');
+  parcaEkle(lg, silG, 0.075, 7.2, 0.075, 0, 3.6, 0, gri); parcaEkle(lg, kutuG, 0.07, 0.07, 1.5, 0, 7.16, 0.72, gri); parcaEkle(lg, kutuG, 0.34, 0.1, 0.62, 0, 7.12, 1.5, isik);
+  parcaEkle(dg, silG, 0.12, 8.4, 0.12, 0, 4.2, 0, ahsap); parcaEkle(dg, kutuG, 1.7, 0.1, 0.1, 0, 7.9, 0, ahsap);
+  for (const sx of [-1.4, 1.4]) for (const sz of [-0.62, 0.62]) parcaEkle(sg, kutuG, 0.08, 2.4, 0.08, sx, 1.2, sz, koyu);
+  parcaEkle(sg, kutuG, 3.1, 0.08, 1.5, 0, 2.44, 0, koyu); parcaEkle(sg, kutuG, 2.84, 1.6, 0.04, 0, 1.4, -0.62, camC); parcaEkle(sg, kutuG, 2.1, 0.07, 0.42, 0, 0.5, -0.38, tahta);
+  for (const sx of [-0.9, 0.9]) parcaEkle(sg, kutuG, 0.07, 0.5, 0.36, sx, 0.25, -0.38, koyu);
+  parcaEkle(sg, kutuG, 0.06, 2.9, 0.06, 1.9, 1.45, 0.5, gri); parcaEkle(sg, kutuG, 0.56, 0.5, 0.05, 1.9, 2.65, 0.5, mavi); parcaEkle(sg, kutuG, 0.36, 0.3, 0.06, 1.9, 2.65, 0.5, sari);
+  const mobMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.25 });
+  const geolar = [[lg.mesh(mobMat, false).geometry, lamba, 8], [dg.mesh(mobMat, false).geometry, direk, 9], [sg.mesh(mobMat, false).geometry, durak, 3]];
+  const hucreler = new Map(), HUCRE = 700, q = new THREE.Quaternion(), UP = new THREE.Vector3(0, 1, 0), p = new THREE.Vector3(), s1 = new THREE.Vector3(1, 1, 1);
+  const hucre = (x, z) => { const key = Math.floor(x / HUCRE) + '_' + Math.floor(z / HUCRE); let h = hucreler.get(key); if (!h) { h = { l: [[], [], []], tel: [], kutu: new THREE.Box3() }; hucreler.set(key, h); } return h; };
+  geolar.forEach((gl, t) => { const a = gl[1]; for (let i = 0; i < a.length; i += 4) { const h = hucre(a[i], a[i + 2]); h.l[t].push(a[i], a[i + 1], a[i + 2], a[i + 3]); h.kutu.expandByPoint(p.set(a[i], a[i + 1], a[i + 2])); h.kutu.expandByPoint(p.set(a[i], a[i + 1] + gl[2], a[i + 2])); } });
+  for (let i = 0; i < tel.length; i += 6) { const h = hucre(tel[i], tel[i + 2]); h.tel.push(tel[i], tel[i + 1], tel[i + 2], tel[i + 3], tel[i + 4], tel[i + 5]); h.kutu.expandByPoint(p.set(tel[i], tel[i + 1], tel[i + 2])); h.kutu.expandByPoint(p.set(tel[i + 3], tel[i + 4], tel[i + 5])); }
+  const telMat = new THREE.LineBasicMaterial({ color: 0x1c1c1c });
+  for (const h of hucreler.values()) {
+    if (h.kutu.isEmpty()) continue;
+    const kure = h.kutu.getBoundingSphere(new THREE.Sphere()); kure.radius += 3;
+    const parca = { x: kure.center.x, z: kure.center.z, r: kure.radius, mesh: [] };
+    geolar.forEach((gl, t) => {
+      const a = h.l[t], nn = a.length / 4;
+      if (!nn) return;
+      const g = new THREE.BufferGeometry(); for (const k in gl[0].attributes) g.setAttribute(k, gl[0].attributes[k]); g.boundingSphere = kure;
+      const im = new THREE.InstancedMesh(g, mobMat, nn);
+      for (let i = 0; i < nn; i++) { q.setFromAxisAngle(UP, a[i * 4 + 3]); m4.compose(p.set(a[i * 4], a[i * 4 + 1], a[i * 4 + 2]), q, s1); im.setMatrixAt(i, m4); }
+      im.castShadow = true; im.frustumCulled = true; scene.add(im); parca.mesh.push(im);
+    });
+    if (h.tel.length) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(h.tel, 3)); g.boundingSphere = kure; const ln = new THREE.LineSegments(g, telMat); scene.add(ln); parca.mesh.push(ln); }
+    PARCA.agac.push(parca);
+  }
+  return { kaldirim: Math.round(kaldirimM), lamba: lamba.length / 4, direk: direk.length / 4, durak: durak.length / 4 };
+}
+
 // ------------------------------------------------------------ kale surları, burçlar, bayrak, Eski Van kalıntıları
 const SUMMIT = { x: 0, z: 0, y: 0 };
 function buildCastle(scene, routeNear) {
@@ -8090,7 +8237,7 @@ function poseCar(c, dt) {
   const k = Math.min(1, dt * 11);
   c.pitch = lerp(c.pitch, tp, k); c.roll = lerp(c.roll, tr, k);
   // Yol ağı araziden yukarıda çizilir (buildRoads: asfalt 0,15–0,22 m, toprak 0,09 m). Araç o yüzeyin üstünde durmalı; yoksa lastik yola gömülür.
-  const yolY = c.onRoad && !c.air ? (c.roadCls <= 6 ? 0.15 + (6 - c.roadCls) * 0.012 : 0.09) : 0;
+  const yolY = c.air ? 0 : c.onRoad ? (c.roadCls <= 6 ? 0.15 + (6 - c.roadCls) * 0.012 : 0.09) : kaldirimda(c.x, c.z) ? 0.2 : 0;      // kaldırıma çıkan araç kaldırım yüksekliğinde durur
   c.lift = lerp(c.lift || 0, yolY, Math.min(1, dt * 7));
   c.mesh.position.set(c.x, c.y + 0.02 + c.lift, c.z);
   c.mesh.rotation.set(c.pitch, c.h, c.roll, 'YXZ');
@@ -8761,7 +8908,7 @@ function trfThink(c, P, dt) {
     const cs = fx * Math.sin(o.h) + fz * Math.cos(o.h), ov = o.vx * fx + o.vz * fz;
     if (cs < -0.5 && al > 1.15 && ov < -1) continue;                         // karşı şeritten geçiyor
     if (i >= 0 && (c.ghost > 0 || (o.blk === c && c.id < o.id))) continue;   // karşılıklı bekleme: küçük numaralı geçer
-    if (c.pass > 0 && o === c.passO && !(f < 5.5 && al < yan + 0.1)) continue;   // yanından geçilen araç
+    if (c.pass > 0 && o === c.passO && !(f < 5.5 && al < yan)) continue;   // yanından geçilen araç
     const gap = f - 5.4, lim = gap < 0.3 ? 0 : Math.max(0, ov) * 0.95 + (gap - 2 - sp * 0.5) * 0.7;
     if (lim < vt) { vt = Math.max(0, lim); blk = o; bcs = cs; bov = ov; }
   }
@@ -8790,11 +8937,15 @@ function trfThink(c, P, dt) {
         const o = i < 0 ? P : act[i];
         if (o === c || o === blk) continue;
         const dx = o.x - c.x, dz = o.z - c.z, f = dx * fx + dz * fz;
-        if (f > -6 && f < uzak && Math.abs(c.lane + dx * rx + dz * rz - cand) < 1.95) free = false;
+        // kendi tarafımdan sıyrılırken yalnız öndekiler engeldir (arkamdaki kuyruk engel sayılmaz); karşı şeride çıkarken arkaya da bakılır
+        if (f > (cand > 0.9 ? 2 : -6) && f < uzak && Math.abs(c.lane + dx * rx + dz * rz - cand) < 1.95) free = false;
       }
       if (free) hedef = cand;
     }
-    if (hedef !== null) { c.pass = 9; c.passO = blk; c.laneT = hedef; } else c.passCd = 1.5;
+    if (hedef !== null) {
+      c.pass = 9; c.passO = blk; c.laneT = hedef;
+      if (sp < 0.5 && (blk.x - c.x) * fx + (blk.z - c.z) * fz < 9) c.rev = 0.9;      // dibinde durmuşsa önce biraz geri çekilir: yana açılacak yer kazanır
+    } else c.passCd = 1.5;
   }
   if (c.pass > 0 && blk === c.passO && sp < 0.4 && c.rev <= 0) { c.jam += dt; if (c.jam > 1.5) { c.jam = 0; c.rev = 1.1; } } else c.jam = 0;
   if (blk === P && sp < 1 && c.blkT > 2.5 && c.honkT <= 0 && c.pass <= 0) { TRF.honk = c; c.honkT = 5 + Math.random() * 4; }
@@ -8815,7 +8966,7 @@ function trfThink(c, P, dt) {
 }
 // Direksiyon ve gaz (her fizik adımında): havucu ileride tut, ona dön, hedef hıza gel.
 function trfSteer(c, dt) {
-  const sp = Math.hypot(c.vx, c.vz), LA = 6.5 + sp * 0.5, I = c.in;
+  const sp = Math.hypot(c.vx, c.vz), LA = (c.pass > 0 ? 4.2 : 6.5) + sp * 0.5, I = c.in;      // yandan geçerken hedef nokta yakındır: araç daha keskin açılır
   c.lane += clamp(c.laneT - c.lane, -2.4 * dt, 2.4 * dt);
   let tx = 0, tz = 0, d2 = 0;
   for (let it = 0; ; it++) {
@@ -10290,6 +10441,7 @@ function mutfakKur(api) {
       buildTrafficNet(); trafikHedef();
       await say(T('yuk.bina', D.buildings.length.toLocaleString(LOCALE[LANG])));
       buildBuildings(world, maxAniso);
+      G.cadde = buildStreets(world, maxAniso);
       await say(Rg.msg[1]);
       for (const ev of EVENTS) {
         if (ev.bolge !== id) continue;
