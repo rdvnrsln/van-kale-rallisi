@@ -8016,6 +8016,41 @@ function makeTrikeGLB(src, motor) {
   return { group: g, wheels, tail, yuk, anim };
 }
 
+// ------------------------------------------------------------ Blender arabaları
+// Model: yayin/model/arac/arabalar.glb (tools/blender/arabalar.py): spor, sedan, hatch, minibus, kamyonet. Yüklenemezse kod çizimi kalır.
+let _arSoz = null;
+function arabaYukle() {
+  if (!_arSoz) _arSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/arac/arabalar.glb', (g) => ok(g.scene), undefined, red); });
+  return _arSoz;
+}
+const _boya = {};
+// tip: spor | sedan | hatch | minibus | kamyonet. Boya malzemesi renge göre paylaşılır; stop malzemesi araca özeldir (fren ışığı).
+function makeCarGLB(src, tip, renkHex, sec) {
+  const kok = src.getObjectByName(tip).clone(true), g = new THREE.Group(), wheels = [];
+  kok.position.set(0, 0, 0); kok.rotation.set(0, 0, 0); g.add(kok);
+  let tail = new THREE.MeshStandardMaterial();
+  kok.traverse((m) => {
+    if (!m.isMesh) return;
+    const ad = m.material.name;
+    m.castShadow = ad === 'boya';
+    if (ad === 'boya') {
+      let b = _boya[renkHex];
+      if (!b) { b = _boya[renkHex] = m.material.clone(); b.color.copy(LIN(renkHex)); b.envMapIntensity = 0.75; }
+      m.material = b;
+    } else if (ad === 'stop') { if (!tail.isKopya) { tail = m.material.clone(); tail.isKopya = true; } m.material = tail; }
+  });
+  for (const ad of ['FL', 'FR', 'RL', 'RR']) {
+    const n = kok.getObjectByName(tip + '_teker_' + ad), pivot = new THREE.Group(), spin = new THREE.Group();
+    pivot.position.copy(n.position); n.parent.add(pivot); pivot.add(spin); spin.add(n); n.position.set(0, 0, 0);
+    n.castShadow = true;
+    wheels.push({ pivot, spin, front: ad[0] === 'F' ? 1 : 0 });
+  }
+  const serit = kok.getObjectByName(tip + '_serit'), taksi = kok.getObjectByName('sedan_taksi');
+  if (serit) serit.visible = !!(sec && sec.serit);
+  if (taksi) taksi.visible = !!(sec && sec.taksi);
+  return { group: g, wheels, tail };
+}
+
 // ------------------------------------------------------------ rota
 function prepRoute(pts0, loop) {
   const pts = resample(pts0, 4);
@@ -8455,7 +8490,7 @@ function trafficInit(scene, n) {
     const style = i % 10 === 3 ? 'sedan' : i % 6 === 1 ? 'minibus' : k < 0.5 ? 'sedan' : 'hatch';
     const color = i % 10 === 3 ? '#e8c33a' : style === 'minibus' ? '#e9e7e1' : TRF_RENK[Math.floor(R() * TRF_RENK.length)];
     const c = makeCar(color, false, '', style, trafficMesh(color, style));
-    c.id = i; c.trafik = true; c.power = style === 'minibus' ? 5.5 : 6.5; c.vmax = 34;
+    c.id = i; c.trafik = true; c.power = style === 'minibus' ? 5.5 : 6.5; c.vmax = 34; c.stil = style; c.renk = color;
     c.in = { thr: 0, brk: 0, steer: 0, hb: false, stop: false };
     c.mesh.visible = false; scene.add(c.mesh);
     TRF.pool.push(c); TRF.free.push(c);
@@ -8665,6 +8700,17 @@ function trafficTick(dt, P, cam) {
     c.hit = 0;
   }
 }
+// Blender arabaları inince havuzdaki kod çizimi araçların yerini alır. Her beş araçtan biri kamyonet olur.
+function trafficModel(scene, src) {
+  for (const c of TRF.pool) {
+    const taksi = c.renk === '#e8c33a', tip = taksi ? 'sedan' : c.stil === 'minibus' ? 'minibus' : c.id % 5 === 2 ? 'kamyonet' : c.stil;
+    const v = makeCarGLB(src, tip, c.renk, { taksi });
+    v.group.visible = c.mesh.visible; v.group.position.copy(c.mesh.position); v.group.rotation.copy(c.mesh.rotation);
+    scene.remove(c.mesh); scene.add(v.group);
+    c.mesh = v.group; c.wheels = v.wheels; c.tail = v.tail;
+  }
+}
+
 
 'use strict';
 // =====================================================================
@@ -10031,6 +10077,15 @@ function mutfakKur(api) {
     const rc = [['#1d6fb8', 'Tuşba', 'sedan'], ['#e8c33a', 'Erek', 'hatch'], ['#2f9a5a', 'Edremit', 'sedan'], ['#7a3fa8', 'Gevaş', 'hatch']];
     rivals = rc.map(([c, n, st], i) => { const r = makeCar(c, false, n, st); Object.defineProperty(r, 'name', { get: () => TA('rakip')[i] }); r.mesh.visible = false; scene.add(r.mesh); return r; });
     trafficInit(scene, 14);
+    // Blender arabaları: oyuncunun spor arabası, rakipler ve trafik. İnmezse kod çizimi kalır.
+    arabaYukle().then((src) => {
+      const degis = (c, v) => { v.group.visible = c.mesh.visible; v.group.position.copy(c.mesh.position); v.group.rotation.copy(c.mesh.rotation); scene.remove(c.mesh); scene.add(v.group); c.mesh = v.group; c.wheels = v.wheels; c.tail = v.tail; };
+      const pv = makeCarGLB(src, 'spor', '#e2572b', { serit: true }), eski = player.car.group;
+      pv.group.visible = eski.visible; scene.remove(eski); scene.add(pv.group); player.car = pv;
+      if (player.mesh === eski) { player.mesh = pv.group; player.wheels = pv.wheels; player.tail = pv.tail; }
+      rivals.forEach((r, i) => degis(r, makeCarGLB(src, rc[i][2] === 'hatch' ? 'hatch' : 'sedan', rc[i][0])));
+      trafficModel(scene, src);
+    }).catch(() => {});
     gate1 = makeGate(); gate2 = makeGate();
     beacon1 = beam(8, 26, LIN('#22c3d6'), 0.3); beacon2 = beam(8, 10, LIN('#22c3d6'), 0.14);
     await loadRegion('van');
