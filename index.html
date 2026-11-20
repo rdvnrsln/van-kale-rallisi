@@ -437,6 +437,14 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
       <label class="onay"><input type="checkbox" id="ayar-oto" checked> <span data-i18n="ayar.oto">Kare hızı düşerse kaliteyi kendiliğinden düşür</span></label>
     </div>
     <div class="ayar">
+      <div class="etiket" id="lbl-kontras" data-i18n="ayar.kontras">Zemin kontrastı</div>
+      <div class="seg" role="group" aria-labelledby="lbl-kontras">
+        <button type="button" id="kontras-0" data-kontras="0" aria-pressed="true" data-i18n="ayar.kontras0">Normal</button>
+        <button type="button" id="kontras-1" data-kontras="1" aria-pressed="false" data-i18n="ayar.kontras1">Hafif</button>
+        <button type="button" id="kontras-2" data-kontras="2" aria-pressed="false" data-i18n="ayar.kontras2">Belirgin</button>
+      </div>
+    </div>
+    <div class="ayar">
       <div class="etiket" id="lbl-vakit" data-i18n="ayar.vakit">Gün vakti</div>
       <div class="seg" role="group" aria-labelledby="lbl-vakit">
         <button type="button" id="vakit-dongu" data-vakit="dongu" aria-pressed="true" data-i18n="ayar.dongu">Döngü</button>
@@ -6259,7 +6267,7 @@ const DIL = {
     'zone.kale': 'Van Kalesi', 'zone.eski': 'Eski Van', 'zone.kiyi': 'Van Gölü kıyısı', 'zone.cevre': 'Kale çevresi', 'zone.sokaklari': '{0} sokakları', 'zone.arazi': 'Arazi',
     'zone.ipekyolu': 'İpekyolu · Van', 'zone.mahalle': '{0} Mahallesi · Van', 'zone.gevas': 'Gevaş · Van', 'zone.kayakMerkezi': 'Abalı Kayak Merkezi',
     'zone.koyu': '{0} köyü', 'zone.pistYolu': 'Pist yolu', 'zone.kayakYolu': 'Kayak yolu', 'zone.artos': 'Artos yamacı',
-    'ayar.baslik': 'Ayarlar', 'ayar.dil': 'Dil', 'ayar.kalite': 'Grafik kalitesi', 'ayar.dusuk': 'Düşük', 'ayar.orta': 'Orta', 'ayar.yuksek': 'Yüksek', 'ayar.ultra': 'Ultra',
+    'ayar.baslik': 'Ayarlar', 'ayar.dil': 'Dil', 'ayar.kalite': 'Grafik kalitesi', 'ayar.dusuk': 'Düşük', 'ayar.orta': 'Orta', 'ayar.yuksek': 'Yüksek', 'ayar.ultra': 'Ultra', 'ayar.kontras': 'Zemin kontrastı', 'ayar.kontras0': 'Normal', 'ayar.kontras1': 'Hafif', 'ayar.kontras2': 'Belirgin',
     'ayar.kaliteNot': 'Düşük: gölge yok, tam piksel. Orta: yumuşak gölge. Yüksek: keskin gölge, yüksek çözünürlük. Ultra: daha keskin ve geniş gölge, daha çok ayrıntılı ağaç, daha uzak görüş; güçlü ekran kartı ister.',
     'ayar.oto': 'Kare hızı düşerse kaliteyi kendiliğinden düşür', 'ayar.sehir': 'Şehir', 'ayar.vakit': 'Gün vakti', 'ayar.dongu': 'Döngü', 'ayar.gunduz': 'Gündüz', 'ayar.gunbatimi': 'Gün batımı', 'ayar.gece': 'Gece', 'ayar.vakitNot': 'Döngüde gündüz, gün batımı ve gece sırayla gelir. Sürerken T tuşu vakti değiştirir.', 'ayar.trafik': 'Şehir trafiği: yollarda araçlar dolaşsın', 'ayar.ses': 'Ses düzeyi', 'ayar.kamera': 'Kamera', 'ayar.yakin': 'Yakın', 'ayar.uzak': 'Uzak', 'ayar.surucu': 'Sürücü',
     'ayar.ekran': 'Ekran', 'ayar.tamEkran': 'Tam ekranı aç ya da kapat', 'ayar.tamEkranNot': 'F11 ya da Alt+Enter', 'ayar.kayit': 'Kayıt', 'ayar.sifirla': 'İlerlemeyi sıfırla',
@@ -6409,7 +6417,7 @@ const DIL = {
     'zone.kale': 'Van Castle', 'zone.eski': 'Old Van', 'zone.kiyi': 'Lake Van shore', 'zone.cevre': 'Around the castle', 'zone.sokaklari': '{0} streets', 'zone.arazi': 'Off road',
     'zone.ipekyolu': 'İpekyolu · Van', 'zone.mahalle': '{0} · Van', 'zone.gevas': 'Gevaş · Van', 'zone.kayakMerkezi': 'Abalı Ski Centre',
     'zone.koyu': '{0} village', 'zone.pistYolu': 'Piste track', 'zone.kayakYolu': 'Ski road', 'zone.artos': 'Artos slope',
-    'ayar.baslik': 'Settings', 'ayar.dil': 'Language', 'ayar.kalite': 'Graphics quality', 'ayar.dusuk': 'Low', 'ayar.orta': 'Medium', 'ayar.yuksek': 'High', 'ayar.ultra': 'Ultra',
+    'ayar.baslik': 'Settings', 'ayar.dil': 'Language', 'ayar.kalite': 'Graphics quality', 'ayar.dusuk': 'Low', 'ayar.orta': 'Medium', 'ayar.yuksek': 'High', 'ayar.ultra': 'Ultra', 'ayar.kontras': 'Ground contrast', 'ayar.kontras0': 'Normal', 'ayar.kontras1': 'Slight', 'ayar.kontras2': 'Strong',
     'ayar.kaliteNot': 'Low: no shadows, native pixels. Medium: soft shadows. High: sharp shadows, high resolution. Ultra: sharper and wider shadows, more detailed trees, longer view distance; needs a strong graphics card.',
     'ayar.oto': 'Lower the quality automatically when the frame rate drops', 'ayar.sehir': 'City', 'ayar.vakit': 'Time of day', 'ayar.dongu': 'Cycle', 'ayar.gunduz': 'Day', 'ayar.gunbatimi': 'Sunset', 'ayar.gece': 'Night', 'ayar.vakitNot': 'The cycle runs through day, sunset and night. While driving, the T key changes the time of day.', 'ayar.trafik': 'City traffic: cars drive on the roads', 'ayar.ses': 'Volume', 'ayar.kamera': 'Camera', 'ayar.yakin': 'Near', 'ayar.uzak': 'Far', 'ayar.surucu': 'Driver',
     'ayar.ekran': 'Display', 'ayar.tamEkran': 'Toggle full screen', 'ayar.tamEkranNot': 'F11 or Alt+Enter', 'ayar.kayit': 'Save data', 'ayar.sifirla': 'Reset progress',
@@ -6559,7 +6567,7 @@ const DIL = {
     'zone.kale': 'قلعه وان', 'zone.eski': 'وان قدیم', 'zone.kiyi': 'ساحل دریاچه وان', 'zone.cevre': 'پیرامون قلعه', 'zone.sokaklari': 'کوچه‌های {0}', 'zone.arazi': 'بیرون جاده',
     'zone.ipekyolu': 'ایپک‌یولو · وان', 'zone.mahalle': 'محله {0} · وان', 'zone.gevas': 'گواش · وان', 'zone.kayakMerkezi': 'پیست اسکی آبالی',
     'zone.koyu': 'روستای {0}', 'zone.pistYolu': 'راه پیست', 'zone.kayakYolu': 'جاده پیست', 'zone.artos': 'دامنه آرتوس',
-    'ayar.baslik': 'تنظیمات', 'ayar.dil': 'زبان', 'ayar.kalite': 'کیفیت گرافیک', 'ayar.dusuk': 'کم', 'ayar.orta': 'متوسط', 'ayar.yuksek': 'زیاد', 'ayar.ultra': 'اولترا',
+    'ayar.baslik': 'تنظیمات', 'ayar.dil': 'زبان', 'ayar.kalite': 'کیفیت گرافیک', 'ayar.dusuk': 'کم', 'ayar.orta': 'متوسط', 'ayar.yuksek': 'زیاد', 'ayar.ultra': 'اولترا', 'ayar.kontras': 'کنتراست زمین', 'ayar.kontras0': 'عادی', 'ayar.kontras1': 'ملایم', 'ayar.kontras2': 'زیاد',
     'ayar.kaliteNot': 'کم: بدون سایه. متوسط: سایه نرم. زیاد: سایه دقیق و وضوح بالا. اولترا: سایه دقیق‌تر و گسترده‌تر، درختان پرجزئیات بیشتر، دید دورتر؛ کارت گرافیک قوی می‌خواهد.',
     'ayar.oto': 'اگر سرعت فریم افت کرد، کیفیت خودکار کم شود', 'ayar.sehir': 'شهر', 'ayar.vakit': 'زمان روز', 'ayar.dongu': 'چرخه', 'ayar.gunduz': 'روز', 'ayar.gunbatimi': 'غروب', 'ayar.gece': 'شب', 'ayar.vakitNot': 'در چرخه، روز و غروب و شب پشت سر هم می‌آیند. هنگام رانندگی کلید T زمان روز را عوض می‌کند.', 'ayar.trafik': 'ترافیک شهر: خودروها در خیابان‌ها حرکت کنند', 'ayar.ses': 'بلندی صدا', 'ayar.kamera': 'دوربین', 'ayar.yakin': 'نزدیک', 'ayar.uzak': 'دور', 'ayar.surucu': 'راننده',
     'ayar.ekran': 'صفحه', 'ayar.tamEkran': 'تمام‌صفحه را باز یا بسته کن', 'ayar.tamEkranNot': 'F11 یا Alt+Enter', 'ayar.kayit': 'داده‌های ذخیره‌شده', 'ayar.sifirla': 'پاک کردن پیشرفت',
@@ -8515,6 +8523,9 @@ function triplanar(mat, side, top, sSide, sTop, gain, kab, cok) {
 // Yakın planda normal haritaları ışığı böler (380 m'de söner). Telefonda tek ölçek ve normal haritası yok.
 // Büyük ölçekte sırt ve oluk (makroUret): yamaçta ışık, oyuk karartması ve sırtta açılan kaya; düz zeminde, yolda ve şehirde yok.
 // Maskede payı olmayan doku okunmaz (dal): kar yalnız Abalı'da, kaya yalnız sarp yamaçta okunur.
+// Zemin kontrastı (Ayarlar; kurucu isteği 20 Kas 2026): 0 bugünkü görünüş. Doku ayrıntısının ve büyük lekelerin karşıtlığı ile kabartma gücü artar; kar hariç.
+// Değer gölgelendiriciye ortak tekdüze değişkenle gider: değişince yeniden derleme yok.
+const ARAZI_U = { uKontras: { value: 0 } };
 const ARAZI_OLCEK = { zemin: 0.5, cayir: 0.4, kum: 0.42, kayalik: 0.17, kar: 0.3 };      // 1 / metre (doku boyu: 2 m, 2,5 m, 2,4 m, 5,9 m, 3,3 m; Poly Haven'ın gerçek ölçüsü)
 function terrainPatch(mat, maskTex, akisTex) {
   const normalVar = !!(TEX.zemin_n && TEX.cayir_n && TEX.kum_n && TEX.kayalik_n && TEX.kar_n && TEX.hava_n);
@@ -8523,7 +8534,7 @@ function terrainPatch(mat, maskTex, akisTex) {
   const K = KAR, TA = ['msk', 'boya', 'det', 'dz', 'ds', 'dk', 'rk', 'isik', 'nrm'].indexOf(TANI) >= 0 ? TANI : '';      // hata, kirik: arazi tanısı değil
   const O = ARAZI_OLCEK, f = (v) => v.toFixed(4);
   mat.onBeforeCompile = (sh) => {
-    sh.uniforms.maskMap = { value: maskTex };
+    sh.uniforms.maskMap = { value: maskTex }; sh.uniforms.uKontras = ARAZI_U.uKontras;
     for (const n of PBR) sh.uniforms['t_' + n] = { value: TEX[n] };
     sh.vertexShader = 'varying vec3 vWPos;\nvarying vec3 vWNrm;\n' + sh.vertexShader
       .replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\nvWNrm = normalize(mat3(modelMatrix) * objectNormal);')
@@ -8531,7 +8542,7 @@ function terrainPatch(mat, maskTex, akisTex) {
     // Tekrar kırıcı: yakın ölçek iki kez okunur (ikincisi 90° döndürülmüş ve %17 küçük); 22 m'lik gürültü lekeleri ikisini karıştırır.
     // Uzak ölçek 9 kat büyüktür. Telefonda tek örnek.
     sh.uniforms.t_makro = { value: TEX.makro }; sh.uniforms.t_akis = { value: akisTex };
-    const ust = ['uniform sampler2D maskMap;', 'uniform sampler2D t_makro;', 'uniform sampler2D t_akis;', 'varying vec3 vWPos;', 'varying vec3 vWNrm;'].concat(PBR.map((n) => 'uniform sampler2D t_' + n + ';'), [
+    const ust = ['uniform sampler2D maskMap;', 'uniform float uKontras;', 'uniform sampler2D t_makro;', 'uniform sampler2D t_akis;', 'varying vec3 vWPos;', 'varying vec3 vWNrm;'].concat(PBR.map((n) => 'uniform sampler2D t_' + n + ';'), [
       'float gurH(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }',
       'float gurultu(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);',
       '  return mix(mix(gurH(i), gurH(i + vec2(1.0, 0.0)), f.x), mix(gurH(i + vec2(0.0, 1.0)), gurH(i + vec2(1.0, 1.0)), f.x), f.y); }',
@@ -8607,10 +8618,10 @@ function terrainPatch(mat, maskTex, akisTex) {
       'det = mix(det, dU, msk.g);',
       'det = mix(det, mix(vec3(1.0), dS, 0.3), msk.b);',      // kar: leke rengi zayıf, kabartmayı normal haritası verir
       'det = mix(det, dK, rk);',
-      'det = mix(vec3(1.0), det, 1.1);',
+      'det = mix(vec3(1.0), det, 1.1 + uKontras * (1.0 - msk.b));',      // zemin kontrastı: doku ayrıntısı
       'float wB = (1.0 - msk.g) * (1.0 - msk.b) * (1.0 - rk);',      // açık bozkır ve çayır payı (drone taraması bu alanda uzağa kadar sürer)
       'det = mix(det, vec3(1.0), mix(smoothstep(100.0, 700.0, dcam) * 0.85, smoothstep(500.0, 2500.0, dcam) * 0.6, wB));',      // fotoğraf ayrıntısı 700 m'de, drone taraması 2,5 km'de söner
-      'det *= 1.0 + ((texture2D(t_makro, wp / 520.0 + 0.17).b - 0.5) * 0.3 + (texture2D(t_makro, wp / 160.0 + 0.53).b - 0.5) * 0.18) * (1.0 - msk.b);',      // iki ölçekte leke: ova tek düze görünmesin
+      'det *= 1.0 + ((texture2D(t_makro, wp / 520.0 + 0.17).b - 0.5) * 0.3 + (texture2D(t_makro, wp / 160.0 + 0.53).b - 0.5) * 0.18) * (1.0 - msk.b) * (1.0 + uKontras * 1.5);',      // iki ölçekte leke: ova tek düze görünmesin
       'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.16, 0.145, 0.13), rk * msk.b * 0.85);',      // karlı yamaçta açılan kaya koyu
       'diffuseColor.rgb *= clamp(det, 0.04, 3.0) * mix(0.92, 0.82, rk) * (1.0 + mH * 0.5 * mK);',      // oluk koyu, sırt açık
       TA ? 'vec3 taniRenk = ' + ({ msk: 'msk', boya: 'taniBoya', det: 'clamp(det, 0.0, 3.0) * 0.33', dz: 'dZ * 0.5', ds: 'dS * 0.5', dk: 'dK * 0.5', rk: 'vec3(rk)', isik: 'vec3(0.0)', nrm: 'nIs * 0.5 + 0.5' }[TA] || 'vec3(1.0, 0.0, 1.0)') + ';' : '',
@@ -8635,7 +8646,7 @@ function terrainPatch(mat, maskTex, akisTex) {
         'vec3 kK3 = vec3(0.0); if (rk > 0.004) kK3 = kayaEgim(n_kayalik, vWPos, nKaya, ' + f(O.kayalik) + ') * (1.0 - smoothstep(60.0, 700.0, dcam));',
         'vec2 kd = mix(mix(kZ, kC, msk.r), kU, msk.g);',
         'kd = mix(kd, kS * 0.8, msk.b);',
-        'kd *= 1.0 - rk;',
+        'kd *= (1.0 - rk) * (1.0 + uKontras * 1.2 * (1.0 - msk.b));',      // zemin kontrastı: kabartma
         'kd *= 1.0 - smoothstep(60.0, mix(380.0, 1100.0, wB), dcam);',      // drone taramasının kabartması daha uzağa kadar
       ].concat(makroNormal, [
         'kwn = normalize(kwn + vec3(kd.x + mO.x, 0.0, kd.y + mO.y) + kK3 * rk * 1.5);',
@@ -12745,10 +12756,10 @@ function mutfakKur(api) {
   }
 
   // ---------------------------------------------------------------- ayarlar
-  const AYAR = Object.assign({ kalite: MOBIL ? 'dusuk' : 'yuksek', oto: true, ses: 100, kamera: 0, trafik: true, vakit: 'dongu' }, store.get('ayar', {}));
+  const AYAR = Object.assign({ kalite: MOBIL ? 'dusuk' : 'yuksek', oto: true, ses: 100, kamera: 0, trafik: true, vakit: 'dongu', kontras: 0 }, store.get('ayar', {}));
   if (['dusuk', 'orta', 'yuksek', 'ultra'].indexOf(AYAR.kalite) < 0 || (MOBIL && AYAR.kalite === 'ultra')) AYAR.kalite = 'yuksek';
   if (MOBIL) $('kalite-ultra').hidden = true;      // telefonda 4096 gölge haritası belleği zorlar
-  AYAR.ses = clamp(+AYAR.ses || 0, 0, 100); AYAR.kamera = clamp(AYAR.kamera | 0, 0, 2);
+  AYAR.ses = clamp(+AYAR.ses || 0, 0, 100); AYAR.kamera = clamp(AYAR.kamera | 0, 0, 2); AYAR.kontras = clamp(AYAR.kontras | 0, 0, 2);
   G.cam = AYAR.kamera;
   // Dil: sayfadaki sabit metinler data-i18n ile, dinamik metinler T() ile gelir. Farsça sağdan sola yazılır.
   function applyLang(l, save) {
@@ -12800,6 +12811,8 @@ function mutfakKur(api) {
     for (const el of document.querySelectorAll('[data-kalite]')) el.setAttribute('aria-pressed', el.getAttribute('data-kalite') === q ? 'true' : 'false');
     for (const el of document.querySelectorAll('[data-kamera]')) el.setAttribute('aria-pressed', +el.getAttribute('data-kamera') === G.cam ? 'true' : 'false');
     for (const el of document.querySelectorAll('[data-vakit]')) el.setAttribute('aria-pressed', el.getAttribute('data-vakit') === AYAR.vakit ? 'true' : 'false');
+    ARAZI_U.uKontras.value = [0, 0.5, 1.0][AYAR.kontras];      // zemin kontrastı: Normal, Hafif, Belirgin
+    for (const el of document.querySelectorAll('[data-kontras]')) el.setAttribute('aria-pressed', +el.getAttribute('data-kontras') === AYAR.kontras ? 'true' : 'false');
     trafikHedef();
     if (CIM) CIM.kalite(q);
     AGAC_U.uYakin.value = MOBIL ? 40 : q === 'dusuk' ? 0 : q === 'orta' ? 70 : q === 'ultra' ? 200 : 120;      // yakın düzey ağaç yarıçapı
@@ -12814,6 +12827,7 @@ function mutfakKur(api) {
   for (const el of document.querySelectorAll('[data-kamera]')) el.addEventListener('click', () => { G.cam = AYAR.kamera = +el.getAttribute('data-kamera'); camSnap = true; applySettings(true); });
   $('ayar-oto').addEventListener('change', () => { AYAR.oto = $('ayar-oto').checked; applySettings(true); });
   for (const el of document.querySelectorAll('[data-vakit]')) el.addEventListener('click', () => vakitSec(el.getAttribute('data-vakit')));
+  for (const el of document.querySelectorAll('[data-kontras]')) el.addEventListener('click', () => { AYAR.kontras = +el.getAttribute('data-kontras'); applySettings(true); });
   $('ayar-trafik').addEventListener('change', () => { AYAR.trafik = $('ayar-trafik').checked; applySettings(true); });
   $('ayar-ses').addEventListener('input', () => { AYAR.ses = clamp(+$('ayar-ses').value || 0, 0, 100); applySettings(true); });
   $('ayar-ses').addEventListener('change', () => { initAudio(); beep(660, 0.15, 0.3, 'triangle'); });
@@ -13539,7 +13553,7 @@ function mutfakKur(api) {
     kirik: () => ({ oge: KIRIK.oge.length, zincir: KIRIK.zincir.length, aktif: KIRIK.aktif.length, say: Object.assign({}, KIRIK.say) }),      // yıkılabilir çit ve direkler
     sahne: () => scene,      // teşhis: katman gizleyip tek başına bakmak için
     cevre: () => cevreKaynak,      // gündüz ortam ışığının kaynağı: 'hdri' ya da 'gok' (dosya gelmediyse)
-    ayar: () => ({ kalite: AYAR.kalite, golge: renderer.shadowMap.enabled, golgeBoyu: sun.shadow.mapSize.x, golgeAlan: sc.right * 2, agacYakin: AGAC_U.uYakin.value, sis: scene.fog.far, piksel: renderer.getPixelRatio(), ses: AYAR.ses, kazanc: masterGain() }),
+    ayar: () => ({ kalite: AYAR.kalite, golge: renderer.shadowMap.enabled, golgeBoyu: sun.shadow.mapSize.x, golgeAlan: sc.right * 2, agacYakin: AGAC_U.uYakin.value, kontras: ARAZI_U.uKontras.value, sis: scene.fog.far, piksel: renderer.getPixelRatio(), ses: AYAR.ses, kazanc: masterGain() }),
     // grafik kıyası için sabit kamera noktaları: Kale Turu rotasında dört yer, biri de kaleye tepeden bakış
     olcumNoktalari() {
       const R = EVENTS[0].R, out = [];
