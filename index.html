@@ -9204,9 +9204,10 @@ function yayaYukle() {
 const YAYA_TIP = {
   ogr_e1: { boy: 1.0, om: 0.205, hiz: 1.5 }, ogr_k1: { boy: 0.94, om: 0.185, hiz: 1.45 }, ogr_k2: { boy: 0.95, om: 0.185, hiz: 1.3, etek: 1 }, ogr_e2: { boy: 1.02, om: 0.205, hiz: 1.55 },
   amca: { boy: 0.99, om: 0.205, hiz: 1.05 }, teyze: { boy: 0.91, om: 0.19, hiz: 0.95, etek: 1, yuk: 1 }, genc_e: { boy: 1.03, om: 0.205, hiz: 1.6 }, kadin: { boy: 0.96, om: 0.188, hiz: 1.35, etek: 1 },
+  is_adami: { boy: 1.01, om: 0.205, hiz: 1.45 }, dede: { boy: 0.97, om: 0.205, hiz: 0.9 }, genc_k: { boy: 0.93, om: 0.185, hiz: 1.5 }, anne: { boy: 0.93, om: 0.19, hiz: 1.2 }, sporcu: { boy: 1.04, om: 0.205, hiz: 1.65 },
   kayakci_1: { boy: 1.0, om: 0.205, hiz: 1.2 }, kayakci_2: { boy: 0.95, om: 0.19, hiz: 1.2 }, kayakci_3: { boy: 1.02, om: 0.205, hiz: 1.2 },
 };
-const YAYA_SOKAK = ['ogr_e1', 'ogr_k1', 'ogr_k2', 'ogr_e2', 'amca', 'teyze', 'genc_e', 'kadin'];
+const YAYA_SOKAK = ['ogr_e1', 'ogr_k1', 'ogr_k2', 'ogr_e2', 'amca', 'teyze', 'genc_e', 'kadin', 'is_adami', 'dede', 'genc_k', 'anne', 'sporcu'];
 const _ya = { v: new THREE.Vector3(), b: new THREE.Vector3(), q: new THREE.Quaternion(), q2: new THREE.Quaternion(), q3: new THREE.Quaternion(), d: new THREE.Vector3(), asagi: new THREE.Vector3(0, -1, 0), X: new THREE.Vector3(1, 0, 0), Y: new THREE.Vector3(0, 1, 0) };
 // ek: 'omuz' (omuzda kayak), 'kayak' (ayakta kayak ve baton) ya da boş
 function yayaKur(src, ad, ek) {
@@ -9245,6 +9246,24 @@ function yayaDur(y, durus) {
     else if (durus === 'salla' && yan === 'L') { v.set(tip.om + 0.16 + 0.1 * Math.sin(t * 7), 0.462 + 0.4, 0.1); b.set(1, -0.5, -0.3); }
     else if (durus === 'tasi' && yan === 'R') { v.set(-tip.om - 0.07, 0.2, 0.0); b.set(-1, -0.4, -0.5); }
     else if (durus === 'urk') { v.set(sx * (tip.om + 0.12), 0.25, 0.22); b.set(sx * 1, -0.5, -0.4); }
+    ikCoz(f.kol[yan], v, b);
+  }
+}
+// Tezgâh başındaki misafir (kahvaltı salonu). barY, barZ: bar üstünün ve misafir tarafındaki kenarının figür ölçüsündeki yeri.
+// durum: 'idle' (elleri barda bekler) | 'emote-no' (sabırsız: başını sallar, elini açar) | 'emote-yes' (sevinir: başını sallar, el çırpar)
+function yayaTezgah(y, durum, barY, barZ) {
+  const f = y.f, t = y.t, tip = y.tip, hayir = durum === 'emote-no', evet = durum === 'emote-yes';
+  const gy = 0.94 + 0.004 * Math.sin(t * 1.4) + (evet ? 0.018 * Math.abs(Math.sin(t * 7)) : 0), egim = 0.1 + (hayir ? -0.05 : 0);
+  f.govde.position.set(0, gy, 0); f.govde.rotation.set(egim, 0.04 * Math.sin(t * 0.5 + y.faz), 0);
+  f.bas.rotation.set((evet ? 0.2 * Math.sin(t * 8) : 0.06) - egim * 0.6, hayir ? 0.38 * Math.sin(t * 6.5) : 0.18 * Math.sin(t * 0.45 + y.faz), hayir ? 0.05 : 0);
+  const gq = _ya.q.setFromEuler(f.govde.rotation).invert();
+  for (const yan of ['L', 'R']) {
+    const sx = yan === 'L' ? 1 : -1;
+    ikCoz(f.bacak[yan], _ya.v.set(sx * 0.105, 0.065 - gy, sx * 0.02), _ya.b.set(sx * 0.1, 0.1, 1));
+    const v = _ya.v.set(sx * 0.17, barY + 0.035, barZ + 0.1), b = _ya.b.set(sx * 1, -0.7, -0.2);                 // dinlenme: ön kollar barın üstünde
+    if (hayir) { if (yan === 'R') v.set(-0.26 - 0.03 * Math.sin(t * 6.5), barY + 0.22 + 0.03 * Math.sin(t * 6.5), barZ + 0.02); }          // açık el: "nerede kaldı"
+    else if (evet) { const c = 0.5 + 0.5 * Math.sin(t * 14); v.set(sx * (0.035 + 0.1 * c), barY + 0.3, barZ - 0.02); b.set(sx * 1, -0.5, -0.1); }   // el çırpma
+    v.y -= gy; v.applyQuaternion(gq); b.applyQuaternion(gq);
     ikCoz(f.kol[yan], v, b);
   }
 }
@@ -9577,14 +9596,15 @@ MTC.buhar = () => '<g class="mt-buhar" fill="none" stroke="#fff" stroke-width="4
 // =====================================================================
 // MUTFAK 3B — kahvaltı salonunun üç boyutlu sahnesi.
 // Modeller: yayin/model/mutfak/mutfak.glb (Blender betiğiyle üretilir: tools/blender/mutfak_modelleri.py)
-// ve yayin/model/mutfak/k/ altındaki canlandırmalı misafirler (Kenney Mini Characters, CC0).
+// Misafirler oyunun kendi yaya figürleridir: yayin/model/kisi/yayalar.glb (tools/blender/yayalar.py); duruşlar src/yaya.js yayaTezgah.
 // Oyun kuralları src/mutfak.js içindedir; o dosya dokunma alanlarını ve balonları 1600×900'lük SVG'de tutar.
 // Bu dosya aynı kareye oturan sabit bir kamerayla sahneyi çizer: SVG noktası ↔ dünya noktası dönüşümü buradadır.
 // Modeller yüklenemezse (ör. yan dosyaya izin vermeyen bir sayfa) oyun 2B çizime döner.
 // =====================================================================
 const MT3 = { durum: 'bos', soz: null, hata: null, gltf: null, kisiler: [], sahne: null, kam: null, din: null, fx: [], zaman: 0 };
-MT3.KISI = ['male-a', 'female-a', 'female-b', 'male-b', 'male-c', 'female-c', 'male-d', 'female-d', 'female-e', 'male-e', 'female-f', 'male-f', 'male-g'];
-MT3.Y_TEZGAH = 0.90; MT3.Y_BAR = 1.05; MT3.Z_MUSTERI = -1.3; MT3.BOY = 1.1; MT3.Y_MUSTERI = 0.72;   // misafir barın arkasında bir basamakta durur: tombul karakterin gövdesi barın üstünden görünsün
+MT3.KISI = ['amca', 'ogr_k1', 'teyze', 'is_adami', 'ogr_e1', 'kadin', 'dede', 'genc_k', 'ogr_k2', 'genc_e', 'anne', 'ogr_e2', 'sporcu'];
+// Misafir barın arkasında durur; bacakları bar gizler. Figür 1,1 kat büyütülür ve 0,2 m aşağıdadır: baş, sipariş balonunun hizasına gelir.
+MT3.Y_TEZGAH = 0.90; MT3.Y_BAR = 1.05; MT3.Z_BAR = -0.83; MT3.Z_MUSTERI = -1.3; MT3.BOY = 1.1; MT3.Y_MUSTERI = -0.2; MT3.YURUME = 2.2;
 // Kapların iç taban yüksekliği (yemek bunun üstüne oturur)
 MT3.IC = { sahan: 0.0127, tabak: 0.0085, kase: 0.0127 };
 
@@ -9593,9 +9613,9 @@ MT3.yukle = function (cevre) {
   if (!THREE.GLTFLoader) { MT3.durum = 'hata'; return (MT3.soz = Promise.resolve()); }
   MT3.durum = 'yukleniyor';
   const L = new THREE.GLTFLoader(), al = (u) => new Promise((ok, red) => L.load(u, ok, undefined, red));
-  MT3.soz = Promise.all([al('model/mutfak/mutfak.glb'), ucTekerYukle().catch(() => null)].concat(MT3.KISI.map((a) => al('model/mutfak/k/character-' + a + '.glb')))).then((r) => {
+  MT3.soz = Promise.all([al('model/mutfak/mutfak.glb'), ucTekerYukle().catch(() => null), yayaYukle()]).then((r) => {
     MT3.gltf = r[0]; MT3.figurSrc = r[1];
-    MT3.kisiler = r.slice(2).map((g) => ({ kok: g.scene, klip: g.animations, mikser: null, act: {}, mesgul: false, olcek: 1 }));
+    MT3.kisiler = MT3.KISI.map((ad) => { const y = yayaKur(r[2], ad, null); return { kok: y.kok, y, mesgul: false, simdi: null }; });
     MT3.kur(cevre);
     MT3.durum = 'hazir';
   }).catch((e) => { MT3.durum = 'hata'; MT3.hata = e; if (window.console) console.warn('Mutfak 3B modelleri yüklenemedi; 2B çizim kullanılıyor.', e); });
@@ -9618,13 +9638,8 @@ MT3.kur = function (cevre) {
   s.add(MT3.nesne('salon'));
   MT3.din = new THREE.Group(); s.add(MT3.din);
   for (const k of MT3.kisiler) {
-    let ust = 0.1;      // iskeletli ağda sınır kutusu: ağların kendi kutularının en üstü
-    k.kok.traverse((o) => { if (o.isMesh) { o.geometry.computeBoundingBox(); ust = Math.max(ust, o.geometry.boundingBox.max.y); } });
-    k.olcek = MT3.BOY / ust;
-    k.kok.scale.setScalar(k.olcek); k.kok.visible = false;
+    k.kok.scale.multiplyScalar(MT3.BOY); k.kok.visible = false;
     k.kok.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
-    k.mikser = new THREE.AnimationMixer(k.kok);
-    for (const c of k.klip) k.act[c.name] = k.mikser.clipAction(c);
     s.add(k.kok);
   }
   // aşçı: oyuncunun kendi figürü. Tezgâhın sol ucunda durur, dokunulan istasyona uzanır.
@@ -9724,16 +9739,14 @@ MT3.kisiAl = function (tercih) {
   for (let i = 0; i < n; i++) { const k = MT3.kisiler[(tercih + i) % n]; if (!k.mesgul) { k.mesgul = true; k.kok.visible = true; k.simdi = null; return k; } }
   return null;
 };
-MT3.kisiBirak = function (k) { if (!k) return; k.mesgul = false; k.kok.visible = false; k.mikser.stopAllAction(); k.simdi = null; };
-MT3.oynat = function (k, ad, bir) {
-  if (!k || k.simdi === ad) return;
-  const a = k.act[ad];
-  if (!a) return;
-  const once = k.simdi && k.act[k.simdi];
-  a.reset(); a.setLoop(bir ? THREE.LoopOnce : THREE.LoopRepeat, Infinity); a.clampWhenFinished = !!bir;
-  a.play();
-  if (once) once.crossFadeTo(a, 0.2, false);
-  k.simdi = ad;
+MT3.kisiBirak = function (k) { if (!k) return; k.mesgul = false; k.kok.visible = false; k.simdi = null; };
+// ad: 'walk' | 'idle' | 'emote-no' | 'emote-yes'. Duruşlar kodla verilir (src/yaya.js); hazır canlandırma dosyası yoktur.
+MT3.oynat = function (k, ad) { if (k) k.simdi = ad; };
+MT3.kisiAdim = function (k, dt) {
+  const y = k.y, ol = k.kok.scale.y;
+  y.t += dt;
+  if (k.simdi === 'walk') { y.faz += (MT3.YURUME * dt / ((2 * 0.34 / 0.6) * ol)) * TAU; yayaYuru(y, 0.34); }
+  else yayaTezgah(y, k.simdi || 'idle', (MT3.Y_BAR - k.kok.position.y) / ol, (MT3.Z_BAR - MT3.Z_MUSTERI) / ol);
 };
 
 // ------------------------------------------------------------ ocak: alev, buhar, duman, pişme halkası
@@ -9791,7 +9804,7 @@ MT3.asciAdim = function (dt) {
 MT3.tick = function (dt) {
   MT3.zaman += dt;
   MT3.asciAdim(dt);
-  for (const k of MT3.kisiler) if (k.mesgul) k.mikser.update(dt);
+  for (const k of MT3.kisiler) if (k.mesgul) MT3.kisiAdim(k, dt);
   const t = MT3.zaman;
   for (const f of MT3.fx) {
     if (f.tip === 'alev') {
