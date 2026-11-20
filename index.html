@@ -6552,7 +6552,7 @@ const YAYA_YOL = [];   // kaldırım orta çizgisi zincirleri [x, y, z, ...]: ya
 let KAR = false;   // kış bölgesi: kar zemini, kaygan yüzey
 const TAU = Math.PI * 2;
 // Telefon: dokunmatik ve küçük ekran. Büyük dokular yarıya iner, kalite düşük başlar (ayarlardan yükseltilebilir).
-const MOBIL = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches && Math.min(window.screen.width, window.screen.height, window.innerWidth) < 900);
+const MOBIL = /[?&]mobil=1/.test(location.search) || !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches && Math.min(window.screen.width, window.screen.height, window.innerWidth) < 900);      // ?mobil=1: telefon kipini masaüstünde sınamak için
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const lerp = (a, b, t) => a + (b - a) * t;
 function smooth(a, b, x) { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); }
@@ -6924,8 +6924,8 @@ function buildGroundCanvas() {
   }
   return { color: cv, mask: mc };
 }
-// Arazi eğimi dokusu (değer: −∂h/∂x, −∂h/∂z; 0,8 eğim = tam aralık). RG: 20 m'de yumuşatılmış eğim, arazinin ışık normali olur
-// (SRTM'nin ±1–2 m gürültüsü 20 m'lik üçgenlerde ışığı yamalara bölüyordu; yükseklik değişmez). BA: 60 m'de yumuşatılmış eğim, akış yönü:
+// Arazi eğimi dokusu, iki yarım (değer: −∂h/∂x, −∂h/∂z; 0,8 eğim = tam aralık). Sol yarı: 20 m'de yumuşatılmış eğim, arazinin ışık normali olur
+// (SRTM'nin ±1–2 m gürültüsü 20 m'lik üçgenlerde ışığı yamalara bölüyordu; yükseklik değişmez). Sağ yarı: 60 m'de yumuşatılmış eğim, akış yönü:
 // büyük kabartmanın olukları bu yönde yamaçtan aşağı uzatılır (yön pikselin kendi normalinden alınsaydı her üçgende döner, desen girdap olurdu).
 function akisDokusu() {
   const nx = dem.nx, nz = dem.nz, gx = new Float32Array(nx * nz), gz = new Float32Array(nx * nz);
@@ -6942,13 +6942,16 @@ function akisDokusu() {
   };
   const ax = gx.slice(), az = gz.slice();
   bulanik(gx, 1); bulanik(gz, 1); bulanik(ax, 3); bulanik(az, 3);
-  const veri = new Uint8Array(nx * nz * 4), b8 = (v) => Math.max(0, Math.min(255, 127.5 + v / 0.8 * 127.5));
+  // Veri yalnız RG kanalında, alfa her yerde 255: Safari (iPhone) alfası 255 olmayan dokunun renk kanallarını alfayla çarpabiliyor;
+  // 20 Kas'ta tek dokuda BA kanalına konan akış verisi telefonda bütün arazinin ışığını bozdu (Abalı dağları mavi göründü).
+  // Tek doku, iki yarım: arazi gölgelendiricisi 16 doku biriminin hepsini kullanıyor, ayrı ikinci doku sınırı aşar (20 Kas'ta denendi, arazi çizilmedi).
+  const W2 = nx * 2, veri = new Uint8Array(W2 * nz * 4), b8 = (v) => Math.max(0, Math.min(255, 127.5 + v / 0.8 * 127.5));
   for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
-    const k = j * nx + i, o = ((nz - 1 - j) * nx + i) * 4;      // dokuda satır 0 alttadır (arazi uv: v = 1 − gj / (nz − 1))
-    veri[o] = b8(gx[k]); veri[o + 1] = b8(gz[k]); veri[o + 2] = b8(ax[k]); veri[o + 3] = b8(az[k]);
+    const k = j * nx + i, o = ((nz - 1 - j) * W2 + i) * 4, o2 = o + nx * 4;      // dokuda satır 0 alttadır (arazi uv: v = 1 − gj / (nz − 1))
+    veri[o] = b8(gx[k]); veri[o + 1] = b8(gz[k]); veri[o + 2] = 128; veri[o + 3] = 255;
+    veri[o2] = b8(ax[k]); veri[o2 + 1] = b8(az[k]); veri[o2 + 2] = 128; veri[o2 + 3] = 255;
   }
-  const t = new THREE.DataTexture(veri, nx, nz, THREE.RGBAFormat);
-  t.magFilter = t.minFilter = THREE.LinearFilter; t.needsUpdate = true;
+  const t = new THREE.DataTexture(veri, W2, nz, THREE.RGBAFormat); t.magFilter = t.minFilter = THREE.LinearFilter; t.premultiplyAlpha = false; t.needsUpdate = true;
   return t;
 }
 function buildTerrain(scene, groundCanvas, maxAniso) {
@@ -7846,57 +7849,62 @@ function buildTrees(scene) {
       pop.push(x, z, 0.85 + R() * 0.5);
     }
   }
-  const trunkG = new THREE.CylinderGeometry(0.16, 0.24, 1, 6); trunkG.translate(0, 0.5, 0);
-  // Yaprak kümesi dokusu: saydam zemin üstünde yüzlerce yaprak. Ağaç tacı bu dokuyu taşıyan kartlardan kurulur.
-  const lc = document.createElement('canvas'); lc.width = lc.height = 256;
-  const lg = lc.getContext('2d'), LR = rng(9);
-  for (let i = 0; i < 300; i++) {
-    const a = LR() * TAU, rr = Math.pow(LR(), 0.62) * 114, x = 128 + Math.cos(a) * rr, y = 128 + Math.sin(a) * rr;
-    const l = 8 + LR() * 12, w = l * (0.42 + LR() * 0.22), sh = LR();
-    lg.save(); lg.translate(x, y); lg.rotate(LR() * TAU);
-    lg.fillStyle = 'rgb(' + ((58 + sh * 78) | 0) + ',' + ((112 + sh * 82) | 0) + ',' + ((38 + sh * 44) | 0) + ')';
-    lg.beginPath(); lg.ellipse(0, 0, l, w, 0, 0, TAU); lg.fill();
-    lg.strokeStyle = 'rgba(24,54,18,0.4)'; lg.lineWidth = 1; lg.beginPath(); lg.moveTo(-l, 0); lg.lineTo(l, 0); lg.stroke();
-    lg.restore();
-  }
-  const leafTex = new THREE.CanvasTexture(lc); leafTex.encoding = THREE.sRGBEncoding; leafTex.anisotropy = 4;
-  // kart ağacı: profil(t) tacın yarıçapını verir (t: 0 alt, 1 tepe)
-  function cardTree(n, yLo, yHi, profile, size, seed) {
-    const Rr = rng(seed), P = [], Nn = [], U = [];
-    for (let k = 0; k < n; k++) {
-      const t = (k + Rr()) / n, y = lerp(yLo, yHi, t), rad = profile(t) * Math.sqrt(Rr()) * 0.9, a = Rr() * TAU;
-      const cx = Math.cos(a) * rad, cz = Math.sin(a) * rad, th = Rr() * TAU, ph = (Rr() - 0.5) * 1.1, h = (size * (0.8 + Rr() * 0.45)) / 2;
-      const ux = Math.cos(th), uz = Math.sin(th), vx = -Math.sin(th) * Math.sin(ph), vy = Math.cos(ph), vz = Math.cos(th) * Math.sin(ph);
-      let nx = cx, ny = (y - (yLo + yHi) / 2) * 0.5 + 0.9, nz = cz; const nl = Math.hypot(nx, ny, nz) || 1; nx /= nl; ny /= nl; nz /= nl;
-      const c = [[-1, -1, 0, 0], [1, -1, 1, 0], [1, 1, 1, 1], [-1, -1, 0, 0], [1, 1, 1, 1], [-1, 1, 0, 1]];
-      for (const q of c) { P.push(cx + (ux * q[0] + vx * q[1]) * h, y + vy * q[1] * h, cz + (uz * q[0] + vz * q[1]) * h); Nn.push(nx, ny, nz); U.push(q[2], q[3]); }
+  // Görünüş: Blender modelleri yüklendiyse (src/agac.js) uzak düzey hücrelere, yakın düzey ortak havuza; yüklenmediyse kodla kurulan kart ağaçları.
+  let popG, rndG, leafM, leafDepth;
+  if (AGAC) { popG = AGAC.geo[KAR ? 'cam_1' : 'kavak_1']; rndG = AGAC.geo[KAR ? 'cam_1' : 'genis_1']; leafM = agacMalzeme(true); leafDepth = agacDerinlik(true); }
+  else {
+    const trunkG = new THREE.CylinderGeometry(0.16, 0.24, 1, 6); trunkG.translate(0, 0.5, 0);
+    // Yaprak kümesi dokusu: saydam zemin üstünde yüzlerce yaprak. Ağaç tacı bu dokuyu taşıyan kartlardan kurulur.
+    const lc = document.createElement('canvas'); lc.width = lc.height = 256;
+    const lg = lc.getContext('2d'), LR = rng(9);
+    for (let i = 0; i < 300; i++) {
+      const a = LR() * TAU, rr = Math.pow(LR(), 0.62) * 114, x = 128 + Math.cos(a) * rr, y = 128 + Math.sin(a) * rr;
+      const l = 8 + LR() * 12, w = l * (0.42 + LR() * 0.22), sh = LR();
+      lg.save(); lg.translate(x, y); lg.rotate(LR() * TAU);
+      lg.fillStyle = 'rgb(' + ((58 + sh * 78) | 0) + ',' + ((112 + sh * 82) | 0) + ',' + ((38 + sh * 44) | 0) + ')';
+      lg.beginPath(); lg.ellipse(0, 0, l, w, 0, 0, TAU); lg.fill();
+      lg.strokeStyle = 'rgba(24,54,18,0.4)'; lg.lineWidth = 1; lg.beginPath(); lg.moveTo(-l, 0); lg.lineTo(l, 0); lg.stroke();
+      lg.restore();
     }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
-    g.setAttribute('normal', new THREE.Float32BufferAttribute(Nn, 3));
-    g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
-    return g;
+    const leafTex = new THREE.CanvasTexture(lc); leafTex.encoding = THREE.sRGBEncoding; leafTex.anisotropy = 4;
+    // kart ağacı: profil(t) tacın yarıçapını verir (t: 0 alt, 1 tepe)
+    function cardTree(n, yLo, yHi, profile, size, seed) {
+      const Rr = rng(seed), P = [], Nn = [], U = [];
+      for (let k = 0; k < n; k++) {
+        const t = (k + Rr()) / n, y = lerp(yLo, yHi, t), rad = profile(t) * Math.sqrt(Rr()) * 0.9, a = Rr() * TAU;
+        const cx = Math.cos(a) * rad, cz = Math.sin(a) * rad, th = Rr() * TAU, ph = (Rr() - 0.5) * 1.1, h = (size * (0.8 + Rr() * 0.45)) / 2;
+        const ux = Math.cos(th), uz = Math.sin(th), vx = -Math.sin(th) * Math.sin(ph), vy = Math.cos(ph), vz = Math.cos(th) * Math.sin(ph);
+        let nx = cx, ny = (y - (yLo + yHi) / 2) * 0.5 + 0.9, nz = cz; const nl = Math.hypot(nx, ny, nz) || 1; nx /= nl; ny /= nl; nz /= nl;
+        const c = [[-1, -1, 0, 0], [1, -1, 1, 0], [1, 1, 1, 1], [-1, -1, 0, 0], [1, 1, 1, 1], [-1, 1, 0, 1]];
+        for (const q of c) { P.push(cx + (ux * q[0] + vx * q[1]) * h, y + vy * q[1] * h, cz + (uz * q[0] + vz * q[1]) * h); Nn.push(nx, ny, nz); U.push(q[2], q[3]); }
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
+      g.setAttribute('normal', new THREE.Float32BufferAttribute(Nn, 3));
+      g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
+      return g;
+    }
+    // Gövde taç geometrisinin içindedir (ağaç başına tek çizim çağrısı). Gövde köşelerinin uv.x değeri 2'dir: gölgelendirici orada dokuyu değil gövde rengini kullanır.
+    const govdeli = (tac, yaricap, boy) => {
+      const tg = trunkG.toNonIndexed(), P = Array.from(tac.attributes.position.array), Nn = Array.from(tac.attributes.normal.array), U = Array.from(tac.attributes.uv.array);
+      const tp = tg.attributes.position.array, tn = tg.attributes.normal.array;
+      for (let i = 0; i < tp.length; i += 3) { P.push(tp[i] * yaricap, tp[i + 1] * boy, tp[i + 2] * yaricap); Nn.push(tn[i], tn[i + 1], tn[i + 2]); U.push(2, 0); }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(Nn, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
+      return g;
+    };
+    popG = govdeli(cardTree(30, 2.4, 12.4, (t) => 0.35 + 1.05 * Math.sin(Math.PI * Math.pow(t, 0.75)) , 2.3, 3), 1, 2.9);          // kavak: ince uzun
+    rndG = govdeli(cardTree(26, 2.3, 6.6, (t) => 0.6 + 2.2 * Math.sin(Math.PI * Math.min(1, t * 0.95 + 0.05)), 3.1, 5), 1.3, 2.6);   // geniş yapraklı
+    leafM = new THREE.MeshStandardMaterial({ map: leafTex, alphaTest: 0.42, side: THREE.DoubleSide, roughness: 0.95 });
+    leafM.name = 'agac';
+    const gc = new THREE.Color(0x6a5238).convertSRGBToLinear(), govdeRenk = 'vec3( ' + gc.r.toFixed(4) + ', ' + gc.g.toFixed(4) + ', ' + gc.b.toFixed(4) + ' )';
+    leafM.onBeforeCompile = (sh) => {   // kartın arka yüzünde normal ters dönmesin: taç tek bir yuvarlak hacim gibi ışık alsın
+      sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_begin>', 'float faceDirection = 1.0;\nvec3 normal = normalize( vNormal );\nvec3 geometryNormal = normal;')
+        .replace('#include <color_fragment>', '#include <color_fragment>\n\tif ( vUv.x > 1.5 ) diffuseColor = vec4( ' + govdeRenk + ', 1.0 );');
+    };
+    leafDepth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: leafTex, alphaTest: 0.42, side: THREE.DoubleSide });
+    leafDepth.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n\tif ( vUv.x > 1.5 ) diffuseColor.a = 1.0;'); };      // gövde de gölge düşürür
   }
-  // Gövde taç geometrisinin içindedir (ağaç başına tek çizim çağrısı). Gövde köşelerinin uv.x değeri 2'dir: gölgelendirici orada dokuyu değil gövde rengini kullanır.
-  const govdeli = (tac, yaricap, boy) => {
-    const tg = trunkG.toNonIndexed(), P = Array.from(tac.attributes.position.array), Nn = Array.from(tac.attributes.normal.array), U = Array.from(tac.attributes.uv.array);
-    const tp = tg.attributes.position.array, tn = tg.attributes.normal.array;
-    for (let i = 0; i < tp.length; i += 3) { P.push(tp[i] * yaricap, tp[i + 1] * boy, tp[i + 2] * yaricap); Nn.push(tn[i], tn[i + 1], tn[i + 2]); U.push(2, 0); }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(Nn, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
-    return g;
-  };
-  const popG = govdeli(cardTree(30, 2.4, 12.4, (t) => 0.35 + 1.05 * Math.sin(Math.PI * Math.pow(t, 0.75)) , 2.3, 3), 1, 2.9);          // kavak: ince uzun
-  const rndG = govdeli(cardTree(26, 2.3, 6.6, (t) => 0.6 + 2.2 * Math.sin(Math.PI * Math.min(1, t * 0.95 + 0.05)), 3.1, 5), 1.3, 2.6);   // geniş yapraklı
-  const leafM = new THREE.MeshStandardMaterial({ map: leafTex, alphaTest: 0.42, side: THREE.DoubleSide, roughness: 0.95 });
-  leafM.name = 'agac';
-  const gc = new THREE.Color(0x6a5238).convertSRGBToLinear(), govdeRenk = 'vec3( ' + gc.r.toFixed(4) + ', ' + gc.g.toFixed(4) + ', ' + gc.b.toFixed(4) + ' )';
-  leafM.onBeforeCompile = (sh) => {   // kartın arka yüzünde normal ters dönmesin: taç tek bir yuvarlak hacim gibi ışık alsın
-    sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_begin>', 'float faceDirection = 1.0;\nvec3 normal = normalize( vNormal );\nvec3 geometryNormal = normal;')
-      .replace('#include <color_fragment>', '#include <color_fragment>\n\tif ( vUv.x > 1.5 ) diffuseColor = vec4( ' + govdeRenk + ', 1.0 );');
-  };
-  const leafDepth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: leafTex, alphaTest: 0.42, side: THREE.DoubleSide });
-  leafDepth.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n\tif ( vUv.x > 1.5 ) diffuseColor.a = 1.0;'); };      // gövde de gölge düşürür
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), c = new THREE.Color(), UP = new THREE.Vector3(0, 1, 0);
   // Ağaçlar 400 m'lik hücrelere bölünür: her hücre kendi sınır küresiyle görüş alanı dışında (ve gölge kutusu dışında) çizilmez.
   // Geometri tamponları hücreler arasında paylaşılır; yalnız sınır küresi hücreye özeldir.
@@ -7911,7 +7919,7 @@ function buildTrees(scene) {
   };
   dagit(pop, 'pop'); dagit(rnd, 'rnd');
   const paylas = (g, kure) => { const q = new THREE.BufferGeometry(); q.setIndex(g.index); for (const k in g.attributes) q.setAttribute(k, g.attributes[k]); q.boundingSphere = kure; return q; };
-  let toplam = 0;
+  let toplam = 0; const liste = [];
   for (const h of hucreler.values()) {
     const nP = h.pop.length / 3, nR = h.rnd.length / 3, kutu = new THREE.Box3();
     for (const arr of [h.pop, h.rnd]) for (let i = 0; i < arr.length; i += 3) { const y = groundH(arr[i], arr[i + 1]); p.set(arr[i], y, arr[i + 1]); kutu.expandByPoint(p); p.y = y + 15 * arr[i + 2]; kutu.expandByPoint(p); }
@@ -7921,14 +7929,18 @@ function buildTrees(scene) {
       const x = h.pop[i * 3], z = h.pop[i * 3 + 1], sc = h.pop[i * 3 + 2], y = groundH(x, z) - 0.2;
       p.set(x, y, z); q.setFromAxisAngle(UP, R() * TAU);
       s.set(sc, sc * (0.9 + R() * 0.5), sc); m4.compose(p, q, s); pm.setMatrixAt(i, m4);
-      if (KAR) c.setHSL(0.38 + R() * 0.04, 0.3, 0.3 + R() * 0.08); else c.setHSL(0.2 + R() * 0.06, 0.28, 0.66 + R() * 0.12);
+      if (AGAC) { if (KAR) c.setHSL(0.36 + R() * 0.04, 0.1, 0.78 + R() * 0.1); else c.setHSL(0.16 + R() * 0.08, 0.22, 0.84 + R() * 0.12); }      // atlas zaten renkli: yalnız hafif ton farkı
+      else if (KAR) c.setHSL(0.38 + R() * 0.04, 0.3, 0.3 + R() * 0.08); else c.setHSL(0.2 + R() * 0.06, 0.28, 0.66 + R() * 0.12);
       c.convertSRGBToLinear(); pm.setColorAt(i, c);
+      if (AGAC) liste.push({ tip: KAR ? 'cam' : 'kavak', x, z, m4: m4.clone(), renk: c.clone() });
     }
     for (let i = 0; i < nR; i++) {
       const x = h.rnd[i * 3], z = h.rnd[i * 3 + 1], sc = h.rnd[i * 3 + 2], y = groundH(x, z) - 0.2;
       p.set(x, y, z); q.setFromAxisAngle(UP, R() * TAU);
       s.set(sc, sc * (0.8 + R() * 0.35), sc); m4.compose(p, q, s); rm.setMatrixAt(i, m4);
-      c.setHSL(0.22 + R() * 0.08, 0.28, 0.6 + R() * 0.14).convertSRGBToLinear(); rm.setColorAt(i, c);
+      if (AGAC) c.setHSL(0.16 + R() * 0.1, 0.22, 0.82 + R() * 0.14).convertSRGBToLinear(); else c.setHSL(0.22 + R() * 0.08, 0.28, 0.6 + R() * 0.14).convertSRGBToLinear();
+      rm.setColorAt(i, c);
+      if (AGAC) liste.push({ tip: KAR ? 'cam' : 'genis', x, z, m4: m4.clone(), renk: c.clone() });
     }
     const parca = { x: kure.center.x, z: kure.center.z, r: kure.radius, mesh: [] };
     for (const m of [pm, rm]) {
@@ -7940,6 +7952,7 @@ function buildTrees(scene) {
     PARCA.agac.push(parca);
     toplam += nP + nR;
   }
+  if (AGAC) agacHavuzKur(scene, liste);
   return toplam;
 }
 
@@ -8307,13 +8320,18 @@ function terrainPatch(mat, maskTex, akisTex) {
       'vec2 wp = vWPos.xz; gDx = dFdx(wp); gDy = dFdy(wp);',
       'tkM = smoothstep(0.3, 0.7, gurultu(wp * 0.045) * 0.7 + gurultu(wp * 0.17) * 0.3);',
       'tkF = smoothstep(0.3, 0.7, gurultu(wp * 0.0071 + 3.1));',
-      'vec4 akT = texture2D(t_akis, vUv); vec2 gIs = (akT.rg * 2.0 - 1.0) * 0.8, mEg = (akT.ba * 2.0 - 1.0) * 0.8; float mE = length(mEg);',      // akisDokusu: ışık eğimi ve akış
+    ].concat(MOBIL ? [
+      // telefonda büyük kabartma yok: arazinin kendi köşe normali, oluk ve sırt yok (20 Kas: iPhone'da Abalı dağları mavi göründü)
+      'vec3 nIs = normalize(vWNrm); float mK = 0.0, mH = 0.0; vec2 mOb = vec2(0.0);',
+    ] : [
+      'vec2 gIs = (texture2D(t_akis, vec2(vUv.x * 0.5, vUv.y)).rg * 2.0 - 1.0) * 0.8, mEg = (texture2D(t_akis, vec2(0.5 + vUv.x * 0.5, vUv.y)).rg * 2.0 - 1.0) * 0.8; float mE = length(mEg);',      // akisDokusu: sol yarı ışık eğimi, sağ yarı akış
       'vec3 nIs = normalize(vec3(gIs.x, 1.0, gIs.y));',      // arazinin ışık normali (20 m'de yumuşatılmış)
       // oluk yönü yamaç aşağısıdır; dört sabit yönden (0°, 45°, 90°, 135°) en yakın ikisi okunur ve açıya göre karıştırılır
       'float mA = mod(atan(mEg.y, mEg.x), 3.14159265) / 0.78539816, mW = smoothstep(0.25, 0.75, fract(mA)), mH, mH1; vec2 mOb, mO1;',      // dar geçiş: çapraz tarama olmasın
       'makroOku(wp, floor(mA) * 0.78539816, mH, mOb); makroOku(wp, (floor(mA) + 1.0) * 0.78539816, mH1, mO1);',
       'mH = mix(mH, mH1, mW); mOb = mix(mOb, mO1, mW);',      // mH: sırt +, oluk −; mOb: eğim (dünya xz)
       'float mK = smoothstep(0.05, 0.3, mE) * (1.0 - msk.g);',      // yalnız yamaçta; yol, kum ve şehir zemininde yok
+    ], [
       'vec3 dZ = ornek(t_zemin, wp, ' + f(O.zemin) + ', fY) / ' + glv3(TEX_AVG.zemin) + ';',
       'vec3 dC = vec3(1.0), dU = vec3(1.0), dS = vec3(1.0), dK = vec3(1.0);',
       'if (msk.r > 0.004) dC = ornek(t_cayir, wp, ' + f(O.cayir) + ', fY) / ' + glv3(TEX_AVG.cayir) + ';',
@@ -8331,7 +8349,7 @@ function terrainPatch(mat, maskTex, akisTex) {
       'det *= 1.0 + (texture2D(t_makro, wp / 520.0 + 0.17).b - 0.5) * 0.22 * (1.0 - msk.b);',
       'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.16, 0.145, 0.13), rk * msk.b * 0.85);',      // karlı yamaçta açılan kaya koyu
       'diffuseColor.rgb *= clamp(det, 0.04, 3.0) * mix(0.92, 0.82, rk) * (1.0 + mH * 0.5 * mK);',      // oluk koyu, sırt açık
-    ].join('\n')).replace('#include <roughnessmap_fragment>', [
+    ]).join('\n')).replace('#include <roughnessmap_fragment>', [
       '#include <roughnessmap_fragment>',
       'roughnessFactor = mix(roughnessFactor, 0.58, msk.b * (1.0 - rk));',      // kar ıslak-parlak değil ama toprak kadar mat da değil
     ].join('\n'));
@@ -8667,6 +8685,105 @@ function buildCim(scene, terrTex) {
     adim(kamera, t) { ortak.uKam.value.copy(kamera.position); ortak.uZaman.value = t; },
     kalite(q) { yamalar[0].m.visible = q !== 'dusuk'; yamalar[1].m.visible = q === 'yuksek'; },
   };
+}
+
+'use strict';
+// =====================================================================
+// AĞAÇ — Blender modelleri (tools/blender/agaclar.py → model/agac/agaclar.glb) ve kodla çizilen doku atlası (tools/agac-atlas.py → doku/agac.png).
+// Ağaçların yeri, sayısı, boyu ve dönüşü buildTrees'te (src/dunya.js) eskisi gibi üretilir; burada yalnız görünüş kurulur.
+// Tip: kavak (cadde ve bahçe), geniş yapraklı (bahçe, meyvelik), çam (karlı bölgede ikisinin yerine).
+// İki ayrıntı düzeyi: uzak (…_1) hücre başına örnekli ağdır ve bütün ağaçları taşır; kameraya AGAC_U.uYakin metreden yakın ağacı gölgelendirici
+// sıfıra indirir. Yakın (…_0) dallı, yüzlerce yaprak kartlı modeldir: kameranın çevresindeki ağaçlar her 0,25 sn'de ortak havuza yazılır,
+// havuz uYakin'dan uzak olanı sıfıra indirir. İki ağ aynı eşiği aynı karede uyguladığı için ağaç ikiye bölünmez, boşluk kalmaz.
+// Yapraklar rüzgârla salınır (tepeye doğru artan). Karlı bölgede çam dallarının üstü kar tutar. GLB gelmezse eski kart ağaçları çizilir.
+// =====================================================================
+let AGAC = null, _agSoz = null, AGAC_HAVUZ = null;
+const AGAC_U = { uKam: { value: new THREE.Vector3() }, uZaman: { value: 0 }, uYakin: { value: 120 } };
+function agacYukle() {
+  if (!_agSoz) _agSoz = new Promise((ok, red) => {
+    if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; }
+    const atlas = new Promise((o, r) => new THREE.TextureLoader().load('doku/agac.png', o, undefined, r));
+    new THREE.GLTFLoader().load('model/agac/agaclar.glb', (g) => {
+      atlas.then((t) => {
+        t.flipY = false; t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; t.needsUpdate = true;      // glTF uv düzeni: v = 0 görüntünün üstü
+        const geo = {};
+        g.scene.traverse((o) => { if (o.isMesh) geo[o.name] = o.geometry; });
+        if (!geo.kavak_0 || !geo.kavak_1 || !geo.genis_0 || !geo.genis_1 || !geo.cam_0 || !geo.cam_1) { red(new Error('ağaç ağları eksik')); return; }
+        AGAC = { geo, atlas: t }; ok(AGAC);
+      }, red);
+    }, undefined, red);
+  });
+  return _agSoz;
+}
+
+// uzak: yakındaki ağacı gizler; yakın: uzaktakini gizler. derinlik: gölge haritası malzemesi (aynı eşik ve salınım).
+function agacYama(sh, uzak) {
+  Object.assign(sh.uniforms, AGAC_U);
+  sh.vertexShader = 'uniform vec3 uKam; uniform float uZaman; uniform float uYakin;\n' + sh.vertexShader.replace('#include <begin_vertex>', [
+    '#include <begin_vertex>',
+    'vec3 agK = (modelMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;',
+    'float agD = distance(agK.xz, uKam.xz);',
+    uzak ? 'if (agD < uYakin) transformed = vec3(0.0);' : 'if (agD >= uYakin) transformed = vec3(0.0);',
+    'float agS = sin(uZaman * 1.3 + agK.x * 0.05 + agK.z * 0.07) * 0.5 + sin(uZaman * 2.3 + agK.x * 0.11) * 0.25;',
+    'transformed.xz += vec2(0.7, 0.5) * agS * 0.0011 * transformed.y * transformed.y;',      // gövde dibinde sıfır, 12 m'de ~10 cm
+  ].join('\n'));
+}
+function agacMalzeme(uzak) {
+  const m = new THREE.MeshStandardMaterial({ map: AGAC.atlas, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.86, metalness: 0 });
+  m.name = uzak ? 'agac' : 'agac-yakin';
+  m.onBeforeCompile = (sh) => {
+    agacYama(sh, uzak);
+    // kartın arka yüzünde normal ters dönmez: taç tek bir hacim gibi ışık alır
+    let f = sh.fragmentShader.replace('#include <normal_fragment_begin>', 'float faceDirection = 1.0;\nvec3 normal = normalize( vNormal );\nvec3 geometryNormal = normal;');
+    if (KAR) f = f.replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n\tdiffuseColor.rgb = mix( diffuseColor.rgb, vec3( 0.86, 0.89, 0.93 ), smoothstep( 0.45, 0.85, inverseTransformDirection( normal, viewMatrix ).y ) * 0.6 );');      // dal üstünde kar
+    sh.fragmentShader = f;
+  };
+  m.customProgramCacheKey = () => 'agac-' + (uzak ? 'u' : 'y') + (KAR ? 'k' : '');
+  return m;
+}
+function agacDerinlik(uzak) {
+  const m = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: AGAC.atlas, alphaTest: 0.45, side: THREE.DoubleSide });
+  m.onBeforeCompile = (sh) => agacYama(sh, uzak);
+  m.customProgramCacheKey = () => 'agac-derinlik-' + (uzak ? 'u' : 'y');
+  return m;
+}
+
+// Yakın havuz: bütün ağaçların dönüşüm ve rengi 60 m'lik hücrelerde tutulur; kameranın çevresindekiler havuz ağlarına yazılır.
+function agacHavuzKur(scene, liste) {
+  const HC = 60, izgara = new Map(), sayac = {};
+  for (const a of liste) {
+    const key = Math.floor(a.x / HC) + '_' + Math.floor(a.z / HC);
+    let h = izgara.get(key); if (!h) izgara.set(key, (h = [])); h.push(a);
+    sayac[a.tip] = (sayac[a.tip] || 0) + 1;
+  }
+  const ag = {}, mat = agacMalzeme(false), der = agacDerinlik(false);
+  for (const tip in sayac) {
+    const m = new THREE.InstancedMesh(AGAC.geo[tip + '_0'], mat, Math.min(sayac[tip], 1400));
+    m.count = 0; m.frustumCulled = false; m.castShadow = true; m.receiveShadow = false; m.customDepthMaterial = der;
+    m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    m.setColorAt(0, new THREE.Color(1, 1, 1));
+    scene.add(m); ag[tip] = m;
+  }
+  AGAC_HAVUZ = {
+    ag,
+    guncelle(cx, cz) {
+      const R = AGAC_U.uYakin.value + 22, n = {};
+      for (const tip in ag) n[tip] = 0;
+      if (AGAC_U.uYakin.value > 0) {
+        const i0 = Math.floor((cx - R) / HC), i1 = Math.floor((cx + R) / HC), j0 = Math.floor((cz - R) / HC), j1 = Math.floor((cz + R) / HC);
+        for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+          const h = izgara.get(i + '_' + j); if (!h) continue;
+          for (const a of h) {
+            if ((a.x - cx) ** 2 + (a.z - cz) ** 2 > R * R) continue;
+            const m = ag[a.tip], k = n[a.tip]; if (k >= m.instanceMatrix.count) continue;
+            m.setMatrixAt(k, a.m4); m.setColorAt(k, a.renk); n[a.tip] = k + 1;
+          }
+        }
+      }
+      for (const tip in ag) { const m = ag[tip]; m.count = n[tip]; m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; }
+    },
+  };
+  return AGAC_HAVUZ;
 }
 
 'use strict';
@@ -11435,6 +11552,7 @@ function mutfakKur(api) {
     }).catch(() => {});
     gate1 = makeGate(); gate2 = makeGate();
     beacon1 = beam(8, 26, LIN('#22c3d6'), 0.3); beacon2 = beam(8, 10, LIN('#22c3d6'), 0.14);
+    await agacYukle().catch(() => null);      // ağaç modelleri gelmezse kart ağaçları çizilir
     await loadRegion('van');
     buildMenu();
     applySettings(false);
@@ -12017,6 +12135,7 @@ function mutfakKur(api) {
     for (const el of document.querySelectorAll('[data-vakit]')) el.setAttribute('aria-pressed', el.getAttribute('data-vakit') === AYAR.vakit ? 'true' : 'false');
     trafikHedef();
     if (CIM) CIM.kalite(q);
+    AGAC_U.uYakin.value = MOBIL ? 40 : q === 'dusuk' ? 0 : q === 'orta' ? 70 : 120;      // yakın düzey ağaç yarıçapı
     { const g = GORUS[q] || GORUS.yuksek; scene.fog.near = g.sis[0]; scene.fog.far = g.sis[1]; parcaGorunur(0, true); }
     $('ayar-oto').checked = !!AYAR.oto; $('ayar-trafik').checked = AYAR.trafik !== false; $('ayar-ses').value = AYAR.ses; $('ayar-ses-n').textContent = AYAR.ses;
   }
@@ -12343,6 +12462,7 @@ function mutfakKur(api) {
     parcaT -= dt;
     if (parcaT > 0 && !zorla) return;
     parcaT = 0.25;
+    if (AGAC_HAVUZ) AGAC_HAVUZ.guncelle(camera.position.x, camera.position.z);
     const g = GORUS[AYAR.kalite] || GORUS.yuksek, cx = camera.position.x, cz = camera.position.z;
     for (const tur of ['agac', 'bina']) {
       const lim = g[tur];
@@ -12700,6 +12820,7 @@ function mutfakKur(api) {
     waterTex.offset.x = G.t * 0.006; waterTex.offset.y = G.t * 0.004;
     env.sky.material.uniforms.uTime.value = G.t;
     if (CIM) CIM.adim(camera, G.t);
+    AGAC_U.uKam.value.copy(camera.position); AGAC_U.uZaman.value = G.t;
     if (castle) castle.flag.rotation.y = 0.5 + Math.sin(G.t * 1.9) * 0.22;
     const pulse = 0.28 + Math.sin(G.t * 4) * 0.08;
     beacon1.material.opacity = pulse;
