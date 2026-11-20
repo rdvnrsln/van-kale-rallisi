@@ -7382,7 +7382,6 @@ const SUMMIT = { x: 0, z: 0, y: 0 };
 function buildCastle(scene, routeNear) {
   const bag = new Bag();
   const stoneA = new THREE.Color('#b9a37c').convertSRGBToLinear(), stoneB = new THREE.Color('#a8926c').convertSRGBToLinear();
-  const mud = new THREE.Color('#b59a72').convertSRGBToLinear();
   const cyl = new THREE.CylinderGeometry(1, 1.12, 1, 10).toNonIndexed();
   const m4 = new THREE.Matrix4();
   // duvar parçası: üst kenarı a ucunda y1, b ucunda y1b yüksekliğindedir (yamaçta sur eğimi izler, basamak yapmaz)
@@ -7459,31 +7458,8 @@ function buildCastle(scene, routeNear) {
   flag.position.set(fx, fy + poleH - 3.2, fz); flag.rotation.y = 0.5;
   scene.add(flag);
 
-  // Eski Van: kerpiç duvar kalıntıları
-  if (D.eskivan) {
-    const poly = pairs(D.eskivan), R = rng(1915);
-    let minx = 1e9, maxx = -1e9, minz = 1e9, maxz = -1e9;
-    for (const p of poly) { minx = Math.min(minx, p.x); maxx = Math.max(maxx, p.x); minz = Math.min(minz, p.z); maxz = Math.max(maxz, p.z); }
-    let made = 0, tries = 0;
-    while (made < 230 && tries++ < 6000) {
-      const x = lerp(minx, maxx, R()), z = lerp(minz, maxz, R());
-      if (!pip(x, z, poly) || pip(x, z, CASTLE)) continue;
-      const rd = roadAt(x, z);
-      if (rd && rd.d < rd.hw + 7) continue;
-      if (routeNear(x, z, 16) || wallDist(x, z) < 9) continue;
-      const ang = Math.floor(R() * 4) * (Math.PI / 2) + (R() - 0.5) * 0.5, len = 3 + R() * 8, h = 0.9 + R() * 2.4;
-      const dx = (Math.cos(ang) * len) / 2, dz = (Math.sin(ang) * len) / 2;
-      const g0 = groundH(x, z);
-      box(x - dx, z - dz, x + dx, z + dz, 0.45 + R() * 0.3, g0 - 1, g0 + h, mud);
-      addWall(x - dx, z - dz, x + dx, z + dz);
-      if (R() < 0.45) {   // köşe yapan ikinci duvar
-        const l2 = 2 + R() * 5, ex = -Math.sin(ang) * l2, ez = Math.cos(ang) * l2;
-        box(x + dx, z + dz, x + dx + ex, z + dz + ez, 0.45, g0 - 1, g0 + h * (0.5 + R() * 0.5), mud);
-        addWall(x + dx, z + dz, x + dx + ex, z + dz + ez);
-      }
-      made++;
-    }
-  }
+  // Eski Van: alan sınırı OSM'den gelir. Eskiden buraya kuralla 230 kerpiç duvar kalıntısı serpilirdi; yerleri veriye dayanmadığı için
+  // kaldırıldı (kurucu kararı, 20 Kas 2026). OSM'de tek tek kayıtlı yapılar (cami, medrese, tarihî bina) bina olarak çizilmeye devam eder.
   const mesh = bag.mesh(triplanar(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true }), 'sur', 'sur', 0.21, 0.21, 1.12, 1.0), true);
   scene.add(mesh);
   return { flag };
