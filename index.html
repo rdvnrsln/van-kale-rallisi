@@ -8137,11 +8137,11 @@ const TEX_AVG = {
   asfalt: [0.104, 0.102, 0.09], cakil: [0.287, 0.158, 0.073],
   // PBR takımları (Poly Haven, CC0; tools/doku-pbr.py): renk (AO işlenmiş) + OpenGL normal haritası. Telefonda yarı boy, normalsiz.
   // zemin: withered_grass (kurumuş bozkır), çayır: grass_ground (20 Kas akşam)
-  zemin: [0.317, 0.226, 0.150], cayir: [0.119, 0.090, 0.037], kum: [0.246, 0.136, 0.063], kayalik: [0.206, 0.129, 0.074], kar: [0.188, 0.188, 0.193],
+  zemin: [0.317, 0.226, 0.150], cayir: [0.119, 0.090, 0.037], kum: [0.246, 0.136, 0.063], kayalik: [0.206, 0.129, 0.074], kar: [0.188, 0.188, 0.193], hava: [0.099, 0.067, 0.049],
   kaya: [0.21, 0.09, 0.033], kaya_ust: [0.23, 0.143, 0.082], sur: [0.238, 0.198, 0.132], siva: [0.407, 0.366, 0.35], beton: [0.093, 0.094, 0.089],
   gok: [0.33, 0.44, 0.62],     // gökyüzü fotoğrafı (Poly Haven, kloofendal_38d_partly_cloudy_puresky, CC0): zirveden ufkun 11° altına
 };
-const PBR = ['zemin', 'cayir', 'kum', 'kayalik', 'kar'];
+const PBR = ['zemin', 'cayir', 'kum', 'kayalik', 'kar', 'hava'];      // hava: aerial_ground_rock, 20 m'lik drone taraması (bozkırın orta-uzak katmanı)
 const glv3 = (a) => 'vec3(' + a.map((x) => x.toFixed(4)).join(', ') + ')';
 
 function loadTextures(maxAniso) {
@@ -8372,7 +8372,10 @@ function triplanar(mat, side, top, sSide, sTop, gain, kab, cok) {
 // Maskede payı olmayan doku okunmaz (dal): kar yalnız Abalı'da, kaya yalnız sarp yamaçta okunur.
 const ARAZI_OLCEK = { zemin: 0.5, cayir: 0.4, kum: 0.42, kayalik: 0.17, kar: 0.3 };      // 1 / metre (doku boyu: 2 m, 2,5 m, 2,4 m, 5,9 m, 3,3 m; Poly Haven'ın gerçek ölçüsü)
 function terrainPatch(mat, maskTex, akisTex) {
-  const normalVar = !!(TEX.zemin_n && TEX.cayir_n && TEX.kum_n && TEX.kayalik_n && TEX.kar_n);
+  const normalVar = !!(TEX.zemin_n && TEX.cayir_n && TEX.kum_n && TEX.kayalik_n && TEX.kar_n && TEX.hava_n);
+  // Doku birimi sınırı 16 (renk, maske, 6 renk + 5 normal, oluk, eğim, ortam, gölge). Bölgeye göre derlenir: karlı bölgede çayır, öbürlerinde kar okunmaz
+  // (maskede payı yok). Okunmayan doku derleyicide düşer ve birim tutmaz; hava katmanına yer böyle açıldı (20 Kas akşam).
+  const K = KAR;
   const O = ARAZI_OLCEK, f = (v) => v.toFixed(4);
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.maskMap = { value: maskTex };
@@ -8394,8 +8397,14 @@ function terrainPatch(mat, maskTex, akisTex) {
       '  h = A.b * 0.65 + B.b * 0.35 - 0.5; vec2 n = (A.xy * 2.0 - 1.0) * 0.65 + (B.xy * 2.0 - 1.0) * 0.35;',
       '  o = p * n.x + d * n.y * 0.65; }',      // türevler dalın dışında alınır: dal içindeki doku okuması mip seviyesini şaşırmasın
       'vec4 oku(sampler2D t, vec2 p, float s, bool don, vec2 o) { return don ? textureGrad(t, vec2(p.y, -p.x) * s + o, vec2(gDx.y, -gDx.x) * s, vec2(gDy.y, -gDy.x) * s) : textureGrad(t, p * s + o, gDx * s, gDy * s); }',
-    ], MOBIL ? ['vec3 ornek(sampler2D t, vec2 p, float s, float k) { return oku(t, p, s * 0.3, false, vec2(0.0)).rgb; }']
-      : ['vec3 ornek(sampler2D t, vec2 p, float s, float k) {',
+    ], MOBIL ? ['vec3 ornek(sampler2D t, vec2 p, float s, float k) { return oku(t, p, s * 0.3, false, vec2(0.0)).rgb; }', 'vec3 havaRenk(vec2 p) { return oku(t_hava, p, 0.05, false, vec2(0.0)).rgb; }']
+      : ['vec3 yakin(sampler2D t, vec2 p, float s) { return mix(oku(t, p, s, false, vec2(0.0)).rgb, oku(t, p, s * 0.83, true, vec2(0.43)).rgb, tkM); }',
+        // drone taraması üç ölçekte (20 m, 32 m dönük, 73 m) okunur; geçişler 48 m ve 110 m'lik gürültüyle: karo ızgarası yukarıdan seçilmesin
+        'float hn1, hn2;',
+        'vec3 havaRenk(vec2 p) { vec3 a = oku(t_hava, p, 0.05, false, vec2(0.0)).rgb, b = oku(t_hava, p, 0.031, true, vec2(0.29)).rgb, c = oku(t_hava, p, 0.0137, false, vec2(0.71)).rgb; return mix(mix(a, b, hn1), c, hn2); }',
+        'vec2 egimYakin(sampler2D t, vec2 p, float s) { vec2 a = oku(t, p, s, false, vec2(0.0)).xy * 2.0 - 1.0, b = oku(t, p, s * 0.83, true, vec2(0.43)).xy * 2.0 - 1.0; return mix(a, vec2(-b.y, b.x), tkM); }',
+        'vec2 havaEgim(vec2 p) { vec2 a = oku(n_hava, p, 0.05, false, vec2(0.0)).xy * 2.0 - 1.0, b = oku(n_hava, p, 0.031, true, vec2(0.29)).xy * 2.0 - 1.0, c = oku(n_hava, p, 0.0137, false, vec2(0.71)).xy * 2.0 - 1.0; return mix(mix(a, vec2(-b.y, b.x), hn1), c, hn2); }',
+        'vec3 ornek(sampler2D t, vec2 p, float s, float k) {',
         '  vec3 a = mix(oku(t, p, s, false, vec2(0.0)).rgb, oku(t, p, s * 0.83, true, vec2(0.43)).rgb, tkM);',
         '  vec3 c = mix(oku(t, p, s * 0.11, false, vec2(0.37)).rgb, oku(t, p, s * 0.087, true, vec2(0.61)).rgb, tkF);',
         '  return mix(a, c, k); }',
@@ -8421,11 +8430,16 @@ function terrainPatch(mat, maskTex, akisTex) {
       'mH = mix(mH, mH1, mW); mOb = mix(mOb, mO1, mW);',      // mH: sırt +, oluk −; mOb: eğim (dünya xz)
       'float mK = smoothstep(0.05, 0.3, mE) * (1.0 - msk.g);',      // yalnız yamaçta; yol, kum ve şehir zemininde yok
     ], [
-      'vec3 dZ = ornek(t_zemin, wp, ' + f(O.zemin) + ', fY) / ' + glv3(TEX_AVG.zemin) + ';',
+      'float fH = smoothstep(14.0, 90.0, dcam);',      // bozkır: yakında kurumuş çim fotoğrafı, ötesinde drone taraması
+      MOBIL ? '' : 'hn1 = smoothstep(0.32, 0.68, gurultu(wp * 0.021 + 1.3)); hn2 = smoothstep(0.38, 0.72, gurultu(wp * 0.009 + 5.7)) * 0.65;',
+      // parlak lekeler kırpılır, sapma uzakta azalır: tekrar eden lekeler ova üstünde desen olmasın
+      'vec3 dH = vec3(1.0) + (clamp(havaRenk(wp) / ' + glv3(TEX_AVG.hava) + ', vec3(0.62), vec3(1.3)) - vec3(1.0)) * mix(0.85, 0.4, smoothstep(150.0, 900.0, dcam));',
+      (MOBIL ? 'vec3 dZ = mix(ornek(t_zemin, wp, ' + f(O.zemin) + ', fY) / ' + glv3(TEX_AVG.zemin) + ', dH, fH);'
+        : 'vec3 dZ = mix(yakin(t_zemin, wp, ' + f(O.zemin) + ') / ' + glv3(TEX_AVG.zemin) + ', dH, fH);'),
       'vec3 dC = vec3(1.0), dU = vec3(1.0), dS = vec3(1.0), dK = vec3(1.0);',
-      'if (msk.r > 0.004) dC = ornek(t_cayir, wp, ' + f(O.cayir) + ', fY) / ' + glv3(TEX_AVG.cayir) + ';',
+      K ? '' : 'if (msk.r > 0.004) { dC = ornek(t_cayir, wp, ' + f(O.cayir) + ', fY) / ' + glv3(TEX_AVG.cayir) + '; dC = mix(dC, dC * vec3(dot(dH, vec3(0.333))), fH * 0.6); }',      // çayırda da drone taramasının açık-koyu lekesi (renk çayırın)
       'if (msk.g > 0.004) dU = ornek(t_kum, wp, ' + f(O.kum) + ', fY) / ' + glv3(TEX_AVG.kum) + ';',
-      'if (msk.b > 0.004) dS = ornek(t_kar, wp, ' + f(O.kar) + ', fY) / ' + glv3(TEX_AVG.kar) + ';',
+      K ? 'if (msk.b > 0.004) dS = ornek(t_kar, wp, ' + f(O.kar) + ', fY) / ' + glv3(TEX_AVG.kar) + ';' : '',
       // sarp yamaç: 26°–44° arası kayaya döner; geçiş gürültüyle kırılır (düz çizgi olmasın)
       'float rk = smoothstep(0.90, 0.72, nIs.y + (tkM - 0.5) * 0.08 - mH * 0.2 * mK) * step(0.0, vWPos.y - 0.3);',      // sırtta kaya daha erken açılır
       'if (rk > 0.004) dK = ornek(t_kayalik, wp, ' + f(O.kayalik) + ', fY) / ' + glv3(TEX_AVG.kayalik) + ';',
@@ -8434,7 +8448,8 @@ function terrainPatch(mat, maskTex, akisTex) {
       'det = mix(det, mix(vec3(1.0), dS, 0.3), msk.b);',      // kar: leke rengi zayıf, kabartmayı normal haritası verir
       'det = mix(det, dK, rk);',
       'det = mix(vec3(1.0), det, 1.1);',
-      'det = mix(det, vec3(1.0), smoothstep(100.0, 700.0, dcam) * 0.85);',      // uzakta doku tekrarı görünmesin: ayrıntı söner, yerine büyük leke
+      'float wB = (1.0 - msk.g) * (1.0 - msk.b) * (1.0 - rk);',      // açık bozkır ve çayır payı (drone taraması bu alanda uzağa kadar sürer)
+      'det = mix(det, vec3(1.0), mix(smoothstep(100.0, 700.0, dcam) * 0.85, smoothstep(500.0, 2500.0, dcam) * 0.6, wB));',      // fotoğraf ayrıntısı 700 m'de, drone taraması 2,5 km'de söner
       'det *= 1.0 + ((texture2D(t_makro, wp / 520.0 + 0.17).b - 0.5) * 0.3 + (texture2D(t_makro, wp / 160.0 + 0.53).b - 0.5) * 0.18) * (1.0 - msk.b);',      // iki ölçekte leke: ova tek düze görünmesin
       'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.16, 0.145, 0.13), rk * msk.b * 0.85);',      // karlı yamaçta açılan kaya koyu
       'diffuseColor.rgb *= clamp(det, 0.04, 3.0) * mix(0.92, 0.82, rk) * (1.0 + mH * 0.5 * mK);',      // oluk koyu, sırt açık
@@ -8453,15 +8468,15 @@ function terrainPatch(mat, maskTex, akisTex) {
       for (const n of PBR) sh.uniforms['n_' + n] = { value: TEX[n + '_n'] };
       sh.fragmentShader = PBR.map((n) => 'uniform sampler2D n_' + n + ';').join('\n') + '\n' + sh.fragmentShader.replace('#include <normal_fragment_maps>', [
         '#include <normal_fragment_maps>',
-        'vec2 kZ = egim(n_zemin, wp, ' + f(O.zemin) + ', fY), kC = vec2(0.0), kU = vec2(0.0), kS = vec2(0.0), kK = vec2(0.0);',
-        'if (msk.r > 0.004) kC = egim(n_cayir, wp, ' + f(O.cayir) + ', fY);',
+        'vec2 kZ = mix(egimYakin(n_zemin, wp, ' + f(O.zemin) + '), havaEgim(wp), fH), kC = vec2(0.0), kU = vec2(0.0), kS = vec2(0.0), kK = vec2(0.0);',
+        K ? '' : 'if (msk.r > 0.004) kC = egim(n_cayir, wp, ' + f(O.cayir) + ', fY);',
         'if (msk.g > 0.004) kU = egim(n_kum, wp, ' + f(O.kum) + ', fY);',
-        'if (msk.b > 0.004) kS = egim(n_kar, wp, ' + f(O.kar) + ', fY);',
+        K ? 'if (msk.b > 0.004) kS = egim(n_kar, wp, ' + f(O.kar) + ', fY);' : '',
         'if (rk > 0.004) kK = egim(n_kayalik, wp, ' + f(O.kayalik) + ', fY);',
         'vec2 kd = mix(mix(kZ, kC, msk.r), kU, msk.g);',
         'kd = mix(kd, kS * 0.8, msk.b);',
         'kd = mix(kd, kK * 1.5, rk);',
-        'kd *= 1.0 - smoothstep(60.0, 380.0, dcam);',
+        'kd *= 1.0 - smoothstep(60.0, mix(380.0, 1100.0, wB), dcam);',      // drone taramasının kabartması daha uzağa kadar
       ].concat(makroNormal, [
         'kwn = normalize(kwn + vec3(kd.x + mO.x, 0.0, kd.y + mO.y));',
         'normal = normalize((viewMatrix * vec4(kwn, 0.0)).xyz);',
@@ -8473,7 +8488,7 @@ function terrainPatch(mat, maskTex, akisTex) {
       ]).join('\n'));
     }
   };
-  mat.customProgramCacheKey = () => 'arazi-pbr-' + (normalVar ? 'n' : '') + (MOBIL ? 'm' : '') + TANI;
+  mat.customProgramCacheKey = () => 'arazi-pbr-' + (normalVar ? 'n' : '') + (MOBIL ? 'm' : '') + (K ? 'k' : '') + TANI;
   return mat;
 }
 
