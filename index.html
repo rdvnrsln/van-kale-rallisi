@@ -8501,7 +8501,37 @@ function figurKur(kok) {
     f.bacak[y] = { ust: al('bacak_ust_' + y), alt: al('bacak_alt_' + y), ayak: al('ayak_' + y), L1: 0.43, L2: 0.44 };
   }
   kok.traverse((m) => { if (m.isMesh) m.castShadow = true; });
+  // yüz kemikleri: kaş, üst göz kapağı, ağız köşesi, çene (tools/blender/figur.py). Durağan yerleri saklanır; ifade bunlara göre verilir.
+  if (ad.kas_L && ad.agiz_L && ad.cene) {
+    const y = (f.yuz = { kas: { L: ad.kas_L, R: ad.kas_R }, kapak: { L: ad.kapak_L, R: ad.kapak_R }, agiz: { L: ad.agiz_L, R: ad.agiz_R }, cene: ad.cene, d: new Map(), s: { ag: 0, agx: 0, kas: 0, kasd: 0, cene: 0, kap: 0 }, kirpT: 1 + Math.random() * 4 });
+    for (const b of [y.kas.L, y.kas.R, y.kapak.L, y.kapak.R, y.agiz.L, y.agiz.R, y.cene]) y.d.set(b, b.position.clone());
+  }
   return f;
+}
+// Yüz ifadeleri. ag: ağız köşesi yukarı (+) / aşağı (−); agx: köşe dışa; kas: kaş yukarı; kasd: kaşın iç ucu aşağı (çatık); cene: çene aşağı (−); kap: göz kapağı.
+const YUZ = {
+  notr: { ag: 0, agx: 0, kas: 0, kasd: 0, cene: 0, kap: 0 },
+  mutlu: { ag: 0.0065, agx: 0.002, kas: 0.0015, kasd: -0.08, cene: -0.0025, kap: 0 },
+  kizgin: { ag: -0.005, agx: -0.001, kas: -0.0025, kasd: 0.32, cene: 0, kap: -0.001 },
+  saskin: { ag: -0.001, agx: -0.002, kas: 0.0055, kasd: -0.1, cene: -0.009, kap: 0.002 },
+};
+// İfadeye yumuşak geçer ve birkaç saniyede bir göz kırpar. Her karede, duruş verildikten sonra çağrılır.
+function yuzAdim(f, ifade, dt) {
+  const y = f.yuz;
+  if (!y) return;
+  const h = YUZ[ifade] || YUZ.notr, s = y.s, k = Math.min(1, dt * 9);
+  for (const a in h) s[a] += (h[a] - s[a]) * k;
+  y.kirpT -= dt;
+  if (y.kirpT < -0.13) y.kirpT = 2.2 + Math.random() * 3.6;
+  const kirp = y.kirpT < 0 ? 1 : 0;
+  for (const yan of ['L', 'R']) {
+    const sx = yan === 'L' ? 1 : -1, kas = y.kas[yan], kap = y.kapak[yan], ag = y.agiz[yan], dk = y.d.get(kas), dp = y.d.get(kap), da = y.d.get(ag);
+    kas.position.set(dk.x, dk.y + s.kas, dk.z); kas.rotation.z = sx * s.kasd;
+    kap.position.set(dp.x, dp.y + s.kap - kirp * 0.0105, dp.z); kap.scale.y = 1 + kirp * 0.9;
+    ag.position.set(da.x + sx * s.agx, da.y + s.ag, da.z);
+  }
+  const dc = y.d.get(y.cene);
+  y.cene.position.set(dc.x, dc.y + s.cene, dc.z);
 }
 // Derili figürü kopyalar: kopyanın ağı kendi kemiklerine bağlanır (clone() iskeleti paylaştırır).
 function figurKopya(src, ad) {
@@ -8556,7 +8586,7 @@ function makeTrikeGLB(src, motor) {
   const yerel = (v) => v.sub(f.govde.position).applyQuaternion(gqi);          // üç teker uzayı → gövde uzayı
   const pedal = { L: al('pedal_L'), R: al('pedal_R') }, tutus = { L: al('yer_tutus_L').position, R: al('yer_tutus_R').position }, ayaklik = { L: al('yer_ayaklik_L').position, R: al('yer_ayaklik_R').position };
   const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), diz = new THREE.Vector3(), dirsek = new THREE.Vector3();
-  let th = 0.6;
+  let th = 0.6, sasT = 0, onceHiz = 0;
   function anim(c, dt) {
     const dn = -c.steer * 1.15;
     gidon.rotation.y = dn;
@@ -8569,6 +8599,7 @@ function makeTrikeGLB(src, motor) {
       v2.copy(tutus[yan]).applyAxisAngle(Y, dn).add(gidon.position);
       ikCoz(f.kol[yan], yerel(v2), dirsek.set(sx * 0.7, -1, -0.35).applyQuaternion(gqi));
     }
+    if (dt > 0) { const hz = Math.abs(c.vf || 0); if (onceHiz - hz > 3.5) sasT = 1.3; else if (sasT > 0) sasT -= dt; onceHiz = hz; yuzAdim(f, sasT > 0 ? 'saskin' : 'notr', dt); }      // ani duruşta (çarpma) şaşırır
   }
   anim({ steer: 0, vf: 0 }, 0);
   return { group: g, wheels, tail, yuk, anim };
@@ -9315,7 +9346,10 @@ function yayaYuru(y, a) {
     const sal = (tip.yuk && yan === 'R' ? 0.3 : 1) * 0.55 * a, kz = -sal * Math.cos(ph + (yan === 'L' ? 0 : Math.PI));
     ikCoz(f.kol[yan], _ya.v.set(sx * (tip.om + 0.035), 0.462 - 0.535 + Math.abs(kz) * 0.25, kz + 0.03), _ya.b.set(sx * 0.3, -0.2, -1));
   }
+  yayaYuz(y, 'notr');
 }
+// Yüz: duruş işlevleri dt almaz; geçen süre figürün kendi saatinden (y.t) hesaplanır.
+function yayaYuz(y, ifade) { const dt = Math.min(0.1, Math.max(0, y.t - (y.yt === undefined ? y.t : y.yt))); y.yt = y.t; yuzAdim(y.f, ifade, dt); }
 // Ayakta bekleme. durus: 'dur' | 'aski' (çanta askısını tutar) | 'telefon' | 'salla' (el sallar) | 'tasi' (omuzdaki kayağı tutar) | 'urk' (araç yaklaşınca)
 function yayaDur(y, durus) {
   const f = y.f, t = y.t, tip = y.tip, gy = 0.938 + 0.004 * Math.sin(t * 1.3);
@@ -9332,6 +9366,7 @@ function yayaDur(y, durus) {
     else if (durus === 'urk') { v.set(sx * (tip.om + 0.12), 0.25, 0.22); b.set(sx * 1, -0.5, -0.4); }
     ikCoz(f.kol[yan], v, b);
   }
+  yayaYuz(y, durus === 'urk' ? 'saskin' : durus === 'salla' ? 'mutlu' : 'notr');
 }
 // Tezgâh başındaki misafir (kahvaltı salonu). barY, barZ: bar üstünün ve misafir tarafındaki kenarının figür ölçüsündeki yeri.
 // durum: 'idle' (elleri barda bekler) | 'emote-no' (sabırsız: başını sallar, elini açar) | 'emote-yes' (sevinir: başını sallar, el çırpar)
@@ -9350,6 +9385,7 @@ function yayaTezgah(y, durum, barY, barZ) {
     v.y -= gy; v.applyQuaternion(gq); b.applyQuaternion(gq);
     ikCoz(f.kol[yan], v, b);
   }
+  yayaYuz(y, hayir ? 'kizgin' : evet ? 'mutlu' : 'notr');
 }
 // Kayakçı (kayak inişindeki oyuncu). c: araç durumu (tuck: çömelme, plow: kar sabanı, steer).
 function yayaKayak(y, c, dt) {
@@ -9884,6 +9920,7 @@ MT3.asciAdim = function (dt) {
     if (yan === 'R' && k > 0) { f.govde.worldToLocal(a.b.copy(a.hedef)); a.b.y += 0.12; a.v.lerp(a.b, k); }
     ikCoz(f.kol[yan], a.v, a.b.set(sx * 0.6, -1, -0.5));
   }
+  yuzAdim(f, k > 0.2 ? 'mutlu' : 'notr', dt);      // aşçı uzanırken gülümser; göz kırpar
 };
 MT3.tick = function (dt) {
   MT3.zaman += dt;
