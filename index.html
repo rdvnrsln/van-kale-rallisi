@@ -279,6 +279,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
 .seg { display: flex; flex-wrap: wrap; }
 .seg button { background: transparent; border: 1px solid var(--cizgi); margin-inline-end: -1px; padding: 8px 18px 9px; font-family: var(--f-baslik); font-weight: 600; font-size: 18px; letter-spacing: 0.03em; }
 .seg button:hover { color: var(--kehribar); }
+.kasa-nokta { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-inline-end: 8px; vertical-align: -1px; box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.55); }
 .seg button[aria-pressed="true"] { background: var(--kehribar); border-color: var(--kehribar); color: #1a1206; }
 .onay { display: flex; gap: 10px; align-items: center; font-size: 14.5px; }
 .onay input, .kaydir input { accent-color: var(--kehribar); }
@@ -449,6 +450,14 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
           <button type="button" id="arac-trike" data-arac="trike" aria-pressed="true">Üç teker</button>
           <button type="button" id="arac-motor" data-arac="motor" aria-pressed="false">Motorlu üç teker</button>
           <button type="button" id="arac-araba" data-arac="car" aria-pressed="false">Araba</button>
+        </div>
+      </div>
+      <!-- Yük kasasının rengi (üç teker ve motorlu üç teker): doğal tahta ya da mavi boya. Araba seçiliyken gizli. -->
+      <div class="bolge-sec" id="kasa-sec">
+        <div class="etiket" id="lbl-kasa-renk" data-i18n="menu.yukKasasi">Yük kasası</div>
+        <div class="seg" role="group" aria-labelledby="lbl-kasa-renk">
+          <button type="button" data-kasa="ahsap" aria-pressed="true"><span class="kasa-nokta" style="background:#8a6a45" aria-hidden="true"></span><span data-i18n="kasaRenk.ahsap">Ahşap</span></button>
+          <button type="button" data-kasa="mavi" aria-pressed="false"><span class="kasa-nokta" style="background:#3c6c9a" aria-hidden="true"></span><span data-i18n="kasaRenk.mavi">Mavi</span></button>
         </div>
       </div>
       <!-- Birlikte sürüş (src/cok.js): oda kur ya da kodla katıl. Sunucu adresi yoksa bölüm gizli kalır. -->
@@ -6289,7 +6298,7 @@ const DIL = {
     'yuk.al': 'Yükü al', 'yuk.birak': 'Teslimat', 'yuk.basla': 'Yük taşıma', 'yuk.basla.alt': 'Mavi sütunda dur, çuvalları yükle',
     'yuk.bindi': 'Yük kasada', 'yuk.bindi.alt': 'Teslimat noktasına sür; çarpma ve sert viraj yüke zarar verir', 'yuk.konfor': 'Yük {0}/100',
     'yuk.sarsildi': 'Yük hasar gördü', 'yuk.vardi': 'Yük teslim edildi',
-    'menu.kasa': 'Kasa: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · kasa {1} ₺', 'menu.arac': 'Araç', 'arac.araba': 'Araba', 'arac.trike': 'Üç teker',
+    'menu.kasa': 'Kasa: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · kasa {1} ₺', 'menu.arac': 'Araç', 'menu.yukKasasi': 'Yük kasası', 'kasaRenk.ahsap': 'Ahşap', 'kasaRenk.mavi': 'Mavi', 'arac.araba': 'Araba', 'arac.trike': 'Üç teker',
     'arac.motor': 'Motorlu üç teker', 'kilit.araba': 'Bu etkinlik araba ister. Araba {0} ₺.', 'kilit.kisa': 'araba gerekli',
     'al.yetmez': '{0} ₺ gerekli, kasada {1} ₺ var', 'hikaye.biriktir': '{0} ₺ biriktir', 'hikaye.biriktir.alt': 'Kasada {0} ₺ var. Mavi sütundan yük işi al.', 'ayar.testAc': 'Test: tüm araçları aç',
     'ev.kahvalti': 'Van Kahvaltısı', 'ev.kahvalti.alt': 'Kahvaltı salonunda vardiya: misafirlerin siparişini hazırla, pişir, sabırları bitmeden servis et',
@@ -6446,7 +6455,7 @@ const DIL = {
     'yuk.al': 'Pick up the load', 'yuk.birak': 'Delivery', 'yuk.basla': 'Cargo run', 'yuk.basla.alt': 'Stop at the blue column and load the sacks',
     'yuk.bindi': 'The load is on', 'yuk.bindi.alt': 'Ride to the delivery point; crashes and sharp corners damage the load', 'yuk.konfor': 'Load {0}/100',
     'yuk.sarsildi': 'The load was damaged', 'yuk.vardi': 'Load delivered',
-    'menu.kasa': 'Savings: ₺{0}', 'sonuc.kazanc': '+₺{0} · savings ₺{1}', 'menu.arac': 'Vehicle', 'arac.araba': 'Car', 'arac.trike': 'Cargo trike',
+    'menu.kasa': 'Savings: ₺{0}', 'sonuc.kazanc': '+₺{0} · savings ₺{1}', 'menu.arac': 'Vehicle', 'menu.yukKasasi': 'Cargo box', 'kasaRenk.ahsap': 'Wood', 'kasaRenk.mavi': 'Blue', 'arac.araba': 'Car', 'arac.trike': 'Cargo trike',
     'arac.motor': 'Motor trike', 'kilit.araba': 'This event needs a car. The car costs ₺{0}.', 'kilit.kisa': 'car needed',
     'al.yetmez': 'You need ₺{0}; you have ₺{1}', 'hikaye.biriktir': 'Save ₺{0}', 'hikaye.biriktir.alt': 'You have ₺{0}. Take a cargo job at the blue column.', 'ayar.testAc': 'Test: unlock all vehicles',
     'ev.kahvalti': 'Van Breakfast', 'ev.kahvalti.alt': 'A shift at the breakfast house: prepare the orders, cook them, and serve before the guests lose patience',
@@ -6603,7 +6612,7 @@ const DIL = {
     'yuk.al': 'بار را بردار', 'yuk.birak': 'تحویل', 'yuk.basla': 'باربری', 'yuk.basla.alt': 'کنار ستون آبی بایست و گونی‌ها را بار کن',
     'yuk.bindi': 'بار روی سه‌چرخه است', 'yuk.bindi.alt': 'تا محل تحویل برو؛ برخورد و پیچ تند به بار آسیب می‌زند', 'yuk.konfor': 'بار {0}/100',
     'yuk.sarsildi': 'بار آسیب دید', 'yuk.vardi': 'بار تحویل شد',
-    'menu.kasa': 'پس‌انداز: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · پس‌انداز {1} ₺', 'menu.arac': 'وسیله', 'arac.araba': 'خودرو', 'arac.trike': 'سه‌چرخه',
+    'menu.kasa': 'پس‌انداز: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · پس‌انداز {1} ₺', 'menu.arac': 'وسیله', 'menu.yukKasasi': 'جعبهٔ بار', 'kasaRenk.ahsap': 'چوبی', 'kasaRenk.mavi': 'آبی', 'arac.araba': 'خودرو', 'arac.trike': 'سه‌چرخه',
     'arac.motor': 'سه‌چرخه موتوری', 'kilit.araba': 'این مسابقه خودرو می‌خواهد. قیمت خودرو {0} ₺ است.', 'kilit.kisa': 'خودرو لازم است',
     'al.yetmez': '{0} ₺ لازم است؛ در پس‌انداز {1} ₺ داری', 'hikaye.biriktir': '{0} ₺ پس‌انداز کن', 'hikaye.biriktir.alt': 'در پس‌انداز {0} ₺ داری. از ستون آبی کار باربری بگیر.', 'ayar.testAc': 'آزمایش: همه وسیله‌ها را باز کن',
     'ev.kahvalti': 'صبحانه وان', 'ev.kahvalti.alt': 'یک نوبت کار در صبحانه‌خانه: سفارش مهمان‌ها را آماده کن، بپز و پیش از تمام شدن صبرشان سرو کن',
@@ -9968,8 +9977,9 @@ function poseCar(c, dt) {
 // ------------------------------------------------------------ Blender modelleri: oyuncu figürü ve üç teker
 // Model: yayin/model/arac/ucteker.glb (tools/blender/oyuncu_ucteker.py). Yüklenemezse yukarıdaki kod çizimi kullanılır.
 let _ucSoz = null;
+const UC_SURUM = '2026-11-20k';      // model dosyası değişince artırılır (Safari eski GLB'yi önbellekten verir); 20 Kas: büyük kasa
 function ucTekerYukle() {
-  if (!_ucSoz) _ucSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/arac/ucteker.glb', (g) => ok(g.scene), undefined, red); });
+  if (!_ucSoz) _ucSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/arac/ucteker.glb?s=' + UC_SURUM, (g) => ok(g.scene), undefined, red); });
   return _ucSoz;
 }
 // Eklemli figür: her parçanın kökü kendi ekleminde, parça −y yönüne uzanır. Kol ve bacak iki kemikli ters kinematikle sürülür.
@@ -10098,6 +10108,28 @@ function makeTrikeGLB(src, motor) {
   }
   anim({ steer: 0, vf: 0 }, 0);
   return { group: g, wheels, tail, yuk, anim, iz };
+}
+// Kasa rengi (20 Kas 2026; kurucu: "farklı mavi renk seçeneği de olsun"): 'ahsap' doğal tahta, 'mavi' boyalı tahta.
+// Kasa tahtaları GLB'de "ahsap0–4" malzemesindedir; mavi sürüm aynı açık-koyu sırasını korur (her tahta biraz farklı tonda).
+const KASA_MAVI = ['#3c6c9a', '#325d87', '#4877a4', '#2b5480', '#5583ae'];
+const _kasaMalz = new Map();
+function kasaRenk(v, renk) {
+  if (!v || !v.group) return;
+  v.kasa = renk;
+  v.group.traverse((m) => {
+    if (!m.isMesh || !m.material) return;
+    const asil = m.userData.asilAhsap || (/^ahsap\d$/.test(m.material.name) ? m.material : null);
+    if (!asil) return;
+    m.userData.asilAhsap = asil;
+    if (renk !== 'mavi') { m.material = asil; return; }
+    let b = _kasaMalz.get(asil);
+    if (!b) {
+      b = asil.clone(); b.name = asil.name + '_mavi';
+      b.color.copy(LIN(KASA_MAVI[+asil.name.slice(5) % KASA_MAVI.length])); b.roughness = Math.min(b.roughness, 0.74);      // boya tahtadan biraz parlak
+      _kasaMalz.set(asil, b);
+    }
+    m.material = b;
+  });
 }
 
 // ------------------------------------------------------------ Blender arabaları
@@ -12348,7 +12380,7 @@ function cokKur(o) {
     const uc = sur && !p.ski && p.ucTeker;      // üç teker bitleri (uzakAdim'de okunur)
     const bayrak = (p.tbAktif && !p.ski ? 1 : 0) | (p.brake ? 2 : 0) | (p.air ? 4 : 0) | (sur ? 0 : 8)
       | (uc && p.ayakta ? 16 : 0) | (uc && p.pedalCev ? 32 : 0) | (uc ? Math.min(3, Math.round((p.kalkis || 0) * 3)) << 6 : 0)
-      | (uc && p.devrik > 0.7 ? 256 : 0) | (uc && p.kalkisYon < 0 ? 512 : 0);
+      | (uc && p.devrik > 0.7 ? 256 : 0) | (uc && p.kalkisYon < 0 ? 512 : 0) | (!p.ski && p.kasa === 'mavi' ? 1024 : 0);
     if (!zorla) {
       if (sur) { if (simdi - C.sonGonder < COK_HIZ) return; }
       else {
@@ -12503,6 +12535,7 @@ function cokKur(o) {
       // üç teker: 16 ayakta pedal, 32 pedal çeviriyor, 64–192 teker kalkışı (0–3), 256 devrik, 512 kalkan teker solda
       c.ucTeker = U.arac !== 'car'; c.iz = v.iz || 0.45; c.ayakta = !!(U.bayrak & 16); c.pedalCev = U.arac === 'trike' ? !!(U.bayrak & 32) : undefined;
       c.kalkis = ((U.bayrak >> 6) & 3) / 3; c.devrikUzak = !!(U.bayrak & 256); c.kalkisYon = U.bayrak & 512 ? -1 : 1;
+      { const kr = U.bayrak & 1024 ? 'mavi' : 'ahsap'; if (c.ucTeker && v.kasa !== kr) kasaRenk(v, kr); }      // 1024: mavi yük kasası
       poseCar(c, dt);
       if (v.anim) v.anim(c, dt);      // pedal, gidon, sürücünün kolları
       const al = o.alev(v); al.visible = !!(U.bayrak & 1);
@@ -12831,6 +12864,7 @@ function cokKur(o) {
       el.setAttribute('aria-pressed', k === sec ? 'true' : 'false');
       el.classList.toggle('kilitli', !owns(k));
     }
+    $('kasa-sec').hidden = sec === 'car';      // kasa rengi yalnız üç tekerlerde
   }
   // Yarışlar ve Abalı etkinlikleri araba ister; yük işi bisiklet ya da motorla yapılır.
   function canStart(ev) {
@@ -12904,12 +12938,14 @@ function cokKur(o) {
     player.car = { group: player.mesh, wheels: player.wheels, tail: player.tail };
     player.trike = makeTrikeMesh(false); player.trike.group.visible = false; scene.add(player.trike.group);
     player.motor = makeTrikeMesh(true); player.motor.group.visible = false; scene.add(player.motor.group);
+    player.kasa = AYAR.kasa === 'mavi' ? 'mavi' : 'ahsap';
     // Blender modeli inince kod çiziminin yerini alır (inmezse kod çizimi kalır)
     ucTekerYukle().then((src) => {
       for (const tur of ['trike', 'motor']) {
         const eski = player[tur], yeni = makeTrikeGLB(src, tur === 'motor');
         yeni.group.visible = eski.group.visible; yeni.yuk.visible = eski.yuk.visible;
         scene.remove(eski.group); scene.add(yeni.group); player[tur] = yeni;
+        kasaRenk(yeni, player.kasa || 'ahsap');      // seçilen kasa rengi (ahşap ya da mavi)
         if (player.mesh === eski.group) { player.mesh = yeni.group; player.wheels = yeni.wheels; player.tail = yeni.tail; }
       }
     }).catch(() => {});
@@ -13581,6 +13617,14 @@ function cokKur(o) {
     // Araç seçimi de hemen uygulanır: yarıda bir serbest sürüş varsa "Devam et" yeni araçla sürer (görev ve yarış sırasında araç değişmez).
     if (G.resume === 'free' && !G.goal && !player.ski) { setVehicle(G.aracSecim); camSnap = true; }
   });
+  // Yük kasası rengi: hemen uygulanır, kaydedilir; birlikte sürüşte öbürleri de görür (bayrak 1024)
+  function kasaSec(k) {
+    AYAR.kasa = k === 'mavi' ? 'mavi' : 'ahsap';
+    if (player) { player.kasa = AYAR.kasa; kasaRenk(player.trike, AYAR.kasa); kasaRenk(player.motor, AYAR.kasa); }      // ilk açılışta oyuncu henüz kurulmadı: build() uygular
+    for (const el of document.querySelectorAll('[data-kasa]')) el.setAttribute('aria-pressed', el.getAttribute('data-kasa') === AYAR.kasa ? 'true' : 'false');
+  }
+  for (const el of document.querySelectorAll('[data-kasa]')) el.addEventListener('click', () => { kasaSec(el.getAttribute('data-kasa')); store.set('ayar', AYAR); });
+  kasaSec(AYAR.kasa);
   $('btn-test-ac').addEventListener('click', () => { SAHIP = ['trike', 'motor', 'car']; store.set('sahip', SAHIP); updateArac(); $('btn-test-ac').disabled = true; });
   function masterGain() { return G.muted ? 0 : (0.55 * AYAR.ses) / 100; }
   function cycleCam() { G.cam = (G.cam + 1) % 3; camSnap = true; AYAR.kamera = G.cam; store.set('ayar', AYAR); }
