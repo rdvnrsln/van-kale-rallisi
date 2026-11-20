@@ -9359,37 +9359,115 @@ function makeTrikeGLB(src, motor) {
 
 // ------------------------------------------------------------ Blender arabaları
 // Model: yayin/model/arac/arabalar.glb (tools/blender/arabalar.py): spor, sedan, hatch, minibus, kamyonet. Yüklenemezse kod çizimi kalır.
+// Model sürümü: dosya değişince artırılır; tarayıcı (özellikle Safari) eski modeli önbellekten vermesin.
+const MODEL_SURUM = { araba: '2026-11-20b' };
 let _arSoz = null;
 function arabaYukle() {
-  if (!_arSoz) _arSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/arac/arabalar.glb', (g) => ok(g.scene), undefined, red); });
+  if (!_arSoz) _arSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/arac/arabalar.glb?s=' + MODEL_SURUM.araba, (g) => ok(g.scene), undefined, red); });
   return _arSoz;
 }
 const _boya = {};
+// Araba malzemeleri ve süsleri (20 Kas 2026): saydam yansıtan cam (içerisi ve sürücü görünür), plaka yazısı, gövde altında zemin gölgesi.
+const ARABA = { cam: null, golge: null, plaka: {}, plakaSira: 0 };
+function arabaCam() {
+  return ARABA.cam || (ARABA.cam = Object.assign(new THREE.MeshPhysicalMaterial({ color: LIN('#25323c'), roughness: 0.03, metalness: 0, transparent: true, opacity: 0.5, envMapIntensity: 2.2, depthWrite: false, clearcoat: 1, clearcoatRoughness: 0.02 }), { name: 'cam' }));
+}
+// Türk plakası: solda mavi TR şeridi, siyah yazı. Van'ın il kodu 65. Oyuncuya "65 ST 081" (Street 81).
+const PLAKA_HARF = 'ABCDEFGHJKLMNPRSTUVYZ';
+function plakaMalzeme(yazi) {
+  if (ARABA.plaka[yazi]) return ARABA.plaka[yazi];
+  const cv = document.createElement('canvas'); cv.width = 512; cv.height = 112;
+  const g = cv.getContext('2d');
+  g.fillStyle = '#f4f3ee'; g.fillRect(0, 0, 512, 112);
+  g.strokeStyle = '#111'; g.lineWidth = 6; g.strokeRect(3, 3, 506, 106);
+  g.fillStyle = '#1f4aa8'; g.fillRect(6, 6, 58, 100);
+  g.fillStyle = '#fff'; g.font = '700 30px "Barlow Condensed", "Arial Narrow", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('TR', 35, 84);
+  g.fillStyle = '#111'; g.font = '700 86px "Barlow Condensed", "Arial Narrow", sans-serif'; g.fillText(yazi, 290, 60);
+  const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; t.flipY = false;      // glTF uv düzeni: v = 0 görüntünün üstü
+  return (ARABA.plaka[yazi] = new THREE.MeshStandardMaterial({ map: t, roughness: 0.42, metalness: 0.1, name: 'plaka' }));
+}
+function rastgelePlaka() {
+  const R = (n) => (ARABA.plakaSira = (ARABA.plakaSira * 1103515245 + 12345 + n) & 0x7fffffff) % n, h = () => PLAKA_HARF[R(PLAKA_HARF.length)];
+  const tur = R(3);
+  return tur === 0 ? '65 ' + h() + ' ' + (1000 + R(9000)) : tur === 1 ? '65 ' + h() + h() + ' ' + (100 + R(900)) : '65 ' + h() + h() + h() + ' ' + (10 + R(90));
+}
+function arabaGolge(uzun, gen) {
+  if (!ARABA.golge) {
+    const cv = document.createElement('canvas'); cv.width = 64; cv.height = 128;
+    const g = cv.getContext('2d'), gr = g.createRadialGradient(32, 32, 2, 32, 32, 31);      // dikeyde iki kat uzatılmış yumuşak elips
+    gr.addColorStop(0, 'rgba(0,0,0,0.7)'); gr.addColorStop(0.45, 'rgba(0,0,0,0.55)'); gr.addColorStop(0.8, 'rgba(0,0,0,0.18)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+    g.setTransform(1, 0, 0, 2, 0, 0); g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+    const t = new THREE.CanvasTexture(cv);
+    ARABA.golge = new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, name: 'araba-golge' });
+  }
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(gen, uzun), ARABA.golge);
+  m.rotation.x = -Math.PI / 2; m.position.y = 0.0; m.renderOrder = 1;
+  return m;
+}
 // tip: spor | sedan | hatch | minibus | kamyonet. Boya malzemesi renge göre paylaşılır; stop malzemesi araca özeldir (fren ışığı).
+// sec: { serit, taksi, oyuncu, plaka }. Oyuncu arabasında sürücü silueti gizlenir (oyuncu figürü oturur: arabaSurucu).
 function makeCarGLB(src, tip, renkHex, sec) {
   const kok = src.getObjectByName(tip).clone(true), g = new THREE.Group(), wheels = [];
   kok.position.set(0, 0, 0); kok.rotation.set(0, 0, 0); g.add(kok);
   let tail = new THREE.MeshStandardMaterial();
+  const plaka = plakaMalzeme((sec && sec.plaka) || rastgelePlaka());
   kok.traverse((m) => {
     if (!m.isMesh) return;
     const ad = m.material.name;
     m.castShadow = ad === 'boya';
     if (ad === 'boya') {
       let b = _boya[renkHex];
-      if (!b) { b = _boya[renkHex] = m.material.clone(); b.color.copy(LIN(renkHex)); b.envMapIntensity = 0.75; }
+      if (!b) { b = _boya[renkHex] = m.material.clone(); b.color.copy(LIN(renkHex)); b.envMapIntensity = 1.0; if (b.isMeshPhysicalMaterial) { b.clearcoat = Math.max(b.clearcoat, 0.85); b.clearcoatRoughness = 0.06; } }
       m.material = b;
     } else if (ad === 'stop') { if (!tail.isKopya) { tail = m.material.clone(); tail.isKopya = true; } m.material = tail; }
+    else if (ad === 'cam') { m.material = arabaCam(); m.renderOrder = 2; }
+    else if (ad === 'plaka') m.material = plaka;
+    else if (ad === 'ic') m.receiveShadow = true;
   });
   for (const ad of ['FL', 'FR', 'RL', 'RR']) {
     const n = kok.getObjectByName(tip + '_teker_' + ad), pivot = new THREE.Group(), spin = new THREE.Group();
     pivot.position.copy(n.position); n.parent.add(pivot); pivot.add(spin); spin.add(n); n.position.set(0, 0, 0);
     n.castShadow = true;
+    const kal = kok.getObjectByName(tip + '_kaliper_' + ad);      // kaliper direksiyonla döner, tekerle dönmez
+    if (kal) { kal.position.sub(pivot.position); pivot.add(kal); }
     wheels.push({ pivot, spin, front: ad[0] === 'F' ? 1 : 0 });
   }
-  const serit = kok.getObjectByName(tip + '_serit'), taksi = kok.getObjectByName('sedan_taksi');
+  const serit = kok.getObjectByName(tip + '_serit'), taksi = kok.getObjectByName('sedan_taksi'), surucu = kok.getObjectByName(tip + '_surucu');
   if (serit) serit.visible = !!(sec && sec.serit);
   if (taksi) taksi.visible = !!(sec && sec.taksi);
-  return { group: g, wheels, tail };
+  if (surucu) surucu.visible = !(sec && sec.oyuncu);
+  if (!ARABA['boy_' + tip]) { const b = new THREE.Box3().setFromObject(kok); ARABA['boy_' + tip] = [b.max.z - b.min.z, b.max.x - b.min.x, (b.max.z + b.min.z) / 2]; }
+  const [uz, gn, oz] = ARABA['boy_' + tip], golge = arabaGolge(uz * 1.08, gn * 1.12); golge.position.z = oz; g.add(golge);
+  return { group: g, wheels, tail, kok, tip };
+}
+// Oyuncu figürünü arabaya oturtur: kalça koltukta, ayaklar pedalda, eller direksiyonda (iki kemikli ters kinematik). Direksiyon c.steer ile döner,
+// eller onunla birlikte gider. src: üç teker GLB'si (oyuncu figürü orada). Dönen nesneye anim(c, dt) eklenir (her karede çağrılır).
+function arabaSurucu(v, src) {
+  const k = v.kok, al = (ad) => k.getObjectByName(v.tip + '_' + ad), yk = al('yer_koltuk'), yp = al('yer_pedal'), dr = al('direksiyon');
+  if (!yk || !yp || !dr || !src) return v;
+  const o = figurKopya(src, 'oyuncu'), f = figurKur(o);
+  o.position.set(0, 0, 0); k.add(o);
+  const egim = v.tip === 'minibus' || v.tip === 'kamyonet' ? -0.12 : v.tip === 'spor' ? -0.42 : -0.28;
+  f.govde.position.set(yk.position.x, yk.position.y + 0.07, yk.position.z); f.govde.rotation.set(egim, 0, 0); f.bas.rotation.set(-egim * 0.85, 0, 0);
+  const gqi = new THREE.Quaternion().setFromEuler(f.govde.rotation).invert();
+  const yerel = (q) => q.sub(f.govde.position).applyQuaternion(gqi);
+  const q0 = dr.quaternion.clone(), qs = new THREE.Quaternion(), Y = new THREE.Vector3(0, 1, 0), v1 = new THREE.Vector3(), diz = new THREE.Vector3(), dirsek = new THREE.Vector3();
+  let don = 0;
+  v.anim = (c, dt) => {
+    don += ((-c.steer * 2.6) - don) * Math.min(1, (dt || 0.016) * 12);
+    dr.quaternion.copy(q0).multiply(qs.setFromAxisAngle(Y, don));
+    dr.updateMatrix();
+    for (const yan of ['L', 'R']) {
+      const sx = yan === 'L' ? 1 : -1;
+      v1.set(sx * 0.165, 0.02, 0).applyAxisAngle(Y, don).applyMatrix4(dr.matrix);          // elin direksiyondaki yeri (saat 9 ve 3)
+      ikCoz(f.kol[yan], yerel(v1), dirsek.set(sx * 0.8, -1, -0.2).applyQuaternion(gqi));
+      v1.set(yp.position.x + sx * 0.11, yp.position.y + 0.06, yp.position.z - 0.04 * (yan === 'R' && c.vf > 0.5 ? 0 : 1));
+      ikCoz(f.bacak[yan], yerel(v1), diz.set(sx * 0.18, 1, 0.5).applyQuaternion(gqi), gqi);
+    }
+    if (dt > 0) yuzAdim(f, 'notr', dt);
+  };
+  v.anim({ steer: 0, vf: 0 }, 0);
+  return v;
 }
 
 // ------------------------------------------------------------ rota
@@ -11707,8 +11785,9 @@ function mutfakKur(api) {
     // Blender arabaları: oyuncunun spor arabası, rakipler ve trafik. İnmezse kod çizimi kalır.
     arabaYukle().then((src) => {
       const degis = (c, v) => { v.group.visible = c.mesh.visible; v.group.position.copy(c.mesh.position); v.group.rotation.copy(c.mesh.rotation); scene.remove(c.mesh); scene.add(v.group); c.mesh = v.group; c.wheels = v.wheels; c.tail = v.tail; };
-      const pv = makeCarGLB(src, 'spor', '#e2572b', { serit: true }), eski = player.car.group;
+      const pv = makeCarGLB(src, 'spor', '#e2572b', { serit: true, oyuncu: true, plaka: '65 ST 081' }), eski = player.car.group;
       pv.group.visible = eski.visible; scene.remove(eski); scene.add(pv.group); player.car = pv;
+      ucTekerYukle().then((us) => arabaSurucu(pv, us)).catch(() => { const s = pv.kok.getObjectByName('spor_surucu'); if (s) s.visible = true; });      // oyuncu direksiyonda; figür inmezse siluet
       if (player.mesh === eski) { player.mesh = pv.group; player.wheels = pv.wheels; player.tail = pv.tail; }
       rivals.forEach((r, i) => degis(r, makeCarGLB(src, rc[i][2] === 'hatch' ? 'hatch' : 'sedan', rc[i][0])));
       trafficModel(scene, src);
