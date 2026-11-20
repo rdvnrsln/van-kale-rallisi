@@ -85,6 +85,14 @@ button:focus-visible { outline: 2px solid var(--gol); outline-offset: 2px; }
 #turbo-d { position: absolute; left: 0; right: 0; bottom: 0; height: 100%; background: var(--kehribar); }
 #turbo.aktif #turbo-d { background: #6fd8ff; box-shadow: 0 0 10px #6fd8ff; }
 #turbo.aktif { border-color: #6fd8ff; }
+/* bisiklette aynı çubuk nefesi gösterir: beyaz; ayakta pedalda yeşil; tükenince kırmızı yanıp söner */
+#hud.pedalli #turbo-d { background: #eef2f4; }
+#hud.pedalli #turbo.aktif #turbo-d { background: #7fe0a4; box-shadow: 0 0 10px #7fe0a4; }
+#hud.pedalli #turbo.aktif { border-color: #7fe0a4; }
+#hud.pedalli #turbo.bitik #turbo-d { background: #ff6f5e; animation: nefes-bitik 0.6s ease-in-out infinite alternate; }
+@keyframes nefes-bitik { to { opacity: 0.35; } }
+.dokun-turbo .ikon-pedal, #hud.pedalli .dokun-turbo .ikon-alev { display: none; }
+#hud.pedalli .dokun-turbo .ikon-pedal { display: inline; }
 /* viraj uyarısı: ekranın üst üçte birinde, ortada */
 #viraj { grid-area: 2 / 1 / 3 / 4; align-self: start; justify-self: center; margin-top: 6vh; width: 110px; }
 #viraj[hidden] { display: none; }
@@ -220,6 +228,29 @@ h1 em { font-style: inherit; color: var(--kehribar); }
 .kucuk b { color: var(--yazi); font-weight: 600; }
 .kucuk a { color: var(--soluk); }
 
+/* ---------- birlikte sürüş (src/cok.js): menüde oda kur / katıl, göstergede oda çipi ---------- */
+.cok-satir { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.cok-kod-gir { width: 5.6em; box-sizing: content-box; font-family: var(--f-baslik); font-weight: 700; font-size: 19px; letter-spacing: 0.24em; text-transform: uppercase; text-align: center; color: var(--yazi); background: rgba(255, 255, 255, 0.04); border: 1.5px solid rgba(255, 255, 255, 0.28); border-radius: 8px; padding: 8px 6px 9px; direction: ltr; }
+.cok-kod-gir:focus { outline: none; border-color: var(--kehribar); }
+.cok-kod-gir::placeholder { color: rgba(255, 255, 255, 0.28); letter-spacing: 0.24em; }
+.cok-oda { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+#cok-oda-kod { font-family: var(--f-baslik); font-weight: 800; font-size: 32px; line-height: 1; letter-spacing: 0.2em; color: var(--kehribar); direction: ltr; unicode-bidi: isolate; user-select: all; -webkit-user-select: all; }
+#cok-oda-sen { font-size: 13px; color: var(--soluk); }
+.cok-oda .m-metin { padding: 4px 0; margin-inline-start: auto; }
+#cok-durum { min-height: 1.3em; }
+.cok-noktalar { display: inline-flex; gap: 5px; align-items: center; direction: ltr; }
+.cok-noktalar i { width: 9px; height: 9px; border-radius: 50%; background: var(--r, transparent); }
+.cok-noktalar i.bos { box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.32); }
+.cok-noktalar i.ben { box-shadow: 0 0 0 2px rgba(11, 22, 34, 0.9), 0 0 0 3.5px rgba(255, 255, 255, 0.92); }
+.cok-cip { display: flex; align-items: center; gap: 8px; padding: 4px 11px 4px 8px; border-radius: 999px; background: rgba(16, 20, 26, 0.32); border: 1px solid rgba(255, 255, 255, 0.3); font-family: var(--f-baslik); font-weight: 700; font-size: 16px; letter-spacing: 0.12em; direction: ltr; }
+.cok-cip svg { width: 17px; height: 17px; color: rgba(255, 255, 255, 0.85); }
+#cok-cip-n { letter-spacing: 0.02em; color: var(--soluk); font-variant-numeric: tabular-nums; }
+.cok-cip.kopuk { opacity: 0.5; animation: cok-nabiz 1.2s ease-in-out infinite; }
+@keyframes cok-nabiz { 50% { opacity: 0.25; } }
+#cok-not { font-size: 13px; padding: 3px 10px; border-radius: 999px; background: rgba(16, 20, 26, 0.32); unicode-bidi: plaintext; }
+@media (prefers-reduced-motion: reduce) { .cok-cip.kopuk { animation: none; } }
+#cok[hidden], .cok-satir[hidden], .cok-oda[hidden], .cok-cip[hidden], #cok-not[hidden] { display: none; }
+
 /* ---------- sonuç ---------- */
 #sonuc { display: flex; align-items: center; background: linear-gradient(90deg, rgba(11, 22, 34, 0.93) 0, rgba(11, 22, 34, 0.8) 380px, rgba(11, 22, 34, 0.15) 800px); overflow-y: auto; touch-action: pan-y; }
 .sonuc-ic { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 14px; }
@@ -344,6 +375,8 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
     </div>
   </div>
   <div class="sag-ust">
+    <div class="cok-cip" id="cok-cip" role="status" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 19c.6-3.3 2.8-5 5.5-5s4.9 1.7 5.5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16.6" cy="9" r="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M17 13.7c2 .3 3.4 1.8 3.9 4.3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span id="cok-cip-kod"></span><span class="cok-noktalar" id="cok-cip-noktalar"></span><span id="cok-cip-n"></span></div>
+    <div id="cok-not" aria-live="polite" hidden></div>
     <div class="kedi" id="kedi"><svg class="ikon-k" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l3.5 4.5h7L19 3v10a7 6.5 0 0 1-14 0z" fill="currentColor"/></svg><span class="etiket" data-i18n="hud.kedi">Van kedisi</span><span id="kedi-n">0/10</span></div>
     <!-- Dokunmatik ekranda düğmeler yuvarlak simgedir; yazı görünmez ama ekran okuyucu okur (.yazi). Masaüstünde yazılı düğme. -->
     <div class="dugmeler">
@@ -362,7 +395,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
   <div class="dokun dokun-sol"><button type="button" data-t="l" aria-label="Sola" data-i18n-aria="hud.sola"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" data-t="r" aria-label="Sağa" data-i18n-aria="hud.saga"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
   <button id="ipucu" type="button" hidden></button>
   <div class="dokun dokun-sag"><button type="button" data-t="h" aria-label="El freni" data-i18n-aria="hud.elFreni"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M10.2 16.6V7.6h2.9a2.55 2.55 0 0 1 0 5.1h-2.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" data-t="b" aria-label="Fren" data-i18n-aria="hud.fren"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.2" y="7.2" width="15.6" height="10.4" rx="2.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.2 10.4v4M12 10.4v4M15.8 10.4v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button><button type="button" data-t="g" aria-label="Gaz" data-i18n-aria="hud.gaz"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="2.8" width="8" height="18.4" rx="2.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10.6 7.6h2.8M10.6 11.8h2.8M10.6 16h2.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
-  <div class="dokun dokun-turbo"><button type="button" data-t="n" aria-label="Turbo" data-i18n-aria="hud.turbo"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8c.9 3.4 5 5.2 5 10.2a5 5 0 0 1-10 0c0-2.4 1.3-4 2.7-5.1.2 1.9 1.1 2.9 2.3 3.3.3-3.3-1-5.8 0-8.4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button></div>
+  <div class="dokun dokun-turbo"><button type="button" id="dokun-n" data-t="n" aria-label="Turbo" data-i18n-aria="hud.turbo"><svg class="ikon ikon-pedal" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="11" r="4"/><path d="M10 11l5.5 6.5M13 18.5h6M4.2 6.6a8 8 0 0 1 9.6-2.9"/></g></svg><svg class="ikon ikon-alev" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8c.9 3.4 5 5.2 5 10.2a5 5 0 0 1-10 0c0-2.4 1.3-4 2.7-5.1.2 1.9 1.1 2.9 2.3 3.3.3-3.3-1-5.8 0-8.4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button></div>
   <div class="sag-alt">
     <div id="turbo" role="meter" aria-label="Turbo" data-i18n-aria="hud.turbo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="turbo-d"></div></div>
     <div id="hiz-n">0</div>
@@ -417,6 +450,20 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
           <button type="button" id="arac-motor" data-arac="motor" aria-pressed="false">Motorlu üç teker</button>
           <button type="button" id="arac-araba" data-arac="car" aria-pressed="false">Araba</button>
         </div>
+      </div>
+      <!-- Birlikte sürüş (src/cok.js): oda kur ya da kodla katıl. Sunucu adresi yoksa bölüm gizli kalır. -->
+      <div class="bolge-sec" id="cok" hidden>
+        <div class="etiket" id="lbl-cok" data-i18n="cok.baslik">Birlikte sür</div>
+        <div class="seg cok-satir" id="cok-giris" role="group" aria-labelledby="lbl-cok">
+          <button type="button" id="cok-kur" data-i18n="cok.kur">Oda kur</button>
+          <input type="text" id="cok-kod" class="cok-kod-gir" maxlength="4" placeholder="ABCD" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="go" data-i18n-aria="cok.kodEtiket" aria-label="Oda kodu">
+          <button type="button" id="cok-katil" data-i18n="cok.katil">Katıl</button>
+        </div>
+        <div class="cok-oda" id="cok-oda" hidden>
+          <span id="cok-oda-kod"></span><span class="cok-noktalar" id="cok-oda-noktalar"></span><span id="cok-oda-sen"></span>
+          <button type="button" id="cok-ayril" class="m-metin" data-i18n="cok.ayril">Odadan çık</button>
+        </div>
+        <p class="kucuk" id="cok-durum" aria-live="polite" data-i18n="cok.aciklama">Oda kur, kodu arkadaşlarına ver. Bir odada en çok dört kişi olur.</p>
       </div>
       <button id="btn-sur" class="birincil" type="button" data-i18n="menu.sur">Sür</button>
     </section>
@@ -6240,7 +6287,7 @@ const DIL = {
     'servis.sarsildi': 'Yolcular sarsıldı', 'servis.vardi': 'Turistler pistte',
     'ev.yuk-tasima': 'Yük Taşıma', 'ev.yuk-tasima.alt': 'Üç tekerli bisikletle çuvalları al, Eski Van yolundan teslim et; kazanç kasaya girer',
     'yuk.al': 'Yükü al', 'yuk.birak': 'Teslimat', 'yuk.basla': 'Yük taşıma', 'yuk.basla.alt': 'Mavi sütunda dur, çuvalları yükle',
-    'yuk.bindi': 'Yük kasada', 'yuk.bindi.alt': 'Teslimat noktasına sür; çarparsan yük zarar görür', 'yuk.konfor': 'Yük {0}/100',
+    'yuk.bindi': 'Yük kasada', 'yuk.bindi.alt': 'Teslimat noktasına sür; çarpma ve sert viraj yüke zarar verir', 'yuk.konfor': 'Yük {0}/100',
     'yuk.sarsildi': 'Yük hasar gördü', 'yuk.vardi': 'Yük teslim edildi',
     'menu.kasa': 'Kasa: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · kasa {1} ₺', 'menu.arac': 'Araç', 'arac.araba': 'Araba', 'arac.trike': 'Üç teker',
     'arac.motor': 'Motorlu üç teker', 'kilit.araba': 'Bu etkinlik araba ister. Araba {0} ₺.', 'kilit.kisa': 'araba gerekli',
@@ -6279,8 +6326,14 @@ const DIL = {
     'menu.tanitim': 'Gerçek Van sokaklarında, kalenin gölgesinde yarış. Göl kıyısından Eski Van’a kadar şehir açık.',
     'menu.devam': 'Devam et', 'menu.hikaye': 'Hikâye', 'menu.hikaye.bolum': 'Hikâye · Bölüm {0}: {1}', 'menu.hikaye.bastan': 'Hikâye · baştan',
     'menu.serbest': 'Serbest sürüş', 'menu.ayarlar': 'Ayarlar', 'menu.cikis': 'Çıkış', 'menu.bolgeSec': 'Serbest sürüş bölgesi', 'menu.yarislar': 'Yarışlar', 'menu.sur': 'Sür',
-    'hud.turbo': 'Turbo', 'hud.gec': 'Geçmek için dokun ya da bir tuşa bas', 'hud.viraj': 'Viraj',
-    'menu.tuslar': '<b>W A S D</b> ya da <b>ok tuşları</b> sürüş · <b>Shift</b> turbo · <b>Boşluk</b> el freni · <b>R</b> yola dön · <b>C</b> kamera · <b>H</b> korna · <b>N</b> ses · <b>M</b> menü. Oyun kolu: sol çubuk, RT gaz, LT fren, X ya da RB turbo, A el freni, B yola dön, Y kamera.',
+    'cok.baslik': 'Birlikte sür', 'cok.aciklama': 'Oda kur, kodu arkadaşlarına ver. Bir odada en çok dört kişi olur.', 'cok.kur': 'Oda kur', 'cok.katil': 'Katıl',
+    'cok.kodEtiket': 'Oda kodu', 'cok.ayril': 'Odadan çık', 'cok.sen': 'Sen {0}. oyuncusun', 'cok.cip': 'Oda {0}, {1} oyuncu',
+    'cok.baglaniyor': 'Bağlanıyor…', 'cok.kuruldu': 'Oda açıldı. Kodu arkadaşlarına ver, sonra Sür’e bas.', 'cok.katildin': 'Odaya katıldın, içeride {1} kişi var. Sür’e bas.', 'cok.odada': 'Odada {0} kişi var.',
+    'cok.gel': 'Oyuncu {0} geldi', 'cok.git': 'Oyuncu {0} ayrıldı', 'cok.koptu': 'Bağlantı koptu, yeniden bağlanıyor…', 'cok.bitti': 'Bağlantı koptu. Odaya yeniden katılabilirsin.',
+    'cok.ulasilamadi': 'Sunucuya ulaşılamadı. İnternetini kontrol edip yeniden dene.', 'cok.dolu': 'Oda dolu. Bir odada en çok dört kişi olur.', 'cok.yok': 'Bu kodla açık oda yok.', 'cok.kodHatali': 'Kod dört harf olmalı.',
+    'cok.ayrildin': 'Odadan çıktın.', 'cok.bolgede': 'Oyuncu {0} {1} bölgesinde, seni de oraya aldık.', 'cok.oyuncu': 'Oyuncu {0}', 'cok.yaninda': 'Oyuncu {0} hemen önünde',
+    'hud.turbo': 'Turbo', 'hud.nefes': 'Nefes', 'hud.ayakta': 'Ayakta pedal', 'uc.nefes': 'Nefesin tükendi', 'uc.devrildi': 'Devrildin', 'uc.devrildi.alt': 'Virajda yavaşla; yükle daha çabuk devrilirsin', 'hud.gec': 'Geçmek için dokun ya da bir tuşa bas', 'hud.viraj': 'Viraj',
+    'menu.tuslar': '<b>W A S D</b> ya da <b>ok tuşları</b> sürüş · <b>Shift</b> turbo (bisiklette ayakta pedal) · <b>Boşluk</b> el freni · <b>R</b> yola dön · <b>C</b> kamera · <b>H</b> korna ya da zil · <b>N</b> ses · <b>M</b> menü. Oyun kolu: sol çubuk, RT gaz, LT fren, X ya da RB turbo, A el freni, B yola dön, Y kamera.',
     'menu.kunye': 'Sokaklar, binalar ve surlar: © OpenStreetMap katkıcıları (ODbL). Yükseklik: SRTM, Mapzen arazi karoları. Dokular: Poly Haven (CC0). Kale kayasının biçimi OSM sınırından yeniden kurulmuştur.',
     'etk.km': 'km', 'etk.tur': '{0} tur', 'etk.zamanaKarsi': 'zamana karşı', 'etk.rakip': '{0} rakip', 'etk.enIyi': 'en iyi {0}',
     'hud.kedi': 'Van kedisi', 'hud.menu': 'Menü', 'hud.kamera': 'Kamera', 'hud.yolaDon': 'Yola dön', 'hud.sesAcik': 'Ses açık', 'hud.sesKapali': 'Ses kapalı', 'hud.yanCevir': 'Daha geniş görüş için telefonu yan çevir',
@@ -6391,7 +6444,7 @@ const DIL = {
     'servis.sarsildi': 'A rough ride', 'servis.vardi': 'The tourists are on the piste',
     'ev.yuk-tasima': 'Cargo Run', 'ev.yuk-tasima.alt': 'Load the sacks on the cargo tricycle and deliver them along the Old Van road; the pay goes to your savings',
     'yuk.al': 'Pick up the load', 'yuk.birak': 'Delivery', 'yuk.basla': 'Cargo run', 'yuk.basla.alt': 'Stop at the blue column and load the sacks',
-    'yuk.bindi': 'The load is on', 'yuk.bindi.alt': 'Ride to the delivery point; each crash damages the load', 'yuk.konfor': 'Load {0}/100',
+    'yuk.bindi': 'The load is on', 'yuk.bindi.alt': 'Ride to the delivery point; crashes and sharp corners damage the load', 'yuk.konfor': 'Load {0}/100',
     'yuk.sarsildi': 'The load was damaged', 'yuk.vardi': 'Load delivered',
     'menu.kasa': 'Savings: ₺{0}', 'sonuc.kazanc': '+₺{0} · savings ₺{1}', 'menu.arac': 'Vehicle', 'arac.araba': 'Car', 'arac.trike': 'Cargo trike',
     'arac.motor': 'Motor trike', 'kilit.araba': 'This event needs a car. The car costs ₺{0}.', 'kilit.kisa': 'car needed',
@@ -6430,8 +6483,14 @@ const DIL = {
     'menu.tanitim': 'Race on the real streets of Van, in the shadow of the castle. The city is open from the lake shore to Old Van.',
     'menu.devam': 'Continue', 'menu.hikaye': 'Story', 'menu.hikaye.bolum': 'Story · Chapter {0}: {1}', 'menu.hikaye.bastan': 'Story · restart',
     'menu.serbest': 'Free roam', 'menu.ayarlar': 'Settings', 'menu.cikis': 'Quit', 'menu.bolgeSec': 'Free roam region', 'menu.yarislar': 'Races', 'menu.sur': 'Drive',
-    'hud.turbo': 'Turbo', 'hud.gec': 'Tap or press any key to skip', 'hud.viraj': 'Bend',
-    'menu.tuslar': '<b>W A S D</b> or <b>arrow keys</b> drive · <b>Shift</b> turbo · <b>Space</b> handbrake · <b>R</b> back to road · <b>C</b> camera · <b>H</b> horn · <b>N</b> sound · <b>M</b> menu. Gamepad: left stick, RT throttle, LT brake, X or RB turbo, A handbrake, B back to road, Y camera.',
+    'cok.baslik': 'Drive together', 'cok.aciklama': 'Create a room and share the code. A room holds up to four players.', 'cok.kur': 'Create room', 'cok.katil': 'Join',
+    'cok.kodEtiket': 'Room code', 'cok.ayril': 'Leave room', 'cok.sen': 'You are player {0}', 'cok.cip': 'Room {0}, {1} players',
+    'cok.baglaniyor': 'Connecting…', 'cok.kuruldu': 'The room is open. Share the code with your friends, then press Drive.', 'cok.katildin': 'You joined. {1} players in the room. Press Drive.', 'cok.odada': '{0} players in the room.',
+    'cok.gel': 'Player {0} joined', 'cok.git': 'Player {0} left', 'cok.koptu': 'Connection lost, reconnecting…', 'cok.bitti': 'Connection lost. You can join the room again.',
+    'cok.ulasilamadi': 'Could not reach the server. Check your internet and try again.', 'cok.dolu': 'The room is full. A room holds up to four players.', 'cok.yok': 'There is no open room with this code.', 'cok.kodHatali': 'The code must be four letters.',
+    'cok.ayrildin': 'You left the room.', 'cok.bolgede': 'Player {0} is in {1}, so we took you there too.', 'cok.oyuncu': 'Player {0}', 'cok.yaninda': 'Player {0} is right ahead',
+    'hud.turbo': 'Turbo', 'hud.nefes': 'Breath', 'hud.ayakta': 'Stand and pedal', 'uc.nefes': 'Out of breath', 'uc.devrildi': 'You tipped over', 'uc.devrildi.alt': 'Slow down in corners; with a load you tip sooner', 'hud.gec': 'Tap or press any key to skip', 'hud.viraj': 'Bend',
+    'menu.tuslar': '<b>W A S D</b> or <b>arrow keys</b> drive · <b>Shift</b> turbo (on the bicycle: stand and pedal) · <b>Space</b> handbrake · <b>R</b> back to road · <b>C</b> camera · <b>H</b> horn or bell · <b>N</b> sound · <b>M</b> menu. Gamepad: left stick, RT throttle, LT brake, X or RB turbo, A handbrake, B back to road, Y camera.',
     'menu.kunye': 'Streets, buildings and walls: © OpenStreetMap contributors (ODbL). Elevation: SRTM, Mapzen terrain tiles. Textures: Poly Haven (CC0). The shape of the castle rock is rebuilt from the OSM outline.',
     'etk.km': 'km', 'etk.tur': '{0} laps', 'etk.zamanaKarsi': 'time trial', 'etk.rakip': '{0} rivals', 'etk.enIyi': 'best {0}',
     'hud.kedi': 'Van cats', 'hud.menu': 'Menu', 'hud.kamera': 'Camera', 'hud.yolaDon': 'Back to road', 'hud.sesAcik': 'Sound on', 'hud.sesKapali': 'Sound off', 'hud.yanCevir': 'Turn your phone sideways for a wider view',
@@ -6542,7 +6601,7 @@ const DIL = {
     'servis.sarsildi': 'مسافران تکان خوردند', 'servis.vardi': 'گردشگران در پیست هستند',
     'ev.yuk-tasima': 'باربری', 'ev.yuk-tasima.alt': 'گونی‌ها را بار سه‌چرخه کن و از راه وان قدیم تحویل بده؛ مزد به پس‌اندازت می‌رود',
     'yuk.al': 'بار را بردار', 'yuk.birak': 'تحویل', 'yuk.basla': 'باربری', 'yuk.basla.alt': 'کنار ستون آبی بایست و گونی‌ها را بار کن',
-    'yuk.bindi': 'بار روی سه‌چرخه است', 'yuk.bindi.alt': 'تا محل تحویل برو؛ هر برخورد به بار آسیب می‌زند', 'yuk.konfor': 'بار {0}/100',
+    'yuk.bindi': 'بار روی سه‌چرخه است', 'yuk.bindi.alt': 'تا محل تحویل برو؛ برخورد و پیچ تند به بار آسیب می‌زند', 'yuk.konfor': 'بار {0}/100',
     'yuk.sarsildi': 'بار آسیب دید', 'yuk.vardi': 'بار تحویل شد',
     'menu.kasa': 'پس‌انداز: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · پس‌انداز {1} ₺', 'menu.arac': 'وسیله', 'arac.araba': 'خودرو', 'arac.trike': 'سه‌چرخه',
     'arac.motor': 'سه‌چرخه موتوری', 'kilit.araba': 'این مسابقه خودرو می‌خواهد. قیمت خودرو {0} ₺ است.', 'kilit.kisa': 'خودرو لازم است',
@@ -6581,8 +6640,14 @@ const DIL = {
     'menu.tanitim': 'در خیابان‌های واقعی وان، زیر سایه قلعه مسابقه بده. شهر از ساحل دریاچه تا وان قدیم باز است.',
     'menu.devam': 'ادامه', 'menu.hikaye': 'داستان', 'menu.hikaye.bolum': 'داستان · فصل {0}: {1}', 'menu.hikaye.bastan': 'داستان · از نو',
     'menu.serbest': 'رانندگی آزاد', 'menu.ayarlar': 'تنظیمات', 'menu.cikis': 'خروج', 'menu.bolgeSec': 'منطقه رانندگی آزاد', 'menu.yarislar': 'مسابقه‌ها', 'menu.sur': 'برو',
-    'hud.turbo': 'توربو', 'hud.gec': 'برای رد کردن لمس کنید یا کلیدی بزنید', 'hud.viraj': 'پیچ',
-    'menu.tuslar': '<b>W A S D</b> یا <b>کلیدهای جهت</b> رانندگی · <b>Shift</b> توربو · <b>Space</b> ترمز دستی · <b>R</b> بازگشت به جاده · <b>C</b> دوربین · <b>H</b> بوق · <b>N</b> صدا · <b>M</b> منو. دسته بازی: اهرم چپ، RT گاز، LT ترمز، X یا RB توربو، A ترمز دستی، B بازگشت به جاده، Y دوربین.',
+    'cok.baslik': 'رانندگی با هم', 'cok.aciklama': 'اتاق بساز و کد را به دوستانت بده. هر اتاق حداکثر چهار نفر دارد.', 'cok.kur': 'ساخت اتاق', 'cok.katil': 'پیوستن',
+    'cok.kodEtiket': 'کد اتاق', 'cok.ayril': 'خروج از اتاق', 'cok.sen': 'تو بازیکن {0} هستی', 'cok.cip': 'اتاق {0}، {1} بازیکن',
+    'cok.baglaniyor': 'در حال اتصال…', 'cok.kuruldu': 'اتاق باز شد. کد را به دوستانت بده، بعد «برو» را بزن.', 'cok.katildin': 'به اتاق پیوستی. {1} نفر در اتاق هستند. «برو» را بزن.', 'cok.odada': '{0} نفر در اتاق هستند.',
+    'cok.gel': 'بازیکن {0} آمد', 'cok.git': 'بازیکن {0} رفت', 'cok.koptu': 'اتصال قطع شد، دوباره وصل می‌شود…', 'cok.bitti': 'اتصال قطع شد. می‌توانی دوباره به اتاق بپیوندی.',
+    'cok.ulasilamadi': 'به سرور دسترسی نیست. اینترنت را بررسی کن و دوباره امتحان کن.', 'cok.dolu': 'اتاق پر است. هر اتاق حداکثر چهار نفر دارد.', 'cok.yok': 'اتاقی با این کد باز نیست.', 'cok.kodHatali': 'کد باید چهار حرف باشد.',
+    'cok.ayrildin': 'از اتاق خارج شدی.', 'cok.bolgede': 'بازیکن {0} در {1} است؛ تو را هم به آنجا بردیم.', 'cok.oyuncu': 'بازیکن {0}', 'cok.yaninda': 'بازیکن {0} درست جلوی توست',
+    'hud.turbo': 'توربو', 'hud.nefes': 'نفس', 'hud.ayakta': 'رکاب ایستاده', 'uc.nefes': 'نفست بند آمد', 'uc.devrildi': 'واژگون شدی', 'uc.devrildi.alt': 'سر پیچ آهسته‌تر برو؛ با بار زودتر واژگون می‌شوی', 'hud.gec': 'برای رد کردن لمس کنید یا کلیدی بزنید', 'hud.viraj': 'پیچ',
+    'menu.tuslar': '<b>W A S D</b> یا <b>کلیدهای جهت</b> رانندگی · <b>Shift</b> توربو (روی دوچرخه: رکاب ایستاده) · <b>Space</b> ترمز دستی · <b>R</b> بازگشت به جاده · <b>C</b> دوربین · <b>H</b> بوق یا زنگ · <b>N</b> صدا · <b>M</b> منو. دسته بازی: اهرم چپ، RT گاز، LT ترمز، X یا RB توربو، A ترمز دستی، B بازگشت به جاده، Y دوربین.',
     'menu.kunye': 'خیابان‌ها، ساختمان‌ها و باروها: © مشارکت‌کنندگان OpenStreetMap (ODbL). ارتفاع: SRTM، کاشی‌های Mapzen. بافت‌ها: Poly Haven (CC0). شکل صخره قلعه از روی محدوده OSM بازسازی شده است.',
     'etk.km': 'کیلومتر', 'etk.tur': '{0} دور', 'etk.zamanaKarsi': 'با زمان', 'etk.rakip': '{0} رقیب', 'etk.enIyi': 'بهترین {0}',
     'hud.kedi': 'گربه وان', 'hud.menu': 'منو', 'hud.kamera': 'دوربین', 'hud.yolaDon': 'بازگشت به جاده', 'hud.sesAcik': 'صدا روشن', 'hud.sesKapali': 'صدا خاموش', 'hud.yanCevir': 'برای دید بازتر، گوشی را افقی بگیرید',
@@ -9720,7 +9785,20 @@ function makeCar(colorHex, isPlayer, name, style, hazir) {
 function placeCar(c, x, z, h) {
   c.x = x; c.z = z; c.h = h; c.vx = c.vz = c.vy = 0; c.vf = 0; c.y = groundH(x, z);
   c.air = false; c.steer = 0; c.water = 0; c.stuck = 0; c.hit = 0;
+  c.kalkis = 0; c.devrik = 0; c.devrikA = 0;
   c.safe.x = x; c.safe.z = z; c.safe.h = h;
+}
+
+// Üç teker oynanışı (20 Kas 2026). Yanal ivme eşiği aşınca iç arka teker kalkar; kalkış dolarsa araç devrilir, 2,6 sn sonra doğrulur.
+// Eşik m/sn²: pedallı 5,6 (0,57 g), motorlu 7,2; yük ağırlık merkezini yükseltir (×0,86). Direksiyon, eşiğin 1,25 katından fazla
+// yanal ivme vermez: tam direksiyonla teker kalkar, ancak uzun tutunca ya da el freniyle devrilir.
+const UC = { esik: 5.6, esikMotor: 7.2, yukKat: 0.86, sinir: 1.25, kalk: 2, in: 2.5, devrikSure: 2.6, aci: 0.3 };
+const DEVRIK_INP = { thr: 0, brk: 0, steer: 0, hb: true, stop: true, turbo: false };
+// Pedal krankı: pedal çevrilirken arka tekere bağlıdır (çevrim oranı 0,42); bırakınca serbest dişli: krank durur, pedallar yataya gelir.
+function krankAdim(th, cevir, vf, dt) {
+  if (cevir) return th + (Math.max(vf, 0.6) / 0.31) * 0.42 * dt;
+  const hedef = Math.round((th - Math.PI / 2) / Math.PI) * Math.PI + Math.PI / 2;
+  return th + (hedef - th) * Math.min(1, dt * 4);
 }
 
 const SURF_ASPHALT = { grip: 1, roll: 0.35, lin: 0, vk: 1, id: 0 };
@@ -9745,11 +9823,18 @@ function stepCar(c, inp, dt) {
   else if (rockSample(RK.h, c.x, c.z) > 1) surf = SURF_DIRT;
   c.surf = surf;
   let vf = c.vx * fx + c.vz * fz, vl = c.vx * rx + c.vz * rz;
+  if (c.devrik > 0) { c.devrik -= dt; inp = DEVRIK_INP; if (c.devrik <= 0) { c.devrik = 0; c.kalkis = 0; } }      // devrik: sürücü bir şey yapamaz, araç yan yatmış kayar
   c.brake = inp.brk > 0.1 && vf > 0.8;
+  if (c.pedal) { c.pedalCev = inp.thr > 0 && !c.air; c.krank = krankAdim(c.krank || 0, c.pedalCev, vf, dt); }
   if (!c.air) {
-    const vmax = c.vmax * surf.vk * (c.tbAktif ? 1.25 : 1);      // turbo: azami hız %25, itiş 1,9 kat
+    const vmax = c.vmax * surf.vk * (c.tbAktif ? 1.25 : 1) * (c.ayakta ? 1.2 : 1);      // turbo: azami hız %25, itiş 1,9 kat; ayakta pedal: %20
     let acc = 0;
-    if (inp.thr > 0) acc += inp.thr * c.power * (c.tbAktif ? 1.9 : 1) * (vf < 0 ? 1.7 : Math.max(0, 1 - vf / vmax));
+    let guc = c.power * (c.tbAktif ? 1.9 : 1);
+    if (c.pedal) {      // pedal: itiş krank açısıyla nabız atar (turda iki basış, en güçlüsü krank yatayken); ayakta 1,55 kat; yük ağırlaştırır
+      const nb = Math.sin(c.krank);
+      guc = c.power * (0.6 + 0.8 * nb * nb) * (c.ayakta ? 1.55 : 1) * (c.yuklu ? 0.8 : 1);
+    }
+    if (inp.thr > 0) acc += inp.thr * guc * (vf < 0 ? 1.7 : Math.max(0, 1 - vf / vmax));
     if (inp.brk > 0) acc -= vf > 0.8 ? inp.brk * 18 : inp.brk * 6.5 * Math.max(0, 1 + vf / 13);
     vf += acc * dt;
     if (inp.stop) vf -= Math.sign(vf) * Math.min(Math.abs(vf), 17 * dt);      // geri vitese geçmeden dur
@@ -9761,7 +9846,15 @@ function stepCar(c, inp, dt) {
     let om = (vf / 2.7) * Math.tan(c.steer);
     const latMax = 14.5 * surf.grip * (inp.hb ? 1.3 : 1), lat = Math.abs(om * vf);
     if (lat > latMax) om *= latMax / lat;
+    if (c.ucTeker && !inp.hb) { const sn = c.esik * UC.sinir, l2 = Math.abs(om * vf); if (l2 > sn) om *= sn / l2; }
     if (inp.hb && sp > 6) om *= 1.35;
+    if (c.ucTeker) {      // virajda iç teker kalkar; kalkış 1'e varırsa devrilir
+      const oran = Math.abs(om * vf) / (c.esik * (c.yuklu ? UC.yukKat : 1));
+      if (c.devrik > 0) { /* yatıyor */ }
+      else if (oran > 1) { c.kalkis = (c.kalkis || 0) + (oran - 1) * UC.kalk * dt; c.kalkisYon = Math.sign(c.steer) || c.kalkisYon || 1; }
+      else c.kalkis = Math.max(0, (c.kalkis || 0) - UC.in * dt);
+      if (c.kalkis >= 1 && !(c.devrik > 0)) { c.devrik = UC.devrikSure; c.devrikYeni = true; }
+    }
     c.h -= om * dt;
     let k = (inp.hb ? 1.3 : 7.5) * surf.grip;
     if (Math.abs(vl) > 6) k *= 0.55;
@@ -9855,7 +9948,16 @@ function poseCar(c, dt) {
   const yolY = c.air ? 0 : c.onRoad ? (c.roadCls <= 6 ? 0.15 + (6 - c.roadCls) * 0.012 : 0.09) : kaldirimda(c.x, c.z) ? 0.2 : 0;      // kaldırıma çıkan araç kaldırım yüksekliğinde durur
   c.lift = lerp(c.lift || 0, yolY, Math.min(1, dt * 7));
   c.mesh.position.set(c.x, c.y + 0.02 + c.lift, c.z);
-  c.mesh.rotation.set(c.pitch, c.h, c.roll, 'YXZ');
+  let ek = 0;
+  if (c.ucTeker) {      // üç teker: iç teker kalkar ya da yan yatar; dönme ekseni dış arka teker (yerel +x sol)
+    c.kalkisG = lerp(c.kalkisG || 0, Math.min(1, c.kalkis || 0), Math.min(1, dt * 10));
+    const A = c.devrikA || 0;
+    c.devrikA = c.devrik > 0.7 || c.devrikUzak ? Math.min(1, A + dt * (1.2 + 6 * A)) : Math.max(0, A - dt * 1.6);
+    const a = Math.max(c.kalkisG * UC.aci, c.devrikA * 1.25), iz = c.iz || 0.45, ox = (c.kalkisYon || 1) * iz * (1 - Math.cos(a));
+    ek = -(c.kalkisYon || 1) * a;
+    c.mesh.position.x += Math.cos(c.h) * ox; c.mesh.position.z -= Math.sin(c.h) * ox; c.mesh.position.y += iz * Math.sin(a);
+  }
+  c.mesh.rotation.set(c.pitch, c.h, c.roll + ek, 'YXZ');
   for (const w of c.wheels) {
     w.spin.rotation.x += (c.vf * dt) / 0.34;
     if (w.front) w.pivot.rotation.y = -c.steer * 1.4;
@@ -9949,6 +10051,7 @@ function makeTrikeGLB(src, motor) {
   t.position.set(0, 0, 0); g.add(t);
   t.traverse((m) => { if (m.isMesh) m.castShadow = true; });
   const al = (ad) => t.getObjectByName(ad), gidon = al('gidon'), krank = al('krank'), wheels = [];
+  const iz = Math.abs(al('teker_L').position.x) || 0.45;      // arka tekerin orta çizgiye uzaklığı: devrilmede dönme ekseni
   for (const ad of ['teker_on', 'teker_L', 'teker_R']) {
     const n = al(ad), pivot = new THREE.Group(), spin = new THREE.Group();
     pivot.position.copy(n.position); n.parent.add(pivot); pivot.add(spin); spin.add(n); n.position.set(0, 0, 0);
@@ -9967,11 +10070,22 @@ function makeTrikeGLB(src, motor) {
   const yerel = (v) => v.sub(f.govde.position).applyQuaternion(gqi);          // üç teker uzayı → gövde uzayı
   const pedal = { L: al('pedal_L'), R: al('pedal_R') }, tutus = { L: al('yer_tutus_L').position, R: al('yer_tutus_R').position }, ayaklik = { L: al('yer_ayaklik_L').position, R: al('yer_ayaklik_R').position };
   const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), diz = new THREE.Vector3(), dirsek = new THREE.Vector3();
-  let th = 0.6, sasT = 0, onceHiz = 0;
+  let th = 0.6, sasT = 0, onceHiz = 0, ay = 0;
   function anim(c, dt) {
     const dn = -c.steer * 1.15;
     gidon.rotation.y = dn;
-    if (!motor) { th += (c.vf / 0.31) * 0.42 * dt; krank.rotation.x = th; pedal.L.rotation.x = -th; pedal.R.rotation.x = -th; }
+    if (!motor) {      // oyuncunun krankı fizikten gelir (itiş nabzı bacakla aynı anda); uzak oyuncuda pedal bayrağından
+      th = c.krank !== undefined ? c.krank : krankAdim(th, c.pedalCev !== undefined ? c.pedalCev : c.vf > 0.5, c.vf || 0, dt);
+      krank.rotation.x = th; pedal.L.rotation.x = -th; pedal.R.rotation.x = -th;
+    }
+    // ayakta pedal: kalça seleden kalkar, gövde öne eğilir, basışla yana sallanır
+    ay += ((c.ayakta ? 1 : 0) - ay) * Math.min(1, dt * 7);
+    if (dt > 0 || ay > 0) {
+      f.govde.position.set(sele.x, sele.y + 0.085 + ay * 0.11, sele.z + ay * 0.07);
+      f.govde.rotation.set(egim + ay * 0.24, 0, ay * 0.09 * Math.cos(th));
+      f.bas.rotation.set(-(egim + ay * 0.24) * 0.75, 0, 0);
+      gqi.setFromEuler(f.govde.rotation).invert();
+    }
     for (const yan of ['L', 'R']) {
       const sx = yan === 'L' ? 1 : -1, yon = -sx;
       if (motor) v1.copy(ayaklik[yan]); else v1.set(sx * 0.15, yon * KR * Math.cos(th), yon * KR * Math.sin(th)).add(krank.position);
@@ -9980,10 +10094,10 @@ function makeTrikeGLB(src, motor) {
       v2.copy(tutus[yan]).applyAxisAngle(Y, dn).add(gidon.position);
       ikCoz(f.kol[yan], yerel(v2), dirsek.set(sx * 0.7, -1, -0.35).applyQuaternion(gqi));
     }
-    if (dt > 0) { const hz = Math.abs(c.vf || 0); if (onceHiz - hz > 3.5) sasT = 1.3; else if (sasT > 0) sasT -= dt; onceHiz = hz; yuzAdim(f, sasT > 0 ? 'saskin' : 'notr', dt); }      // ani duruşta (çarpma) şaşırır
+    if (dt > 0) { const hz = Math.abs(c.vf || 0); if (onceHiz - hz > 3.5 || c.devrik > 0 || c.devrikUzak) sasT = 1.3; else if (sasT > 0) sasT -= dt; onceHiz = hz; yuzAdim(f, sasT > 0 ? 'saskin' : 'notr', dt); }      // ani duruşta (çarpma) ve devrilince şaşırır
   }
   anim({ steer: 0, vf: 0 }, 0);
-  return { group: g, wheels, tail, yuk, anim };
+  return { group: g, wheels, tail, yuk, anim, iz };
 }
 
 // ------------------------------------------------------------ Blender arabaları
@@ -12074,6 +12188,397 @@ function mutfakKur(api) {
 
 'use strict';
 // =====================================================================
+// BİRLİKTE SÜRÜŞ — çok oyunculu serbest sürüş (20 Kas 2026, kurucu: "kendi sunucumuz", ilk adım birlikte serbest sürüş).
+// 2–4 oyuncu bir oda koduyla aynı bölgede birbirinin aracını görür; çarpışma yok (hayalet). Oyunculara karşı yarış sonra.
+// Sunucu: sunucu/worker.mjs (Cloudflare Worker + Durable Object); yerel eşi tools/oda-yerel.mjs; protokol sunucu/protokol.mjs.
+// Bağlantı oyun.js'ten cokKur({...}) ile kurulur; her karede COK.adim(dt).
+// =====================================================================
+// Sunucu adresi: Worker kurulunca buraya yazılır (sunucu/KURULUM.md). Boşken "Birlikte sür" bölümü görünmez.
+// Sayfada ?oda-sunucu=ws://localhost:8787 ile ezilir. Masaüstü kabuğu yalnız bu adrese ve yerel sunucuya izin verir (derle.mjs → app/ag.json).
+const ODA_SUNUCU = '';
+const COK_RENK = ['#e2572b', '#2d8fe0', '#f0c419', '#9b59d0'];      // oyuncu 1–4; 1 oyunun kendi turuncusu
+const COK_HARF = 'ABCDEFGHJKLMNPRSTUVYZ';                           // I, O, Q, W, X yok: sesli söylenirken karışmasın
+const COK_BOLGE = ['van', 'abali', 'kampus'], COK_ARAC = ['trike', 'motor', 'car', 'kayak'];
+const COK_HIZ = 1000 / 12, COK_GECIKME = 120;                       // saniyede 12 durum; uzak araç 120 ms geriden ara değerle çizilir
+
+// o: { scene, $, oyuncu(), bolge(), durum(), bolgeGit(id), panel(ad), alev(v), bip(frekans, süre) }
+// Bağlantı adresi: ?oda=KOD menü açılınca o odaya katılır (paylaşılan bağlantı).
+function cokKur(o) {
+  const $ = o.$, TAU2 = Math.PI * 2;
+  const C = { sunucu: '', ws: null, kod: '', no: 0, kur: false, odada: false, baglaniyor: false, yeniden: null, deneme: 0, varDeneme: 0,
+    oyuncular: new Set(), uzak: new Map(), sonGonder: 0, sonAnahtar: '', sonPing: 0, bolgeBekle: false, durumYazi: null, boyaRenk: null, tur: 0 };
+  {
+    const q = (location.search.match(/[?&]oda-sunucu=([^&#]+)/) || [])[1];
+    sunucuAyarla(q ? decodeURIComponent(q) : ODA_SUNUCU);
+    const k = (location.search.match(/[?&]oda=([A-Za-z]{4})(?:&|#|$)/) || [])[1];
+    C.otoKatil = k ? k.toUpperCase() : '';
+  }
+  function sunucuAyarla(u) {
+    u = String(u || '').replace(/\/+$/, '');
+    C.sunucu = /^wss?:\/\/[^\s/?#]+$/i.test(u) ? u : '';
+    arayuz();
+  }
+  const kodUret = () => Array.from({ length: 4 }, () => COK_HARF[Math.floor(Math.random() * COK_HARF.length)]).join('');
+  const r2 = (v) => Math.round(v * 100) / 100, r3 = (v) => Math.round(v * 1000) / 1000;
+  const aci = (a) => { a %= TAU2; return a > Math.PI ? a - TAU2 : a < -Math.PI ? a + TAU2 : a; };
+  const surusta = () => { const d = o.durum(); return d === 'free' || d === 'race' || d === 'count'; };
+
+  // ---------------------------------------------------------------- arayüz: menü bölümü, gösterge çipi, durum satırı
+  // durum satırı; { bolge: id } argümanı o anki dilde bölge adına çevrilir (dil değişince satır yeniden yazılır)
+  function durumYaz(anahtar, ...a) { C.durumYazi = anahtar ? [anahtar, a] : null; $('cok-durum').textContent = anahtar ? T(anahtar, ...a.map((x) => (x && x.bolge ? T('bolge.' + x.bolge) : x))) : ''; }
+  function noktalar(el) {
+    el.textContent = '';
+    for (let n = 1; n <= 4; n++) {
+      const i = document.createElement('i');
+      if (C.oyuncular.has(n)) i.style.setProperty('--r', COK_RENK[n - 1]); else i.className = 'bos';
+      if (n === C.no) i.className = 'ben';
+      el.appendChild(i);
+    }
+  }
+  function arayuz() {
+    if (!$('cok')) return;
+    $('cok').hidden = !C.sunucu;
+    $('cok-giris').hidden = C.odada;
+    $('cok-oda').hidden = !C.odada;
+    for (const id of ['cok-kur', 'cok-katil', 'cok-kod']) $(id).disabled = C.baglaniyor;
+    const n = C.oyuncular.size;
+    if (C.odada) { $('cok-oda-kod').textContent = C.kod; noktalar($('cok-oda-noktalar')); $('cok-oda-sen').textContent = T('cok.sen', C.no); }
+    const cip = $('cok-cip');
+    cip.hidden = !(C.odada || C.yeniden);
+    cip.classList.toggle('kopuk', !C.odada);
+    $('cok-cip-kod').textContent = C.kod;
+    $('cok-cip-n').textContent = (C.odada ? n : 0) + '/4';
+    noktalar($('cok-cip-noktalar'));
+    cip.setAttribute('aria-label', T('cok.cip', C.kod, n));
+  }
+  let notZaman = null;
+  function not(metin) {
+    const el = $('cok-not');
+    el.textContent = metin; el.hidden = false;
+    clearTimeout(notZaman); notZaman = setTimeout(() => { el.hidden = true; }, 3500);
+  }
+
+  // ---------------------------------------------------------------- bağlantı
+  function baglan(kod, kur, yeniden) {
+    if (!C.sunucu) return;
+    kapat();
+    C.kod = kod; C.kur = kur; C.baglaniyor = true; C.retNeden = '';
+    if (!yeniden) durumYaz('cok.baglaniyor');
+    arayuz();
+    let ws;
+    const q = [kur ? 'kur=1' : '', yeniden && C.no ? 'no=' + C.no : ''].filter(Boolean).join('&');      // yeniden bağlanırken eski numara istenir
+    try { ws = new WebSocket(C.sunucu + '/oda/' + kod + (q ? '?' + q : '')); } catch (e) { C.baglaniyor = false; durumYaz('cok.ulasilamadi'); arayuz(); return; }
+    C.ws = ws;
+    ws.onmessage = (e) => { if (C.ws === ws) mesaj(e.data, yeniden); };
+    ws.onclose = () => { if (C.ws === ws) koptu(); };
+    ws.onerror = () => {};
+  }
+  function kapat() {
+    if (C.ws) { const w = C.ws; C.ws = null; try { w.close(1000); } catch (e) { /* kapalı */ } }
+  }
+  function mesaj(veri, yeniden) {
+    if (veri === 'P') return;
+    let m;
+    try { m = JSON.parse(veri); } catch (e) { return; }
+    if (m.t === 'd') { durumAl(m); return; }
+    if (m.t === 'hos') {
+      C.odada = true; C.baglaniyor = false; C.no = m.no; C.kod = m.oda; C.deneme = 0; C.varDeneme = 0;
+      clearTimeout(C.yeniden); C.yeniden = null;
+      C.oyuncular = new Set(m.oyuncular.concat([m.no]));
+      for (const [n, U] of C.uzak) if (!C.oyuncular.has(n) || n === C.no) uzakSil(U);      // yeniden bağlanınca numara değişmiş olabilir
+      if (!yeniden) { durumYaz(C.kur ? 'cok.kuruldu' : 'cok.katildin', C.kod, C.oyuncular.size); C.bolgeBekle = !C.kur; o.bip(880, 0.12); }
+      kendiBoya();
+      C.sonAnahtar = ''; durumGonder(performance.now(), true);
+      arayuz();
+      return;
+    }
+    if (m.t === 'gel') {
+      C.oyuncular.add(m.no); arayuz();
+      C.sonAnahtar = ''; durumGonder(performance.now(), true);      // yeni gelen bizi hemen görsün
+      not(T('cok.gel', m.no)); o.bip(988, 0.1);
+      if (o.durum() === 'menu') durumYaz('cok.odada', C.oyuncular.size);
+      return;
+    }
+    if (m.t === 'git') {
+      C.oyuncular.delete(m.no);
+      const U = C.uzak.get(m.no); if (U) uzakSil(U);
+      arayuz(); not(T('cok.git', m.no)); o.bip(523, 0.1);
+      if (o.durum() === 'menu') durumYaz('cok.odada', C.oyuncular.size);
+      return;
+    }
+    if (m.t === 'ret') {
+      C.retNeden = m.neden;
+      const ws = C.ws; C.ws = null; try { ws.close(1000); } catch (e) { /* kapalı */ }
+      if (yeniden && (m.neden === 'yok' || m.neden === 'var') && C.varDeneme++ < 6) { baglan(C.kod, m.neden === 'yok', true); return; }      // oda kapanmış: aynı kodla yeniden aç; bu arada başkası açtıysa katıl
+      if (m.neden === 'var' && C.kur && C.varDeneme++ < 6) { baglan(kodUret(), true, false); return; }      // yeni oda kodu tuttu: başka kod
+      sifirla(); durumYaz(m.neden === 'dolu' ? 'cok.dolu' : m.neden === 'yok' ? 'cok.yok' : 'cok.ulasilamadi');
+    }
+  }
+  function koptu() {
+    C.ws = null;
+    const odadaydi = C.odada || C.yeniden;
+    C.odada = false; C.baglaniyor = false;
+    if (odadaydi && C.deneme < 8) {      // kısa kopma: aynı odaya yeniden bağlan (1, 2, 4, 8, 10 … sn)
+      const ms = Math.min(10000, 1000 * Math.pow(2, C.deneme++));
+      clearTimeout(C.yeniden);
+      C.yeniden = setTimeout(() => baglan(C.kod, false, true), ms);
+      not(T('cok.koptu')); arayuz();
+      return;
+    }
+    const ilk = !odadaydi;
+    sifirla();
+    durumYaz(ilk ? 'cok.ulasilamadi' : 'cok.bitti');
+  }
+  function sifirla() {
+    clearTimeout(C.yeniden); C.yeniden = null;
+    kapat();
+    C.odada = false; C.baglaniyor = false; C.no = 0; C.deneme = 0; C.oyuncular = new Set(); C.bolgeBekle = false;
+    for (const U of C.uzak.values()) uzakSil(U);
+    kendiBoya();
+    arayuz();
+  }
+  function ayril() { sifirla(); C.kod = ''; durumYaz('cok.ayrildin'); arayuz(); }
+
+  // ---------------------------------------------------------------- gönderme: sürüşte saniyede 12, menüde yalnız değişince (en geç 15 sn)
+  function durumGonder(simdi, zorla) {
+    const p = o.oyuncu();
+    if (!C.ws || !C.odada || C.ws.readyState !== 1 || !p) return;
+    const sur = surusta();
+    const ar = p.ski ? 3 : Math.max(0, COK_ARAC.indexOf(p.arac || 'trike')), bl = Math.max(0, COK_BOLGE.indexOf(o.bolge()));
+    const uc = sur && !p.ski && p.ucTeker;      // üç teker bitleri (uzakAdim'de okunur)
+    const bayrak = (p.tbAktif && !p.ski ? 1 : 0) | (p.brake ? 2 : 0) | (p.air ? 4 : 0) | (sur ? 0 : 8)
+      | (uc && p.ayakta ? 16 : 0) | (uc && p.pedalCev ? 32 : 0) | (uc ? Math.min(3, Math.round((p.kalkis || 0) * 3)) << 6 : 0)
+      | (uc && p.devrik > 0.7 ? 256 : 0) | (uc && p.kalkisYon < 0 ? 512 : 0);
+    if (!zorla) {
+      if (sur) { if (simdi - C.sonGonder < COK_HIZ) return; }
+      else {
+        const anahtar = [Math.round(p.x), Math.round(p.z), ar, bl, bayrak].join();
+        if (anahtar === C.sonAnahtar && simdi - C.sonGonder < 15000) {
+          if (simdi - C.sonPing > 30000 && simdi - C.sonGonder > 25000) { C.sonPing = simdi; try { C.ws.send('p'); } catch (e) { /* koptu */ } }
+          return;
+        }
+      }
+    }
+    C.sonAnahtar = [Math.round(p.x), Math.round(p.z), ar, bl, bayrak].join();
+    C.sonGonder = simdi;
+    const d = [r2(p.x), r2(p.y), r2(p.z), r3(aci(p.h)), r2(p.vf || 0), r3(p.steer || 0), ar, bl, bayrak];
+    try { C.ws.send(JSON.stringify({ t: 'd', s: Math.round(simdi), d })); } catch (e) { /* koptu: onclose karşılar */ }
+  }
+
+  // ---------------------------------------------------------------- uzak oyuncular
+  function uzakAl(no) {
+    let U = C.uzak.get(no);
+    if (!U) {
+      U = { no, renk: COK_RENK[no - 1], arac: '', bolge: '', bayrak: 0, ornek: [], fark: null, araclar: {}, v: null, etiket: null, sonAl: 0,
+        c: { mesh: null, wheels: [], tail: new THREE.MeshStandardMaterial(), x: 0, y: 0, z: 0, h: 0, vf: 0, steer: 0, air: false, pitch: 0, roll: 0, onRoad: true, roadCls: 5, brake: false, lift: 0 } };
+      C.uzak.set(no, U);
+    }
+    return U;
+  }
+  function uzakSil(U) {
+    for (const v of Object.values(U.araclar)) o.scene.remove(v.group);
+    if (U.etiket) { o.scene.remove(U.etiket.s); U.etiket.tex.dispose(); U.etiket.s.material.dispose(); }
+    U.ornek = []; U.fark = null; U.arac = ''; U.v = null;
+    C.uzak.delete(U.no);
+    U.sil = true;
+  }
+  function durumAl(m) {
+    if (!C.oyuncular.has(m.no) || m.no === C.no) return;
+    const d = m.d, simdi = performance.now(), U = uzakAl(m.no);
+    const orn = { t: m.s, x: d[0], y: d[1], z: d[2], h: d[3], vf: d[4], st: d[5] };
+    const son = U.ornek[U.ornek.length - 1];
+    if (son && (orn.t <= son.t - 5000 || Math.hypot(orn.x - son.x, orn.z - son.z) > 60)) { U.ornek = []; U.fark = null; }      // ışınlanma ya da yeniden bağlanma: ara değer yok
+    else if (son && orn.t <= son.t) return;      // sırası bozuk
+    // saat farkı: en az gecikmeli örneğe oturur, yavaşça yukarı kayar (yol değişirse uyum sağlar)
+    const f = simdi - orn.t;
+    U.fark = U.fark === null ? f : Math.min(f, U.fark + 1);
+    U.ornek.push(orn); U.alinan = (U.alinan || 0) + 1;
+    if (U.ornek.length > 40) U.ornek.shift();
+    U.arac = COK_ARAC[d[6]] || 'car'; U.bolge = COK_BOLGE[d[7]] || ''; U.bayrak = d[8] | 0; U.sonAl = simdi;
+    if (C.bolgeBekle && o.durum() === 'menu') {      // odaya yeni katılan: öbürü başka bölgedeyse oraya geç
+      C.bolgeBekle = false;
+      if (U.bolge && U.bolge !== o.bolge()) { o.bolgeGit(U.bolge); durumYaz('cok.bolgede', U.no, { bolge: U.bolge }); }
+    }
+  }
+  // Boya: GLB'de "boya" adlı malzeme (araba gövdesi, üç teker çerçevesi). Asıl malzeme saklanır, oda bitince geri konur.
+  const BOYA = {};
+  function boyaRenk(grup, hex) {
+    grup.traverse((m) => {
+      if (!m.isMesh || !m.material) return;
+      const asil = m.userData.asilBoya || (m.material.name === 'boya' ? m.material : null);
+      if (!asil) return;
+      m.userData.asilBoya = asil;
+      if (!hex) { m.material = asil; return; }
+      const k = asil.uuid + hex;
+      if (!BOYA[k]) { BOYA[k] = asil.clone(); BOYA[k].color.copy(new THREE.Color(hex).convertSRGBToLinear()); }
+      m.material = BOYA[k];
+    });
+    grup.userData.cokRenk = hex || null;
+  }
+  function kendiBoya() {      // odadayken kendi aracın da numaranın renginde: herkes seni aynı renkte görür
+    const p = o.oyuncu(), hex = C.odada || C.yeniden ? COK_RENK[C.no - 1] || null : null;
+    if (!p) return;
+    for (const v of [p.car, p.trike, p.motor]) if (v && v.group && (v.group.userData.cokRenk || null) !== hex) boyaRenk(v.group, hex);
+  }
+  function aracKur(U, tur) {
+    if (U.araclar[tur]) return U.araclar[tur];
+    let v;
+    if (tur === 'car') {
+      v = makeCarMesh(U.renk, false, 'spor');
+      arabaYukle().then((src) => {
+        const yeni = makeCarGLB(src, 'spor', U.renk, { serit: true, oyuncu: true, plaka: '65 ST 08' + U.no });
+        yeni.ikiEgzoz = true;
+        degistir(U, tur, yeni);
+        ucTekerYukle().then((us) => arabaSurucu(yeni, us)).catch(() => { const s = yeni.kok.getObjectByName('spor_surucu'); if (s) s.visible = true; });
+      }).catch(() => {});
+    } else {
+      v = makeTrikeMesh(tur === 'motor');
+      ucTekerYukle().then((src) => { const yeni = makeTrikeGLB(src, tur === 'motor'); boyaRenk(yeni.group, U.renk); degistir(U, tur, yeni); }).catch(() => {});
+    }
+    if (v.yuk) v.yuk.visible = false;
+    v.group.visible = false; o.scene.add(v.group);
+    return (U.araclar[tur] = v);
+  }
+  function degistir(U, tur, yeni) {
+    const eski = U.araclar[tur];
+    if (yeni.yuk) yeni.yuk.visible = false;
+    yeni.group.visible = eski.group.visible; yeni.group.position.copy(eski.group.position); yeni.group.rotation.copy(eski.group.rotation);
+    o.scene.remove(eski.group); o.scene.add(yeni.group); U.araclar[tur] = yeni;
+    if (U.v === eski) aracGec(U, yeni);
+  }
+  function aracGec(U, v) {
+    if (U.v && U.v !== v) U.v.group.visible = false;
+    U.v = v; U.c.mesh = v.group; U.c.wheels = v.wheels; U.c.tail = v.tail;
+  }
+  // "Oyuncu N" etiketi: renk noktası ve ad; duvarların arkasından da görünür (arkadaşını bulmak için), uzakta da okunur boyutta kalır
+  function etiketKur(U) {
+    const cv = document.createElement('canvas'); cv.width = 256; cv.height = 64;
+    const tex = new THREE.CanvasTexture(cv); tex.encoding = THREE.sRGBEncoding;
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, depthWrite: false, transparent: true, fog: false, toneMapped: false }));
+    s.center.set(0.5, 0); s.renderOrder = 20; s.visible = false; o.scene.add(s);
+    U.etiket = { s, cv, tex, dil: '' };
+  }
+  function etiketCiz(U) {
+    const e = U.etiket;
+    if (e.dil === LANG) return;
+    e.dil = LANG;
+    const g = e.cv.getContext('2d'), yazi = T('cok.oyuncu', U.no);
+    const font = getComputedStyle(document.documentElement).getPropertyValue('--f-baslik') || 'sans-serif';
+    g.clearRect(0, 0, 256, 64);
+    g.font = '700 34px ' + font;
+    const w = Math.min(232, g.measureText(yazi).width + 58), x0 = (256 - w) / 2;
+    g.fillStyle = 'rgba(11, 22, 34, 0.62)';
+    g.beginPath(); if (g.roundRect) g.roundRect(x0, 8, w, 48, 24); else g.rect(x0, 8, w, 48); g.fill();
+    g.fillStyle = U.renk; g.beginPath(); g.arc(x0 + 24, 32, 9, 0, TAU2); g.fill();
+    g.fillStyle = '#f3efe6'; g.textBaseline = 'middle'; g.textAlign = 'left'; g.direction = 'ltr';
+    g.fillText(yazi, x0 + 42, 34);
+    e.tex.needsUpdate = true;
+  }
+  const _k = new THREE.Vector3();
+  function uzakAdim(U, simdi, dt, kam) {
+    const gor = U.ornek.length > 0 && U.bolge === o.bolge() && !!U.arac;
+    if (!gor) { if (U.v) U.v.group.visible = false; if (U.etiket) U.etiket.s.visible = false; return; }
+    // ara değer: gönderenin saatinde 120 ms geriden; tampon biterse en çok 250 ms ileri tahmin
+    const rt = simdi - U.fark - COK_GECIKME, O = U.ornek, c = U.c;
+    while (O.length > 2 && O[1].t < rt - 400) O.shift();
+    let a = O[0], b = null;
+    for (let i = O.length - 1; i >= 0; i--) if (O[i].t <= rt) { a = O[i]; b = O[i + 1] || null; break; }
+    if (b) {
+      const k = (rt - a.t) / Math.max(1, b.t - a.t);
+      c.x = a.x + (b.x - a.x) * k; c.y = a.y + (b.y - a.y) * k; c.z = a.z + (b.z - a.z) * k;
+      c.h = a.h + aci(b.h - a.h) * k; c.vf = a.vf + (b.vf - a.vf) * k; c.steer = a.st + (b.st - a.st) * k;
+    } else {
+      const e = rt > a.t ? Math.min(rt - a.t, 250) / 1000 : 0;
+      c.x = a.x + Math.sin(a.h) * a.vf * e; c.z = a.z + Math.cos(a.h) * a.vf * e; c.y = a.y; c.h = a.h; c.vf = a.vf; c.steer = a.st;
+      if (simdi - U.sonAl > 1500) c.vf = 0;      // ses yok: teker dönmesin
+    }
+    c.air = !!(U.bayrak & 4); c.brake = !!(U.bayrak & 2);
+    const rd = roadAt(c.x, c.z); c.onRoad = !!(rd && rd.on); c.roadCls = rd ? rd.cls : 9;
+    // araç türü
+    if (U.arac === 'kayak') { if (U.v) U.v.group.visible = false; }
+    else {
+      const v = aracKur(U, U.arac);
+      if (U.v !== v) { aracGec(U, v); c.pitch = c.roll = 0; c.lift = 0; c.devrikA = 0; c.kalkisG = 0; }
+      v.group.visible = true;
+      // üç teker: 16 ayakta pedal, 32 pedal çeviriyor, 64–192 teker kalkışı (0–3), 256 devrik, 512 kalkan teker solda
+      c.ucTeker = U.arac !== 'car'; c.iz = v.iz || 0.45; c.ayakta = !!(U.bayrak & 16); c.pedalCev = U.arac === 'trike' ? !!(U.bayrak & 32) : undefined;
+      c.kalkis = ((U.bayrak >> 6) & 3) / 3; c.devrikUzak = !!(U.bayrak & 256); c.kalkisYon = U.bayrak & 512 ? -1 : 1;
+      poseCar(c, dt);
+      if (v.anim) v.anim(c, dt);      // pedal, gidon, sürücünün kolları
+      const al = o.alev(v); al.visible = !!(U.bayrak & 1);
+      if (al.visible) for (const s of al.children) { const z = (0.62 - s.userData.k * 0.16) * (0.75 + Math.random() * 0.5); s.scale.set(z, z, 1); }
+    }
+    // etiket
+    if (!U.etiket) etiketKur(U);
+    etiketCiz(U);
+    const s = U.etiket.s, yuk = U.arac === 'car' ? 2.05 : 2.35;
+    s.position.set(c.x, c.y + (c.lift || 0) + yuk, c.z);
+    const d = _k.copy(s.position).distanceTo(kam);
+    s.visible = d < 3000;
+    const f = Math.min(Math.max(1, d / 22), 40);
+    s.scale.set(2.4 * f, 0.6 * f, 1);
+  }
+
+  // ---------------------------------------------------------------- menü düğmeleri
+  if ($('cok')) {
+    $('cok-kur').addEventListener('click', () => { if (!C.odada) { C.varDeneme = 0; baglan(kodUret(), true, false); } });
+    const katil = () => {
+      const kod = $('cok-kod').value.toUpperCase().replace(/[^A-Z]/g, '');
+      if (!/^[A-Z]{4}$/.test(kod)) { durumYaz('cok.kodHatali'); $('cok-kod').focus(); return; }
+      baglan(kod, false, false);
+    };
+    $('cok-katil').addEventListener('click', katil);
+    $('cok-kod').addEventListener('input', () => { const el = $('cok-kod'), v = el.value.toLocaleUpperCase('tr').replace(/İ/g, 'I').replace(/[^A-Z]/g, '').slice(0, 4); if (v !== el.value) el.value = v; });
+    $('cok-kod').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); katil(); } });
+    $('cok-ayril').addEventListener('click', ayril);
+    arayuz();
+  }
+
+  return {
+    // her kare: gönder, uzak araçları çiz
+    adim(dt, kam) {
+      const simdi = performance.now();
+      if (C.otoKatil && C.sunucu && o.durum() === 'menu') { const k = C.otoKatil; C.otoKatil = ''; o.panel('serbest'); $('cok-kod').value = k; baglan(k, false, false); }
+      durumGonder(simdi, false);
+      if ((C.tur = (C.tur + 1) % 60) === 0) kendiBoya();      // model sonradan inerse yeni gövde de boyansın
+      if (o.durum() === 'load') { for (const U of C.uzak.values()) { if (U.v) U.v.group.visible = false; if (U.etiket) U.etiket.s.visible = false; } return; }
+      for (const U of C.uzak.values()) uzakAdim(U, simdi, dt, kam);
+    },
+    kur() { C.varDeneme = 0; baglan(kodUret(), true, false); },
+    katil(kod) { baglan(String(kod).toUpperCase(), false, false); },
+    ayril,
+    sunucuAyarla,
+    dilYenile() { if (C.durumYazi) durumYaz(C.durumYazi[0], ...C.durumYazi[1]); arayuz(); },
+    // serbest sürüş başlarken: aynı bölgedeki bir arkadaşın 10 m arkası (sürendeki öncelikli). Yoksa null.
+    yanNokta() {
+      if (!C.odada) return null;
+      let en = null;
+      for (const U of C.uzak.values()) {
+        const a = U.ornek[U.ornek.length - 1];
+        if (!a || U.bolge !== o.bolge()) continue;
+        if (!en || ((en.U.bayrak & 8) && !(U.bayrak & 8))) en = { U, a };
+      }
+      if (!en) return null;
+      const { U, a } = en, x = a.x - Math.sin(a.h) * 10, z = a.z - Math.cos(a.h) * 10;
+      return groundH(x, z) > -0.2 ? { x, z, h: a.h, no: U.no } : { x: a.x + Math.cos(a.h) * 4, z: a.z - Math.sin(a.h) * 4, h: a.h, no: U.no };
+    },
+    // mini harita: aynı bölgedeki arkadaşlar
+    harita() {
+      const out = [];
+      for (const U of C.uzak.values()) if (U.ornek.length && U.bolge === o.bolge()) out.push({ x: U.c.x || U.ornek[U.ornek.length - 1].x, z: U.c.z || U.ornek[U.ornek.length - 1].z, renk: U.renk });
+      return out;
+    },
+    // sınama ve tanı
+    get durum() {
+      return { sunucu: C.sunucu, odada: C.odada, kod: C.kod, no: C.no, oyuncular: [...C.oyuncular].sort(), baglaniyor: C.baglaniyor, yazi: $('cok-durum') ? $('cok-durum').textContent : '',
+        uzak: [...C.uzak.values()].map((U) => ({ no: U.no, arac: U.arac, bolge: U.bolge, ornek: U.ornek.length, gorunur: !!(U.v && U.v.group.visible), glb: !!(U.v && U.v.kok || U.v && U.v.anim), x: r2(U.c.x), z: r2(U.c.z), h: r3(U.c.h), vf: r2(U.c.vf), etiket: !!(U.etiket && U.etiket.s.visible), renk: U.renk,
+          alinan: U.alinan || 0, son: U.ornek.length ? [r2(U.ornek[U.ornek.length - 1].x), r2(U.ornek[U.ornek.length - 1].z), U.ornek[U.ornek.length - 1].t] : null })) };
+    },
+  };
+}
+
+'use strict';
+// =====================================================================
 // OYUN — sahne, döngü, yarışlar, gösterge, mini harita, ses, menü
 // =====================================================================
 (function () {
@@ -12298,6 +12803,9 @@ function mutfakKur(api) {
     player.power = kind === 'trike' ? 4.4 : kind === 'motor' ? 6.8 : 10.5;
     player.vmax = kind === 'trike' ? 9.5 : kind === 'motor' ? 19 : 62;
     player.pedal = kind === 'trike'; player.arac = kind;
+    player.ucTeker = kind !== 'car'; player.esik = kind === 'motor' ? UC.esikMotor : UC.esik; player.iz = v.iz || 0.45;
+    player.kalkis = 0; player.devrik = 0; player.devrikA = 0; player.ayakta = false; player.yuklu = false;
+    if (player.nefes === undefined) player.nefes = 1;
     player.trike.yuk.visible = false; player.motor.yuk.visible = false;
   }
   // Araç sahipliği: oyun üç tekerli bisikletle başlar; motorlu üç teker ve araba kasadaki parayla alınır.
@@ -12650,6 +13158,7 @@ function mutfakKur(api) {
       for (const m of evMarkers) dot(m.x, m.z, 5.5, '#f2a93b');
       for (const ct of cats) if (!ct.got) dot(ct.x, ct.z, 3.2, '#f6f3ec');
     }
+    for (const u of COK.harita()) { dot(u.x, u.z, 5.6, '#0b1622'); dot(u.x, u.z, 4, u.renk); }      // birlikte sürüş: arkadaşlar
     g.restore();
     g.save(); g.translate(W / 2, W * 0.6);
     g.beginPath(); g.moveTo(0, -8 * dpr); g.lineTo(5.5 * dpr, 6 * dpr); g.lineTo(0, 3 * dpr); g.lineTo(-5.5 * dpr, 6 * dpr); g.closePath();
@@ -12679,6 +13188,11 @@ function mutfakKur(api) {
       A.noise = buf;
       const mk = (type, f, q) => { const s = ctx.createBufferSource(); s.buffer = buf; s.loop = true; const fl = ctx.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q; const gn = ctx.createGain(); gn.gain.value = 0; s.connect(fl); fl.connect(gn); gn.connect(A.master); s.start(); return gn; };
       A.skid = mk('bandpass', 1300, 2.5); A.wind = mk('lowpass', 420, 0.5); A.dirt = mk('bandpass', 260, 0.8); A.turbo = mk('bandpass', 2600, 1.4);
+      A.nefes = mk('bandpass', 1100, 0.9);      // bisiklette yorgun soluk
+      // serbest dişli tıkırtısı: kare dalganın her kenarı yüksek geçiren süzgeçte bir tık olur (tekerin bir turunda 24 tık)
+      A.carkO = ctx.createOscillator(); A.carkO.type = 'square'; A.carkO.frequency.value = 20;
+      const cf = ctx.createBiquadFilter(); cf.type = 'highpass'; cf.frequency.value = 3200; cf.Q.value = 0.8;
+      A.cark = ctx.createGain(); A.cark.gain.value = 0; A.carkO.connect(cf); cf.connect(A.cark); A.cark.connect(A.master); A.carkO.start();
     } catch (e) { A.ctx = null; }
   }
   function beep(f, dur, vol, type, delay) {
@@ -12729,10 +13243,21 @@ function mutfakKur(api) {
     A.lp.frequency.setTargetAtTime(380 + rpm * 1400 + inp.thr * 500, t, 0.05);
     A.eng.gain.setTargetAtTime(driving && !c.ski && !c.pedal ? 0.05 + inp.thr * 0.07 + rpm * 0.02 : 0, t, 0.08);
     const asphalt = c.surf && c.surf.id === 0;
-    A.skid.gain.setTargetAtTime(driving && !c.air && asphalt ? clamp((c.slip - 3.5) / 9, 0, 0.22) : 0, t, 0.05);
+    const kalk = driving && c.ucTeker && !c.air ? clamp((c.kalkis || 0) * 0.2, 0, 0.18) : 0;      // üç tekerde iç teker kalkarken dış lastik sürtünür
+    A.skid.gain.setTargetAtTime(driving && !c.air && asphalt ? Math.max(clamp((c.slip - 3.5) / 9, 0, 0.22), kalk) : 0, t, 0.05);
     A.dirt.gain.setTargetAtTime(driving && !c.air && !asphalt ? clamp(sp / 40, 0, 0.3) : 0, t, 0.08);
     A.wind.gain.setTargetAtTime(driving ? clamp(sp / 62, 0, 1) * 0.16 : 0, t, 0.1);
     A.turbo.gain.setTargetAtTime(driving && c.tbAktif ? 0.12 : 0, t, 0.06);      // turbo: tıslama
+    const pedal = driving && !c.ski && c.pedal, serbest = pedal && !c.pedalCev && !c.air && sp > 0.8 && !(c.devrik > 0);
+    A.carkO.frequency.setTargetAtTime(Math.max(2, (12 * sp) / (2 * Math.PI * 0.31)), t, 0.05);
+    A.cark.gain.setTargetAtTime(serbest ? clamp(0.02 + sp * 0.003, 0, 0.05) : 0, t, 0.04);
+    const yorgun = pedal && (c.nefesYok || (c.ayakta && c.nefes < 0.35));      // nefes tükenirken soluk (saniyede ~1,1 soluk)
+    A.nefes.gain.setTargetAtTime(yorgun ? 0.035 + 0.035 * Math.sin(G.t * 7) : 0, t, 0.05);
+  }
+  // bisiklet zili: iki kısa vuruş, metal çanın üç kısmi tonu
+  function zil() {
+    if (!A.ctx) return;
+    for (const d of [0, 0.17]) { beep(2350, 0.6, 0.11, 'sine', d); beep(3320, 0.42, 0.06, 'sine', d); beep(4870, 0.26, 0.03, 'sine', d); }
   }
   // turbo açılınca hava hışırtısı (gürültü süzgeci 400 → 2.600 Hz)
   function turboSes() {
@@ -12755,8 +13280,8 @@ function mutfakKur(api) {
       if (Math.abs(PAD.steer) > Math.abs(inp.steer)) inp.steer = PAD.steer;
       inp.thr = Math.max(inp.thr, PAD.thr); inp.brk = Math.max(inp.brk, PAD.brk); inp.hb = inp.hb || PAD.hb; inp.turbo = inp.turbo || PAD.turbo;
     }
-    // turbo kendi başına tam gaz verir: telefonda turbo düğmesi gazın üstünde, tek başparmak ikisine birden basamaz (20 Kas, simülatörde ölçüldü)
-    if (inp.turbo && !player.ski && (player.arac === 'car' || player.arac === 'motor')) inp.thr = 1;
+    // turbo (bisiklette ayakta pedal) kendi başına tam gaz verir: telefonda düğme gazın üstünde, tek başparmak ikisine birden basamaz (20 Kas, simülatörde ölçüldü)
+    if (inp.turbo && !player.ski) inp.thr = 1;
     return inp;
   }
   // Oyun kolu (Steam ve masaüstü için): sol çubuk direksiyon, RT gaz, LT fren, A el freni / onay, X ya da RB turbo,
@@ -12785,6 +13310,7 @@ function mutfakKur(api) {
     else if (a && G.near && G.state === 'free' && !G.goal && canStart(G.near)) startEvent(G.near);
   }
   window.addEventListener('keydown', (e) => {
+    if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'text') return;      // oda kodu yazılırken (src/cok.js)
     if (e.code === 'ArrowUp' || e.code === 'ArrowDown' || e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'Space') e.preventDefault();
     if (e.repeat) return;
     keys[e.code] = true;
@@ -12802,7 +13328,7 @@ function mutfakKur(api) {
     else if (e.code === 'Escape' || e.code === 'KeyM') showMenu(true);
     else if (e.code === 'KeyN') toggleMute();
     else if (e.code === 'KeyT') { const sira = ['gunduz', 'gunbatimi', 'gece', 'dongu'], yeni = sira[(sira.indexOf(AYAR.vakit) + 1) % 4]; vakitSec(yeni); flash(T('ayar.' + yeni), T('ayar.vakit'), 1.6); }
-    else if (e.code === 'KeyH') { beep(392, 0.35, 0.25, 'square'); beep(494, 0.35, 0.2, 'square'); }
+    else if (e.code === 'KeyH') { if (player && player.pedal && !player.ski) zil(); else { beep(392, 0.35, 0.25, 'square'); beep(494, 0.35, 0.2, 'square'); } }
     else if (e.code === 'Enter' && G.near && !G.goal && canStart(G.near)) { G.lastStory = 0; startEvent(G.near); }
   });
   window.addEventListener('keyup', (e) => { keys[e.code] = false; });
@@ -12908,8 +13434,9 @@ function mutfakKur(api) {
     clearRace();
     updateArac();
     setVehicle(G.aracSecim);      // seçilen araç her bölgede geçerlidir
-    let giris = null;
-    if (!keepPlace || G.state === 'menu') {
+    let giris = null, yan = null;
+    if ((!keepPlace || G.state === 'menu') && (yan = COK.yanNokta())) placeCar(player, yan.x, yan.z, yan.h);      // odada: arkadaşın 10 m arkası
+    else if (!keepPlace || G.state === 'menu') {
       const ev0 = EVENTS.find((e) => e.bolge === REGION.id), s0 = REGION.id === 'van' ? 330 : ev0.R.L - 260, p = routePoint(ev0.R, s0);
       placeCar(player, p.x, p.z, Math.atan2(p.dx, p.dz));
       giris = [ev0.R, Math.min(s0 + 16, ev0.R.L - 30)];
@@ -12919,7 +13446,7 @@ function mutfakKur(api) {
     $('menu').hidden = true; $('sonuc').hidden = true; $('konusma').hidden = true; $('hud').hidden = false;
     camSnap = true;
     if (giris) girisBasla(giris[0], giris[1]);      // drone çekimi ve asfaltta yer adı; "Serbest sürüş" yazısı çekim bitince
-    else flash(T('flash.serbest'), T('flash.serbest.alt'));
+    else flash(T('flash.serbest'), yan ? T('cok.yaninda', yan.no) : T('flash.serbest.alt'));
   }
   function startEvent(ev) {
     if (ev.erzak) { startErzak(); return; }
@@ -13040,6 +13567,7 @@ function mutfakKur(api) {
     $('load-baslik').textContent = T('yukleniyor', T('bolge.van'));
     placeName = ''; placeAlt = '';
     updateKasa(); updateArac();
+    COK.dilYenile();
     if (G.state !== 'load') { buildMenu(); $('btn-hikaye').textContent = S.i >= STORY.length ? T('menu.hikaye.bastan') : S.i === 0 ? T('menu.hikaye') : T('menu.hikaye.bolum', S.i + 1, STORY[S.i].ad); }
     if (save) store.set('ayar', AYAR);
   }
@@ -13259,6 +13787,10 @@ function mutfakKur(api) {
     const gl = G.goal;
     gl.t += dt;
     if (gl.konfor !== undefined && gl.si > 0 && player.hit > 5) gl.konfor = Math.max(0, gl.konfor - Math.round(player.hit * 1.4));
+    if (gl.konfor !== undefined && gl.si > 0 && player.ucTeker && player.kalkis > 0.35 && !(player.devrik > 0)) {      // teker havadayken yük kayar: saniyede 8 puan
+      gl.kayma = (gl.kayma || 0) + dt * 8;
+      if (gl.kayma >= 1) { const n = Math.floor(gl.kayma); gl.kayma -= n; gl.konfor = Math.max(0, gl.konfor - n); }
+    }
     const near = (player.x - gl.x) ** 2 + (player.z - gl.z) ** 2 < 15 * 15, stopped = !gl.stop || Math.hypot(player.vx, player.vz) < 3;
     if (near && stopped) {
       beep(660, 0.15, 0.3, 'triangle'); beep(990, 0.4, 0.3, 'triangle', 0.14);
@@ -13357,6 +13889,17 @@ function mutfakKur(api) {
     hikaye: () => kahvaltiBolumu() || paraReady(),
     hikayeDevam() { if (kahvaltiBolumu()) storyAdvance(); else startStory(); },
     aracAd: () => T(ARAC_AD[erzakAraci()]), aracKap: () => ERZAK_KAP[erzakAraci()],
+  });
+  // Birlikte sürüş (src/cok.js): oda kodu, uzak oyuncuların araçları, gösterge çipi
+  const COK = cokKur({
+    scene, $, oyuncu: () => player, bolge: () => (REGION ? REGION.id : ''), durum: () => G.state,
+    alev: (v) => turboAlev(v), bip: (f, d) => beep(f, d, 0.18, 'triangle'), panel: (ad) => menuPanel(ad, false),
+    async bolgeGit(id) {      // odaya katılan, öbürünün bölgesine geçer (yalnız menüdeyken)
+      if (!REGIONS[id] || (REGION && REGION.id === id) || G.loading || G.state !== 'menu') return;
+      G.bolge = id;
+      await loadRegion(id);
+      if (REGION.id === id) { showMenu(false); menuPanel('serbest'); }
+    },
   });
   function startCooking(ev) {
     clearRace();
@@ -13575,7 +14118,7 @@ function mutfakKur(api) {
     const kutu = new THREE.Box3().setFromObject(grp);
     grp.quaternion.copy(q0); grp.position.copy(p0); grp.updateMatrixWorld(true);
     const al = new THREE.Group(), mat = new THREE.SpriteMaterial({ map: alevTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
-    for (const x of v === player.car ? [-0.38, 0.38] : [0.12]) for (let k = 0; k < 3; k++) { const s = new THREE.Sprite(mat); s.position.set(x, kutu.min.y + 0.34, kutu.min.z - 0.1 - k * 0.3); s.userData.k = k; al.add(s); }
+    for (const x of v === player.car || v.ikiEgzoz ? [-0.38, 0.38] : [0.12]) for (let k = 0; k < 3; k++) { const s = new THREE.Sprite(mat); s.position.set(x, kutu.min.y + 0.34, kutu.min.z - 0.1 - k * 0.3); s.userData.k = k; al.add(s); }
     al.visible = false; grp.add(al); v.alev = al;
     return al;
   }
@@ -13599,9 +14142,12 @@ function mutfakKur(api) {
     const tbVar = !player.ski && (player.arac === 'car' || player.arac === 'motor') && !(r && r.done);
     player.tbAktif = tbVar && !!pin.turbo && pin.thr > 0 && player.turbo > 0.01 && !player.air;
     player.turbo = player.tbAktif ? Math.max(0, player.turbo - dt / 4.5) : Math.min(1, (player.turbo || 0) + dt / 14);
+    nefesAdim(pin, dt, r);
+    player.yuklu = !!(player.ucTeker && player[player.arac].yuk && player[player.arac].yuk.visible);
     const step = player.ski ? stepSkier : stepCar;
     if (r && r.done) { step(player, idle, dt); }
     else { step(player, pin, dt); if (r && !G.auto) advance(player, r.R); }
+    if (player.devrikYeni) { player.devrikYeni = false; devrildi(); }
     if (r) {
       if (!r.done) r.t += dt;
       for (const c of cars) {
@@ -13778,15 +14324,41 @@ function mutfakKur(api) {
     else _zone.ad = T('zone.arazi');
     return _zone;
   }
-  // turbo göstergesi: hızın yanında dikey çubuk (araba ve motorda)
-  let tbGos = -1, tbOnce = false;
+  // Üç tekerli bisiklet: ayakta pedal (Shift / X·RB / pedal düğmesi) nefes harcar. Dolu nefes 7 sn yeter; pedal çevirirken 12, boşta 8 sn'de dolar.
+  // Nefes tükenince %30'a dolana kadar ayağa kalkılmaz.
+  function nefesAdim(pin, dt, r) {
+    const c = player;
+    if (!c.pedal || c.ski) { c.ayakta = false; return; }
+    if (c.nefesYok && c.nefes >= 0.3) c.nefesYok = false;
+    c.ayakta = !!pin.turbo && pin.thr > 0 && !c.air && !(c.devrik > 0) && !(r && r.done) && !c.nefesYok && c.nefes > 0;
+    if (c.ayakta) {
+      c.nefes = Math.max(0, c.nefes - dt / 7);
+      if (c.nefes <= 0) { c.nefesYok = true; c.ayakta = false; flash(T('uc.nefes'), '', 1.6); }
+    } else c.nefes = Math.min(1, c.nefes + dt / (pin.thr > 0 ? 12 : 8));
+  }
+  // Üç teker devrildi: gürültü, uyarı; yük taşınıyorsa yük 35 puan zarar görür
+  function devrildi() {
+    thud(18); beep(240, 0.3, 0.14, 'square'); beep(170, 0.4, 0.12, 'square', 0.08);
+    const gl = G.goal;
+    if (gl && gl.konfor !== undefined && gl.si > 0) gl.konfor = Math.max(0, gl.konfor - 35);
+    hudT = 0;
+    flash(T('uc.devrildi'), T('uc.devrildi.alt'), 2.6);
+  }
+  // turbo göstergesi: hızın yanında dikey çubuk (araba ve motorda). Bisiklette aynı çubuk nefesi gösterir.
+  let tbGos = -1, tbOnce = false, tbPedal = null;
   function turboHud(c) {
-    const var_ = !c.ski && (c.arac === 'car' || c.arac === 'motor');
+    const pedal = !c.ski && !!c.pedal, var_ = !c.ski && (c.arac === 'car' || c.arac === 'motor' || pedal);
     $('hud').classList.toggle('turbosuz', !var_);
     if (!var_) return;
-    const v = Math.round((c.turbo || 0) * 100);
+    if (pedal !== tbPedal) {
+      tbPedal = pedal; tbGos = -1;
+      $('hud').classList.toggle('pedalli', pedal);
+      for (const [el, k] of [[$('turbo'), pedal ? 'hud.nefes' : 'hud.turbo'], [$('dokun-n'), pedal ? 'hud.ayakta' : 'hud.turbo']]) { el.setAttribute('data-i18n-aria', k); el.setAttribute('aria-label', T(k)); }
+    }
+    const v = Math.round(((pedal ? c.nefes : c.turbo) || 0) * 100);
     if (v !== tbGos) { tbGos = v; $('turbo-d').style.height = v + '%'; $('turbo').setAttribute('aria-valuenow', v); }
-    $('turbo').classList.toggle('aktif', !!c.tbAktif);
+    $('turbo').classList.toggle('aktif', pedal ? !!c.ayakta : !!c.tbAktif);
+    $('turbo').classList.toggle('bitik', pedal && !!c.nefesYok);
   }
   // viraj uyarısı (klasik yarış oyunlarındaki çift ok): yarış rotasında önümüzdeki 45–150 m'de (hıza göre) en keskin dönüş.
   // Yarıçap 90 m altı beyaz, 50 m altı kehribar, 25 m altı kırmızı üç ok. Eğrilik işaretli: artı sağa dönüş (sağ = (−ileri.z, ileri.x)).
@@ -13899,6 +14471,7 @@ function mutfakKur(api) {
     for (const c of cars) (c.ski ? poseSkier : poseCar)(c, dt);
     { const pv = player[player.arac]; if (pv && pv.anim && !player.ski) pv.anim(player, dt); }      // pedal, gidon, sürücünün kol ve bacakları
     if (driving) for (const c of TRF.act) poseCar(c, dt);
+    COK.adim(dt, camera.position);      // birlikte sürüş: durum gönder, uzak araçları çiz
     if (driving) {      // yayalar: gece ve düşük kalitede daha az
       YAYA.hedef = AYAR.trafik === false ? 0 : Math.round((MOBIL ? 4 : AYAR.kalite === 'dusuk' ? 5 : AYAR.kalite === 'orta' ? 9 : 13) * (1 - 0.6 * geceN));
       yayaTick(dt, player);
@@ -13966,6 +14539,7 @@ function mutfakKur(api) {
     sim(sec) { const n = Math.round(sec / STEP); for (let i = 0; i < n; i++) { if (G.state === 'free' || G.state === 'race' || G.state === 'count') tick(STEP); } },
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
     wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
+    cok: COK,      // birlikte sürüş: .durum, .kur(), .katil(kod), .ayril(), .sunucuAyarla(adres)
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
     kediler: () => cats.map((c) => ({ canli: !!c.kedi, gorunur: c.mesh.visible, got: c.got })),
     kediNesne: (i) => cats[i] && cats[i].kedi,
