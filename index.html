@@ -6578,6 +6578,8 @@ const YAYA_YOL = [];   // kaldırım orta çizgisi zincirleri [x, y, z, ...]: ya
 let KAR = false;   // kış bölgesi: kar zemini, kaygan yüzey
 const TAU = Math.PI * 2;
 // Telefon: dokunmatik ve küçük ekran. Büyük dokular yarıya iner, kalite düşük başlar (ayarlardan yükseltilebilir).
+// Tanı: ?tani=<anahtar> arazi gölgelendiricisinin bir ara değerini ışıksız basar (msk, boya, det, dz, ds, dk, rk, isik, nrm). Yalnız sınama içindir.
+const TANI = (location.search.match(/[?&]tani=([a-z]+)/) || [])[1] || '';
 const MOBIL = /[?&]mobil=1/.test(location.search) || !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches && Math.min(window.screen.width, window.screen.height, window.innerWidth) < 900);      // ?mobil=1: telefon kipini masaüstünde sınamak için
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -6922,8 +6924,10 @@ function buildGroundCanvas() {
   const MW = MOBIL ? 1024 : 2048, MH = Math.round((MW * WORLD_H) / WORLD_W), ms = MW / WORLD_W;
   const mc = document.createElement('canvas'); mc.width = MW; mc.height = MH;
   const mg = mc.getContext('2d');
-  lg.putImageData(mim, 0, 0);
-  mg.imageSmoothingEnabled = true; mg.drawImage(lc, 0, 0, MW, MH);
+  // Maske ayrı bir ara tuvalden çizilir. Renk haritası da lc'den çizilmişti; aynı tuvale maske yazılınca Safari (iPhone) ertelediği renk çizimini
+  // maskeyle yaptı: karda maske mavi kanalda olduğu için Abalı'nın zemini lekeler hâlinde saf mavi göründü (20 Kas 2026, iOS Simülatöründe ölçüldü).
+  const lc2 = document.createElement('canvas'); lc2.width = LW; lc2.height = LH; lc2.getContext('2d').putImageData(mim, 0, 0);
+  mg.imageSmoothingEnabled = true; mg.drawImage(lc2, 0, 0, MW, MH);
   const mpath = (flat, off, close) => {
     mg.beginPath(); mg.moveTo((flat[off] - dem.x0) * ms, (flat[off + 1] - dem.z0) * ms);
     for (let i = off + 2; i < flat.length; i += 2) mg.lineTo((flat[i] - dem.x0) * ms, (flat[i + 1] - dem.z0) * ms);
@@ -8340,16 +8344,14 @@ function terrainPatch(mat, maskTex, akisTex) {
         '  return mix(mix(a, vec2(-b.y, b.x), tkM), mix(c, vec2(-e.y, e.x), tkF), k); }']);      // döndürülmüş örneğin eğimi geri döndürülür
     sh.fragmentShader = ust.join('\n') + '\n' + sh.fragmentShader.replace('#include <map_fragment>', [
       '#include <map_fragment>',
+      'vec3 taniBoya = diffuseColor.rgb;',
       'vec3 msk = texture2D(maskMap, vUv).rgb;',
       'float dcam = length(vWPos - cameraPosition);',
       'float fY = smoothstep(8.0, 70.0, dcam);',
       'vec2 wp = vWPos.xz; gDx = dFdx(wp); gDy = dFdy(wp);',
       'tkM = smoothstep(0.3, 0.7, gurultu(wp * 0.045) * 0.7 + gurultu(wp * 0.17) * 0.3);',
       'tkF = smoothstep(0.3, 0.7, gurultu(wp * 0.0071 + 3.1));',
-    ].concat(MOBIL ? [
-      // telefonda büyük kabartma yok: arazinin kendi köşe normali, oluk ve sırt yok (20 Kas: iPhone'da Abalı dağları mavi göründü)
-      'vec3 nIs = normalize(vWNrm); float mK = 0.0, mH = 0.0; vec2 mOb = vec2(0.0);',
-    ] : [
+    ].concat([
       'vec2 gIs = (texture2D(t_akis, vec2(vUv.x * 0.5, vUv.y)).rg * 2.0 - 1.0) * 0.8, mEg = (texture2D(t_akis, vec2(0.5 + vUv.x * 0.5, vUv.y)).rg * 2.0 - 1.0) * 0.8; float mE = length(mEg);',      // akisDokusu: sol yarı ışık eğimi, sağ yarı akış
       'vec3 nIs = normalize(vec3(gIs.x, 1.0, gIs.y));',      // arazinin ışık normali (20 m'de yumuşatılmış)
       // oluk yönü yamaç aşağısıdır; dört sabit yönden (0°, 45°, 90°, 135°) en yakın ikisi okunur ve açıya göre karıştırılır
@@ -8375,12 +8377,13 @@ function terrainPatch(mat, maskTex, akisTex) {
       'det *= 1.0 + (texture2D(t_makro, wp / 520.0 + 0.17).b - 0.5) * 0.22 * (1.0 - msk.b);',
       'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.16, 0.145, 0.13), rk * msk.b * 0.85);',      // karlı yamaçta açılan kaya koyu
       'diffuseColor.rgb *= clamp(det, 0.04, 3.0) * mix(0.92, 0.82, rk) * (1.0 + mH * 0.5 * mK);',      // oluk koyu, sırt açık
+      TANI ? 'vec3 taniRenk = ' + ({ msk: 'msk', boya: 'taniBoya', det: 'clamp(det, 0.0, 3.0) * 0.33', dz: 'dZ * 0.5', ds: 'dS * 0.5', dk: 'dK * 0.5', rk: 'vec3(rk)', isik: 'vec3(0.0)', nrm: 'nIs * 0.5 + 0.5' }[TANI] || 'vec3(1.0, 0.0, 1.0)') + ';' : '',
+      TANI === 'isik' ? 'diffuseColor.rgb = vec3(0.7);' : '',
     ]).join('\n')).replace('#include <roughnessmap_fragment>', [
       '#include <roughnessmap_fragment>',
-      // kar ıslak-parlak değil ama toprak kadar mat da değil. Telefonda değil: iPhone Safari yansımanın bulanık katlarını seçemiyor, 0,58 pürüzlü kar
-      // HDR göğü ayna gibi yansıttı (20 Kas, Abalı'da mavi ve bulut desenli lekeler). Telefonda arazi pürüzlülüğü 1 kalır.
-      MOBIL ? '' : 'roughnessFactor = mix(roughnessFactor, 0.58, msk.b * (1.0 - rk));',
+      'roughnessFactor = mix(roughnessFactor, 0.58, msk.b * (1.0 - rk));',      // kar ıslak-parlak değil ama toprak kadar mat da değil
     ].join('\n'));
+    if (TANI && TANI !== 'isik') sh.fragmentShader = sh.fragmentShader.replace('#include <output_fragment>', '#include <output_fragment>\n\tgl_FragColor = vec4(taniRenk, 1.0);');
     const makroNormal = [
       'vec3 kwn = nIs;',      // köşe normali yerine yumuşatılmış eğim
       'vec2 mO = mOb * mK * 0.6;',      // büyük kabartma: ışık uzakta da bölünür
@@ -8409,7 +8412,7 @@ function terrainPatch(mat, maskTex, akisTex) {
       ]).join('\n'));
     }
   };
-  mat.customProgramCacheKey = () => 'arazi-pbr-' + (normalVar ? 'n' : '') + (MOBIL ? 'm' : '');
+  mat.customProgramCacheKey = () => 'arazi-pbr-' + (normalVar ? 'n' : '') + (MOBIL ? 'm' : '') + TANI;
   return mat;
 }
 
@@ -11518,8 +11521,7 @@ function mutfakKur(api) {
       scene.environment = gunduzCevre = pm.fromScene(es, 0, 0.1, 100).texture;
       // Gündüz ortam ışığı HDRI'dan (Poly Haven kloofendal_38d_partly_cloudy_puresky, CC0; tools/hdri-isik.py): güneş diski kırpılmış,
       // gök fotoğrafıyla aynı yöne döndürülmüş 512 × 256 RGBE. Dosya gelmezse gök fotoğrafından kurulan ortam kalır.
-      // Telefonda HDRI ortamı kurulmaz: iPhone Safari'de yansıma katları keskin kaldı, parlak HDR gök karda ayna gibi göründü (20 Kas). Gök fotoğrafından ortam kalır.
-      if (!MOBIL) try {
+      try {
         const veri = new Uint8Array(await (await fetch('doku/gok_isik.bin')).arrayBuffer());
         if (String.fromCharCode(veri[0], veri[1], veri[2], veri[3]) !== 'VKR1') throw new Error('biçim');
         const W = veri[4] | (veri[5] << 8), H = veri[6] | (veri[7] << 8), f32 = new Float32Array(W * H * 4);
@@ -11587,6 +11589,8 @@ function mutfakKur(api) {
     applySettings(false);
     $('load').hidden = true;
     showMenu();
+    { const b = (location.search.match(/[?&]bolge=([a-z]+)/) || [])[1];      // sınama: ?bolge=abali doğrudan o bölgede serbest sürüş açar
+      if (b && REGIONS[b]) { await loadRegion(b); startFree(); } }
     last = performance.now();
     requestAnimationFrame(frame);
   }
