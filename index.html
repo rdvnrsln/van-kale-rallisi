@@ -6548,6 +6548,7 @@ function ordinal(n) {
 // Dünya durumu bölgeye göre değişir (Van, Abalı): setRegion() hepsini yeniden kurar.
 let D = window.VAN_DATA;
 let [XMIN, XMAX, ZMIN, ZMAX] = D.meta.bounds;
+const YAYA_YOL = [];   // kaldırım orta çizgisi zincirleri [x, y, z, ...]: yayalar bunların üstünde yürür (src/yaya.js)
 let KAR = false;   // kış bölgesi: kar zemini, kaygan yüzey
 const TAU = Math.PI * 2;
 // Telefon: dokunmatik ve küçük ekran. Büyük dokular yarıya iner, kalite düşük başlar (ayarlardan yükseltilebilir).
@@ -7185,7 +7186,7 @@ function kaldirimda(x, z) {
   return i >= 0 && j >= 0 && i < KALD.nx && j < KALD.nz && KALD.d[j * KALD.nx + i] === 1;
 }
 function buildStreets(scene, maxAniso) {
-  KALD = null;
+  KALD = null; YAYA_YOL.length = 0;
   if (KAR) return { kaldirim: 0, lamba: 0, direk: 0, durak: 0 };
   const HC = 60, gx = Math.ceil((XMAX - XMIN) / HC) + 1, gz = Math.ceil((ZMAX - ZMIN) / HC) + 1, yog = new Uint16Array(gx * gz);
   for (const b of D.buildings) { const i = Math.floor((b[3] - XMIN) / HC), j = Math.floor((b[4] - ZMIN) / HC); if (i >= 0 && j >= 0 && i < gx && j < gz) yog[j * gx + i]++; }
@@ -7230,12 +7231,14 @@ function buildStreets(scene, maxAniso) {
       return { x: p.x + tz * s * off, z: p.z - tx * s * off, nx: tz * s, nz: -tx * s };
     };
     for (const s of [1, -1]) {
-      let prev = null, along = 0;
+      let prev = null, along = 0, zin = null;
+      const zinBitir = () => { if (zin && zin.length >= 9 && Math.hypot(zin[zin.length - 3] - zin[0], zin[zin.length - 1] - zin[2]) > 25) YAYA_YOL.push(zin); zin = null; };
       for (let q = 0; q < idx.length; q++) {
         const i = idx[q], I = nokta(i, s, hw - 0.04), O = nokta(i, s, hw + ws), mx = (I.x + O.x) / 2, mz = (I.z + O.z) / 2;
         if (q > 0) along += Math.hypot(pts[i].x - pts[idx[q - 1]].x, pts[i].z - pts[idx[q - 1]].z);
         const ok = !baskaYol(mx, mz) && !baskaYol(O.x, O.z) && sehir(mx, mz, enAz) && baseH(mx, mz) > 0.5;
         const cur = ok ? { ix: I.x, iz: I.z, ox: O.x, oz: O.z, yb: groundH(I.x, I.z) + lift, yi: groundH(I.x, I.z) + lift + 0.14, yo: groundH(O.x, O.z) + 0.06, u: along / 1.6 } : null;      // dış kenar zemine iner: altı boş görünmez, etek yüzü gerekmez
+        if (cur) { if (!zin) zin = []; zin.push(mx, (cur.yi + cur.yo) / 2 + 0.01, mz); } else zinBitir();     // yaya yolu: kaldırımın orta çizgisi
         if (prev && cur) {
           const bag = chunkOf(mx, mz).k, v1 = ws / 1.6;
           bag.quad([prev.ix, prev.yi, prev.iz], [prev.ox, prev.yo, prev.oz], [cur.ox, cur.yo, cur.oz], [cur.ix, cur.yi, cur.iz], ust);
@@ -7249,6 +7252,7 @@ function buildStreets(scene, maxAniso) {
         }
         prev = cur;
       }
+      zinBitir();
       if (r.cls <= 2) {       // ana caddede kenar çizgisi
         for (let q = 1; q < idx.length; q++) {
           const A = nokta(idx[q - 1], s, hw - 0.42), B = nokta(idx[q], s, hw - 0.42), A2 = nokta(idx[q - 1], s, hw - 0.56), B2 = nokta(idx[q], s, hw - 0.56), ya = groundH(A.x, A.z) + lift + 0.035, yb = groundH(B.x, B.z) + lift + 0.035;
@@ -8327,14 +8331,30 @@ function ucTekerYukle() {
 }
 // Eklemli figür: her parçanın kökü kendi ekleminde, parça −y yönüne uzanır. Kol ve bacak iki kemikli ters kinematikle sürülür.
 const _ik = { d: new THREE.Vector3(), e: new THREE.Vector3(), h: new THREE.Vector3(), t: new THREE.Vector3(), q: new THREE.Quaternion(), asagi: new THREE.Vector3(0, -1, 0) };
+// Figür tek parça derili ağdır (tools/blender/figur.py); kemik adı "<figür>__<eklem>". Kemiklerin durağan ekseni dünya ekseniyle aynıdır.
 function figurKur(kok) {
-  const al = (ad) => kok.getObjectByName(ad), f = { kok, govde: al('govde'), bas: al('bas'), kol: {}, bacak: {} };
+  const ad = {};
+  kok.traverse((o) => { if (o.isBone) ad[o.name.split('__').pop()] = o; });
+  const al = (n) => ad[n] || kok.getObjectByName(n), f = { kok, govde: al('govde'), bas: al('bas'), kol: {}, bacak: {}, baton: { L: ad.baton_L, R: ad.baton_R } };
   for (const y of ['L', 'R']) {
     f.kol[y] = { ust: al('kol_ust_' + y), alt: al('kol_alt_' + y), ayak: null, L1: 0.28, L2: 0.29 };
     f.bacak[y] = { ust: al('bacak_ust_' + y), alt: al('bacak_alt_' + y), ayak: al('ayak_' + y), L1: 0.43, L2: 0.44 };
   }
   kok.traverse((m) => { if (m.isMesh) m.castShadow = true; });
   return f;
+}
+// Derili figürü kopyalar: kopyanın ağı kendi kemiklerine bağlanır (clone() iskeleti paylaştırır).
+function figurKopya(src, ad) {
+  const k = src.getObjectByName(ad).clone(true), kemik = {};
+  k.traverse((o) => { if (o.isBone) kemik[o.name] = o; });
+  k.traverse((o) => {
+    if (!o.isSkinnedMesh) return;
+    const s = o.skeleton;
+    o.bind(new THREE.Skeleton(s.bones.map((b) => kemik[b.name]), s.boneInverses), o.bindMatrix);
+    if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere();
+    if (!o.geometry.userData.genis) { o.geometry.boundingSphere.radius *= 1.5; o.geometry.userData.genis = true; }     // duruş değişince görüş dışı elemesi yanlış kesmesin
+  });
+  return k;
 }
 // hedef: uç noktanın (el, ayak bileği) gövde uzayındaki yeri. bukum: dirseğin ya da dizin bakacağı yön. duz: ayağı düz tutan ek dönüş.
 function ikCoz(u, hedef, bukum, duz) {
@@ -8354,7 +8374,7 @@ function ikCoz(u, hedef, bukum, duz) {
 }
 // Üç teker: Blender modeli + seleye oturmuş sürücü. Dönen: tekerler, gidon takımı, krank, pedallar, bacaklar, kollar.
 function makeTrikeGLB(src, motor) {
-  const g = new THREE.Group(), t = src.getObjectByName('ucteker').clone(true), o = src.getObjectByName('oyuncu').clone(true);
+  const g = new THREE.Group(), t = src.getObjectByName('ucteker').clone(true), o = figurKopya(src, 'oyuncu');
   t.position.set(0, 0, 0); g.add(t);
   t.traverse((m) => { if (m.isMesh) m.castShadow = true; });
   const al = (ad) => t.getObjectByName(ad), gidon = al('gidon'), krank = al('krank'), wheels = [];
@@ -8675,11 +8695,12 @@ function poseSkier(c, dt) {
   const fx = Math.sin(c.h), fz = Math.cos(c.h), m = c.skiMesh;
   const hf = groundH(c.x + fx * 0.9, c.z + fz * 0.9), hb = groundH(c.x - fx * 0.9, c.z - fz * 0.9);
   const k = Math.min(1, dt * 10);
-  c.pitch = lerp(c.pitch, -Math.atan2(hf - hb, 1.8) + (c.tuck ? 0.28 : 0.1), k);
+  const yy = m.userData.yaya;      // Blender kayakçısı: çömelme ve kar sabanı duruşla verilir, ezilerek değil
+  c.pitch = lerp(c.pitch, -Math.atan2(hf - hb, 1.8) + (yy ? 0 : c.tuck ? 0.28 : 0.1), k);
   c.roll = lerp(c.roll, clamp(c.steer * 0.45 * Math.min(1, Math.abs(c.vf) / 8), -0.5, 0.5), k);
   m.position.set(c.x, c.y + 0.02, c.z);
   m.rotation.set(c.pitch, c.h, c.roll, 'YXZ');
-  m.scale.y = lerp(m.scale.y, c.tuck ? 0.8 : c.plow ? 0.92 : 1, k);
+  if (yy) yayaKayak(yy, c, dt); else m.scale.y = lerp(m.scale.y, c.tuck ? 0.8 : c.plow ? 0.92 : 1, k);
 }
 
 // ------------------------------------------------------------ Van kedisi (toplanacak heykelcik)
@@ -9095,6 +9116,178 @@ function trafficModel(scene, src) {
 }
 
 
+// Yayalar: kaldırımda yürüyenler, servis bekleyen gruplar ve kayakçı.
+// Model: yayin/model/kisi/yayalar.glb (tools/blender/yayalar.py, tools/blender/figur.py). Her figür tek parça derili ağdır;
+// kemikler oyuncu figürüyle aynı düzendedir ve iki kemikli ters kinematikle sürülür (src/arac.js figurKur, ikCoz).
+let _yaSoz = null;
+function yayaYukle() {
+  if (!_yaSoz) _yaSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/kisi/yayalar.glb', (g) => ok(g.scene), undefined, red); });
+  return _yaSoz;
+}
+// boy: figürün ölçeği. om: omuz yarı genişliği (kolun asılı durduğu yer). hiz: yürüme hızı (m/sn). yuk: sağ elde çanta (kol az sallanır).
+const YAYA_TIP = {
+  ogr_e1: { boy: 1.0, om: 0.205, hiz: 1.5 }, ogr_k1: { boy: 0.94, om: 0.185, hiz: 1.45 }, ogr_k2: { boy: 0.95, om: 0.185, hiz: 1.3, etek: 1 }, ogr_e2: { boy: 1.02, om: 0.205, hiz: 1.55 },
+  amca: { boy: 0.99, om: 0.205, hiz: 1.05 }, teyze: { boy: 0.91, om: 0.19, hiz: 0.95, etek: 1, yuk: 1 }, genc_e: { boy: 1.03, om: 0.205, hiz: 1.6 }, kadin: { boy: 0.96, om: 0.188, hiz: 1.35, etek: 1 },
+  kayakci_1: { boy: 1.0, om: 0.205, hiz: 1.2 }, kayakci_2: { boy: 0.95, om: 0.19, hiz: 1.2 }, kayakci_3: { boy: 1.02, om: 0.205, hiz: 1.2 },
+};
+const YAYA_SOKAK = ['ogr_e1', 'ogr_k1', 'ogr_k2', 'ogr_e2', 'amca', 'teyze', 'genc_e', 'kadin'];
+const _ya = { v: new THREE.Vector3(), b: new THREE.Vector3(), q: new THREE.Quaternion(), q2: new THREE.Quaternion(), q3: new THREE.Quaternion(), d: new THREE.Vector3(), asagi: new THREE.Vector3(0, -1, 0), X: new THREE.Vector3(1, 0, 0), Y: new THREE.Vector3(0, 1, 0) };
+// ek: 'omuz' (omuzda kayak), 'kayak' (ayakta kayak ve baton) ya da boş
+function yayaKur(src, ad, ek) {
+  const kok = figurKopya(src, 'yaya_' + ad), f = figurKur(kok), tip = YAYA_TIP[ad];
+  kok.scale.setScalar(tip.boy);
+  kok.traverse((o) => { if (o.isMesh) { if (o.name.endsWith('ek_omuz')) o.visible = ek === 'omuz'; else if (o.name.endsWith('ek_kayak')) o.visible = ek === 'kayak'; } });
+  return { kok, f, ad, tip, ek, faz: Math.random() * TAU, t: Math.random() * 20 };
+}
+// Yürüyüş. faz: adım fazı (radyan, bir tur = iki adım); a: adım yarı boyu (figür ölçüsünde).
+function yayaYuru(y, a) {
+  const f = y.f, ph = y.faz, tip = y.tip, gy = 0.905 - 0.02 * Math.cos(2 * ph);
+  f.govde.position.set(0, gy, 0); f.govde.rotation.set(0.04, 0.09 * Math.sin(ph), 0.018 * Math.sin(ph));
+  f.bas.rotation.set(-0.03, -0.07 * Math.sin(ph) + 0.12 * Math.sin(y.t * 0.4), 0);
+  for (const yan of ['L', 'R']) {
+    const sx = yan === 'L' ? 1 : -1, p = ((ph / TAU + (yan === 'L' ? 0 : 0.5)) % 1 + 1) % 1;
+    let z, kaldir = 0, egim = 0;
+    if (p < 0.6) { const u = p / 0.6; z = a * (1 - 2 * u); egim = u < 0.15 ? -0.3 * (1 - u / 0.15) : u > 0.75 ? 0.5 * (u - 0.75) / 0.25 : 0; }      // basış: topuk vuruşundan parmak ucuna
+    else { const u = (p - 0.6) / 0.4, s = u * u * (3 - 2 * u); z = -a + 2 * a * s; kaldir = Math.sin(Math.PI * u) * 0.11; egim = 0.5 * (1 - u) - 0.3 * u; }   // salınım
+    ikCoz(f.bacak[yan], _ya.v.set(sx * 0.1, 0.065 + kaldir - gy, z + 0.02), _ya.b.set(sx * 0.06, 0.15, 1));
+    f.bacak[yan].ayak.rotateX(egim);
+    const sal = (tip.yuk && yan === 'R' ? 0.3 : 1) * 0.55 * a, kz = -sal * Math.cos(ph + (yan === 'L' ? 0 : Math.PI));
+    ikCoz(f.kol[yan], _ya.v.set(sx * (tip.om + 0.035), 0.462 - 0.535 + Math.abs(kz) * 0.25, kz + 0.03), _ya.b.set(sx * 0.3, -0.2, -1));
+  }
+}
+// Ayakta bekleme. durus: 'dur' | 'aski' (çanta askısını tutar) | 'telefon' | 'salla' (el sallar) | 'tasi' (omuzdaki kayağı tutar) | 'urk' (araç yaklaşınca)
+function yayaDur(y, durus) {
+  const f = y.f, t = y.t, tip = y.tip, gy = 0.938 + 0.004 * Math.sin(t * 1.3);
+  f.govde.position.set(0.012 * Math.sin(t * 0.45), gy, 0); f.govde.rotation.set(0.015, 0.05 * Math.sin(t * 0.3), 0.012 * Math.sin(t * 0.45));
+  f.bas.rotation.set(durus === 'telefon' ? 0.42 : 0.02, durus === 'telefon' ? -0.12 : 0.25 * Math.sin(t * 0.37 + y.faz), 0);
+  for (const yan of ['L', 'R']) {
+    const sx = yan === 'L' ? 1 : -1;
+    ikCoz(f.bacak[yan], _ya.v.set(sx * 0.105, 0.065 - gy, sx * 0.025), _ya.b.set(sx * 0.1, 0.1, 1));
+    const v = _ya.v.set(sx * (tip.om + 0.04), 0.462 - 0.548, 0.03), b = _ya.b.set(sx * 0.3, -0.2, -1);
+    if (durus === 'aski') { v.set(sx * 0.125, 0.335, 0.15); b.set(sx * 1, -0.6, -0.2); }
+    else if (durus === 'telefon' && yan === 'R') { v.set(-0.07, 0.3, 0.27); b.set(-1, -0.7, -0.1); }
+    else if (durus === 'salla' && yan === 'L') { v.set(tip.om + 0.16 + 0.1 * Math.sin(t * 7), 0.462 + 0.4, 0.1); b.set(1, -0.5, -0.3); }
+    else if (durus === 'tasi' && yan === 'R') { v.set(-tip.om - 0.07, 0.2, 0.0); b.set(-1, -0.4, -0.5); }
+    else if (durus === 'urk') { v.set(sx * (tip.om + 0.12), 0.25, 0.22); b.set(sx * 1, -0.5, -0.4); }
+    ikCoz(f.kol[yan], v, b);
+  }
+}
+// Kayakçı (kayak inişindeki oyuncu). c: araç durumu (tuck: çömelme, plow: kar sabanı, steer).
+function yayaKayak(y, c, dt) {
+  const f = y.f, k = Math.min(1, dt * 9);
+  y.com = lerp(y.com === undefined ? 0.3 : y.com, c.tuck ? 1 : c.plow ? 0.15 : 0.35, k);
+  y.sab = lerp(y.sab || 0, c.plow ? 1 : 0, k);
+  const com = y.com, gy = 0.9 - com * 0.3;
+  f.govde.position.set(0, gy, -0.05 - com * 0.1); f.govde.rotation.set(0.28 + com * 0.5, 0, 0);
+  f.bas.rotation.set(-0.2 - com * 0.42, clamp((c.steer || 0) * 0.5, -0.4, 0.4), 0);
+  const gq = _ya.q.setFromEuler(f.govde.rotation).invert();
+  for (const yan of ['L', 'R']) {
+    const sx = yan === 'L' ? 1 : -1;
+    _ya.v.set(sx * (0.15 + y.sab * 0.1), 0.085, 0.02).sub(f.govde.position).applyQuaternion(gq);
+    ikCoz(f.bacak[yan], _ya.v, _ya.b.set(sx * 0.1 - sx * y.sab * 0.3, 0.2, 1).applyQuaternion(gq), gq);
+    f.bacak[yan].ayak.rotateY(-sx * y.sab * 0.3);                                                // kar sabanı: uçlar içe
+    _ya.v.set(sx * (0.27 - com * 0.1), 0.86 - com * 0.34, 0.26 + com * 0.06).sub(f.govde.position).applyQuaternion(gq);
+    ikCoz(f.kol[yan], _ya.v, _ya.b.set(sx * 0.8, -0.6, -0.4).applyQuaternion(gq));
+  }
+  // batonlar: uçları geride, yere doğru
+  y.kok.updateMatrixWorld(true);
+  y.kok.getWorldQuaternion(_ya.q2);
+  for (const yan of ['L', 'R']) {
+    const bt = f.baton[yan]; if (!bt) continue;
+    _ya.q3.setFromUnitVectors(_ya.asagi, _ya.d.set((yan === 'L' ? 1 : -1) * 0.12, -0.55 - com * 0.25, -0.85).normalize());
+    bt.parent.getWorldQuaternion(_ya.q).invert();
+    bt.quaternion.copy(_ya.q).multiply(_ya.q2).multiply(_ya.q3);
+  }
+}
+
+// ------------------------------------------------------------ bekleyen grup (servis yolcuları)
+function yayaGrup(src, adlar, ek, duruslar) {
+  const g = new THREE.Group(), uye = [];
+  adlar.forEach((ad, i) => {
+    const y = yayaKur(src, ad, ek); y.durus = duruslar[i % duruslar.length];
+    y.kok.position.set((i - (adlar.length - 1) / 2) * 0.95, 0, (i % 2) * 0.8); y.kok.rotation.y = (i - (adlar.length - 1) / 2) * 0.22;
+    yayaDur(y, y.durus); g.add(y.kok); uye.push(y);
+  });
+  g.userData.uye = uye;
+  return g;
+}
+function yayaGrupTick(g, dt, yakin) {
+  for (const y of g.userData.uye || []) { y.t += dt; yayaDur(y, y.durus === 'salla' && !yakin ? 'dur' : y.durus); }
+}
+
+// ------------------------------------------------------------ kaldırım yayaları
+// Yol: YAYA_YOL (src/dunya.js buildStreets) kaldırım orta çizgisi zincirleri. Yayalar oyuncunun çevresinde doğar, zincir boyunca yürür,
+// zincirin ucunda geri döner, uzakta kalınca başka yerde yeniden doğar. Araç yaklaşınca durur ve kenara çekilir; araç yayayı ezemez.
+const YAYA = { src: null, sahne: null, act: [], bos: [], izgara: null, hedef: 0, dogT: 0, HC: 90 };
+function yayaAgKur() {
+  for (const y of YAYA.act) { y.kok.visible = false; YAYA.bos.push(y); }
+  YAYA.act.length = 0;
+  const m = (YAYA.izgara = new Map());
+  YAYA_YOL.forEach((z, zi) => {
+    for (let i = 0; i < z.length / 3 - 1; i++) {
+      const key = Math.floor(z[i * 3] / YAYA.HC) + '_' + Math.floor(z[i * 3 + 2] / YAYA.HC);
+      let L = m.get(key); if (!L) m.set(key, (L = []));
+      L.push(zi, i);
+    }
+  });
+}
+function yayaDogur(P) {
+  const a = Math.random() * TAU, d = 45 + Math.random() * 80, L = YAYA.izgara.get(Math.floor((P.x + Math.cos(a) * d) / YAYA.HC) + '_' + Math.floor((P.z + Math.sin(a) * d) / YAYA.HC));
+  if (!L) return false;
+  const k = Math.floor(Math.random() * (L.length / 2)) * 2, zi = L[k], i = L[k + 1], z = YAYA_YOL[zi], x = z[i * 3], zz = z[i * 3 + 2], d2 = (x - P.x) ** 2 + (zz - P.z) ** 2;
+  if (d2 < 38 * 38 || d2 > 135 * 135) return false;
+  for (const o of YAYA.act) if ((o.x - x) ** 2 + (o.z - zz) ** 2 < 5 * 5) return false;
+  let y = YAYA.bos.pop();
+  if (!y) {
+    const say = {}; for (const o of YAYA.act) say[o.ad] = (say[o.ad] || 0) + 1;
+    let ad = YAYA_SOKAK[0], en = 1e9;
+    for (const q of YAYA_SOKAK) { const s = (say[q] || 0) + Math.random() * 0.9; if (s < en) { en = s; ad = q; } }
+    y = yayaKur(YAYA.src, ad, null); YAYA.sahne.add(y.kok);
+  }
+  y.zi = zi; y.i = i; y.yon = Math.random() < 0.5 ? 1 : -1; y.s = 0; y.yan = (Math.random() - 0.5) * 0.7; y.bekle = 0; y.urk = 0;
+  y.hiz = y.tip.hiz * (0.75 + Math.random() * 0.2); y.x = x; y.z = zz; y.h = 0; y.kok.visible = true;
+  YAYA.act.push(y);
+  return true;
+}
+function yayaTick(dt, P) {
+  if (!YAYA.src || !YAYA.izgara) return;
+  if (YAYA.act.length < YAYA.hedef && (YAYA.dogT -= dt) <= 0) { YAYA.dogT = 0.25; for (let k = 0; k < 4 && !yayaDogur(P); k++);  }
+  const pv = Math.hypot(P.vx || 0, P.vz || 0);
+  for (let n = YAYA.act.length - 1; n >= 0; n--) {
+    const y = YAYA.act[n], z = YAYA_YOL[y.zi], nn = z.length / 3;
+    const dx0 = y.x - P.x, dz0 = y.z - P.z, d2 = dx0 * dx0 + dz0 * dz0;
+    if (d2 > 170 * 170 || n >= YAYA.hedef + 2) { y.kok.visible = false; YAYA.bos.push(y); YAYA.act.splice(n, 1); continue; }
+    y.t += dt;
+    // araç yakında ve hareketliyse dur
+    if (d2 < 7 * 7 && pv > 2) y.urk = 1.2; else if (y.urk > 0) y.urk -= dt;
+    let j = y.i + y.yon;
+    if (j < 0 || j >= nn) { y.yon = -y.yon; j = y.i + y.yon; y.s = 0; y.bekle = 1 + Math.random() * 2.5; }
+    const ax = z[y.i * 3], ay = z[y.i * 3 + 1], az = z[y.i * 3 + 2], bx = z[j * 3], by = z[j * 3 + 1], bz = z[j * 3 + 2];
+    const L = Math.hypot(bx - ax, bz - az) || 1, ux = (bx - ax) / L, uz = (bz - az) / L;
+    const yuruyor = y.urk <= 0 && y.bekle <= 0, adim = y.tip.etek ? 0.27 : 0.34;
+    if (y.bekle > 0) y.bekle -= dt;
+    if (yuruyor) {
+      y.s += y.hiz * dt;
+      y.faz += (y.hiz * dt / ((2 * adim / 0.6) * y.tip.boy)) * TAU;        // basış fazı 0,6: ayak yerde kaymaz
+      if (y.s >= L) { y.s -= L; y.i = j; }
+    }
+    const u = clamp(y.s / L, 0, 1);
+    let x = ax + (bx - ax) * u + uz * y.yan * y.yon, zz = az + (bz - az) * u - ux * y.yan * y.yon;
+    // araç yayanın üstüne gelirse yaya kenara itilir (çarpışma canlandırılmaz)
+    const ex = x - P.x, ez = zz - P.z, ed = Math.hypot(ex, ez);
+    if (ed < 1.7 && ed > 0.01) { x = P.x + (ex / ed) * 1.7; zz = P.z + (ez / ed) * 1.7; }
+    y.x = x; y.z = zz;
+    const hedefH = y.urk > 0 ? Math.atan2(-dx0, -dz0) : Math.atan2(ux, uz);
+    y.h += wrapAngle(hedefH - y.h) * Math.min(1, dt * 6);
+    y.kok.position.set(x, ay + (by - ay) * u, zz); y.kok.rotation.y = y.h;
+    const yakin = d2 < 95 * 95;
+    if (yakin || (y.sira = !y.sira)) { if (yuruyor) yayaYuru(y, adim); else yayaDur(y, y.urk > 0 ? 'urk' : 'dur'); }
+    const golge = d2 < 45 * 45;
+    if (golge !== y.golge) { y.golge = golge; y.kok.traverse((o) => { if (o.isMesh) o.castShadow = golge; }); }
+  }
+}
+function yayaTemizle() { for (const y of YAYA.act) { y.kok.visible = false; YAYA.bos.push(y); } YAYA.act.length = 0; }
+
 'use strict';
 // =====================================================================
 // MUTFAK ÇİZİMLERİ — kahvaltı salonunun bütün görselleri kodla çizilen SVG'dir (hazır görsel yok).
@@ -9360,7 +9553,7 @@ MT3.kur = function (cevre) {
   }
   // aşçı: oyuncunun kendi figürü. Tezgâhın sol ucunda durur, dokunulan istasyona uzanır.
   if (MT3.figurSrc) {
-    const o = MT3.figurSrc.getObjectByName('oyuncu').clone(true), f = figurKur(o);
+    const o = figurKopya(MT3.figurSrc, 'oyuncu'), f = figurKur(o);
     o.position.set(-1.56, 0, 0.56); o.rotation.y = Math.PI / 2 + 0.35;
     s.add(o);
     MT3.asci = { o, f, t: 0, hedef: new THREE.Vector3(), yon: Math.PI / 2 + 0.35, v: new THREE.Vector3(), b: new THREE.Vector3() };
@@ -10361,7 +10554,11 @@ function mutfakKur(api) {
       }
     });
     world.add(bag.mesh(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6 }), true));
-    TUR = new THREE.Group();
+    buildSkiTur();
+  }
+  function buildSkiTur() {
+    if (YAYA.src) { TUR = yayaGrup(YAYA.src, ['kayakci_2', 'kayakci_1', 'kayakci_3'], 'omuz', ['tasi', 'tasi', 'tasi']); TUR.visible = false; world.add(TUR); return; }
+    TUR = new THREE.Group();      // model inmediyse kod çizimi
     [['#c8382e', '#f3efe6'], ['#1d6fb8', '#f2a93b'], ['#2f9a5a', '#22c3d6'], ['#7a3fa8', '#f3efe6'], ['#e8c33a', '#c8382e']].forEach(([j, h], i) => {
       const m = makePerson(j, { carry: true, helmet: h });
       m.position.set((i - 2) * 0.95, 0, (i % 2) * 0.8); m.rotation.y = (i - 2) * 0.25;
@@ -10371,7 +10568,8 @@ function mutfakKur(api) {
   }
   // Kampüs: servis bekleyen öğrenci grubu (sırt çantalı, kasksız)
   function buildOgrenci() {
-    TUR = new THREE.Group();
+    if (YAYA.src) { TUR = yayaGrup(YAYA.src, ['ogr_e1', 'ogr_k1', 'ogr_e2', 'ogr_k2', 'genc_e'], null, ['aski', 'salla', 'telefon', 'dur', 'dur']); TUR.visible = false; world.add(TUR); return; }
+    TUR = new THREE.Group();      // model inmediyse kod çizimi
     [['#2c4f7a', '#2a1c14', '#c8382e'], ['#8a2f3a', '#111318', '#1f2a3a'], ['#3d6b4a', '#3a2616', '#e0b040'], ['#d8d2c4', '#17191d', '#2f6fa8'], ['#5a4a78', '#2a1c14', '#22303f']].forEach(([j, sac, canta], i) => {
       const m = makePerson(j, { helmet: sac, canta });
       m.position.set((i - 2) * 0.95, 0, (i % 2) * 0.8); m.rotation.y = (i - 2) * 0.25;
@@ -10491,6 +10689,18 @@ function mutfakKur(api) {
       rivals.forEach((r, i) => degis(r, makeCarGLB(src, rc[i][2] === 'hatch' ? 'hatch' : 'sedan', rc[i][0])));
       trafficModel(scene, src);
     }).catch(() => {});
+    // Blender yayaları: kayakçı, bekleyen gruplar, kaldırımda yürüyenler. İnmezse kod çizimi kalır, kaldırım boş olur.
+    YAYA.sahne = scene;
+    yayaYukle().then((src) => {
+      YAYA.src = src;
+      const ky = yayaKur(src, 'kayakci_1', 'kayak'), eski = player.skiMesh;
+      ky.kok.userData.yaya = ky; ky.kok.visible = eski.visible; scene.remove(eski); scene.add(ky.kok); player.skiMesh = ky.kok;
+      if (REGION && TUR && TUR.parent === world && !TUR.userData.uye) {      // bölge modelden önce kurulduysa grubu yeniden kur
+        const gor = TUR.visible, p = TUR.position.clone(), h = TUR.rotation.y; world.remove(TUR);
+        if (REGION.id === 'abali') buildSkiTur(); else buildOgrenci();
+        TUR.visible = gor; TUR.position.copy(p); TUR.rotation.y = h;
+      }
+    }).catch(() => {});
     gate1 = makeGate(); gate2 = makeGate();
     beacon1 = beam(8, 26, LIN('#22c3d6'), 0.3); beacon2 = beam(8, 10, LIN('#22c3d6'), 0.14);
     await loadRegion('van');
@@ -10535,6 +10745,7 @@ function mutfakKur(api) {
       await say(T('yuk.bina', D.buildings.length.toLocaleString(LOCALE[LANG])));
       buildBuildings(world, maxAniso);
       G.cadde = buildStreets(world, maxAniso);
+      yayaAgKur();
       await say(Rg.msg[1]);
       for (const ev of EVENTS) {
         if (ev.bolge !== id) continue;
@@ -11732,6 +11943,11 @@ function mutfakKur(api) {
     for (const c of cars) (c.ski ? poseSkier : poseCar)(c, dt);
     { const pv = player[player.arac]; if (pv && pv.anim && !player.ski) pv.anim(player, dt); }      // pedal, gidon, sürücünün kol ve bacakları
     if (driving) for (const c of TRF.act) poseCar(c, dt);
+    if (driving) {      // yayalar: gece ve düşük kalitede daha az
+      YAYA.hedef = AYAR.trafik === false ? 0 : Math.round((MOBIL ? 4 : AYAR.kalite === 'dusuk' ? 5 : AYAR.kalite === 'orta' ? 9 : 13) * (1 - 0.6 * geceN));
+      yayaTick(dt, player);
+      if (TUR && TUR.visible && TUR.userData.uye) yayaGrupTick(TUR, dt, (TUR.position.x - player.x) ** 2 + (TUR.position.z - player.z) ** 2 < 60 * 60);
+    }
     const f = updateCamera(dt);
     vakitAdim(dt);
     parcaGorunur(dt, false);
@@ -11773,7 +11989,7 @@ function mutfakKur(api) {
 
   // sınama kancaları (tarayıcı konsolundan): __van.sim(saniye) fiziği görüntüsüz ilerletir
   window.__van = {
-    G, EVENTS, STORY, S, startStory, nextLine, loadRegion, get bolge() { return REGION.id; }, get player() { return player; }, get cars() { return cars; }, startEvent, startFree, tick,
+    G, EVENTS, STORY, S, startStory, nextLine, loadRegion, get bolge() { return REGION.id; }, get tur() { return TUR; }, get player() { return player; }, get cars() { return cars; }, startEvent, startFree, tick,
     sim(sec) { const n = Math.round(sec / STEP); for (let i = 0; i < n; i++) { if (G.state === 'free' || G.state === 'race' || G.state === 'count') tick(STEP); } },
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
     wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
