@@ -6647,6 +6647,17 @@ function castleCross(x, z) {
   }
   return { ds, dn };
 }
+// Kale çokgeninin (x, z) noktasına en yakın kenar noktası
+function kenarYakin(x, z) {
+  let best = null, bd = 1e18;
+  for (let i = 0, j = CASTLE.length - 1; i < CASTLE.length; j = i++) {
+    const a = CASTLE[j], b = CASTLE[i], ex = b.x - a.x, ez = b.z - a.z, L = ex * ex + ez * ez;
+    const t = L ? clamp(((x - a.x) * ex + (z - a.z) * ez) / L, 0, 1) : 0, px = a.x + ex * t, pz = a.z + ez * t, d = (px - x) * (px - x) + (pz - z) * (pz - z);
+    if (d < bd) { bd = d; best = { x: px, z: pz, d: 0 }; }
+  }
+  if (best) best.d = Math.sqrt(bd);
+  return best;
+}
 function computeRock() {
   const n = RK.nx * RK.nz;
   RK.h = new Float32Array(n); RK.t = new Float32Array(n).fill(-1); RK.ds = new Float32Array(n).fill(-1);
@@ -6937,7 +6948,9 @@ function buildTerrain(scene, groundCanvas, maxAniso) {
   function vert(i, j) {
     const k = j * RK.nx + i;
     if (map[k] >= 0) return map[k];
-    const x = RK.x0 + i * RK.step, z = RK.z0 + j * RK.step, h = RK.h[k];
+    let x = RK.x0 + i * RK.step, z = RK.z0 + j * RK.step; const h = RK.h[k];
+    // Taban köşesi (kayanın dışı) ızgarada kalırsa uçurum eteği testere dişi gibi kırılır; kale çokgeninin en yakın kenarına oturtulur.
+    if (h <= 0.02) { const e = kenarYakin(x, z); if (e && e.d < RK.step * 1.6) { x = e.x; z = e.z; } }
     rp.push(x, baseH(x, z) + (h > 0.02 ? h : -1.2), z);
     map[k] = rp.length / 3 - 1;
     return map[k];
@@ -6959,7 +6972,7 @@ function buildTerrain(scene, groundCanvas, maxAniso) {
     rc.push(col.r, col.g, col.b);
   }
   rg.setAttribute('color', new THREE.Float32BufferAttribute(rc, 3));
-  const rock = new THREE.Mesh(rg, triplanar(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true }), 'kaya', 'kaya_ust', 0.062, 0.11, 1.0));
+  const rock = new THREE.Mesh(rg, triplanar(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true }), 'kaya', 'kaya_ust', 0.062, 0.11, 1.0, 1.1, true));
   rock.castShadow = true; rock.receiveShadow = true;
   scene.add(rock);
   return { mesh, rock, textures: [tex, maskTex] };
@@ -7037,7 +7050,7 @@ function buildBuildings(scene, maxAniso, webgl2) {
   const EK = DZ ? { vitrin: DZ.vitrin } : facadeExtra(maxAniso), evMat = DZ ? null : cepheMat(EK.ev), depoMat = DZ ? null : cepheMat(EK.depo), vitMat = cepheMat(EK.vitrin);
   const kirMat = DZ ? null : new THREE.MeshStandardMaterial({ map: EK.kiremit, vertexColors: true, roughness: 0.9, side: THREE.DoubleSide });
   const sacMat = DZ ? null : new THREE.MeshStandardMaterial({ map: EK.sac, vertexColors: true, roughness: 0.5, metalness: 0.45, side: THREE.DoubleSide });
-  const stoneMat = triplanar(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, side: THREE.DoubleSide }), 'sur', 'beton', 0.19, 0.17, 1.05);
+  const stoneMat = triplanar(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, side: THREE.DoubleSide }), 'sur', 'beton', 0.19, 0.17, 1.05, 0.8);
   const flatMat = triplanar(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, side: THREE.DoubleSide }), 'siva', 'beton', 0.21, 0.17, 1.0);
   if (!DZ) { wallMats.forEach((m, i) => { m.name = 'bina-cephe' + i; }); evMat.name = 'bina-ev'; depoMat.name = 'bina-depo'; kirMat.name = 'bina-kiremit'; sacMat.name = 'bina-sac'; }
   vitMat.name = 'bina-vitrin'; stoneMat.name = 'bina-tas'; flatMat.name = 'bina-duz';
@@ -7369,18 +7382,28 @@ function buildCastle(scene, routeNear) {
   const mud = new THREE.Color('#b59a72').convertSRGBToLinear();
   const cyl = new THREE.CylinderGeometry(1, 1.12, 1, 10).toNonIndexed();
   const m4 = new THREE.Matrix4();
-  function box(ax, az, bx, bz, th, y0, y1, col) {
+  // duvar parçası: üst kenarı a ucunda y1, b ucunda y1b yüksekliğindedir (yamaçta sur eğimi izler, basamak yapmaz)
+  function box(ax, az, bx, bz, th, y0, y1, col, y1b) {
+    if (y1b === undefined) y1b = y1;
     let tx = bx - ax, tz = bz - az; const L = Math.hypot(tx, tz) || 1; tx /= L; tz /= L;
     const nx = tz * th, nz = -tx * th;
-    const A = [ax + nx, az + nz], B = [bx + nx, bz + nz], Cc = [bx - nx, bz - nz], Dd = [ax - nx, az - nz];
-    const q = (p, r) => { bag.tri([p[0], y0, p[1]], [r[0], y1, r[1]], [r[0], y0, r[1]], col); bag.tri([p[0], y0, p[1]], [p[0], y1, p[1]], [r[0], y1, r[1]], col); };
+    const A = [ax + nx, az + nz, y1], B = [bx + nx, bz + nz, y1b], Cc = [bx - nx, bz - nz, y1b], Dd = [ax - nx, az - nz, y1];
+    const q = (p, r) => { bag.tri([p[0], y0, p[1]], [r[0], r[2], r[1]], [r[0], y0, r[1]], col); bag.tri([p[0], y0, p[1]], [p[0], p[2], p[1]], [r[0], r[2], r[1]], col); };
     q(A, B); q(B, Cc); q(Cc, Dd); q(Dd, A);
-    bag.quad([A[0], y1, A[1]], [Dd[0], y1, Dd[1]], [Cc[0], y1, Cc[1]], [B[0], y1, B[1]], col);
+    bag.quad([A[0], A[2], A[1]], [Dd[0], Dd[2], Dd[1]], [Cc[0], Cc[2], Cc[1]], [B[0], B[2], B[1]], col);
   }
+  // mazgal dişi: (x, z) merkezli, yönü (tx, tz) olan küçük blok
+  const dis = new THREE.BoxGeometry(1, 1, 1).toNonIndexed(), koyuTas = new THREE.Color('#3a3026').convertSRGBToLinear(), q4 = new THREE.Quaternion(), e3 = new THREE.Euler(), v3a = new THREE.Vector3(), v3b = new THREE.Vector3();
+  function blok(x, y, z, yon, uz, yuk, kal, col) { q4.setFromEuler(e3.set(0, yon, 0)); m4.compose(v3a.set(x, y, z), q4, v3b.set(kal, yuk, uz)); bag.geom(dis, m4, col); }
   function tower(x, z, r, h) {
-    const g = groundH(x, z);
-    m4.makeScale(r, h + 3, r).setPosition(x, g + (h - 3) / 2, z); bag.geom(cyl, m4, stoneB);
-    m4.makeScale(r * 1.18, 1.3, r * 1.18).setPosition(x, g + h + 0.4, z); bag.geom(cyl, m4, stoneA);
+    const g = groundH(x, z), ust = g + h;
+    m4.makeScale(r * 1.1, 2.2, r * 1.1).setPosition(x, g - 0.4, z); bag.geom(cyl, m4, stoneA);              // taban kuşağı
+    m4.makeScale(r, h + 3, r).setPosition(x, g + (h - 3) / 2, z); bag.geom(cyl, m4, stoneB);                // gövde
+    m4.makeScale(r * 1.14, 0.7, r * 1.14).setPosition(x, ust - 0.25, z); bag.geom(cyl, m4, stoneA);         // çıkma kuşak
+    m4.makeScale(r * 1.02, 0.5, r * 1.02).setPosition(x, ust + 0.25, z); bag.geom(cyl, m4, stoneB);         // seyir katının döşemesi
+    const nd = Math.max(8, Math.round(r * 3.2));                                                           // mazgal dişleri: çepeçevre, aralıklı
+    for (let k = 0; k < nd; k++) { const a = (k / nd) * TAU; blok(x + Math.sin(a) * r * 1.08, ust + 1.05, z + Math.cos(a) * r * 1.08, a, (TAU * r * 1.08 / nd) * 0.58, 1.3, 0.5, k % 2 ? stoneA : stoneB); }
+    for (const m of [0, 3, 5, 8]) { const a = ((18 + 36 * m) / 360) * TAU, rr = r * (1 + 0.12 * (0.38 * h / (h + 3))) * 0.951; blok(x + Math.sin(a) * rr, g + h * 0.62, z + Math.cos(a) * rr, a, 0.2, 1.5, 0.07, koyuTas); }   // mazgal delikleri: yüz ortasında, duvarla aynı hizada
     const s = r * 0.8;
     addWall(x - s, z - s, x + s, z - s); addWall(x + s, z - s, x + s, z + s); addWall(x + s, z + s, x - s, z + s); addWall(x - s, z + s, x - s, z - s);
   }
@@ -7400,7 +7423,10 @@ function buildCastle(scene, routeNear) {
       if (gate) { if (!open) { tower(a.x, a.z, 2.6, 8.5); } open = true; since = 99; continue; }
       if (open) { tower(a.x, a.z, 2.6, 8.5); open = false; since = 0; }
       const g0 = Math.min(groundH(a.x, a.z), groundH(b.x, b.z)), g1 = Math.max(groundH(a.x, a.z), groundH(b.x, b.z));
-      box(a.x, a.z, b.x, b.z, 0.95, g0 - 1.5, g1 + (i % 2 ? 5.4 : 4.4), i % 2 ? stoneA : stoneB);
+      const ga = groundH(a.x, a.z), gb = groundH(b.x, b.z), L = Math.hypot(b.x - a.x, b.z - a.z) || 1, tx = (b.x - a.x) / L, tz = (b.z - a.z) / L, yon = Math.atan2(tx, tz);
+      box(a.x, a.z, b.x, b.z, 0.95, g0 - 1.5, ga + 4.6, i % 2 ? stoneA : stoneB, gb + 4.6);
+      // siper: iki kenarda mazgal dişleri (segment başına bir diş, bir boşluk); diş duvarın o noktadaki üst kenarına oturur
+      for (const yan of [-1, 1]) blok((a.x + b.x) / 2 + tz * yan * 0.72 - tx * L * 0.2, lerp(ga, gb, 0.3) + 4.6 + 0.42, (a.z + b.z) / 2 - tx * yan * 0.72 - tz * L * 0.2, yon, L * 0.56, 1.15, 0.46, i % 2 ? stoneB : stoneA);
       addWall(a.x, a.z, b.x, b.z);
       since += 2.6;
       if (since > 62) { tower(b.x, b.z, 3.1, 9.5); since = 0; }
@@ -7455,7 +7481,7 @@ function buildCastle(scene, routeNear) {
       made++;
     }
   }
-  const mesh = bag.mesh(triplanar(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true }), 'sur', 'sur', 0.21, 0.21, 1.12), true);
+  const mesh = bag.mesh(triplanar(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true }), 'sur', 'sur', 0.21, 0.21, 1.12, 1.0), true);
   scene.add(mesh);
   return { flag };
 }
@@ -7752,7 +7778,35 @@ function loadTextures(maxAniso) {
       TEX.missing++;
       fin(new THREE.DataTexture(new Uint8Array([c.r * 255, c.g * 255, c.b * 255, 255]), 1, 1));
     });
-  })));
+  }))).then(() => {
+    // Kabartma haritaları: zemin, kaya ve sur. Telefonda kurulmaz (bellek ve dolgu maliyeti).
+    if (!MOBIL) for (const [n, guc] of [['bozkir', 5], ['cimen', 4], ['cakil', 6], ['kaya', 6], ['kaya_ust', 5], ['sur', 6]]) { const k = kabartmaUret(n, guc, maxAniso); if (k) TEX[n + '_k'] = k; }
+  });
+}
+// Kabartma (normal) haritası indirilmez: renk dokusunun parlaklığından türetilir (açık = yüksek, komşu fark = eğim).
+// Kırmızı kanal −∂h/∂u, yeşil kanal −∂h/∂v (v yukarı). Kenarlar sarmalıdır: doku tekrar ederken dikiş vermez.
+function kabartmaUret(ad, guc, maxAniso) {
+  const img = TEX[ad] && TEX[ad].image;
+  if (!img || !(img.width > 1)) return null;
+  const N = 512, cv = document.createElement('canvas'); cv.width = cv.height = N;
+  const g = cv.getContext('2d', { willReadFrequently: true });
+  g.drawImage(img, 0, 0, N, N);
+  const im = g.getImageData(0, 0, N, N), d = im.data, L0 = new Float32Array(N * N), L = new Float32Array(N * N);
+  for (let i = 0; i < N * N; i++) L0[i] = (d[i * 4] * 0.299 + d[i * 4 + 1] * 0.587 + d[i * 4 + 2] * 0.114) / 255;
+  const w = (v) => (v + N) % N;
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {       // 3×3 yumuşatma: sıkıştırma gürültüsü kabartmaya dönüşmesin
+    let s = 0;
+    for (let b = -1; b <= 1; b++) for (let a = -1; a <= 1; a++) s += L0[w(y + b) * N + w(x + a)];
+    L[y * N + x] = s / 9;
+  }
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const dx = (L[y * N + w(x + 1)] - L[y * N + w(x - 1)]) * guc, dy = (L[w(y + 1) * N + x] - L[w(y - 1) * N + x]) * guc, k = (y * N + x) * 4;
+    d[k] = Math.max(0, Math.min(255, 127.5 - dx * 127.5)); d[k + 1] = Math.max(0, Math.min(255, 127.5 + dy * 127.5)); d[k + 2] = 255; d[k + 3] = 255;
+  }
+  g.putImageData(im, 0, 0);
+  const t = new THREE.CanvasTexture(cv);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = Math.min(4, maxAniso);
+  return t;
 }
 
 // ------------------------------------------------------------ ek cepheler ve çatılar (bina kategorileri)
@@ -7854,9 +7908,12 @@ function facadeExtra(maxAniso) {
 }
 
 // Köşe renkli malzemeye üç eksenli (triplanar) fotoğraf dokusu: UV gerektirmez, sarp yüzeyde de esnemez.
-function triplanar(mat, side, top, sSide, sTop, gain) {
+// kab: kabartma gücü (0: yok; kabartma haritası TEX[ad + '_k']). cok: doku tekrarını kıran ikinci, büyük ölçekli örnek (kaya yüzü).
+function triplanar(mat, side, top, sSide, sTop, gain, kab, cok) {
+  kab = kab && TEX[side + '_k'] ? kab : 0;      // üst yüzün kabartması yoksa düz (128, 128) doku kullanılır
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.tSide = { value: TEX[side] }; sh.uniforms.tTop = { value: TEX[top] };
+    if (kab) { sh.uniforms.nSide = { value: TEX[side + '_k'] }; sh.uniforms.nTop = { value: TEX[top + '_k'] || (TEX.duz_k = TEX.duz_k || (() => { const t = new THREE.DataTexture(new Uint8Array([128, 128, 255, 255]), 1, 1); t.needsUpdate = true; return t; })()) }; }
     sh.vertexShader = 'varying vec3 vWPos;\nvarying vec3 vWNrm;\n' + sh.vertexShader
       .replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\nvWNrm = normalize(mat3(modelMatrix) * objectNormal);')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWPos = (modelMatrix * vec4(position, 1.0)).xyz;');
@@ -7866,10 +7923,23 @@ function triplanar(mat, side, top, sSide, sTop, gain) {
       'vec3 tpx = texture2D(tSide, vWPos.zy * ' + sSide.toFixed(4) + ').rgb / ' + glv3(TEX_AVG[side]) + ';',
       'vec3 tpz = texture2D(tSide, vWPos.xy * ' + sSide.toFixed(4) + ').rgb / ' + glv3(TEX_AVG[side]) + ';',
       'vec3 tpy = texture2D(tTop, vWPos.xz * ' + sTop.toFixed(4) + ').rgb / ' + glv3(TEX_AVG[top]) + ';',
+      cok ? ['vec3 bx = texture2D(tSide, vWPos.zy * ' + (sSide * 0.19).toFixed(4) + ' + 0.37).rgb / ' + glv3(TEX_AVG[side]) + ', bz = texture2D(tSide, vWPos.xy * ' + (sSide * 0.19).toFixed(4) + ' + 0.61).rgb / ' + glv3(TEX_AVG[side]) + ';',
+        'tpx = mix(tpx, texture2D(tSide, vWPos.zy * ' + (sSide * 0.47).toFixed(4) + ' + 0.5).rgb / ' + glv3(TEX_AVG[side]) + ', smoothstep(0.8, 1.15, dot(bx, vec3(0.333)))) * mix(vec3(1.0), bx, 0.5);',
+        'tpz = mix(tpz, texture2D(tSide, vWPos.xy * ' + (sSide * 0.47).toFixed(4) + ' + 0.5).rgb / ' + glv3(TEX_AVG[side]) + ', smoothstep(0.8, 1.15, dot(bz, vec3(0.333)))) * mix(vec3(1.0), bz, 0.5);'].join('\n') : '',
       'diffuseColor.rgb *= (tpx * bw.x + tpy * bw.y + tpz * bw.z) * ' + gain.toFixed(3) + ';',
     ].join('\n'));
+    if (kab) sh.fragmentShader = 'uniform sampler2D nSide;\nuniform sampler2D nTop;\n' + sh.fragmentShader.replace('#include <normal_fragment_maps>', [
+      '#include <normal_fragment_maps>',
+      'vec2 kx = texture2D(nSide, vWPos.zy * ' + sSide.toFixed(4) + ').xy * 2.0 - 1.0;',
+      'vec2 kz = texture2D(nSide, vWPos.xy * ' + sSide.toFixed(4) + ').xy * 2.0 - 1.0;',
+      'vec2 ky = texture2D(nTop, vWPos.xz * ' + sTop.toFixed(4) + ').xy * 2.0 - 1.0;',
+      'vec3 ksap = vec3(0.0, kx.y, kx.x) * bw.x + vec3(ky.x, 0.0, ky.y) * bw.y + vec3(kz.x, kz.y, 0.0) * bw.z;',
+      'vec3 kwn = inverseTransformDirection(normal, viewMatrix);',
+      'kwn = normalize(kwn + ksap * ' + kab.toFixed(3) + ' * (1.0 - smoothstep(70.0, 320.0, length(vWPos - cameraPosition))));',
+      'normal = normalize((viewMatrix * vec4(kwn, 0.0)).xyz);',
+    ].join('\n'));
   };
-  mat.customProgramCacheKey = () => 'tri-' + side + top + sSide + sTop + gain;
+  mat.customProgramCacheKey = () => 'tri-' + side + top + sSide + sTop + gain + '-' + kab + (cok ? 'c' : '');
   return mat;
 }
 
@@ -7895,6 +7965,20 @@ function terrainPatch(mat, maskTex) {
       'det = mix(det, vec3(1.0), smoothstep(700.0, 2600.0, dcam) * 0.7);',
       'diffuseColor.rgb *= clamp(det, 0.05, 3.0) * 0.9;',
     ].join('\n'));
+    // yakın planda kabartma: bozkır, çimen ve çakılın kabartma haritaları aynı maskeyle karışır; 260 m'de söner
+    if (TEX.bozkir_k && TEX.cimen_k && TEX.cakil_k) {
+      sh.uniforms.nGround = { value: TEX.bozkir_k }; sh.uniforms.nGrass = { value: TEX.cimen_k }; sh.uniforms.nGravel = { value: TEX.cakil_k };
+      sh.fragmentShader = 'uniform sampler2D nGround;\nuniform sampler2D nGrass;\nuniform sampler2D nGravel;\n' + sh.fragmentShader.replace('#include <normal_fragment_maps>', [
+        '#include <normal_fragment_maps>',
+        'vec2 kg = texture2D(nGround, wp * 0.17).xy * 2.0 - 1.0;',
+        'vec2 kr = texture2D(nGrass, wp * 0.21).xy * 2.0 - 1.0;',
+        'vec2 ku = texture2D(nGravel, wp * 0.19).xy * 2.0 - 1.0;',
+        'vec2 kd = mix(mix(kg, kr, msk.r), ku, msk.g) * (1.0 - smoothstep(45.0, 260.0, dcam)) * (1.0 - msk.b * 0.8) * 2.4;',
+        'vec3 kwn = inverseTransformDirection(normal, viewMatrix);',
+        'kwn = normalize(kwn + vec3(kd.x, 0.0, kd.y));',
+        'normal = normalize((viewMatrix * vec4(kwn, 0.0)).xyz);',
+      ].join('\n'));
+    }
   };
   return mat;
 }
@@ -12093,6 +12177,10 @@ function mutfakKur(api) {
         out.push([x - dx * 14, groundH(x, z) + 6, z - dz * 14, x + dx * 40, groundH(x + dx * 40, z + dz * 40) + 2, z + dz * 40]);
       }
       out.push([700, 260, 620, 60, 40, 40]);
+      // yakın plan noktaları (arazi zemini, burç ve sur, uçurum yüzü): doku ve kabartma değişikliklerini karşılaştırmak için
+      { const p = routePoint(R, R.L * 0.3), x = p.x + p.dz * 26, z = p.z - p.dx * 26; out.push([x, groundH(x, z) + 1.5, z, x + p.dx * 9 + p.dz * 4, groundH(x + p.dx * 9, z + p.dz * 9) + 0.2, z + p.dz * 9 - p.dx * 4]); }
+      { const fx = SUMMIT.x - AX.nx * 14, fz = SUMMIT.z - AX.nz * 14, gy = groundH(fx, fz); out.push([fx + AX.nz * 17 + AX.nx * 9, gy + 7, fz - AX.nx * 17 + AX.nz * 9, fx, gy + 6.5, fz]); }
+      { const x = SUMMIT.x + AX.nx * 95, z = SUMMIT.z + AX.nz * 95; out.push([x, groundH(x, z) + 9, z, SUMMIT.x + AX.nx * 20, SUMMIT.y - 16, SUMMIT.z + AX.nz * 20]); }
       return out;
     },
     look(x, y, z, tx, ty, tz) { G.state = 'menu'; G.resume = null; G.freeze = [x, y, z, tx, ty, tz]; parcaT = 0; },
