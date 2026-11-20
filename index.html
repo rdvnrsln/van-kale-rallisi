@@ -8377,7 +8377,9 @@ function terrainPatch(mat, maskTex, akisTex) {
       'diffuseColor.rgb *= clamp(det, 0.04, 3.0) * mix(0.92, 0.82, rk) * (1.0 + mH * 0.5 * mK);',      // oluk koyu, sırt açık
     ]).join('\n')).replace('#include <roughnessmap_fragment>', [
       '#include <roughnessmap_fragment>',
-      'roughnessFactor = mix(roughnessFactor, 0.58, msk.b * (1.0 - rk));',      // kar ıslak-parlak değil ama toprak kadar mat da değil
+      // kar ıslak-parlak değil ama toprak kadar mat da değil. Telefonda değil: iPhone Safari yansımanın bulanık katlarını seçemiyor, 0,58 pürüzlü kar
+      // HDR göğü ayna gibi yansıttı (20 Kas, Abalı'da mavi ve bulut desenli lekeler). Telefonda arazi pürüzlülüğü 1 kalır.
+      MOBIL ? '' : 'roughnessFactor = mix(roughnessFactor, 0.58, msk.b * (1.0 - rk));',
     ].join('\n'));
     const makroNormal = [
       'vec3 kwn = nIs;',      // köşe normali yerine yumuşatılmış eğim
@@ -11516,7 +11518,8 @@ function mutfakKur(api) {
       scene.environment = gunduzCevre = pm.fromScene(es, 0, 0.1, 100).texture;
       // Gündüz ortam ışığı HDRI'dan (Poly Haven kloofendal_38d_partly_cloudy_puresky, CC0; tools/hdri-isik.py): güneş diski kırpılmış,
       // gök fotoğrafıyla aynı yöne döndürülmüş 512 × 256 RGBE. Dosya gelmezse gök fotoğrafından kurulan ortam kalır.
-      try {
+      // Telefonda HDRI ortamı kurulmaz: iPhone Safari'de yansıma katları keskin kaldı, parlak HDR gök karda ayna gibi göründü (20 Kas). Gök fotoğrafından ortam kalır.
+      if (!MOBIL) try {
         const veri = new Uint8Array(await (await fetch('doku/gok_isik.bin')).arrayBuffer());
         if (String.fromCharCode(veri[0], veri[1], veri[2], veri[3]) !== 'VKR1') throw new Error('biçim');
         const W = veri[4] | (veri[5] << 8), H = veri[6] | (veri[7] << 8), f32 = new Float32Array(W * H * 4);
