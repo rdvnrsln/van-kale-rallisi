@@ -415,6 +415,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
     <div class="dugmeler">
       <button id="btn-menu" type="button"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5v14M15.5 5v14" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg><span class="yazi" data-i18n="hud.menu">Menü</span></button>
       <button id="btn-kam" type="button"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3.2l1.8-2.6h6l1.8 2.6H20v11H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="2"/></svg><span class="yazi" data-i18n="hud.kamera">Kamera</span></button>
+      <button id="btn-yuz" type="button" aria-pressed="false"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="9.2" cy="10.4" r="1.2" fill="currentColor"/><circle cx="14.8" cy="10.4" r="1.2" fill="currentColor"/><path d="M8.8 14.6c1.8 1.6 4.6 1.6 6.4 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="yazi" data-i18n="hud.yuz">Yüz</span></button>
       <button id="btn-don" type="button"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.2 12.5a6.8 6.8 0 1 0 2-5.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M4.5 3.8v4.8h4.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="yazi" data-i18n="hud.yolaDon">Yola dön</span></button>
       <button id="btn-ses" type="button" aria-pressed="false"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4 4 0 0 1 0 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="yazi" id="ses-yazi">Ses açık</span></button>
     </div>
@@ -6415,10 +6416,10 @@ const DIL = {
     'cok.ayrildin': 'Odadan çıktın.', 'cok.bolgede': 'Oyuncu {0} {1} bölgesinde, seni de oraya aldık.', 'cok.oyuncu': 'Oyuncu {0}', 'cok.yaninda': 'Oyuncu {0} hemen önünde',
     'hud.turbo': 'Turbo', 'hud.nefes': 'Nefes', 'hud.ayakta': 'Ayakta pedal', 'uc.nefes': 'Nefesin tükendi', 'uc.devrildi': 'Devrildin', 'uc.devrildi.alt': 'Virajda yavaşla; yükle daha çabuk devrilirsin', 'hud.gec': 'Geçmek için dokun ya da bir tuşa bas', 'hud.viraj': 'Viraj',
     'hud.zil': 'Zil', 'uc.kilPayi': 'Kıl payı!', 'uc.kilPayi.alt': 'Yoldakiler alkışlıyor',
-    'menu.tuslar': '<b>W A S D</b> ya da <b>ok tuşları</b> sürüş · <b>Shift</b> turbo (bisiklette ayakta pedal) · <b>Boşluk</b> el freni · <b>R</b> yola dön · <b>C</b> kamera · <b>H</b> korna ya da zil · <b>N</b> ses · <b>M</b> menü. Oyun kolu: sol çubuk, RT gaz, LT fren, X ya da RB turbo, A el freni, B yola dön, Y kamera.',
+    'menu.tuslar': '<b>W A S D</b> ya da <b>ok tuşları</b> sürüş · <b>Shift</b> turbo (bisiklette ayakta pedal) · <b>Boşluk</b> el freni · <b>R</b> yola dön · <b>C</b> kamera · <b>F</b> (basılı tut) sürücünün yüzü · <b>H</b> korna ya da zil · <b>N</b> ses · <b>M</b> menü. Oyun kolu: sol çubuk, RT gaz, LT fren, X ya da RB turbo, A el freni, B yola dön, Y kamera, LB sürücünün yüzü.',
     'menu.kunye': 'Sokaklar, binalar ve surlar: © OpenStreetMap katkıcıları (ODbL). Yükseklik: SRTM, Mapzen arazi karoları. Dokular: Poly Haven (CC0). Kale kayasının biçimi OSM sınırından yeniden kurulmuştur.',
     'etk.km': 'km', 'etk.tur': '{0} tur', 'etk.zamanaKarsi': 'zamana karşı', 'etk.rakip': '{0} rakip', 'etk.enIyi': 'en iyi {0}',
-    'hud.kedi': 'Van kedisi', 'hud.menu': 'Menü', 'hud.kamera': 'Kamera', 'hud.yolaDon': 'Yola dön', 'hud.sesAcik': 'Ses açık', 'hud.sesKapali': 'Ses kapalı', 'hud.yanCevir': 'Daha geniş görüş için telefonu yan çevir',
+    'hud.kedi': 'Van kedisi', 'hud.menu': 'Menü', 'hud.kamera': 'Kamera', 'hud.yuz': 'Yüz', 'hud.yolaDon': 'Yola dön', 'hud.sesAcik': 'Ses açık', 'hud.sesKapali': 'Ses kapalı', 'hud.yanCevir': 'Daha geniş görüş için telefonu yan çevir',
     'hud.kmsa': 'km/sa', 'hud.el': 'El', 'hud.fren': 'Fren', 'hud.gaz': 'Gaz', 'hud.tur': 'Tur {0}/{1}', 'hud.nokta': 'Nokta {0}/{1}', 'hud.hedef': 'Hedef: {0}',
     'hud.geri': 'G', 'hud.bos': 'B', 'hud.sola': 'Sola', 'hud.saga': 'Sağa', 'hud.elFreni': 'El freni', 'hud.harita': 'Mini harita',
     'flash.serbest': 'Serbest sürüş', 'flash.serbest.alt': 'Turuncu ışık sütunları yarış başlangıcıdır', 'flash.basla': 'Başla!',
@@ -6588,10 +6589,10 @@ const DIL = {
     'cok.ayrildin': 'You left the room.', 'cok.bolgede': 'Player {0} is in {1}, so we took you there too.', 'cok.oyuncu': 'Player {0}', 'cok.yaninda': 'Player {0} is right ahead',
     'hud.turbo': 'Turbo', 'hud.nefes': 'Breath', 'hud.ayakta': 'Stand and pedal', 'uc.nefes': 'Out of breath', 'uc.devrildi': 'You tipped over', 'uc.devrildi.alt': 'Slow down in corners; with a load you tip sooner', 'hud.gec': 'Tap or press any key to skip', 'hud.viraj': 'Bend',
     'hud.zil': 'Bell', 'uc.kilPayi': 'Close call!', 'uc.kilPayi.alt': 'People on the street are clapping',
-    'menu.tuslar': '<b>W A S D</b> or <b>arrow keys</b> drive · <b>Shift</b> turbo (on the bicycle: stand and pedal) · <b>Space</b> handbrake · <b>R</b> back to road · <b>C</b> camera · <b>H</b> horn or bell · <b>N</b> sound · <b>M</b> menu. Gamepad: left stick, RT throttle, LT brake, X or RB turbo, A handbrake, B back to road, Y camera.',
+    'menu.tuslar': '<b>W A S D</b> or <b>arrow keys</b> drive · <b>Shift</b> turbo (on the bicycle: stand and pedal) · <b>Space</b> handbrake · <b>R</b> back to road · <b>C</b> camera · <b>F</b> (hold) driver’s face · <b>H</b> horn or bell · <b>N</b> sound · <b>M</b> menu. Gamepad: left stick, RT throttle, LT brake, X or RB turbo, A handbrake, B back to road, Y camera, LB driver’s face.',
     'menu.kunye': 'Streets, buildings and walls: © OpenStreetMap contributors (ODbL). Elevation: SRTM, Mapzen terrain tiles. Textures: Poly Haven (CC0). The shape of the castle rock is rebuilt from the OSM outline.',
     'etk.km': 'km', 'etk.tur': '{0} laps', 'etk.zamanaKarsi': 'time trial', 'etk.rakip': '{0} rivals', 'etk.enIyi': 'best {0}',
-    'hud.kedi': 'Van cats', 'hud.menu': 'Menu', 'hud.kamera': 'Camera', 'hud.yolaDon': 'Back to road', 'hud.sesAcik': 'Sound on', 'hud.sesKapali': 'Sound off', 'hud.yanCevir': 'Turn your phone sideways for a wider view',
+    'hud.kedi': 'Van cats', 'hud.menu': 'Menu', 'hud.kamera': 'Camera', 'hud.yuz': 'Face', 'hud.yolaDon': 'Back to road', 'hud.sesAcik': 'Sound on', 'hud.sesKapali': 'Sound off', 'hud.yanCevir': 'Turn your phone sideways for a wider view',
     'hud.kmsa': 'km/h', 'hud.el': 'Hand', 'hud.fren': 'Brake', 'hud.gaz': 'Gas', 'hud.tur': 'Lap {0}/{1}', 'hud.nokta': 'Gate {0}/{1}', 'hud.hedef': 'Target: {0}',
     'hud.geri': 'R', 'hud.bos': 'N', 'hud.sola': 'Left', 'hud.saga': 'Right', 'hud.elFreni': 'Handbrake', 'hud.harita': 'Mini map',
     'flash.serbest': 'Free roam', 'flash.serbest.alt': 'The orange light columns are race starts', 'flash.basla': 'Go!',
@@ -6761,10 +6762,10 @@ const DIL = {
     'cok.ayrildin': 'از اتاق خارج شدی.', 'cok.bolgede': 'بازیکن {0} در {1} است؛ تو را هم به آنجا بردیم.', 'cok.oyuncu': 'بازیکن {0}', 'cok.yaninda': 'بازیکن {0} درست جلوی توست',
     'hud.turbo': 'توربو', 'hud.nefes': 'نفس', 'hud.ayakta': 'رکاب ایستاده', 'uc.nefes': 'نفست بند آمد', 'uc.devrildi': 'واژگون شدی', 'uc.devrildi.alt': 'سر پیچ آهسته‌تر برو؛ با بار زودتر واژگون می‌شوی', 'hud.gec': 'برای رد کردن لمس کنید یا کلیدی بزنید', 'hud.viraj': 'پیچ',
     'hud.zil': 'زنگ', 'uc.kilPayi': 'به مو رسید!', 'uc.kilPayi.alt': 'رهگذرها برایت دست می‌زنند',
-    'menu.tuslar': '<b>W A S D</b> یا <b>کلیدهای جهت</b> رانندگی · <b>Shift</b> توربو (روی دوچرخه: رکاب ایستاده) · <b>Space</b> ترمز دستی · <b>R</b> بازگشت به جاده · <b>C</b> دوربین · <b>H</b> بوق یا زنگ · <b>N</b> صدا · <b>M</b> منو. دسته بازی: اهرم چپ، RT گاز، LT ترمز، X یا RB توربو، A ترمز دستی، B بازگشت به جاده، Y دوربین.',
+    'menu.tuslar': '<b>W A S D</b> یا <b>کلیدهای جهت</b> رانندگی · <b>Shift</b> توربو (روی دوچرخه: رکاب ایستاده) · <b>Space</b> ترمز دستی · <b>R</b> بازگشت به جاده · <b>C</b> دوربین · <b>F</b> (نگه دارید) چهرهٔ راننده · <b>H</b> بوق یا زنگ · <b>N</b> صدا · <b>M</b> منو. دسته بازی: اهرم چپ، RT گاز، LT ترمز، X یا RB توربو، A ترمز دستی، B بازگشت به جاده، Y دوربین، LB چهرهٔ راننده.',
     'menu.kunye': 'خیابان‌ها، ساختمان‌ها و باروها: © مشارکت‌کنندگان OpenStreetMap (ODbL). ارتفاع: SRTM، کاشی‌های Mapzen. بافت‌ها: Poly Haven (CC0). شکل صخره قلعه از روی محدوده OSM بازسازی شده است.',
     'etk.km': 'کیلومتر', 'etk.tur': '{0} دور', 'etk.zamanaKarsi': 'با زمان', 'etk.rakip': '{0} رقیب', 'etk.enIyi': 'بهترین {0}',
-    'hud.kedi': 'گربه وان', 'hud.menu': 'منو', 'hud.kamera': 'دوربین', 'hud.yolaDon': 'بازگشت به جاده', 'hud.sesAcik': 'صدا روشن', 'hud.sesKapali': 'صدا خاموش', 'hud.yanCevir': 'برای دید بازتر، گوشی را افقی بگیرید',
+    'hud.kedi': 'گربه وان', 'hud.menu': 'منو', 'hud.kamera': 'دوربین', 'hud.yuz': 'چهره', 'hud.yolaDon': 'بازگشت به جاده', 'hud.sesAcik': 'صدا روشن', 'hud.sesKapali': 'صدا خاموش', 'hud.yanCevir': 'برای دید بازتر، گوشی را افقی بگیرید',
     'hud.kmsa': 'km/h', 'hud.el': 'دستی', 'hud.fren': 'ترمز', 'hud.gaz': 'گاز', 'hud.tur': 'دور {0}/{1}', 'hud.nokta': 'نقطه {0}/{1}', 'hud.hedef': 'مقصد: {0}',
     'hud.geri': 'R', 'hud.bos': 'N', 'hud.sola': 'چپ', 'hud.saga': 'راست', 'hud.elFreni': 'ترمز دستی', 'hud.harita': 'نقشه کوچک',
     'flash.serbest': 'رانندگی آزاد', 'flash.serbest.alt': 'ستون‌های نور نارنجی نقطه شروع مسابقه‌اند', 'flash.basla': 'برو!',
@@ -13950,7 +13951,7 @@ function cokKur(o) {
     const hit = (i) => { const now = val(i) > 0.5, was = PAD.prev[i]; PAD.prev[i] = now; return now && !was; };
     const ax = gp.axes[0] || 0, dz = 0.12;
     PAD.steer = Math.abs(ax) > dz ? (Math.sign(ax) * (Math.abs(ax) - dz)) / (1 - dz) : val(15) - val(14);
-    PAD.thr = val(7); PAD.brk = val(6); PAD.hb = val(0) > 0.5; PAD.turbo = val(2) > 0.5 || val(5) > 0.5;
+    PAD.thr = val(7); PAD.brk = val(6); PAD.hb = val(0) > 0.5; PAD.turbo = val(2) > 0.5 || val(5) > 0.5; PAD.yuz = val(4) > 0.5;      // LB basılı: yüz kamerası
     const a = hit(0), b = hit(1), y = hit(3), st = hit(9);
     if (a || st) initAudio();
     if (GIRIS && (a || b || st)) { girisBitir(); return; }
@@ -14004,6 +14005,7 @@ function cokKur(o) {
   $('btn-ses').addEventListener('click', () => { initAudio(); toggleMute(); });
   $('btn-menu').addEventListener('click', () => showMenu(true));
   $('btn-kam').addEventListener('click', () => cycleCam());
+  $('btn-yuz').addEventListener('click', () => { YUZK.sabit = !YUZK.sabit; $('btn-yuz').setAttribute('aria-pressed', YUZK.sabit ? 'true' : 'false'); });
   $('btn-don').addEventListener('click', () => respawn());
   $('ipucu').addEventListener('click', () => { if (G.near && G.state === 'free' && !G.goal && canStart(G.near)) { G.lastStory = 0; startEvent(G.near); } });
 
@@ -15143,6 +15145,26 @@ function cokKur(o) {
   let camH = 0, camSnap = true, orbit = 0.6;
   const SKICAM = { d: 5.6, h: 2.5, la: 1.2 };
   const CAMS = [{ d: 7.8, h: 3.0, la: 1.3 }, { d: 12.5, h: 5.2, la: 1.6 }, { d: -0.55, h: 1.28, la: 1.15 }];
+  // Yüz kamerası (21 Kas, kurucu: "sürerken modelin yüzünün göründüğü açı"): araç 2 sn durunca kendiliğinden, F ya da oyun kolunda LB basılıyken,
+  // "Yüz" düğmesiyle açık kalır. Kamera sürücünün başına önden ¾ açıdan bakar; gaz verince (durma kaynaklıysa) arkaya döner.
+  // _gp/_gl'yi yazar (konum, bakış); 0..1 geçiş oranını döndürür.
+  const YUZK = { k: 0, dur: 0, sabit: false, bas: null, kaynak: null }, _yb = new THREE.Vector3(), _yv0 = new THREE.Vector3(), _yv1 = new THREE.Vector3(), _yq = new THREE.Quaternion(), _yq0 = new THREE.Quaternion(), _yq1 = new THREE.Quaternion();
+  function yuzKamera(c, sp, dt) {
+    const serbest = (G.state === 'free' || G.state === 'race') && !c.ski && !GIRIS;
+    const tus = keys.KeyF || PAD.yuz, gazda = inp.thr > 0 || inp.brk > 0 || Math.abs(inp.steer) > 0;
+    YUZK.dur = G.state === 'free' && serbest && sp < 0.35 && !gazda ? YUZK.dur + dt : 0;      // yarışta durunca kendiliğinden dönmez
+    const hedef = serbest && (tus || YUZK.sabit || YUZK.dur > 2) ? 1 : 0;
+    YUZK.k = clamp(YUZK.k + (hedef ? dt * 1.6 : -dt * 2.6), 0, 1);
+    if (YUZK.k <= 0) return 0;
+    if (YUZK.kaynak !== c.mesh) { YUZK.kaynak = c.mesh; YUZK.bas = c.mesh.getObjectByName('oyuncu__bas') || null; }
+    if (YUZK.bas) { YUZK.bas.getWorldPosition(_yb); _yb.y += 0.12; } else _yb.set(c.x, c.y + 1.55, c.z);
+    const fx = Math.sin(c.h), fz = Math.cos(c.h), rx = fz, rz = -fx;          // ileri ve sağ
+    let d = 2.3, px = _yb.x + fx * d + rx * 1.0, pz = _yb.z + fz * d + rz * 1.0;
+    const t = wallRay(_yb.x, _yb.z, px, pz);
+    if (t < 1) { d *= Math.max(0.35, t * 0.9); px = _yb.x + fx * d + rx * d * 0.43; pz = _yb.z + fz * d + rz * d * 0.43; }
+    _gp.set(px, Math.max(_yb.y + 0.12, groundH(px, pz) + 0.5), pz); _gl.copy(_yb).y -= 0.06;
+    return YUZK.k;
+  }
   function updateCamera(dt) {
     if (G.freeze) { camera.position.set(G.freeze[0], G.freeze[1], G.freeze[2]); lookAt.set(G.freeze[3], G.freeze[4], G.freeze[5]); camera.lookAt(lookAt); camera.fov = 55; camera.updateProjectionMatrix(); return lookAt; }
     if (G.state === 'menu') {      // menüde her zaman bölgenin drone çekimi (duraklatınca da); Devam et kamerayı oyuncuya geri oturtur
@@ -15171,9 +15193,16 @@ function cokKur(o) {
     camSnap = false;
     camera.position.copy(camPos);
     lookAt.set(c.x + Math.sin(c.h) * 5, c.y + m.la, c.z + Math.cos(c.h) * 5);
+    let fov = 60 + Math.min(20, sp * 0.34) + (c.tbAktif ? 9 : 0);      // turboda görüş açısı genişler
+    const yk = yuzKamera(c, sp, dt);
+    if (yk > 0.001) {      // sürücünün yüzü: önden ¾ açı; arka kameradan yumuşak geçiş
+      const e = yk * yk * (3 - 2 * yk);      // başın çevresinde yay çizer: düz geçişte kamera sürücünün içinden geçiyordu
+      const v0 = _yv0.copy(camera.position).sub(_yb), v1 = _yv1.copy(_gp).sub(_yb), L = lerp(v0.length(), v1.length(), e);
+      _yq1.setFromUnitVectors(v0.normalize(), v1.normalize()); _yq.slerpQuaternions(_yq0, _yq1, e);
+      camera.position.copy(_yb).addScaledVector(v0.applyQuaternion(_yq), L); lookAt.lerp(_gl, Math.sqrt(e)); fov = lerp(fov, 34, e);      // bakış başa erken döner: geçişte sürücü kadrajda kalır
+    }
     camera.lookAt(lookAt);
-    const fov = 60 + Math.min(20, sp * 0.34) + (c.tbAktif ? 9 : 0);      // turboda görüş açısı genişler
-    if (Math.abs(fov - camera.fov) > 0.05) { camera.fov = lerp(camera.fov, fov, Math.min(1, dt * 3)); camera.updateProjectionMatrix(); }
+    if (Math.abs(fov - camera.fov) > 0.05) { camera.fov = yk > 0.001 ? fov : lerp(camera.fov, fov, Math.min(1, dt * 3)); camera.updateProjectionMatrix(); }
     if (GIRIS) {      // giriş: drone yazının arkasından yüksekten bakar, alçalıp yaklaşır, sonra arabanın arkasına süzülür
       const g = GIRIS, k = clamp(g.t / g.dur, 0, 1), pT = routePoint(g.R, g.s + g.L * 0.5), fx = pT.dx, fz = pT.dz, ty = groundH(pT.x, pT.z);
       const a = smooth(0, 0.62, k), b = smooth(0.52, 1, k), rx = -fz, rz = fx;
