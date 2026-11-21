@@ -10369,7 +10369,7 @@ let _ucSoz = null;
 const UC_SURUM = '2026-11-21e';      // model dosyası değişince artırılır (Safari eski GLB'yi önbellekten verir); 20 Kas: büyük kasa
 let _sasiKoyu = null;      // kabinli motorlu üç tekerin şasi boyası (bütün kopyalar paylaşır)
 // Motorlu üç teker (21 Kas 2026; kurucu: Van'da bu araç hamal aracıdır, kırmızı, tutamaksız, demir kasalı, ön tekeri büyük): yayin/model/arac/tuktuk.glb
-// (tools/blender/tuktuk.py --tur=kirmizi). Sürücü figürü ve yükler ucteker.glb'den gelir; yükler eski kasanın tabanına göre kuruludur, yeni kasaya
+// (tools/blender/tuktuk.py --tur=oyun: kırmızı tür + gizli muşamba düğümü). Sürücü figürü ve yükler ucteker.glb'den gelir; yükler eski kasanın tabanına göre kuruludur, yeni kasaya
 // yukY/yukZ kadar kaydırılır. İnmezse eski kabinli model (ucteker.glb içindeki motor_parca) kalır.
 const CEK = { yukY: -0.168, yukZ: 0.01, onR: 0.215, arkaR: 0.18, egim: 0.1, egzozX: -0.3 };
 let _cekSoz = null;
@@ -10474,6 +10474,7 @@ function makeTrikeGLB(src, motor, tt) {
     wheels.push({ pivot, spin, front: 0, r: cek ? (ad === 'teker_on' ? CEK.onR : CEK.arkaR) : 0 });       // ön teker gidon takımıyla döner; ayrıca çevrilmez. r: teker yarıçapı (dönüş hızı)
   }
   if (!cek) { al('motor_parca').visible = motor; krank.visible = !motor; }
+  else { const mus = al('musamba'); if (mus) mus.visible = false; }      // kasa örtüsü (şeffaf plastik) yalnız park halindeki üç tekerlerde (oyun.js PARK): oyuncunun yükü görünür kalır
   // Motorlu (kabinli) sürüm: tel yerine dolu jant, kırmızı bisiklet boyası yerine koyu şasi (kabinin altında görünür), tahta kasa yerine demir kasa
   if (!cek) t.traverse((m) => {
     if (!m.isMesh) return;
@@ -10616,7 +10617,7 @@ function kasaRenk(v, renk) {
 // ------------------------------------------------------------ Blender arabaları
 // Model: yayin/model/arac/arabalar.glb (tools/blender/arabalar.py): spor, sedan, hatch, minibus, kamyonet. Yüklenemezse kod çizimi kalır.
 // Model sürümü: dosya değişince artırılır; tarayıcı (özellikle Safari) eski modeli önbellekten vermesin.
-const MODEL_SURUM = { araba: '2026-11-20b', cekcek: '2026-11-21a' };
+const MODEL_SURUM = { araba: '2026-11-20b', cekcek: '2026-11-21c' };
 let _arSoz = null;
 function arabaYukle() {
   if (!_arSoz) _arSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/arac/arabalar.glb?s=' + MODEL_SURUM.araba, (g) => ok(g.scene), undefined, red); });
@@ -13594,6 +13595,7 @@ function cokKur(o) {
       castle = Rg.castle ? buildCastle(world, routeNear) : null;
       if (D.lifts) buildLifts(world);
       G.detay = buildDetay(world);
+      parkKur();
       YERLER = D.detay ? D.detay.yer.map((y) => ({ ad: y[0], poly: pairs(y, 1) })) : [];
       if (id === 'abali') buildSkiExtras();
       if (id === 'kampus') buildOgrenci();
@@ -14545,6 +14547,86 @@ function cokKur(o) {
     }
   }      // m/sn: altın, gümüş, bronz (bisiklet; motor 1,8 kat)
   let tesSon = '';
+  // ---------------------------------------------------------------- park halindeki hamal üç tekerleri (21 Kas 2026)
+  // Kurucu: Van'da motorlu üç teker hamal aracıdır; rengi kırmızı, mavi, siyah, bazısının kasası örtülü ("çadır yerine şeffaf plastik örtü olmalı"). Oyuncununki kırmızı; mavi ve
+  // siyah olanlar teslimat dükkânlarının (market, peynirci, fırın, kuruyemişçi; data/van-dukkan.json) önünde ve OSM otoparklarında park halinde
+  // durur. Yer: yolun dükkân tarafında, kaldırımın dışında (kaldırım yoksa asfaltın hemen dışında); asfalt, kaldırım, bina dibi, su ve dik zemine
+  // konmaz, iki araç arası en az 60 m. Çarpışma dört duvar parçası. 230 m'den uzakta gizlenir (araç başına ~30 çizim çağrısı).
+  const PARK = { grup: new THREE.Group(), arac: [], yer: [], boya: {}, sira: 0, t: 0 };
+  const PARK_RENK = ['#1d4f9e', '#0d0d0e'], PARK_EN = { dukkan: 7, otopark: 4 };
+  function parkUygun(x, z, h) {
+    if (baseH(x, z) < 0.5 || wallDist(x, z) < 1.7) return false;
+    const fx = Math.sin(h), fz = Math.cos(h), lx = Math.cos(h), lz = -Math.sin(h);
+    for (const [a, b] of [[0, 0], [1.3, 0.62], [1.3, -0.62], [-1.3, 0.62], [-1.3, -0.62]]) {
+      const px = x + fx * a + lx * b, pz = z + fz * a + lz * b, rd = roadAt(px, pz);
+      if (!rd) continue;
+      if (rd.d < rd.hw + 0.15) return false;      // asfalt
+      if (rd.cls <= 5 && rd.hw >= 2.5 && rd.d < rd.hw + (rd.cls <= 3 ? 2.2 : 1.5) + 0.15 && kaldirimda(px, pz)) return false;      // kaldırım (buildStreets ile aynı genişlik)
+    }
+    if (Math.abs(groundH(x + fx * 1.3, z + fz * 1.3) - groundH(x - fx * 1.3, z - fz * 1.3)) > 0.3) return false;
+    if (Math.abs(groundH(x + lx * 0.6, z + lz * 0.6) - groundH(x - lx * 0.6, z - lz * 0.6)) > 0.16) return false;
+    for (const p of PARK.yer) if (Math.hypot(p.x - x, p.z - z) < 60) return false;
+    return true;
+  }
+  function parkEkle(x, z, h) {
+    const fx = Math.sin(h), fz = Math.cos(h), lx = Math.cos(h), lz = -Math.sin(h), k = [[1.48, 0.68], [1.48, -0.68], [-1.43, -0.68], [-1.43, 0.68]].map(([a, b]) => [x + fx * a + lx * b, z + fz * a + lz * b]);
+    for (let i = 0; i < 4; i++) addWall(k[i][0], k[i][1], k[(i + 1) % 4][0], k[(i + 1) % 4][1]);
+    PARK.yer.push({ x, z, h, y: groundH(x, z) + 0.02, egim: -Math.atan2(groundH(x + fx, z + fz) - groundH(x - fx, z - fz), 2), yat: Math.atan2(groundH(x + lx * 0.58, z + lz * 0.58) - groundH(x - lx * 0.58, z - lz * 0.58), 1.17) });
+  }
+  function parkTemizle() { PARK.sira++; PARK.yer.length = 0; PARK.arac.length = 0; while (PARK.grup.children.length) PARK.grup.remove(PARK.grup.children[0]); }
+  function parkKur() {      // bölge kurulurken (yol, kaldırım, bina duvarları hazır) çağrılır; modeller inince araçlar eklenir
+    parkTemizle();
+    if (!PARK.grup.parent) scene.add(PARK.grup);
+    if (REGION.id !== 'van') return;
+    let n = 0;
+    for (const k of window.VAN_DUKKAN || []) {      // dükkân önü
+      if (n >= PARK_EN.dukkan) break;
+      if (!['market', 'peynirci', 'firin', 'kuruyemis'].includes(k[0])) continue;
+      const r = nearRoad(k[1], k[2]), rd = roadAt(r.x, r.z);
+      if (!rd || Math.hypot(r.x - k[1], r.z - k[2]) > 70) continue;
+      const hw = rd.hw, cls = rd.cls, nx = Math.cos(r.h), nz = -Math.sin(r.h), s = (k[1] - r.x) * nx + (k[2] - r.z) * nz < 0 ? -1 : 1;
+      const kald = cls <= 5 && hw >= 2.5 && kaldirimda(r.x + nx * s * (hw + 0.7), r.z + nz * s * (hw + 0.7)), yan = hw + (kald ? (cls <= 3 ? 2.2 : 1.5) : 0) + 0.95, h = s > 0 ? r.h + Math.PI : r.h;      // kendi şeridinin yönüne bakar
+      for (const boy of [7, -7, 12, -12, 3, 17, -17]) {
+        const x = r.x + Math.sin(r.h) * boy + nx * s * yan, z = r.z + Math.cos(r.h) * boy + nz * s * yan;
+        if (parkUygun(x, z, h)) { parkEkle(x, z, h); n++; break; }
+      }
+    }
+    n = 0;
+    for (const a of D.areas) {      // OSM otoparkı (alan türü 8): ortasında, en uzun kenar boyunca
+      if (n >= PARK_EN.otopark) break;
+      if (a[0] !== 8) continue;
+      let cx = 0, cz = 0, en = 0, h = 0; const m = (a.length - 1) / 2;
+      for (let i = 0; i < m; i++) {
+        const x0 = a[1 + i * 2], z0 = a[2 + i * 2], x1 = a[1 + ((i + 1) % m) * 2], z1 = a[2 + ((i + 1) % m) * 2], L = Math.hypot(x1 - x0, z1 - z0);
+        cx += x0 / m; cz += z0 / m; if (L > en) { en = L; h = Math.atan2(x1 - x0, z1 - z0); }
+      }
+      if (parkUygun(cx, cz, h)) { parkEkle(cx, cz, h); n++; }
+    }
+    const sira = PARK.sira;
+    cekcekYukle().then((tt) => {
+      if (sira !== PARK.sira) return;      // bu arada bölge değişti
+      PARK.yer.forEach((p, i) => {
+        const t = tt.getObjectByName('tuktuk').clone(true), g = new THREE.Group(), renk = PARK_RENK[i % 2];
+        t.traverse((ms) => {
+          if (!ms.isMesh) return;
+          ms.castShadow = !(ms.material && ms.material.name === 'plastik_ortu');      // şeffaf plastik örtü gölge düşürmez
+          if (ms.material && ms.material.name === 'boya') { if (!PARK.boya[renk]) { PARK.boya[renk] = ms.material.clone(); PARK.boya[renk].name = 'boya_park'; PARK.boya[renk].color.copy(LIN(renk)); } ms.material = PARK.boya[renk]; }
+        });
+        const mus = t.getObjectByName('musamba'), gd = t.getObjectByName('gidon');
+        if (mus) mus.visible = i % 3 !== 1;      // üçte ikisinin kasası şeffaf plastik örtülü
+        if (gd) gd.rotation.y = (((i * 37) % 7) - 3) * 0.09;      // gidon hafif çevrik bırakılmış
+        g.add(t); g.position.set(p.x, p.y, p.z); g.rotation.set(p.egim, p.h, p.yat, 'YXZ'); g.visible = false;
+        PARK.grup.add(g); PARK.arac.push(g);
+      });
+      PARK.t = 0;
+    }).catch(() => {});
+  }
+  function parkTick(dt) {
+    PARK.t -= dt;
+    if (PARK.t > 0 || !PARK.arac.length) return;
+    PARK.t = 0.3;
+    for (let i = 0; i < PARK.arac.length; i++) { const p = PARK.yer[i], g = PARK.arac[i], gor = (p.x - camera.position.x) ** 2 + (p.z - camera.position.z) ** 2 < 230 * 230; if (g.visible !== gor) g.visible = gor; }
+  }
   // İş seç: yakin verilirse (zincir) alış noktası oraya 40–1300 m: 350 m içinde dükkân varsa o, yoksa 700 m içi, o da yoksa uzak (bu tür daha seyrek
   // gelir; fırın ve kuruyemişçi merkezden uzak). Hiçbiri yoksa ya da yakin yoksa şehrin her yerinden. Alış-teslim arası 300–1100 m.
   function tesSec(yakin, zorla) {      // zorla: yalnız bu tür (sınama)
@@ -15682,6 +15764,7 @@ function cokKur(o) {
       if (TUR && TUR.visible && TUR.userData.uye) yayaGrupTick(TUR, dt, (TUR.position.x - player.x) ** 2 + (TUR.position.z - player.z) ** 2 < 60 * 60);
     }
     karsTick(dt);      // teslimat karşılayıcıları (sonuç ekranında da)
+    parkTick(dt);      // park halindeki hamal üç tekerleri: uzaktakiler gizlenir
     const f = updateCamera(dt);
     if (G.sars > 0) { G.sars -= dt; const k = G.sars * 0.35; camera.position.x += (Math.random() - 0.5) * k; camera.position.y += (Math.random() - 0.5) * k; camera.position.z += (Math.random() - 0.5) * k; }
     vakitAdim(dt);
@@ -15759,6 +15842,7 @@ function cokKur(o) {
     tus: (k, v) => { keys[k] = !!v; }, girisGec: () => girisBitir(),
     // performans: durum (PERF), ölçüm turu, denetleyiciye yapay kare besleme (sınama: aynı pencere mantığı, gerçek kare gerekmez)
     sacik: SACIK,      // komik devrilme: saçılan parçalar ve kırık yumurtalar
+    park: () => ({ yer: PARK.yer.map((p) => [+p.x.toFixed(1), +p.z.toFixed(1), +p.h.toFixed(2)]), arac: PARK.arac.length, gorunen: PARK.arac.filter((g) => g.visible).length, musamba: PARK.arac.filter((g) => { const m = g.getObjectByName('musamba'); return m && m.visible; }).length }),      // park halindeki hamal üç tekerleri
     kars: KARS,      // teslimat karşılayıcıları
     TES, tesSec, startTeslimat: (tur) => startTeslimat(EVENTS.find((e) => e.id === 'teslimat'), tur),      // teslimat işleri
     perf: PERF, perfTuru, perfBesle(ms, cpu, gpu, n, surus) { const t = performance.now(); for (let i = 0; i < n; i++) { perfKayit(ms, cpu, gpu); perfAyarla(surus !== false, t + i * ms); } return { olcek: +PERF.olcek.toFixed(3), tavan: PERF.tavan, kilit: PERF.kilitT > 0 }; }, get giris() { return GIRIS ? { t: GIRIS.t, dur: GIRIS.dur } : null; },
