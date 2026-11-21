@@ -7405,14 +7405,14 @@ function buildRoads(scene) {
   const mk = () => ({ P: [], C: [], U: [], I: [], K: [] });
   const asph = mk(), dirt = mk(), M = new Bag();
   const tint = [0.92, 0.95, 1.0, 1.05, 1.14, 1.2, 1.34, 1.0, 1.12];
-  const white = new THREE.Color('#e9e6dc').convertSRGBToLinear();
+  const white = new THREE.Color(KAR ? '#f7f6f1' : '#e9e6dc').convertSRGBToLinear();      // Abalı'da çizgi yeni boyanmış
   const TS = 4.5;   // bir doku karosu 4,5 m
   function v(b, x, z, lift, sh, uu, vv) { b.P.push(x, groundH(x, z) + lift, z); b.C.push(sh, sh, sh); b.U.push(uu, vv); return b.P.length / 3 - 1; }
-  // Karlı bölgede (Abalı) karlı, buzlu asfalt (Poly Haven asphalt_snow, 2 m; 21 Kas). Kenarı kara karışır (karYolPatch, src/doku.js; kurucu 21 Kas: "asfalt ve karlı
+  // Karlı bölgede (Abalı) asfalt yeni: koyu, temiz, bütün sınıflar aynı ton (kurucu 21 Kas: "asfalt yeni orası. köy yolu gibi değil"). Kenarı kara yumuşak geçişle karışır (karYolPatch, src/doku.js; kurucu 21 Kas: "asfalt ve karlı
   // bölge çok keskin ayrılıyor"): her köşe aKen özniteliği taşır = (sol kenara uzaklık, sağ kenara uzaklık, sol kenarın başka yolun içine girme derinliği, sağınki; m).
   // Toprak yollar da aynı yamayla çizilir. Gölgelendirici bundan yol birleşiminin kenarına uzaklığı bulur: kavşak ağzında kar şeridi yolu kesmez. Şerit 0,5 m geniş çizilir (KP; geçiş payı), kesit aralığı
   // 7 m yerine 1,75 m (derinlik kavşakta doğru aradeğerlensin). Üst üste binen yollar birbirinden 2 mm, uç kapakları 4 mm aşağıda: titreşme olmaz.
-  const kAs = KAR && TEX.asfalt_kar && TEX.asfalt_kar.image && TEX.asfalt_kar.image.width > 1;
+  const kAs = KAR && TEX.asfalt && TEX.asfalt.image && TEX.asfalt.image.width > 1;
   const KP = 0.5, AS = [], AG = kAs ? makeGrid(48) : null;
   if (kAs) ROADS.forEach((r, ri) => {
     for (let i = 1; i < r.pts.length; i++) { const a = r.pts[i - 1], c = r.pts[i]; gridAdd(AG, AS.length / 6, a.x, a.z, c.x, c.z, r.w / 2 + KP + 30); AS.push(a.x, a.z, c.x, c.z, r.w / 2 + KP, ri); }
@@ -7450,7 +7450,7 @@ function buildRoads(scene) {
         let tx = lerp(tg[i][0], tg[Math.min(n - 1, i + 1)][0], f), tz = lerp(tg[i][1], tg[Math.min(n - 1, i + 1)][1], f); const L = Math.hypot(tx, tz) || 1; tx /= L; tz /= L;
         const kx = tz, kz = -tx;
         along += Math.hypot(x - ox, z - oz); ox = x; oz = z;
-        const sh = tint[r.cls] * (0.93 + vnoise(x / 19, z / 19) * 0.14);
+        const sh = ken && b === asph ? 1 : tint[r.cls] * (0.93 + vnoise(x / 19, z / 19) * 0.14);      // karlı bölgede asfalt yeni: her sınıf aynı koyu ton
         const l = v(b, x + kx * hwG, z + kz * hwG, lift, sh, 0, along / TS), rr = v(b, x - kx * hwG, z - kz * hwG, lift, sh, r.w / TS, along / TS);
         if (ken) { const sL = icDer(x + kx * hwG, z + kz * hwG, ri), sR = icDer(x - kx * hwG, z - kz * hwG, ri); b.K.push(0, 2 * hwG, sL, sR, 2 * hwG, 0, sL, sR); }
         if (prevL >= 0) b.I.push(prevL, prevR, l, prevR, rr, l);
@@ -7459,11 +7459,11 @@ function buildRoads(scene) {
     }
     // uç kapakları: farklı yolların birleşimindeki boşlukları örter
     for (const e of [pts[0], pts[n - 1]]) {
-      const kl = lift - (ken ? (ri % 4) * 0.002 + 0.004 : 0);
-      const c0 = v(b, e.x, e.z, kl, tint[r.cls], e.x / TS, e.z / TS), first = b.P.length / 3;
+      const kl = lift - (ken ? (ri % 4) * 0.002 + 0.004 : 0), ks = ken && b === asph ? 1 : tint[r.cls];
+      const c0 = v(b, e.x, e.z, kl, ks, e.x / TS, e.z / TS), first = b.P.length / 3;
       if (ken) b.K.push(hwG, hwG, 0, 0);
       for (let k = 0; k < 10; k++) {
-        const a = (k / 10) * TAU, x = e.x + Math.cos(a) * hwG, z = e.z + Math.sin(a) * hwG; v(b, x, z, kl, tint[r.cls], x / TS, z / TS);
+        const a = (k / 10) * TAU, x = e.x + Math.cos(a) * hwG, z = e.z + Math.sin(a) * hwG; v(b, x, z, kl, ks, x / TS, z / TS);
         if (ken) { const s = icDer(x, z, -1); b.K.push(0, 0, s, s); }      // kapağın çevresi: yolun kendi gövdesinin ya da başka yolun içindeyse kar yok
       }
       for (let k = 0; k < 10; k++) b.I.push(c0, first + ((k + 1) % 10), first + k);
@@ -7480,7 +7480,7 @@ function buildRoads(scene) {
     mesh.receiveShadow = true; scene.add(mesh);
     return mesh;
   };
-  const asfM = new THREE.MeshStandardMaterial({ map: kAs ? TEX.asfalt_kar : TEX.asfalt, normalMap: kAs ? TEX.asfalt_kar_n : TEX.asfalt_n, normalScale: new THREE.Vector2(0.9, 0.9), vertexColors: true, roughness: kAs ? 0.62 : 0.86, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+  const asfM = new THREE.MeshStandardMaterial({ map: TEX.asfalt, normalMap: TEX.asfalt_n, normalScale: new THREE.Vector2(0.9, 0.9), vertexColors: true, roughness: kAs ? 0.8 : 0.86, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
   if (kAs) { karYolPatch(asfM, KP); asfM.name = 'yol-asfalt-kar'; }
   const asfMesh = add(asph, asfM);
   if (kAs) asfMesh.renderOrder = -5;      // kenarı saydam: saydam sıranın başında çizilir (gölge lekesi, cam, toz bunun üstüne gelir)
@@ -8581,8 +8581,8 @@ const TEX_AVG = {
   // zemin: withered_grass (kurumuş bozkır), çayır: grass_ground (20 Kas akşam)
   zemin: [0.317, 0.226, 0.150], cayir: [0.119, 0.090, 0.037], kum: [0.246, 0.136, 0.063], kayalik: [0.206, 0.129, 0.074], kar: [0.188, 0.188, 0.193], hava: [0.099, 0.067, 0.049],
   tasli: [0.145, 0.081, 0.033],      // rocky_terrain (21 Kas, kurucunun getirdiği takım): Eski Van'ın taşlı, otlu zemini
-  kuru: [0.281, 0.164, 0.075],
-  asfalt_kar: [0.177, 0.163, 0.173],      // asphalt_snow (21 Kas, kurucunun getirdiği takım): Abalı'nın karlı, buzlu asfaltı (2 m)      // dry_ground_rocks (21 Kas, kurucunun getirdiği takım): çatlak kuru toprak ve çakıl
+  kuru: [0.281, 0.164, 0.075],      // dry_ground_rocks (21 Kas, kurucunun getirdiği takım): çatlak kuru toprak ve çakıl
+  // asphalt_snow (doku/asfalt_kar*.jpg, ortalama [0.177, 0.163, 0.173]) yüklenmez: Abalı asfaltı yeni ve koyu (karYolPatch); dosyalar yerinde duruyor
   kaya: [0.21, 0.09, 0.033], kaya_ust: [0.23, 0.143, 0.082], sur: [0.238, 0.198, 0.132], siva: [0.407, 0.366, 0.35], beton: [0.093, 0.094, 0.089],
   gok: [0.33, 0.44, 0.62],     // gökyüzü fotoğrafı (Poly Haven, kloofendal_38d_partly_cloudy_puresky, CC0): zirveden ufkun 11° altına
 };
@@ -8619,7 +8619,7 @@ const glv3 = (a) => 'vec3(' + a.map((x) => x.toFixed(4)).join(', ') + ')';
 
 function loadTextures(maxAniso) {
   const loader = new THREE.TextureLoader();
-  const names = Object.keys(TEX_AVG).concat(['asfalt_n', 'asfalt_kar_n'], MOBIL ? [] : PBR.map((n) => n + '_n'));
+  const names = Object.keys(TEX_AVG).concat(['asfalt_n'], MOBIL ? [] : PBR.map((n) => n + '_n'));
   TEX.missing = 0;
   return Promise.all(names.map((n) => new Promise((res) => {
     const normal = n.endsWith('_n');
@@ -8628,7 +8628,7 @@ function loadTextures(maxAniso) {
       if (!normal) t.encoding = THREE.sRGBEncoding;
       t.needsUpdate = true; TEX[n] = t; res();
     };
-    const dosya = MOBIL && (n === 'gok' || n === 'asfalt_kar' || PBR.indexOf(n) >= 0) ? n + '_k' : n;
+    const dosya = MOBIL && (n === 'gok' || PBR.indexOf(n) >= 0) ? n + '_k' : n;
     loader.load('doku/' + dosya + '.jpg', fin, undefined, () => {
       // dosya gelmezse ortalama renkli düz doku: oyun yine açılır
       const a = TEX_AVG[n], c = a ? new THREE.Color(a[0], a[1], a[2]).convertLinearToSRGB() : new THREE.Color(0.5, 0.5, 1);
@@ -9080,23 +9080,28 @@ function terrainPatch(mat, maskTex, katman) {
   return mat;
 }
 
-// Karlı asfalt (Abalı; kurucu 21 Kas 2026: "asfalt ve karlı bölge çok keskin ayrılıyor ... sürekli tekrar eden aynı desen de olmazsa iyi olur").
-//  - Doku dünya koordinatından okunur (2 m). İkinci örnek 90° dönük ve %17 küçük, 22 ve 6 m'lik gürültü ikisini karıştırır; uzakta 18 m'lik örnek: karo ızgarası seçilmez.
+// Karlı bölgede yol (Abalı; kurucu 21 Kas 2026: "asfalt ve karlı bölge çok keskin ayrılıyor ... sürekli tekrar eden aynı desen de olmazsa iyi olur"; aynı akşam:
+// "yol koyu olsun, asfalt yeni orası. köy yolu gibi değil ... sadece keskin geçiş olmasın ... şerit çizgileri yeni").
+//  - Asfalt YENİ: koyu (KAR_ASFALT_KOYU), tek ton, üstünde kar ya da leke yok; dokunun (TEX.asfalt) çatlağı renkte ve normalde bastırılır, tanesi kalır. Karlı, buzlu
+//    asfalt dokusu (asphalt_snow) ve yol üstü ince kar bu yüzden kaldırıldı; yeniden eklenmez.
+//  - Doku dünya koordinatından okunur (4,5 m). İkinci örnek 90° dönük ve %17 küçük, 22 ve 6 m'lik gürültü ikisini karıştırır; uzakta 41 m'lik örnek: karo ızgarası seçilmez.
 //    Kavşakta üst üste binen yollar aynı noktada aynı rengi verir.
-//  - Kenar: aKen (buildRoads, src/dunya.js) asfalt birleşiminin kenarına uzaklığı verir (ykE, m). Kar sınırı kenardan 0,4–2,2 m içeride üç ölçekte gürültüyle dolaşır,
-//    dokunun açık (karlı) tanelerinden başlar; en dış 0,6 m saydamlaşır ve alttaki arazinin karı görünür: kenar çizgisi kalmaz. pay: şeridin yoldan geniş çizilen kısmı.
-//  - Yol üstünde ince kar: 50 ve 14 m'lik lekeler hâlinde, şerit ortasında ve teker izlerinin arasında birikir; teker izleri açık kalır (izler 7 m'lik gürültüyle hafif dalgalı).
-//  - Toprak yol (o.toprak): aynı yama, çakıl dokusu (4,5 m) soluk gri-kahve; kar sınırı kenara daha yakın, ortadaki kar daha sık (iki teker izi açık).
+//  - Kenar: aKen (buildRoads, src/dunya.js) asfalt birleşiminin kenarına uzaklığı verir (ykE, m). Asfaltta kar, kenardan 0,55–1,55 m içerideki sınırın çevresinde 1,3 m'lik
+//    yumuşak geçişle biter; ince taneli gürültü geçişi toz kar gibi dağıtır. En dış 0,6 m saydamlaşır ve alttaki arazinin karı görünür: kenar çizgisi kalmaz.
+//    pay: şeridin yoldan geniş çizilen kısmı (0,5 m; sınırın çoğu bu payın içinde kalır, asfaltın kendisi dar görünmez).
+//  - Toprak yol (o.toprak): çakıl dokusu soluk gri-kahve; kar sınırı kenara yakın ve keskin taneli, ortada ince kar (iki teker izi açık; izler 7 m'lik gürültüyle dalgalı).
+const KAR_ASFALT_KOYU = 0.55;      // yeni asfalt: doku ortalamasının (0,10) bu katı
 const KAR_YOL_RENK = [0.60, 0.63, 0.69];      // yol kenarındaki kirli kar (doğrusal); arazideki yol banketiyle aynı ton
 function karYolPatch(mat, pay, o) {
-  const T = !!(o && o.toprak), f = (v) => v.toFixed(4), ORT = glv3(T ? TEX_AVG.cakil : TEX_AVG.asfalt_kar), OL = T ? 0.2222 : 0.5, nV = !!mat.normalMap;
+  const T = !!(o && o.toprak), f = (v) => v.toFixed(4), ORT = glv3(T ? TEX_AVG.cakil : TEX_AVG.asfalt), OL = 0.2222, nV = !!mat.normalMap;
   const S = (k) => f(OL * k);
   mat.transparent = true;
   mat.onBeforeCompile = (sh) => {
     sh.vertexShader = 'attribute vec4 aKen;\nvarying vec4 vKen;\nvarying vec3 vYkW;\n' + sh.vertexShader
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvYkW = (modelMatrix * vec4(position, 1.0)).xyz;\nvKen = aKen;');
     const ust = ['varying vec4 vKen;', 'varying vec3 vYkW;',
-      'float ykH(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }',
+      // hücre numarası 256'da sarılır: dünya koordinatı büyükken (1700 m × 19) kayan nokta duyarlığı bitip gürültü çizgi çizgi olmasın
+      'float ykH(vec2 p){ p = mod(p, 256.0); vec3 q = fract(vec3(p.xyx) * 0.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }',
       'float ykG(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);',
       '  return mix(mix(ykH(i), ykH(i + vec2(1.0, 0.0)), f.x), mix(ykH(i + vec2(0.0, 1.0)), ykH(i + vec2(1.0, 1.0)), f.x), f.y); }',
       'vec4 ykOku(sampler2D t, vec2 p, float s, bool don, vec2 o) { return don ? texture2D(t, vec2(p.y, -p.x) * s + o) : texture2D(t, p * s + o); }',
@@ -9109,20 +9114,23 @@ function karYolPatch(mat, pay, o) {
       'vec3 ykDet = mix(ykA, ykOku(map, ykP, ' + S(0.11) + ', false, vec2(0.37)).rgb, smoothstep(10.0, 80.0, ykD)) / ' + ORT + ';',
       'ykDet = mix(ykDet, vec3(1.0), smoothstep(120.0, 700.0, ykD) * 0.85);',
       'float ykL = dot(ykDet, vec3(0.333));',
-      'ykDet *= 0.9 + (ykG(ykP * 0.013 + 2.7) * 0.6 + ykG(ykP * 0.05 + 8.1) * 0.4) * 0.22;',      // 77 ve 20 m'lik ton lekeleri
-      'diffuseColor.rgb *= ' + ORT + ' * ykDet;',
+      T ? 'ykDet *= 0.9 + (ykG(ykP * 0.013 + 2.7) * 0.6 + ykG(ykP * 0.05 + 8.1) * 0.4) * 0.22;'      // 77 ve 20 m'lik ton lekeleri
+        : 'ykDet = max(mix(vec3(1.0), ykDet, 0.75), vec3(0.96)) * (0.97 + (ykG(ykP * 0.013 + 2.7) * 0.6 + ykG(ykP * 0.05 + 8.1) * 0.4) * 0.06);',      // yeni asfalt: tek ton, leke yok denecek kadar
+      'diffuseColor.rgb *= ' + ORT + ' * ykDet' + (T ? '' : ' * ' + f(KAR_ASFALT_KOYU)) + ';',
       T ? 'diffuseColor.rgb = mix(vec3(dot(diffuseColor.rgb, vec3(0.3, 0.5, 0.2))) * vec3(1.06, 1.0, 0.9), diffuseColor.rgb, 0.35) * 0.95;' : '',      // kırmızımsı çakıl soluk gri-kahveye
       // kenar
       'float ykE = min(vKen.x + max(vKen.z, 0.0), vKen.y + max(vKen.w, 0.0));',
-      'float ykS = ' + (T ? '0.3' : '0.4') + ' + (ykG(ykP * 0.11 + 3.7) * 0.55 + ykG(ykP * 0.41 + 1.3) * 0.3 + ykG(ykP * 1.7) * 0.15) * ' + (T ? '1.1' : '1.8') + ';',
-      'float ykKen = 1.0 - smoothstep(-0.3, 0.3, ykE - ykS - (ykL - 1.0) * 0.35);',
+      'float ykS = ' + (T ? '0.3' : '0.55') + ' + (ykG(ykP * 0.11 + 3.7) * 0.55 + ykG(ykP * 0.41 + 1.3) * 0.3 + ykG(ykP * 1.7) * 0.15) * ' + (T ? '1.1' : '1.0') + ';',
+      T ? 'float ykKen = 1.0 - smoothstep(-0.3, 0.3, ykE - ykS - (ykL - 1.0) * 0.35);'
+        // asfalt: 1,3 m'lik yumuşak geçiş; ince taneli gürültü geçişi toz kar gibi dağıtır (uzakta kapanır: kıpırdamaz)
+        : 'float ykC = 1.0 - smoothstep(-0.65, 0.65, ykE - ykS);\nfloat ykT = (ykG(ykP * 6.0) * 0.55 + ykG(ykP * 19.0) * 0.45 - 0.5) * (1.0 - smoothstep(12.0, 55.0, ykD));\nfloat ykKen = smoothstep(0.12, 0.88, ykC + ykT * 0.55 * min(ykC * 4.0, 1.0));',
       // yol üstü ince kar
       'float ykHw = (vKen.x + vKen.y) * 0.5, ykO = abs(vKen.y - vKen.x) * 0.5;',      // şeridin yarı genişliği, eksenden uzaklık
       'float ykSer = ykHw > ' + f(3.2 + pay) + ' ? abs(ykO - (ykHw - ' + f(pay) + ') * 0.5) : ykO;',      // şerit ortasından uzaklık (dar yol tek şerit)
       'ykSer += (ykG(ykP * 0.14 + 5.5) - 0.5) * 0.3;',
       'float ykIz = exp(-pow((ykSer - 0.85) / 0.55, 2.0));',      // teker izi
-      'float ykToz = smoothstep(' + (T ? '0.2, 0.6' : '0.42, 0.86') + ', ykG(ykP * 0.02 + 9.1) * 0.6 + ykG(ykP * 0.07 + 4.3) * 0.4) * 0.72 * (1.0 - ykIz * 0.9);',
-      'ykKar = max(ykKen, smoothstep(0.3, 0.7, ykToz + (ykL - 1.0) * 0.3) * ' + (T ? '0.8' : '0.6') + ');',
+      'float ykToz = smoothstep(0.2, 0.6, ykG(ykP * 0.02 + 9.1) * 0.6 + ykG(ykP * 0.07 + 4.3) * 0.4) * 0.72 * (1.0 - ykIz * 0.9);',
+      T ? 'ykKar = max(ykKen, smoothstep(0.3, 0.7, ykToz + (ykL - 1.0) * 0.3) * 0.8);' : 'ykKar = ykKen;',      // asfaltın üstü temiz
       'ykAlfa = smoothstep(0.12, 0.72, ykE + (ykG(ykP * 0.9 + 6.1) - 0.5) * 0.24);',
     ].join('\n')).replace('#include <color_fragment>', [
       '#include <color_fragment>',
@@ -9136,6 +9144,7 @@ function karYolPatch(mat, pay, o) {
       MOBIL ? 'vec2 ykN = ykOku(normalMap, ykP, ' + S(1) + ', false, vec2(0.0)).xy * 2.0 - 1.0;'
         : 'vec2 ykN1 = ykOku(normalMap, ykP, ' + S(1) + ', false, vec2(0.0)).xy * 2.0 - 1.0, ykN2 = ykOku(normalMap, ykP, ' + S(0.83) + ', true, vec2(0.43)).xy * 2.0 - 1.0;\nvec2 ykN = mix(ykN1, vec2(-ykN2.y, ykN2.x), ykM);',      // dönük örneğin eğimi geri döndürülür
       'ykN *= normalScale * (1.0 - ykKar * 0.8) * (1.0 - smoothstep(40.0, 300.0, ykD));',
+      T ? '' : 'ykN *= 1.0 - smoothstep(0.15, 0.45, length(ykN));',      // yeni asfalt: dokudaki çatlağın dik eğimi silinir, tane kalır
       'vec3 ykW = inverseTransformDirection(normal, viewMatrix);',
       'normal = normalize((viewMatrix * vec4(normalize(ykW + vec3(ykN.x, 0.0, ykN.y)), 0.0)).xyz);',
     ].join('\n'));
