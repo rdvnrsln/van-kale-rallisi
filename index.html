@@ -93,6 +93,7 @@ button:focus-visible { outline: 2px solid var(--gol); outline-offset: 2px; }
 @keyframes nefes-bitik { to { opacity: 0.35; } }
 .dokun-turbo .ikon-pedal, #hud.pedalli .dokun-turbo .ikon-alev { display: none; }
 #hud.pedalli .dokun-turbo .ikon-pedal { display: inline; }
+#dokun-zil { display: none; } #hud.pedalli #dokun-zil { display: grid; }      /* zil yalnız pedallı üç tekerde */
 /* viraj uyarısı: ekranın üst üçte birinde, ortada */
 #viraj { grid-area: 2 / 1 / 3 / 4; align-self: start; justify-self: center; margin-top: 6vh; width: 110px; }
 #viraj[hidden] { display: none; }
@@ -427,7 +428,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
   <div class="dokun dokun-sol"><button type="button" data-t="l" aria-label="Sola" data-i18n-aria="hud.sola"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" data-t="r" aria-label="Sağa" data-i18n-aria="hud.saga"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
   <button id="ipucu" type="button" hidden></button>
   <div class="dokun dokun-sag"><button type="button" data-t="h" aria-label="El freni" data-i18n-aria="hud.elFreni"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M10.2 16.6V7.6h2.9a2.55 2.55 0 0 1 0 5.1h-2.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" data-t="b" aria-label="Fren" data-i18n-aria="hud.fren"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.2" y="7.2" width="15.6" height="10.4" rx="2.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.2 10.4v4M12 10.4v4M15.8 10.4v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button><button type="button" data-t="g" aria-label="Gaz" data-i18n-aria="hud.gaz"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="2.8" width="8" height="18.4" rx="2.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10.6 7.6h2.8M10.6 11.8h2.8M10.6 16h2.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
-  <div class="dokun dokun-turbo"><button type="button" id="dokun-n" data-t="n" aria-label="Turbo" data-i18n-aria="hud.turbo"><svg class="ikon ikon-pedal" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="11" r="4"/><path d="M10 11l5.5 6.5M13 18.5h6M4.2 6.6a8 8 0 0 1 9.6-2.9"/></g></svg><svg class="ikon ikon-alev" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8c.9 3.4 5 5.2 5 10.2a5 5 0 0 1-10 0c0-2.4 1.3-4 2.7-5.1.2 1.9 1.1 2.9 2.3 3.3.3-3.3-1-5.8 0-8.4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button></div>
+  <div class="dokun dokun-turbo"><button type="button" id="dokun-zil" aria-label="Zil" data-i18n-aria="hud.zil"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.6h12l-1.7-2.3V10a4.3 4.3 0 0 0-8.6 0v4.3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M10.2 19.2a1.9 1.9 0 0 0 3.6 0M12 3.6v1.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><button type="button" id="dokun-n" data-t="n" aria-label="Turbo" data-i18n-aria="hud.turbo"><svg class="ikon ikon-pedal" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="11" r="4"/><path d="M10 11l5.5 6.5M13 18.5h6M4.2 6.6a8 8 0 0 1 9.6-2.9"/></g></svg><svg class="ikon ikon-alev" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8c.9 3.4 5 5.2 5 10.2a5 5 0 0 1-10 0c0-2.4 1.3-4 2.7-5.1.2 1.9 1.1 2.9 2.3 3.3.3-3.3-1-5.8 0-8.4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button></div>
   <div class="sag-alt">
     <div id="turbo" role="meter" aria-label="Turbo" data-i18n-aria="hud.turbo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="turbo-d"></div></div>
     <div id="hiz-n">0</div>
@@ -6413,6 +6414,7 @@ const DIL = {
     'cok.ulasilamadi': 'Sunucuya ulaşılamadı. İnternetini kontrol edip yeniden dene.', 'cok.dolu': 'Oda dolu. Bir odada en çok dört kişi olur.', 'cok.yok': 'Bu kodla açık oda yok.', 'cok.kodHatali': 'Kod dört harf olmalı.',
     'cok.ayrildin': 'Odadan çıktın.', 'cok.bolgede': 'Oyuncu {0} {1} bölgesinde, seni de oraya aldık.', 'cok.oyuncu': 'Oyuncu {0}', 'cok.yaninda': 'Oyuncu {0} hemen önünde',
     'hud.turbo': 'Turbo', 'hud.nefes': 'Nefes', 'hud.ayakta': 'Ayakta pedal', 'uc.nefes': 'Nefesin tükendi', 'uc.devrildi': 'Devrildin', 'uc.devrildi.alt': 'Virajda yavaşla; yükle daha çabuk devrilirsin', 'hud.gec': 'Geçmek için dokun ya da bir tuşa bas', 'hud.viraj': 'Viraj',
+    'hud.zil': 'Zil', 'uc.kilPayi': 'Kıl payı!', 'uc.kilPayi.alt': 'Yoldakiler alkışlıyor',
     'menu.tuslar': '<b>W A S D</b> ya da <b>ok tuşları</b> sürüş · <b>Shift</b> turbo (bisiklette ayakta pedal) · <b>Boşluk</b> el freni · <b>R</b> yola dön · <b>C</b> kamera · <b>H</b> korna ya da zil · <b>N</b> ses · <b>M</b> menü. Oyun kolu: sol çubuk, RT gaz, LT fren, X ya da RB turbo, A el freni, B yola dön, Y kamera.',
     'menu.kunye': 'Sokaklar, binalar ve surlar: © OpenStreetMap katkıcıları (ODbL). Yükseklik: SRTM, Mapzen arazi karoları. Dokular: Poly Haven (CC0). Kale kayasının biçimi OSM sınırından yeniden kurulmuştur.',
     'etk.km': 'km', 'etk.tur': '{0} tur', 'etk.zamanaKarsi': 'zamana karşı', 'etk.rakip': '{0} rakip', 'etk.enIyi': 'en iyi {0}',
@@ -6585,6 +6587,7 @@ const DIL = {
     'cok.ulasilamadi': 'Could not reach the server. Check your internet and try again.', 'cok.dolu': 'The room is full. A room holds up to four players.', 'cok.yok': 'There is no open room with this code.', 'cok.kodHatali': 'The code must be four letters.',
     'cok.ayrildin': 'You left the room.', 'cok.bolgede': 'Player {0} is in {1}, so we took you there too.', 'cok.oyuncu': 'Player {0}', 'cok.yaninda': 'Player {0} is right ahead',
     'hud.turbo': 'Turbo', 'hud.nefes': 'Breath', 'hud.ayakta': 'Stand and pedal', 'uc.nefes': 'Out of breath', 'uc.devrildi': 'You tipped over', 'uc.devrildi.alt': 'Slow down in corners; with a load you tip sooner', 'hud.gec': 'Tap or press any key to skip', 'hud.viraj': 'Bend',
+    'hud.zil': 'Bell', 'uc.kilPayi': 'Close call!', 'uc.kilPayi.alt': 'People on the street are clapping',
     'menu.tuslar': '<b>W A S D</b> or <b>arrow keys</b> drive · <b>Shift</b> turbo (on the bicycle: stand and pedal) · <b>Space</b> handbrake · <b>R</b> back to road · <b>C</b> camera · <b>H</b> horn or bell · <b>N</b> sound · <b>M</b> menu. Gamepad: left stick, RT throttle, LT brake, X or RB turbo, A handbrake, B back to road, Y camera.',
     'menu.kunye': 'Streets, buildings and walls: © OpenStreetMap contributors (ODbL). Elevation: SRTM, Mapzen terrain tiles. Textures: Poly Haven (CC0). The shape of the castle rock is rebuilt from the OSM outline.',
     'etk.km': 'km', 'etk.tur': '{0} laps', 'etk.zamanaKarsi': 'time trial', 'etk.rakip': '{0} rivals', 'etk.enIyi': 'best {0}',
@@ -6757,6 +6760,7 @@ const DIL = {
     'cok.ulasilamadi': 'به سرور دسترسی نیست. اینترنت را بررسی کن و دوباره امتحان کن.', 'cok.dolu': 'اتاق پر است. هر اتاق حداکثر چهار نفر دارد.', 'cok.yok': 'اتاقی با این کد باز نیست.', 'cok.kodHatali': 'کد باید چهار حرف باشد.',
     'cok.ayrildin': 'از اتاق خارج شدی.', 'cok.bolgede': 'بازیکن {0} در {1} است؛ تو را هم به آنجا بردیم.', 'cok.oyuncu': 'بازیکن {0}', 'cok.yaninda': 'بازیکن {0} درست جلوی توست',
     'hud.turbo': 'توربو', 'hud.nefes': 'نفس', 'hud.ayakta': 'رکاب ایستاده', 'uc.nefes': 'نفست بند آمد', 'uc.devrildi': 'واژگون شدی', 'uc.devrildi.alt': 'سر پیچ آهسته‌تر برو؛ با بار زودتر واژگون می‌شوی', 'hud.gec': 'برای رد کردن لمس کنید یا کلیدی بزنید', 'hud.viraj': 'پیچ',
+    'hud.zil': 'زنگ', 'uc.kilPayi': 'به مو رسید!', 'uc.kilPayi.alt': 'رهگذرها برایت دست می‌زنند',
     'menu.tuslar': '<b>W A S D</b> یا <b>کلیدهای جهت</b> رانندگی · <b>Shift</b> توربو (روی دوچرخه: رکاب ایستاده) · <b>Space</b> ترمز دستی · <b>R</b> بازگشت به جاده · <b>C</b> دوربین · <b>H</b> بوق یا زنگ · <b>N</b> صدا · <b>M</b> منو. دسته بازی: اهرم چپ، RT گاز، LT ترمز، X یا RB توربو، A ترمز دستی، B بازگشت به جاده، Y دوربین.',
     'menu.kunye': 'خیابان‌ها، ساختمان‌ها و باروها: © مشارکت‌کنندگان OpenStreetMap (ODbL). ارتفاع: SRTM، کاشی‌های Mapzen. بافت‌ها: Poly Haven (CC0). شکل صخره قلعه از روی محدوده OSM بازسازی شده است.',
     'etk.km': 'کیلومتر', 'etk.tur': '{0} دور', 'etk.zamanaKarsi': 'با زمان', 'etk.rakip': '{0} رقیب', 'etk.enIyi': 'بهترین {0}',
@@ -10079,7 +10083,8 @@ function poseCar(c, dt) {
 // ------------------------------------------------------------ Blender modelleri: oyuncu figürü ve üç teker
 // Model: yayin/model/arac/ucteker.glb (tools/blender/oyuncu_ucteker.py). Yüklenemezse yukarıdaki kod çizimi kullanılır.
 let _ucSoz = null;
-const UC_SURUM = '2026-11-21b';      // model dosyası değişince artırılır (Safari eski GLB'yi önbellekten verir); 20 Kas: büyük kasa
+const UC_SURUM = '2026-11-21d';      // model dosyası değişince artırılır (Safari eski GLB'yi önbellekten verir); 20 Kas: büyük kasa
+let _sasiKoyu = null;      // kabinli motorlu üç tekerin şasi boyası (bütün kopyalar paylaşır)
 function ucTekerYukle() {
   if (!_ucSoz) _ucSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/arac/ucteker.glb?s=' + UC_SURUM, (g) => ok(g.scene), undefined, red); });
   return _ucSoz;
@@ -10171,6 +10176,12 @@ function makeTrikeGLB(src, motor) {
     wheels.push({ pivot, spin, front: 0 });       // ön teker gidon takımıyla döner; ayrıca çevrilmez
   }
   al('motor_parca').visible = motor; krank.visible = !motor;
+  // Motorlu (kabinli) sürüm: tel yerine dolu jant, kırmızı bisiklet boyası yerine koyu şasi (kabinin altında görünür)
+  t.traverse((m) => {
+    if (!m.isMesh) return;
+    if (/^motor_disk/.test(m.name)) m.visible = motor; else if (/^tel/.test(m.name)) m.visible = !motor;
+    if (motor && m.material && m.material.name === 'boya') { if (!_sasiKoyu) { _sasiKoyu = m.material.clone(); _sasiKoyu.name = 'sasi'; _sasiKoyu.color.copy(LIN('#2a2e33')); } m.material = _sasiKoyu; }
+  });
   const yuk = al('yuk'); yuk.visible = false;
   const yukKahvalti = al('yuk_kahvalti'); if (yukKahvalti) yukKahvalti.visible = false;      // Van kahvaltısı erzakı (erzak işi)
   const yukler = { kahvalti: yukKahvalti };      // teslimat yükleri (yumurta, peynir, ekmek, bal): tek tür, adıyla seçilir
@@ -11128,11 +11139,15 @@ function yayaYuru(y, a) {
 function yayaYuz(y, ifade) { const dt = Math.min(0.1, Math.max(0, y.t - (y.yt === undefined ? y.t : y.yt))); y.yt = y.t; yuzAdim(y.f, ifade, dt); }
 // Ayakta bekleme. durus: 'dur' | 'aski' (çanta askısını tutar) | 'telefon' | 'salla' (el sallar) | 'tasi' (omuzdaki kayağı tutar) | 'urk' (araç yaklaşınca)
 // | 'gul' (üç teker devrilince: bir eli karnında, öbürüyle gösterir, gövdesi gülmekten sarsılır, başı geri)
+// | 'sasir' (üç teker iki tekere kalkınca: iki eli başında, geri çekilir) | 'alkis' (el çırpar, hafif zıplar) | 'hayir' (elleri açık, başını sallar)
 function yayaDur(y, durus) {
   const f = y.f, t = y.t, tip = y.tip, gy = 0.938 + 0.004 * Math.sin(t * 1.3);
   f.govde.position.set(0.012 * Math.sin(t * 0.45), gy, 0); f.govde.rotation.set(0.015, 0.05 * Math.sin(t * 0.3), 0.012 * Math.sin(t * 0.45));
   f.bas.rotation.set(durus === 'telefon' ? 0.42 : 0.02, durus === 'telefon' ? -0.12 : 0.25 * Math.sin(t * 0.37 + y.faz), 0);
   if (durus === 'gul') { const k = Math.sin(t * 17); f.govde.position.y = gy + 0.012 * k; f.govde.rotation.set(-0.1 + 0.035 * k, 0, 0.02 * Math.sin(t * 8.5)); f.bas.rotation.set(-0.28 + 0.06 * k, 0, 0.05 * Math.sin(t * 6)); }
+  else if (durus === 'sasir') { f.govde.rotation.set(-0.09, 0, 0); f.bas.rotation.set(-0.1, 0.05 * Math.sin(t * 3), 0); }
+  else if (durus === 'alkis') { f.govde.position.y = gy + 0.014 * Math.abs(Math.sin(t * 7)); f.bas.rotation.set(-0.06 + 0.05 * Math.sin(t * 7), 0, 0); }
+  else if (durus === 'hayir') { f.govde.rotation.set(0.08, 0, 0); f.bas.rotation.set(0.16, 0.34 * Math.sin(t * 6.5), 0); }
   for (const yan of ['L', 'R']) {
     const sx = yan === 'L' ? 1 : -1;
     ikCoz(f.bacak[yan], _ya.v.set(sx * 0.105, 0.065 - gy, sx * 0.025), _ya.b.set(sx * 0.1, 0.1, 1));
@@ -11144,9 +11159,12 @@ function yayaDur(y, durus) {
     else if (durus === 'urk') { v.set(sx * (tip.om + 0.12), 0.25, 0.22); b.set(sx * 1, -0.5, -0.4); }
     else if (durus === 'gul' && yan === 'L') { v.set(0.04, -0.02, 0.17); b.set(1, -0.4, -0.2); }      // eli karnında
     else if (durus === 'gul') { v.set(-0.12, 0.42, 0.5 + 0.02 * Math.sin(t * 17)); b.set(-1, -0.6, -0.2); }      // gösterir
+    else if (durus === 'sasir') { v.set(sx * 0.125, 0.68, 0.03); b.set(sx * 1, 0.35, -0.25); }      // elleri başının iki yanında, dirsekler dışarı
+    else if (durus === 'alkis') { const c = 0.5 + 0.5 * Math.sin(t * 14); v.set(sx * (0.03 + 0.09 * c), 0.34, 0.3); b.set(sx * 1, -0.5, -0.1); }
+    else if (durus === 'hayir') { v.set(sx * (tip.om + 0.17), 0.06, 0.24); b.set(sx * 1, -0.6, -0.4); }      // avuçlar açık: "ne oldu böyle"
     ikCoz(f.kol[yan], v, b);
   }
-  yayaYuz(y, durus === 'urk' ? 'saskin' : durus === 'salla' || durus === 'gul' ? 'mutlu' : 'notr');
+  yayaYuz(y, durus === 'urk' || durus === 'sasir' ? 'saskin' : durus === 'salla' || durus === 'gul' || durus === 'alkis' ? 'mutlu' : durus === 'hayir' ? 'kizgin' : 'notr');
 }
 // Tezgâh başındaki misafir (kahvaltı salonu). barY, barZ: bar üstünün ve misafir tarafındaki kenarının figür ölçüsündeki yeri.
 // durum: 'idle' (elleri barda bekler) | 'emote-no' (sabırsız: başını sallar, elini açar) | 'emote-yes' (sevinir: başını sallar, el çırpar)
@@ -11239,7 +11257,7 @@ function yayaDogur(P) {
     for (const q of YAYA_SOKAK) { const s = (say[q] || 0) + Math.random() * 0.9; if (s < en) { en = s; ad = q; } }
     y = yayaKur(YAYA.src, ad, null); YAYA.sahne.add(y.kok);
   }
-  y.zi = zi; y.i = i; y.yon = Math.random() < 0.5 ? 1 : -1; y.s = 0; y.yan = (Math.random() - 0.5) * 0.7; y.bekle = 0; y.urk = 0;
+  y.zi = zi; y.i = i; y.yon = Math.random() < 0.5 ? 1 : -1; y.s = 0; y.yan = (Math.random() - 0.5) * 0.7; y.bekle = 0; y.urk = 0; y.tep = null; y.selamT = 0;
   y.hiz = y.tip.hiz * (0.75 + Math.random() * 0.2); y.x = x; y.z = zz; y.h = 0; y.kok.visible = true;
   YAYA.act.push(y);
   return true;
@@ -11253,14 +11271,17 @@ function yayaTick(dt, P) {
     const dx0 = y.x - P.x, dz0 = y.z - P.z, d2 = dx0 * dx0 + dz0 * dz0;
     if (d2 > 170 * 170 || n >= YAYA.hedef + 2) { y.kok.visible = false; YAYA.bos.push(y); YAYA.act.splice(n, 1); continue; }
     y.t += dt;
-    // araç yakında ve hareketliyse dur
-    if (d2 < 7 * 7 && pv > 2) y.urk = 1.2; else if (y.urk > 0) y.urk -= dt;
-    if (y.gul > 0) y.gul -= dt;
+    // araç yakında ve hareketliyse dur. Pedallı üç teker yavaşken ürkütmez; yanından geçerken yayaların kimisi el sallar (geçiş başına bir kez).
+    const urkHiz = P.pedal ? 5.5 : 2;
+    if (d2 < 7 * 7 && pv > urkHiz) y.urk = 1.2; else if (y.urk > 0) y.urk -= dt;
+    if (y.selamT > 0) y.selamT -= dt;
+    else if (P.pedal && d2 < 9 * 9 && pv > 0.8 && pv <= urkHiz && !y.tep) { y.selamT = 25; if (Math.random() < 0.3) yayaTepkiVer(y, 'salla', 1.7, 0.1 + Math.random() * 0.3); }
+    if (y.tep && (y.tep.t -= dt) <= 0) y.tep = null;
     let j = y.i + y.yon;
     if (j < 0 || j >= nn) { y.yon = -y.yon; j = y.i + y.yon; y.s = 0; y.bekle = 1 + Math.random() * 2.5; }
     const ax = z[y.i * 3], ay = z[y.i * 3 + 1], az = z[y.i * 3 + 2], bx = z[j * 3], by = z[j * 3 + 1], bz = z[j * 3 + 2];
     const L = Math.hypot(bx - ax, bz - az) || 1, ux = (bx - ax) / L, uz = (bz - az) / L;
-    const gulyor = y.gul > 0 && y.gul < y.gulSure, yuruyor = y.urk <= 0 && y.bekle <= 0 && !(y.gul > 0), adim = y.tip.etek ? 0.27 : 0.34;
+    const tep = y.tep && y.tep.t < y.tep.sure ? y.tep.durus : null, yuruyor = y.urk <= 0 && y.bekle <= 0 && !y.tep, adim = y.tip.etek ? 0.27 : 0.34;
     if (y.bekle > 0) y.bekle -= dt;
     if (yuruyor) {
       y.s += y.hiz * dt;
@@ -11273,23 +11294,39 @@ function yayaTick(dt, P) {
     const ex = x - P.x, ez = zz - P.z, ed = Math.hypot(ex, ez);
     if (ed < 1.7 && ed > 0.01) { x = P.x + (ex / ed) * 1.7; zz = P.z + (ez / ed) * 1.7; }
     y.x = x; y.z = zz;
-    const hedefH = y.urk > 0 || y.gul > 0 ? Math.atan2(-dx0, -dz0) : Math.atan2(ux, uz);      // ürkünce ya da gülünce oyuncuya döner
+    const hedefH = y.urk > 0 || y.tep ? Math.atan2(-dx0, -dz0) : Math.atan2(ux, uz);      // ürkünce ya da tepki verirken oyuncuya döner
     y.h += wrapAngle(hedefH - y.h) * Math.min(1, dt * 6);
     y.kok.position.set(x, ay + (by - ay) * u, zz); y.kok.rotation.y = y.h;
     const yakin = d2 < 95 * 95;
-    if (yakin || (y.sira = !y.sira)) { if (yuruyor) yayaYuru(y, adim); else yayaDur(y, gulyor ? 'gul' : y.urk > 0 ? 'urk' : 'dur'); }
+    if (yakin || (y.sira = !y.sira)) { if (yuruyor) yayaYuru(y, adim); else yayaDur(y, tep || (y.urk > 0 ? 'urk' : 'dur')); }
     const golge = d2 < 45 * 45;
     if (golge !== y.golge) { y.golge = golge; y.kok.traverse((o) => { if (o.isMesh) o.castShadow = golge; }); }
   }
 }
-// Üç teker devrilince (21 Kas 2026, komik devrilme): r metre içindeki yayalar durur, oyuncuya döner ve güler (0,2–0,6 sn gecikmeyle, 2,5–3,5 sn).
-function yayaGul(P, r) {
-  for (const y of YAYA.act) {
-    if ((y.x - P.x) ** 2 + (y.z - P.z) ** 2 > r * r) continue;
-    const gec = 0.2 + Math.random() * 0.4, sure = 2.5 + Math.random();
-    y.gul = gec + sure; y.gulSure = sure;      // ilk 'gec' saniye yalnız döner, sonra güler
-  }
+// Tepkiler (21 Kas 2026): yaya durur, oyuncuya döner, 'gec' saniye sonra 'sure' saniye boyunca duruşu yapar. Güçlü tepki zayıfını ezer, tersi olmaz.
+const TEPKI_SIRA = { salla: 1, urk: 1, sasir: 2, alkis: 3, hayir: 3, gul: 4 };
+function yayaTepkiVer(y, durus, sure, gec) {
+  if (y.tep && TEPKI_SIRA[y.tep.durus] > TEPKI_SIRA[durus]) return false;
+  y.tep = { durus, sure, t: gec + sure };
+  return true;
 }
+// r metre içindeki yayalar tepki verir; tepki veren sayısını döndürür. ops.koni: yalnız oyuncunun önündekiler (yön kosinüsü eşiği);
+// ops.oran: her yayanın tepki verme olasılığı; ops.durus: yaya başına duruş seçen işlev (ör. zilde çoğu el sallar, kimisi irkilir).
+function yayaTepki(P, r, durus, sure, ops) {
+  ops = ops || {};
+  const fx = Math.sin(P.h), fz = Math.cos(P.h);
+  let n = 0;
+  for (const y of YAYA.act) {
+    const dx = y.x - P.x, dz = y.z - P.z, d = Math.hypot(dx, dz);
+    if (d > r) continue;
+    if (ops.koni !== undefined && d > 0.5 && (dx * fx + dz * fz) / d < ops.koni) continue;
+    if (ops.oran !== undefined && Math.random() > ops.oran) continue;
+    if (yayaTepkiVer(y, ops.durus ? ops.durus() : durus, sure * (0.85 + Math.random() * 0.3), 0.15 + Math.random() * 0.4)) n++;
+  }
+  return n;
+}
+// Üç teker devrilince (komik devrilme): r metre içindekiler döner ve güler (0,15–0,55 sn gecikmeyle, 2,5–3,5 sn).
+function yayaGul(P, r) { return yayaTepki(P, r, 'gul', 3); }
 function yayaTemizle() { for (const y of YAYA.act) { y.kok.visible = false; YAYA.bos.push(y); } YAYA.act.length = 0; }
 
 'use strict';
@@ -12616,12 +12653,12 @@ function cokKur(o) {
       if (U.bolge && U.bolge !== o.bolge()) { o.bolgeGit(U.bolge); durumYaz('cok.bolgede', U.no, { bolge: U.bolge }); }
     }
   }
-  // Boya: GLB'de "boya" adlı malzeme (araba gövdesi, üç teker çerçevesi). Asıl malzeme saklanır, oda bitince geri konur.
+  // Boya: GLB'de "boya" adlı malzeme (araba gövdesi, üç teker çerçevesi) ve "kabin_boya" (kabinli motorlu üç teker). Asıl malzeme saklanır, oda bitince geri konur.
   const BOYA = {};
   function boyaRenk(grup, hex) {
     grup.traverse((m) => {
       if (!m.isMesh || !m.material) return;
-      const asil = m.userData.asilBoya || (m.material.name === 'boya' ? m.material : null);
+      const asil = m.userData.asilBoya || (m.material.name === 'boya' || m.material.name === 'kabin_boya' ? m.material : null);
       if (!asil) return;
       m.userData.asilBoya = asil;
       if (!hex) { m.material = asil; return; }
@@ -13518,6 +13555,27 @@ function cokKur(o) {
     if (!A.ctx) return;
     for (const d of [0, 0.17]) { beep(2350, 0.6, 0.11, 'sine', d); beep(3320, 0.42, 0.06, 'sine', d); beep(4870, 0.26, 0.03, 'sine', d); }
   }
+  // Zil (pedallı üç teker) ya da korna: önündeki yayalar (20 m, ±70°) döner; zilde çoğu el sallar, kimisi irkilir; kornada irkilir.
+  let zilT = 0;
+  function zilCal() {
+    if (!player) return;
+    if (player.pedal && !player.ski) zil(); else { beep(392, 0.35, 0.25, 'square'); beep(494, 0.35, 0.2, 'square'); }
+    const simdi = performance.now();
+    if (player.ski || simdi < zilT || !(G.state === 'free' || G.state === 'race')) return;
+    zilT = simdi + 600;
+    yayaTepki(player, 20, 'urk', player.pedal ? 1.7 : 0.9, { koni: 0.35, durus: player.pedal ? () => (Math.random() < 0.7 ? 'salla' : 'urk') : null });
+  }
+  // alkış: n kişi; süzülmüş gürültüden kısa el çırpmaları, 2 sn'ye dağılır
+  function alkisSes(n) {
+    if (!A.ctx || !A.noise) return;
+    const t0 = A.ctx.currentTime, kac = Math.min(40, 10 + n * 7);
+    for (let i = 0; i < kac; i++) {
+      const t = t0 + Math.random() * 2.1, s = A.ctx.createBufferSource(), f = A.ctx.createBiquadFilter(), g = A.ctx.createGain();
+      s.buffer = A.noise; f.type = 'bandpass'; f.frequency.value = 1000 + Math.random() * 1500; f.Q.value = 1.1;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05 + Math.random() * 0.05, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+      s.connect(f); f.connect(g); g.connect(A.master); s.start(t, Math.random() * 1.5); s.stop(t + 0.09);
+    }
+  }
   // turbo açılınca hava hışırtısı (gürültü süzgeci 400 → 2.600 Hz)
   function turboSes() {
     if (!A.ctx) return;
@@ -13587,7 +13645,7 @@ function cokKur(o) {
     else if (e.code === 'Escape' || e.code === 'KeyM') showMenu(true);
     else if (e.code === 'KeyN') toggleMute();
     else if (e.code === 'KeyT') { const sira = ['gunduz', 'gunbatimi', 'gece', 'dongu'], yeni = sira[(sira.indexOf(AYAR.vakit) + 1) % 4]; vakitSec(yeni); flash(T('ayar.' + yeni), T('ayar.vakit'), 1.6); }
-    else if (e.code === 'KeyH') { if (player && player.pedal && !player.ski) zil(); else { beep(392, 0.35, 0.25, 'square'); beep(494, 0.35, 0.2, 'square'); } }
+    else if (e.code === 'KeyH') zilCal();
     else if (e.code === 'Enter' && G.near && !G.goal && canStart(G.near)) { G.lastStory = 0; startEvent(G.near); }
   });
   window.addEventListener('keyup', (e) => { keys[e.code] = false; });
@@ -13599,6 +13657,7 @@ function cokKur(o) {
     el.addEventListener('pointerdown', on); el.addEventListener('pointerup', off); el.addEventListener('pointercancel', off); el.addEventListener('pointerleave', off);
     el.addEventListener('contextmenu', (e) => e.preventDefault());
   }
+  { const z = $('dokun-zil'); z.addEventListener('pointerdown', (e) => { e.preventDefault(); initAudio(); zilCal(); z.classList.add('basili'); setTimeout(() => z.classList.remove('basili'), 140); }); z.addEventListener('contextmenu', (e) => e.preventDefault()); }
   function toggleMute() {
     G.muted = !G.muted;
     if (A.master) A.master.gain.value = masterGain();
@@ -14080,7 +14139,7 @@ function cokKur(o) {
         beacon1.position.set(st.x, groundH(st.x, st.z) - 0.5, st.z);
         if (gl.ozel.yuk) yukGoster(true, gl.yukTur); else TUR.visible = false;
         hudT = 0;
-        if (gl.ozel.teslimat) { gl.t = 0; flash(T('tes.yuklendi.' + gl.yukTur), T('tes.gotur.' + gl.hedefTur) + ' ' + T('tes.ipucu.' + gl.yukTur), 4.5); return; }      // süre yüklenince başlar
+        if (gl.ozel.teslimat) { gl.t = 0; KARS.veda = 2.6; flash(T('tes.yuklendi.' + gl.yukTur), T('tes.gotur.' + gl.hedefTur) + ' ' + T('tes.ipucu.' + gl.yukTur), 4.5); return; }      // süre yüklenince başlar
         flash(T(gl.on + '.bindi'), T(gl.on + '.bindi.alt'), 3);
         return;
       }
@@ -14148,7 +14207,44 @@ function cokKur(o) {
     bal: { kaynak: ['kuruyemis'], hedef: ['otel', 'kahvalti', 'kafe', 'misafirhane', 'lokanta'], guc: 0.84, esik: 0.84, kirilgan: 1.4, ucret: 1.15, hiz: 0.95, agirlik: 3 },
   };
   // agirlik: seçilme payı. OSM'de fırın ve kuruyemişçi birer tane ve merkezden uzak; payları yüksek tutulur ki ekmek ve bal da gelsin.
-  const TES_MADALYA = [6.2, 4.9, 3.4];      // m/sn: altın, gümüş, bronz (bisiklet; motor 1,8 kat)
+  const TES_MADALYA = [6.2, 4.9, 3.4];
+  // Karşılayıcılar: alış noktasında dükkâncı, teslim noktasında alıcı kapının önünde (yolun dükkân tarafında, kaldırımda) bekler; oyuncu 45 m'ye
+  // gelince el sallar. Yük alınınca dükkâncı el sallayarak uğurlar. Teslimde alıcı alkışlar; yük hasarlıysa ya da ekmek soğuduysa ellerini açıp
+  // başını sallar. Figürler yaya modelinden (src/yaya.js), işe göre değişir; her figür bir kez kurulur, havuzda kalır.
+  const KARS = { havuz: {}, d: null, a: null, dp: null, ap: null, sonuc: 'dur', sonucT: 0, veda: 0 };
+  function karsFigur(ad) {
+    if (!YAYA.src) return null;
+    let y = KARS.havuz[ad];
+    if (!y) { y = KARS.havuz[ad] = yayaKur(YAYA.src, ad, null); y.kok.visible = false; y.kok.traverse((o) => { if (o.isMesh) o.castShadow = true; }); scene.add(y.kok); }
+    return y;
+  }
+  function karsYer(k, r) {      // r: yol noktası (nearRoad); k: gerçek yer [tür, x, z]. Yolun o yanında, kenardan 1,7 m içeride
+    const nx = Math.cos(r.h), nz = -Math.sin(r.h), rd = roadAt(r.x, r.z), hw = rd ? rd.hw : 3.5;
+    const s = (k[1] - r.x) * nx + (k[2] - r.z) * nz < 0 ? -1 : 1, x = r.x + nx * s * (hw + 1.7), z = r.z + nz * s * (hw + 1.7);
+    return { x, z, y: groundH(x, z) + yolUstu(x, z) };
+  }
+  function karsKur(is, a0, b0) {
+    for (const y of [KARS.d, KARS.a]) if (y) y.kok.visible = false;
+    const dAd = ['amca', 'teyze', 'dede', 'is_adami'][Math.floor(Math.random() * 4)], aAdlar = ['genc_e', 'kadin', 'is_adami', 'genc_k', 'amca', 'anne'].filter((x) => x !== dAd);
+    KARS.d = karsFigur(dAd); KARS.a = karsFigur(aAdlar[Math.floor(Math.random() * aAdlar.length)]);
+    KARS.dp = karsYer(is.k, a0); KARS.ap = karsYer(is.h, b0); KARS.veda = 0; KARS.sonucT = 0;
+    for (const [y, p] of [[KARS.d, KARS.dp], [KARS.a, KARS.ap]]) if (y) { y.kok.position.set(p.x, p.y, p.z); y.kok.rotation.y = Math.atan2(player.x - p.x, player.z - p.z); }
+  }
+  function karsTick(dt) {
+    const gl = G.goal, tes = !!(gl && gl.ozel && gl.ozel.teslimat), sonuc = G.state === 'result' && G.lastEvent && G.lastEvent.teslimat;
+    if (KARS.veda > 0) KARS.veda -= dt;
+    if (KARS.sonucT > 0) KARS.sonucT -= dt;
+    for (const [y, p, rol] of [[KARS.d, KARS.dp, 'd'], [KARS.a, KARS.ap, 'a']]) {
+      if (!y || !p) continue;
+      const d = Math.hypot(player.x - p.x, player.z - p.z);
+      const gor = rol === 'd' ? tes && (gl.si === 0 || KARS.veda > 0 || d < 80) : tes || sonuc;
+      if (y.kok.visible !== !!gor) y.kok.visible = !!gor;
+      if (!gor || d > 130) continue;
+      const durus = rol === 'd' ? (KARS.veda > 0 || (gl.si === 0 && d < 45) ? 'salla' : 'dur') : sonuc ? (KARS.sonucT > 0 ? KARS.sonuc : 'dur') : gl.si === 1 && d < 45 ? 'salla' : 'dur';
+      y.kok.rotation.y += wrapAngle(Math.atan2(player.x - p.x, player.z - p.z) - y.kok.rotation.y) * Math.min(1, dt * 5);
+      y.t += dt; yayaDur(y, durus);
+    }
+  }      // m/sn: altın, gümüş, bronz (bisiklet; motor 1,8 kat)
   let tesSon = '';
   // İş seç: yakin verilirse (zincir) alış noktası oraya 40–1300 m: 350 m içinde dükkân varsa o, yoksa 700 m içi, o da yoksa uzak (bu tür daha seyrek
   // gelir; fırın ve kuruyemişçi merkezden uzak). Hiçbiri yoksa ya da yakin yoksa şehrin her yerinden. Alış-teslim arası 300–1100 m.
@@ -14191,6 +14287,7 @@ function cokKur(o) {
       placeCar(player, s.x, s.z, Math.atan2(a0.x - s.x, a0.z - s.z));
     }
     tesSon = is.tur;
+    karsKur(is, a0, b0);
     const yol = 1.3 * Math.hypot(b0.x - a0.x, b0.z - a0.z), md = TES_MADALYA.map((v) => v * Y.hiz);
     const a = { x: a0.x, z: a0.z, ad: T('tes.yer.' + is.k[0]) }, b = { x: b0.x, z: b0.z, ad: T('tes.yer.' + is.h[0]) };
     G.goal = { stages: [a, b], si: 0, x: a.x, z: a.z, ad: a.ad, t: 0, sure: 0, R: null, ozel: ev, on: 'tes', konfor: 100, stop: true, yol, carpan: cp,
@@ -14213,6 +14310,8 @@ function cokKur(o) {
     const kazanc = Math.round(gl.odeme * cp * (t <= gold ? 1.5 : t <= silver ? 1.25 : t <= bronze ? 1 : 0.7) * (gl.konfor / 100) * (sicak === null ? 1 : 0.55 + (0.45 * sicak) / 100));
     addMoney(kazanc);
     const sayi = store.get('tes.sayi', 0) + 1; store.set('tes.sayi', sayi);
+    KARS.sonuc = gl.konfor >= 50 && !(sicak !== null && sicak < 40) ? 'alkis' : 'hayir'; KARS.sonucT = 6;      // alıcı alkışlar ya da başını sallar
+    if (KARS.sonuc === 'alkis' && KARS.a) alkisSes(1);
     G.state = 'result';
     $('hud').hidden = true; $('sonuc').hidden = false;
     $('sonuc-ad').textContent = T('tes.is.' + tur);
@@ -14521,6 +14620,7 @@ function cokKur(o) {
     if (r && r.done) { step(player, idle, dt); }
     else { step(player, pin, dt); if (r && !G.auto) advance(player, r.R); }
     if (player.devrikYeni) { player.devrikYeni = false; devrildi(); }
+    ucTepki(STEP);
     if (r) {
       if (!r.done) r.t += dt;
       for (const c of cars) {
@@ -14548,6 +14648,14 @@ function cokKur(o) {
       if (TRF.honk) { korna(TRF.honk); TRF.honk = null; }
     }
     if (G.goal && G.state === 'free') goalTick(dt);
+    // Üç teker binaya, sura ya da arabaya sert çarparsa devrilir (21 Kas 2026, kurucu: "3 tekerlek ile binalara veya arabaya çarpınca devrilmesi
+    // gerekir"). Eşik çarpma hızının duvara dik bileşeni: pedallı 4,2 m/sn (15 km/sa), motorlu 5. Araba çarparsa da (trafik) aynı. Devrilme yana:
+    // çarpmadan sonraki yan hızın yönüne; dümdüz çarpmada rastgele.
+    if (player.ucTeker && !player.ski && !(player.devrik > 0) && player.hit > (player.pedal ? 4.2 : 5)) {
+      const yan = player.vx * Math.cos(player.h) - player.vz * Math.sin(player.h);
+      player.kalkisYon = Math.abs(yan) > 0.3 ? Math.sign(yan) : Math.random() < 0.5 ? -1 : 1;
+      player.devrik = UC.devrikSure; player.kalkis = 1; devrildi();
+    }
     if (player.hit > 4) { thud(player.hit); }
     for (const c of cars) c.hit = 0;
     if (player.water > 1.0) { flash(T('flash.gol'), T('flash.gol.alt')); respawn(); }
@@ -14817,6 +14925,21 @@ function cokKur(o) {
     if (!korunsunLeke) { for (const e of SACIK.leke) scene.remove(e.l); SACIK.leke.length = 0; }
   }
   // Üç teker devrildi: gürültü, uyarı; yük taşınıyorsa yük 35 puan zarar görür
+  // Yaya tepkileri (21 Kas 2026, kurucu: "Yaya tepkileri"): üç teker iki tekere kalkınca (kalkış > 0,5) 26 m içindekiler ellerini başına götürür;
+  // devrilmeden toparlanırsa (en yüksek kalkış ≥ 0,72) 32 m içindekiler alkışlar ("Kıl payı"). Devrilince güler (devrildi). Zil: zilCal.
+  const UCT = { tepe: 0, sasirT: 0, alkisT: 0 };
+  function ucTepki(dt) {
+    if (UCT.sasirT > 0) UCT.sasirT -= dt;
+    if (UCT.alkisT > 0) UCT.alkisT -= dt;
+    if (!player.ucTeker || player.ski || player.devrik > 0) { UCT.tepe = 0; return; }
+    const k = player.kalkis || 0;
+    if (k > UCT.tepe) UCT.tepe = k;
+    if (k > 0.5 && UCT.sasirT <= 0) { yayaTepki(player, 26, 'sasir', 1.8); UCT.sasirT = 3; }
+    if (k < 0.05 && UCT.tepe > 0) {
+      if (UCT.tepe >= 0.72 && UCT.alkisT <= 0) { const n = yayaTepki(player, 32, 'alkis', 2.4); if (n) { alkisSes(n); flash(T('uc.kilPayi'), T('uc.kilPayi.alt'), 1.8); UCT.alkisT = 6; } }
+      UCT.tepe = 0;
+    }
+  }
   function devrildi() {
     thud(18); beep(240, 0.3, 0.14, 'square'); beep(170, 0.4, 0.12, 'square', 0.08);
     G.yavas = 0.75; G.sars = 0.45;      // ağır çekim (gerçek zamanla 0,75 sn, 0,35 hız) ve kamera sarsıntısı
@@ -15259,6 +15382,7 @@ function cokKur(o) {
       yayaTick(dt, player);
       if (TUR && TUR.visible && TUR.userData.uye) yayaGrupTick(TUR, dt, (TUR.position.x - player.x) ** 2 + (TUR.position.z - player.z) ** 2 < 60 * 60);
     }
+    karsTick(dt);      // teslimat karşılayıcıları (sonuç ekranında da)
     const f = updateCamera(dt);
     if (G.sars > 0) { G.sars -= dt; const k = G.sars * 0.35; camera.position.x += (Math.random() - 0.5) * k; camera.position.y += (Math.random() - 0.5) * k; camera.position.z += (Math.random() - 0.5) * k; }
     vakitAdim(dt);
@@ -15336,6 +15460,7 @@ function cokKur(o) {
     tus: (k, v) => { keys[k] = !!v; }, girisGec: () => girisBitir(),
     // performans: durum (PERF), ölçüm turu, denetleyiciye yapay kare besleme (sınama: aynı pencere mantığı, gerçek kare gerekmez)
     sacik: SACIK,      // komik devrilme: saçılan parçalar ve kırık yumurtalar
+    kars: KARS,      // teslimat karşılayıcıları
     TES, tesSec, startTeslimat: (tur) => startTeslimat(EVENTS.find((e) => e.id === 'teslimat'), tur),      // teslimat işleri
     perf: PERF, perfTuru, perfBesle(ms, cpu, gpu, n, surus) { const t = performance.now(); for (let i = 0; i < n; i++) { perfKayit(ms, cpu, gpu); perfAyarla(surus !== false, t + i * ms); } return { olcek: +PERF.olcek.toFixed(3), tavan: PERF.tavan, kilit: PERF.kilitT > 0 }; }, get giris() { return GIRIS ? { t: GIRIS.t, dur: GIRIS.dur } : null; },
     get yerYazi() { return yerYazi ? { L: yerYazi.L, ad: yerYazi.ad, opak: yerYazi.mesh.material.opacity } : null; }, viraj: () => Object.assign({}, virajAdim(player, G.race)), rotaEgrilik,
