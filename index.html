@@ -10083,7 +10083,7 @@ function poseCar(c, dt) {
 // ------------------------------------------------------------ Blender modelleri: oyuncu figürü ve üç teker
 // Model: yayin/model/arac/ucteker.glb (tools/blender/oyuncu_ucteker.py). Yüklenemezse yukarıdaki kod çizimi kullanılır.
 let _ucSoz = null;
-const UC_SURUM = '2026-11-21d';      // model dosyası değişince artırılır (Safari eski GLB'yi önbellekten verir); 20 Kas: büyük kasa
+const UC_SURUM = '2026-11-21e';      // model dosyası değişince artırılır (Safari eski GLB'yi önbellekten verir); 20 Kas: büyük kasa
 let _sasiKoyu = null;      // kabinli motorlu üç tekerin şasi boyası (bütün kopyalar paylaşır)
 function ucTekerYukle() {
   if (!_ucSoz) _ucSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/arac/ucteker.glb?s=' + UC_SURUM, (g) => ok(g.scene), undefined, red); });
@@ -10176,10 +10176,11 @@ function makeTrikeGLB(src, motor) {
     wheels.push({ pivot, spin, front: 0 });       // ön teker gidon takımıyla döner; ayrıca çevrilmez
   }
   al('motor_parca').visible = motor; krank.visible = !motor;
-  // Motorlu (kabinli) sürüm: tel yerine dolu jant, kırmızı bisiklet boyası yerine koyu şasi (kabinin altında görünür)
+  // Motorlu (kabinli) sürüm: tel yerine dolu jant, kırmızı bisiklet boyası yerine koyu şasi (kabinin altında görünür), tahta kasa yerine demir kasa
   t.traverse((m) => {
     if (!m.isMesh) return;
     if (/^motor_disk/.test(m.name)) m.visible = motor; else if (/^tel/.test(m.name)) m.visible = !motor;
+    if (motor && m.material && /^ahsap\d$/.test(m.material.name)) m.visible = false;      // motorluda tahta kasa yok: demir kasa (motor_parca)
     if (motor && m.material && m.material.name === 'boya') { if (!_sasiKoyu) { _sasiKoyu = m.material.clone(); _sasiKoyu.name = 'sasi'; _sasiKoyu.color.copy(LIN('#2a2e33')); } m.material = _sasiKoyu; }
   });
   const yuk = al('yuk'); yuk.visible = false;
@@ -13123,7 +13124,7 @@ function cokKur(o) {
       el.setAttribute('aria-pressed', k === sec ? 'true' : 'false');
       el.classList.toggle('kilitli', !owns(k));
     }
-    $('kasa-sec').hidden = sec === 'car';      // kasa rengi yalnız üç tekerlerde
+    $('kasa-sec').hidden = sec !== 'trike';      // kasa rengi yalnız pedallı üç tekerde (motorlunun kasası demir, kabin renginde)
   }
   // Yarışlar ve Abalı etkinlikleri araba ister; yük işi bisiklet ya da motorla yapılır.
   function canStart(ev) {
