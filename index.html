@@ -10366,7 +10366,7 @@ function poseCar(c, dt) {
 // ------------------------------------------------------------ Blender modelleri: oyuncu figürü ve üç teker
 // Model: yayin/model/arac/ucteker.glb (tools/blender/oyuncu_ucteker.py). Yüklenemezse yukarıdaki kod çizimi kullanılır.
 let _ucSoz = null;
-const UC_SURUM = '2026-11-21e';      // model dosyası değişince artırılır (Safari eski GLB'yi önbellekten verir); 20 Kas: büyük kasa
+const UC_SURUM = '2026-11-21f';      // model dosyası değişince artırılır (Safari eski GLB'yi önbellekten verir); 20 Kas: büyük kasa
 let _sasiKoyu = null;      // kabinli motorlu üç tekerin şasi boyası (bütün kopyalar paylaşır)
 // Motorlu üç teker (21 Kas 2026; kurucu: Van'da bu araç hamal aracıdır, kırmızı, tutamaksız, demir kasalı, ön tekeri büyük): yayin/model/arac/tuktuk.glb
 // (tools/blender/tuktuk.py --tur=oyun: kırmızı tür + gizli muşamba düğümü). Sürücü figürü ve yükler ucteker.glb'den gelir; yükler eski kasanın tabanına göre kuruludur, yeni kasaya
@@ -10377,8 +10377,31 @@ function cekcekYukle() {
   if (!_cekSoz) _cekSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/arac/tuktuk.glb?s=' + MODEL_SURUM.cekcek, (g) => ok(g.scene), undefined, red); });
   return _cekSoz;
 }
+// Kumaş dokusu (kasket; 21 Kas 2026, kurucu görselle: "görseldeki gibi yap"): balıksırtı. 16 pikselli sütunlarda yönü değişen 45° çizgiler, iplik
+// gürültüsüyle; 128 piksel = 5 cm (tools/blender/figur.py kasket TS). Görsel GLB'ye gömülmez: modelde yalnız UV ve "kumas" adlı malzeme vardır,
+// doku burada üretilip bağlanır. Köşe rengi kumaşın açık ipliğidir; doku koyu ipliği çarpar. Önizlemedeki eşi: tools/blender/kasket_onizle.py.
+let _kumasDoku = null;
+function kumasDoku() {
+  if (_kumasDoku) return _kumasDoku;
+  const N = 128, cv = document.createElement('canvas'); cv.width = cv.height = N;
+  const cx = cv.getContext('2d'), im = cx.createImageData(N, N), d = im.data;
+  let r = 7;
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const s = (((y + ((x >> 4) & 1 ? x : -x)) % 8) + 8) % 8, i = (y * N + x) * 4;
+    r = (Math.imul(r, 1103515245) + 12345) & 0x7fffffff;
+    d[i] = d[i + 1] = d[i + 2] = Math.min(255, (s < 3 ? 1 : s === 3 || s === 7 ? 0.88 : 0.76) * (0.9 + 0.2 * (r / 0x7fffffff)) * 255); d[i + 3] = 255;
+  }
+  cx.putImageData(im, 0, 0);
+  const t = new THREE.CanvasTexture(cv);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.encoding = THREE.sRGBEncoding; t.anisotropy = 8;
+  return (_kumasDoku = t);
+}
+function kumasBagla(sahne) {
+  sahne.traverse((m) => { if (m.isMesh && m.material && m.material.name === 'kumas' && !m.material.map) { m.material.map = kumasDoku(); m.material.needsUpdate = true; } });
+  return sahne;
+}
 function ucTekerYukle() {
-  if (!_ucSoz) _ucSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/arac/ucteker.glb?s=' + UC_SURUM, (g) => ok(g.scene), undefined, red); });
+  if (!_ucSoz) _ucSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/arac/ucteker.glb?s=' + UC_SURUM, (g) => ok(kumasBagla(g.scene)), undefined, red); });
   return _ucSoz;
 }
 // Eklemli figür: her parçanın kökü kendi ekleminde, parça −y yönüne uzanır. Kol ve bacak iki kemikli ters kinematikle sürülür.
@@ -10617,7 +10640,7 @@ function kasaRenk(v, renk) {
 // ------------------------------------------------------------ Blender arabaları
 // Model: yayin/model/arac/arabalar.glb (tools/blender/arabalar.py): spor, sedan, hatch, minibus, kamyonet. Yüklenemezse kod çizimi kalır.
 // Model sürümü: dosya değişince artırılır; tarayıcı (özellikle Safari) eski modeli önbellekten vermesin.
-const MODEL_SURUM = { araba: '2026-11-20b', cekcek: '2026-11-21c' };
+const MODEL_SURUM = { araba: '2026-11-20b', cekcek: '2026-11-21c', yaya: '2026-11-21a' };
 let _arSoz = null;
 function arabaYukle() {
   if (!_arSoz) _arSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/arac/arabalar.glb?s=' + MODEL_SURUM.araba, (g) => ok(g.scene), undefined, red); });
@@ -11399,7 +11422,7 @@ function trafficModel(scene, src) {
 // kemikler oyuncu figürüyle aynı düzendedir ve iki kemikli ters kinematikle sürülür (src/arac.js figurKur, ikCoz).
 let _yaSoz = null;
 function yayaYukle() {
-  if (!_yaSoz) _yaSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/kisi/yayalar.glb', (g) => ok(g.scene), undefined, red); });
+  if (!_yaSoz) _yaSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/kisi/yayalar.glb?s=' + MODEL_SURUM.yaya, (g) => ok(kumasBagla(g.scene)), undefined, red); });
   return _yaSoz;
 }
 // boy: figürün ölçeği. om: omuz yarı genişliği (kolun asılı durduğu yer). hiz: yürüme hızı (m/sn). yuk: sağ elde çanta (kol az sallanır).
