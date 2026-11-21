@@ -7402,62 +7402,94 @@ function buildTerrain(scene, groundCanvas, maxAniso) {
 
 // ------------------------------------------------------------ yollar
 function buildRoads(scene) {
-  const mk = () => ({ P: [], C: [], U: [], I: [] });
+  const mk = () => ({ P: [], C: [], U: [], I: [], K: [] });
   const asph = mk(), dirt = mk(), M = new Bag();
   const tint = [0.92, 0.95, 1.0, 1.05, 1.14, 1.2, 1.34, 1.0, 1.12];
   const white = new THREE.Color('#e9e6dc').convertSRGBToLinear();
   const TS = 4.5;   // bir doku karosu 4,5 m
   function v(b, x, z, lift, sh, uu, vv) { b.P.push(x, groundH(x, z) + lift, z); b.C.push(sh, sh, sh); b.U.push(uu, vv); return b.P.length / 3 - 1; }
-  for (const r of ROADS) {
+  // Karlı bölgede (Abalı) karlı, buzlu asfalt (Poly Haven asphalt_snow, 2 m; 21 Kas). Kenarı kara karışır (karYolPatch, src/doku.js; kurucu 21 Kas: "asfalt ve karlı
+  // bölge çok keskin ayrılıyor"): her köşe aKen özniteliği taşır = (sol kenara uzaklık, sağ kenara uzaklık, sol kenarın başka yolun içine girme derinliği, sağınki; m).
+  // Toprak yollar da aynı yamayla çizilir. Gölgelendirici bundan yol birleşiminin kenarına uzaklığı bulur: kavşak ağzında kar şeridi yolu kesmez. Şerit 0,5 m geniş çizilir (KP; geçiş payı), kesit aralığı
+  // 7 m yerine 1,75 m (derinlik kavşakta doğru aradeğerlensin). Üst üste binen yollar birbirinden 2 mm, uç kapakları 4 mm aşağıda: titreşme olmaz.
+  const kAs = KAR && TEX.asfalt_kar && TEX.asfalt_kar.image && TEX.asfalt_kar.image.width > 1;
+  const KP = 0.5, AS = [], AG = kAs ? makeGrid(48) : null;
+  if (kAs) ROADS.forEach((r, ri) => {
+    for (let i = 1; i < r.pts.length; i++) { const a = r.pts[i - 1], c = r.pts[i]; gridAdd(AG, AS.length / 6, a.x, a.z, c.x, c.z, r.w / 2 + KP + 30); AS.push(a.x, a.z, c.x, c.z, r.w / 2 + KP, ri); }
+  });
+  const icDer = (x, z, haric) => {      // (x, z) noktasının yolların (haric dışında) içine girme derinliği; dışarıdaysa eksi (en çok −30 m)
+    const cell = AG && gridCell(AG, x, z); let s = -30;
+    if (cell) for (let q = 0; q < cell.length; q++) {
+      const o = cell[q] * 6; if (AS[o + 5] === haric) continue;
+      const ax = AS[o], az = AS[o + 1], ex = AS[o + 2] - ax, ez = AS[o + 3] - az, L = ex * ex + ez * ez;
+      const t = L > 0 ? clamp(((x - ax) * ex + (z - az) * ez) / L, 0, 1) : 0;
+      s = Math.max(s, AS[o + 4] - Math.hypot(x - ax - ex * t, z - az - ez * t));
+    }
+    return s;
+  };
+  ROADS.forEach((r, ri) => {
     const pts = r.pts, n = pts.length, hw = r.w / 2, b = r.cls <= 6 ? asph : dirt;
-    const lift = r.cls <= 6 ? 0.15 + (6 - r.cls) * 0.012 : 0.09;
-    let prevL = -1, prevR = -1, acc = 0, along = 0;
+    const ken = kAs, hwG = hw + (ken ? KP : 0), ince = ken ? 4 : 1;
+    const lift = (r.cls <= 6 ? 0.15 + (6 - r.cls) * 0.012 : 0.09) + (ken ? (ri % 4) * 0.002 : 0);
+    const tg = pts.map((p, i) => { const a = pts[Math.max(0, i - 1)], c = pts[Math.min(n - 1, i + 1)]; const tx = c.x - a.x, tz = c.z - a.z, L = Math.hypot(tx, tz) || 1; return [tx / L, tz / L]; });
+    let prevL = -1, prevR = -1, acc = 0, along = 0, ox = pts[0].x, oz = pts[0].z;
     for (let i = 0; i < n; i++) {
-      const a = pts[Math.max(0, i - 1)], c = pts[Math.min(n - 1, i + 1)], p = pts[i];
-      let tx = c.x - a.x, tz = c.z - a.z; const L = Math.hypot(tx, tz) || 1; tx /= L; tz /= L;
-      const nx = tz, nz = -tx;
+      const p = pts[i], nx = tg[i][1], nz = -tg[i][0];
       const d = i > 0 ? Math.hypot(p.x - pts[i - 1].x, p.z - pts[i - 1].z) : 0;
-      along += d;
-      const sh = tint[r.cls] * (0.93 + vnoise(p.x / 19, p.z / 19) * 0.14);
-      const l = v(b, p.x + nx * hw, p.z + nz * hw, lift, sh, 0, along / TS), rr = v(b, p.x - nx * hw, p.z - nz * hw, lift, sh, r.w / TS, along / TS);
-      if (i > 0) {
-        b.I.push(prevL, prevR, l, prevR, rr, l);
-        if (r.cls <= 3) {   // orta çizgi
-          const q = pts[i - 1];
-          if (acc % 9 < 3.4) {
-            const y0 = groundH(q.x, q.z) + lift + 0.035, y1 = groundH(p.x, p.z) + lift + 0.035, e = 0.09;
-            const f = Math.min(1, 3.2 / d), mx = lerp(q.x, p.x, f), mz = lerp(q.z, p.z, f), my = lerp(y0, y1, f);
-            M.quad([q.x + nx * e, y0, q.z + nz * e], [q.x - nx * e, y0, q.z - nz * e], [mx - nx * e, my, mz - nz * e], [mx + nx * e, my, mz + nz * e], white);
-          }
-          acc += d;
+      if (i > 0 && r.cls <= 3) {   // orta çizgi
+        const q = pts[i - 1];
+        if (acc % 9 < 3.4) {
+          const y0 = groundH(q.x, q.z) + lift + 0.035, y1 = groundH(p.x, p.z) + lift + 0.035, e = 0.09;
+          const f = Math.min(1, 3.2 / d), mx = lerp(q.x, p.x, f), mz = lerp(q.z, p.z, f), my = lerp(y0, y1, f);
+          M.quad([q.x + nx * e, y0, q.z + nz * e], [q.x - nx * e, y0, q.z - nz * e], [mx - nx * e, my, mz - nz * e], [mx + nx * e, my, mz + nz * e], white);
         }
+        acc += d;
       }
-      prevL = l; prevR = rr;
+      for (let k = 0; k < (i < n - 1 ? ince : 1); k++) {   // kesitler: yol noktası ve (karlı asfaltta) aradaki üç ara kesit
+        const f = k / ince, c = pts[Math.min(n - 1, i + 1)], x = lerp(p.x, c.x, f), z = lerp(p.z, c.z, f);
+        let tx = lerp(tg[i][0], tg[Math.min(n - 1, i + 1)][0], f), tz = lerp(tg[i][1], tg[Math.min(n - 1, i + 1)][1], f); const L = Math.hypot(tx, tz) || 1; tx /= L; tz /= L;
+        const kx = tz, kz = -tx;
+        along += Math.hypot(x - ox, z - oz); ox = x; oz = z;
+        const sh = tint[r.cls] * (0.93 + vnoise(x / 19, z / 19) * 0.14);
+        const l = v(b, x + kx * hwG, z + kz * hwG, lift, sh, 0, along / TS), rr = v(b, x - kx * hwG, z - kz * hwG, lift, sh, r.w / TS, along / TS);
+        if (ken) { const sL = icDer(x + kx * hwG, z + kz * hwG, ri), sR = icDer(x - kx * hwG, z - kz * hwG, ri); b.K.push(0, 2 * hwG, sL, sR, 2 * hwG, 0, sL, sR); }
+        if (prevL >= 0) b.I.push(prevL, prevR, l, prevR, rr, l);
+        prevL = l; prevR = rr;
+      }
     }
     // uç kapakları: farklı yolların birleşimindeki boşlukları örter
     for (const e of [pts[0], pts[n - 1]]) {
-      const c0 = v(b, e.x, e.z, lift, tint[r.cls], e.x / TS, e.z / TS), first = b.P.length / 3;
-      for (let k = 0; k < 10; k++) { const a = (k / 10) * TAU, x = e.x + Math.cos(a) * hw, z = e.z + Math.sin(a) * hw; v(b, x, z, lift, tint[r.cls], x / TS, z / TS); }
+      const kl = lift - (ken ? (ri % 4) * 0.002 + 0.004 : 0);
+      const c0 = v(b, e.x, e.z, kl, tint[r.cls], e.x / TS, e.z / TS), first = b.P.length / 3;
+      if (ken) b.K.push(hwG, hwG, 0, 0);
+      for (let k = 0; k < 10; k++) {
+        const a = (k / 10) * TAU, x = e.x + Math.cos(a) * hwG, z = e.z + Math.sin(a) * hwG; v(b, x, z, kl, tint[r.cls], x / TS, z / TS);
+        if (ken) { const s = icDer(x, z, -1); b.K.push(0, 0, s, s); }      // kapağın çevresi: yolun kendi gövdesinin ya da başka yolun içindeyse kar yok
+      }
       for (let k = 0; k < 10; k++) b.I.push(c0, first + ((k + 1) % 10), first + k);
     }
-  }
+  });
   const add = (b, mat) => {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(b.P, 3));
     g.setAttribute('color', new THREE.Float32BufferAttribute(b.C, 3));
     g.setAttribute('uv', new THREE.Float32BufferAttribute(b.U, 2));
+    if (b.K.length) g.setAttribute('aKen', new THREE.Float32BufferAttribute(b.K, 4));
     g.setIndex(b.I); g.computeVertexNormals();
     const mesh = new THREE.Mesh(g, mat);
     mesh.receiveShadow = true; scene.add(mesh);
+    return mesh;
   };
-  // Karlı bölgede (Abalı) karlı, buzlu asfalt (Poly Haven asphalt_snow, 2 m; 21 Kas): UV 4,5 m'lik karoya göre, doku 2,25 kez tekrarlanır. Biraz parlak (buz).
-  const kAs = KAR && TEX.asfalt_kar && TEX.asfalt_kar.image && TEX.asfalt_kar.image.width > 1;
-  if (kAs) { for (const t of [TEX.asfalt_kar, TEX.asfalt_kar_n]) { t.repeat.set(TS / 2, TS / 2); t.needsUpdate = true; } }
-  add(asph, new THREE.MeshStandardMaterial({ map: kAs ? TEX.asfalt_kar : TEX.asfalt, normalMap: kAs ? TEX.asfalt_kar_n : TEX.asfalt_n, normalScale: new THREE.Vector2(0.9, 0.9), vertexColors: true, roughness: kAs ? 0.62 : 0.86, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }));
+  const asfM = new THREE.MeshStandardMaterial({ map: kAs ? TEX.asfalt_kar : TEX.asfalt, normalMap: kAs ? TEX.asfalt_kar_n : TEX.asfalt_n, normalScale: new THREE.Vector2(0.9, 0.9), vertexColors: true, roughness: kAs ? 0.62 : 0.86, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+  if (kAs) { karYolPatch(asfM, KP); asfM.name = 'yol-asfalt-kar'; }
+  const asfMesh = add(asph, asfM);
+  if (kAs) asfMesh.renderOrder = -5;      // kenarı saydam: saydam sıranın başında çizilir (gölge lekesi, cam, toz bunun üstüne gelir)
   const dirtM = new THREE.MeshStandardMaterial({ map: TEX.cakil, vertexColors: true, roughness: 1, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
-  dirtM.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n\tdiffuseColor.rgb = mix(vec3(dot(diffuseColor.rgb, vec3(0.3, 0.5, 0.2))) * vec3(1.06, 1.0, 0.9), diffuseColor.rgb, 0.35) * 0.95;'); };      // kırmızımsı çakıl soluk gri-kahveye (patika kırmızı çizgi gibi görünmesin)
-  dirtM.customProgramCacheKey = () => 'toprak-yol';
-  add(dirt, dirtM);
+  if (kAs) { karYolPatch(dirtM, KP, { toprak: true }); dirtM.name = 'yol-toprak-kar'; }
+  else dirtM.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n\tdiffuseColor.rgb = mix(vec3(dot(diffuseColor.rgb, vec3(0.3, 0.5, 0.2))) * vec3(1.06, 1.0, 0.9), diffuseColor.rgb, 0.35) * 0.95;'); };      // kırmızımsı çakıl soluk gri-kahveye (patika kırmızı çizgi gibi görünmesin)
+  if (!kAs) dirtM.customProgramCacheKey = () => 'toprak-yol';
+  const dirtMesh = add(dirt, dirtM);
+  if (kAs) dirtMesh.renderOrder = -6;      // asfalttan önce (altında)
   const marks = M.mesh(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 }), false);
   scene.add(marks);
 }
@@ -9045,6 +9077,70 @@ function terrainPatch(mat, maskTex, katman) {
     }
   };
   mat.customProgramCacheKey = () => 'arazi-pbr-' + (KL || '') + (normalVar ? 'n' : '') + (MOBIL ? 'm' : '') + (K ? 'k' : '') + TA;
+  return mat;
+}
+
+// Karlı asfalt (Abalı; kurucu 21 Kas 2026: "asfalt ve karlı bölge çok keskin ayrılıyor ... sürekli tekrar eden aynı desen de olmazsa iyi olur").
+//  - Doku dünya koordinatından okunur (2 m). İkinci örnek 90° dönük ve %17 küçük, 22 ve 6 m'lik gürültü ikisini karıştırır; uzakta 18 m'lik örnek: karo ızgarası seçilmez.
+//    Kavşakta üst üste binen yollar aynı noktada aynı rengi verir.
+//  - Kenar: aKen (buildRoads, src/dunya.js) asfalt birleşiminin kenarına uzaklığı verir (ykE, m). Kar sınırı kenardan 0,4–2,2 m içeride üç ölçekte gürültüyle dolaşır,
+//    dokunun açık (karlı) tanelerinden başlar; en dış 0,6 m saydamlaşır ve alttaki arazinin karı görünür: kenar çizgisi kalmaz. pay: şeridin yoldan geniş çizilen kısmı.
+//  - Yol üstünde ince kar: 50 ve 14 m'lik lekeler hâlinde, şerit ortasında ve teker izlerinin arasında birikir; teker izleri açık kalır (izler 7 m'lik gürültüyle hafif dalgalı).
+//  - Toprak yol (o.toprak): aynı yama, çakıl dokusu (4,5 m) soluk gri-kahve; kar sınırı kenara daha yakın, ortadaki kar daha sık (iki teker izi açık).
+const KAR_YOL_RENK = [0.60, 0.63, 0.69];      // yol kenarındaki kirli kar (doğrusal); arazideki yol banketiyle aynı ton
+function karYolPatch(mat, pay, o) {
+  const T = !!(o && o.toprak), f = (v) => v.toFixed(4), ORT = glv3(T ? TEX_AVG.cakil : TEX_AVG.asfalt_kar), OL = T ? 0.2222 : 0.5, nV = !!mat.normalMap;
+  const S = (k) => f(OL * k);
+  mat.transparent = true;
+  mat.onBeforeCompile = (sh) => {
+    sh.vertexShader = 'attribute vec4 aKen;\nvarying vec4 vKen;\nvarying vec3 vYkW;\n' + sh.vertexShader
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvYkW = (modelMatrix * vec4(position, 1.0)).xyz;\nvKen = aKen;');
+    const ust = ['varying vec4 vKen;', 'varying vec3 vYkW;',
+      'float ykH(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }',
+      'float ykG(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);',
+      '  return mix(mix(ykH(i), ykH(i + vec2(1.0, 0.0)), f.x), mix(ykH(i + vec2(0.0, 1.0)), ykH(i + vec2(1.0, 1.0)), f.x), f.y); }',
+      'vec4 ykOku(sampler2D t, vec2 p, float s, bool don, vec2 o) { return don ? texture2D(t, vec2(p.y, -p.x) * s + o) : texture2D(t, p * s + o); }',
+      'float ykKar = 0.0, ykAlfa = 1.0, ykM = 0.0, ykD = 0.0;'];
+    sh.fragmentShader = ust.join('\n') + '\n' + sh.fragmentShader.replace('#include <map_fragment>', [
+      'vec2 ykP = vYkW.xz; ykD = length(vYkW - cameraPosition);',
+      'ykM = smoothstep(0.3, 0.7, ykG(ykP * 0.045) * 0.7 + ykG(ykP * 0.17) * 0.3);',
+      MOBIL ? 'vec3 ykA = ykOku(map, ykP, ' + S(1) + ', false, vec2(0.0)).rgb;'
+        : 'vec3 ykA = mix(ykOku(map, ykP, ' + S(1) + ', false, vec2(0.0)).rgb, ykOku(map, ykP, ' + S(0.83) + ', true, vec2(0.43)).rgb, ykM);',
+      'vec3 ykDet = mix(ykA, ykOku(map, ykP, ' + S(0.11) + ', false, vec2(0.37)).rgb, smoothstep(10.0, 80.0, ykD)) / ' + ORT + ';',
+      'ykDet = mix(ykDet, vec3(1.0), smoothstep(120.0, 700.0, ykD) * 0.85);',
+      'float ykL = dot(ykDet, vec3(0.333));',
+      'ykDet *= 0.9 + (ykG(ykP * 0.013 + 2.7) * 0.6 + ykG(ykP * 0.05 + 8.1) * 0.4) * 0.22;',      // 77 ve 20 m'lik ton lekeleri
+      'diffuseColor.rgb *= ' + ORT + ' * ykDet;',
+      T ? 'diffuseColor.rgb = mix(vec3(dot(diffuseColor.rgb, vec3(0.3, 0.5, 0.2))) * vec3(1.06, 1.0, 0.9), diffuseColor.rgb, 0.35) * 0.95;' : '',      // kırmızımsı çakıl soluk gri-kahveye
+      // kenar
+      'float ykE = min(vKen.x + max(vKen.z, 0.0), vKen.y + max(vKen.w, 0.0));',
+      'float ykS = ' + (T ? '0.3' : '0.4') + ' + (ykG(ykP * 0.11 + 3.7) * 0.55 + ykG(ykP * 0.41 + 1.3) * 0.3 + ykG(ykP * 1.7) * 0.15) * ' + (T ? '1.1' : '1.8') + ';',
+      'float ykKen = 1.0 - smoothstep(-0.3, 0.3, ykE - ykS - (ykL - 1.0) * 0.35);',
+      // yol üstü ince kar
+      'float ykHw = (vKen.x + vKen.y) * 0.5, ykO = abs(vKen.y - vKen.x) * 0.5;',      // şeridin yarı genişliği, eksenden uzaklık
+      'float ykSer = ykHw > ' + f(3.2 + pay) + ' ? abs(ykO - (ykHw - ' + f(pay) + ') * 0.5) : ykO;',      // şerit ortasından uzaklık (dar yol tek şerit)
+      'ykSer += (ykG(ykP * 0.14 + 5.5) - 0.5) * 0.3;',
+      'float ykIz = exp(-pow((ykSer - 0.85) / 0.55, 2.0));',      // teker izi
+      'float ykToz = smoothstep(' + (T ? '0.2, 0.6' : '0.42, 0.86') + ', ykG(ykP * 0.02 + 9.1) * 0.6 + ykG(ykP * 0.07 + 4.3) * 0.4) * 0.72 * (1.0 - ykIz * 0.9);',
+      'ykKar = max(ykKen, smoothstep(0.3, 0.7, ykToz + (ykL - 1.0) * 0.3) * ' + (T ? '0.8' : '0.6') + ');',
+      'ykAlfa = smoothstep(0.12, 0.72, ykE + (ykG(ykP * 0.9 + 6.1) - 0.5) * 0.24);',
+    ].join('\n')).replace('#include <color_fragment>', [
+      '#include <color_fragment>',
+      'diffuseColor.rgb = mix(diffuseColor.rgb, ' + glv3(KAR_YOL_RENK) + ' * (0.94 + 0.12 * ykG(ykP * 2.3)), ykKar);',
+      'diffuseColor.a *= ykAlfa;',
+    ].join('\n')).replace('#include <roughnessmap_fragment>', [
+      '#include <roughnessmap_fragment>',
+      'roughnessFactor = mix(roughnessFactor, 0.6, ykKar);',
+    ].join('\n'));
+    if (nV) sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_maps>', [
+      MOBIL ? 'vec2 ykN = ykOku(normalMap, ykP, ' + S(1) + ', false, vec2(0.0)).xy * 2.0 - 1.0;'
+        : 'vec2 ykN1 = ykOku(normalMap, ykP, ' + S(1) + ', false, vec2(0.0)).xy * 2.0 - 1.0, ykN2 = ykOku(normalMap, ykP, ' + S(0.83) + ', true, vec2(0.43)).xy * 2.0 - 1.0;\nvec2 ykN = mix(ykN1, vec2(-ykN2.y, ykN2.x), ykM);',      // dönük örneğin eğimi geri döndürülür
+      'ykN *= normalScale * (1.0 - ykKar * 0.8) * (1.0 - smoothstep(40.0, 300.0, ykD));',
+      'vec3 ykW = inverseTransformDirection(normal, viewMatrix);',
+      'normal = normalize((viewMatrix * vec4(normalize(ykW + vec3(ykN.x, 0.0, ykN.y)), 0.0)).xyz);',
+    ].join('\n'));
+  };
+  mat.customProgramCacheKey = () => 'kar-yol' + (T ? 't' : '') + (MOBIL ? 'm' : '');
   return mat;
 }
 
