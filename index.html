@@ -10366,7 +10366,7 @@ function poseCar(c, dt) {
 // ------------------------------------------------------------ Blender modelleri: oyuncu figürü ve üç teker
 // Model: yayin/model/arac/ucteker.glb (tools/blender/oyuncu_ucteker.py). Yüklenemezse yukarıdaki kod çizimi kullanılır.
 let _ucSoz = null;
-const UC_SURUM = '2026-11-21g';      // model dosyası değişince artırılır (Safari eski GLB'yi önbellekten verir); 20 Kas: büyük kasa
+const UC_SURUM = '2026-11-21h';      // model dosyası değişince artırılır (Safari eski GLB'yi önbellekten verir); 20 Kas: büyük kasa
 let _sasiKoyu = null;      // kabinli motorlu üç tekerin şasi boyası (bütün kopyalar paylaşır)
 // Motorlu üç teker (21 Kas 2026; kurucu: Van'da bu araç hamal aracıdır, kırmızı, tutamaksız, demir kasalı, ön tekeri büyük): yayin/model/arac/tuktuk.glb
 // (tools/blender/tuktuk.py --tur=oyun: kırmızı tür + gizli muşamba düğümü). Sürücü figürü ve yükler ucteker.glb'den gelir; yükler eski kasanın tabanına göre kuruludur, yeni kasaya
@@ -10377,27 +10377,40 @@ function cekcekYukle() {
   if (!_cekSoz) _cekSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/arac/tuktuk.glb?s=' + MODEL_SURUM.cekcek, (g) => ok(g.scene), undefined, red); });
   return _cekSoz;
 }
-// Kumaş dokusu (kasket; 21 Kas 2026, kurucu görselle: "görseldeki gibi yap"): balıksırtı. 16 pikselli sütunlarda yönü değişen 45° çizgiler, iplik
-// gürültüsüyle; 128 piksel = 5 cm (tools/blender/figur.py kasket TS). Görsel GLB'ye gömülmez: modelde yalnız UV ve "kumas" adlı malzeme vardır,
-// doku burada üretilip bağlanır. Köşe rengi kumaşın açık ipliğidir; doku koyu ipliği çarpar. Önizlemedeki eşi: tools/blender/kasket_onizle.py.
+// Kumaş dokusu (kasket; 21 Kas 2026, kurucu görselle: "görseldeki gibi yap"; ardından "kumaş texture u yok hiç": ilk desen 3 mm çizgili ve düşük
+// kontrastlıydı, 1 m'den bile düz görünüyordu): balıksırtı. 32 pikselli (12,5 mm) sütunlarda yönü değişen 45° çizgiler, açık ve koyu iplik arası belirgin;
+// üstüne yıpranma lekesi (3 cm ölçekli açık-koyu dalga) ve iplik gürültüsü. 256 piksel = 10 cm (modelde UV birimi 5 cm: tools/blender/figur.py kasket TS;
+// burada repeat 0,5). Aynı görsel kabartma haritasıdır: açık iplik yüksekte durur, güneşte dokuma seçilir. Görsel GLB'ye gömülmez: modelde yalnız UV ve
+// "kumas" adlı malzeme vardır. Köşe rengi kumaşın açık ipliğidir. Önizlemedeki eşi: tools/blender/kasket_onizle.py.
 let _kumasDoku = null;
 function kumasDoku() {
   if (_kumasDoku) return _kumasDoku;
-  const N = 128, cv = document.createElement('canvas'); cv.width = cv.height = N;
+  const N = 256, G = 8, cv = document.createElement('canvas'); cv.width = cv.height = N;
   const cx = cv.getContext('2d'), im = cx.createImageData(N, N), d = im.data;
   let r = 7;
+  const rs = () => { r = (Math.imul(r, 1103515245) + 12345) & 0x7fffffff; return r / 0x7fffffff; };
+  const kaf = []; for (let i = 0; i < G * G; i++) kaf.push(rs());
+  const yum = (u) => u * u * (3 - 2 * u);
+  const leke = (x, y) => {          // sarmalı değer gürültüsü: doku tekrar ederken dikiş vermez
+    const gx = x / N * G, gy = y / N * G, i = Math.floor(gx) % G, j = Math.floor(gy) % G, u = yum(gx - Math.floor(gx)), v = yum(gy - Math.floor(gy));
+    const a = kaf[j * G + i], b = kaf[j * G + (i + 1) % G], c = kaf[((j + 1) % G) * G + i], e = kaf[((j + 1) % G) * G + (i + 1) % G];
+    return a + (b - a) * u + (c - a) * v + (a - b - c + e) * u * v;
+  };
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-    const s = (((y + ((x >> 4) & 1 ? x : -x)) % 8) + 8) % 8, i = (y * N + x) * 4;
-    r = (Math.imul(r, 1103515245) + 12345) & 0x7fffffff;
-    d[i] = d[i + 1] = d[i + 2] = Math.min(255, (s < 3 ? 1 : s === 3 || s === 7 ? 0.88 : 0.76) * (0.9 + 0.2 * (r / 0x7fffffff)) * 255); d[i + 3] = 255;
+    const s = (((y + ((x >> 5) & 1 ? x : -x)) % 16) + 16) % 16, i = (y * N + x) * 4;
+    const iplik = s < 6 ? 1 : s < 8 ? 0.75 : s < 14 ? 0.52 : 0.75;
+    d[i] = d[i + 1] = d[i + 2] = Math.min(255, iplik * (0.78 + 0.3 * leke(x, y)) * (0.92 + 0.16 * rs()) * 255); d[i + 3] = 255;
   }
   cx.putImageData(im, 0, 0);
   const t = new THREE.CanvasTexture(cv);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.encoding = THREE.sRGBEncoding; t.anisotropy = 8;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(0.5, 0.5); t.encoding = THREE.sRGBEncoding; t.anisotropy = 8;
   return (_kumasDoku = t);
 }
 function kumasBagla(sahne) {
-  sahne.traverse((m) => { if (m.isMesh && m.material && m.material.name === 'kumas' && !m.material.map) { m.material.map = kumasDoku(); m.material.needsUpdate = true; } });
+  sahne.traverse((m) => {
+    if (!m.isMesh || !m.material || m.material.name !== 'kumas' || m.material.map) return;
+    m.material.map = m.material.bumpMap = kumasDoku(); m.material.bumpScale = 0.0009; m.material.needsUpdate = true;
+  });
   return sahne;
 }
 function ucTekerYukle() {
@@ -10640,7 +10653,7 @@ function kasaRenk(v, renk) {
 // ------------------------------------------------------------ Blender arabaları
 // Model: yayin/model/arac/arabalar.glb (tools/blender/arabalar.py): spor, sedan, hatch, minibus, kamyonet. Yüklenemezse kod çizimi kalır.
 // Model sürümü: dosya değişince artırılır; tarayıcı (özellikle Safari) eski modeli önbellekten vermesin.
-const MODEL_SURUM = { araba: '2026-11-20b', cekcek: '2026-11-21c', yaya: '2026-11-21a' };
+const MODEL_SURUM = { araba: '2026-11-20b', cekcek: '2026-11-21c', yaya: '2026-11-21b' };
 let _arSoz = null;
 function arabaYukle() {
   if (!_arSoz) _arSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/arac/arabalar.glb?s=' + MODEL_SURUM.araba, (g) => ok(g.scene), undefined, red); });
