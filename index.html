@@ -10357,7 +10357,7 @@ function poseCar(c, dt) {
   }
   c.mesh.rotation.set(c.pitch, c.h, c.roll + ek, 'YXZ');
   for (const w of c.wheels) {
-    w.spin.rotation.x += (c.vf * dt) / 0.34;
+    w.spin.rotation.x += (c.vf * dt) / (w.r || 0.34);
     if (w.front) w.pivot.rotation.y = -c.steer * 1.4;
   }
   c.tail.emissiveIntensity = c.brake ? 2.6 : 0.45;
@@ -10368,6 +10368,15 @@ function poseCar(c, dt) {
 let _ucSoz = null;
 const UC_SURUM = '2026-11-21e';      // model dosyası değişince artırılır (Safari eski GLB'yi önbellekten verir); 20 Kas: büyük kasa
 let _sasiKoyu = null;      // kabinli motorlu üç tekerin şasi boyası (bütün kopyalar paylaşır)
+// Motorlu üç teker (21 Kas 2026; kurucu: Van'da bu araç hamal aracıdır, kırmızı, tutamaksız, demir kasalı, ön tekeri büyük): yayin/model/arac/tuktuk.glb
+// (tools/blender/tuktuk.py --tur=kirmizi). Sürücü figürü ve yükler ucteker.glb'den gelir; yükler eski kasanın tabanına göre kuruludur, yeni kasaya
+// yukY/yukZ kadar kaydırılır. İnmezse eski kabinli model (ucteker.glb içindeki motor_parca) kalır.
+const CEK = { yukY: -0.168, yukZ: 0.01, onR: 0.215, arkaR: 0.18, egim: 0.1, egzozX: -0.3 };
+let _cekSoz = null;
+function cekcekYukle() {
+  if (!_cekSoz) _cekSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/arac/tuktuk.glb?s=' + MODEL_SURUM.cekcek, (g) => ok(g.scene), undefined, red); });
+  return _cekSoz;
+}
 function ucTekerYukle() {
   if (!_ucSoz) _ucSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/arac/ucteker.glb?s=' + UC_SURUM, (g) => ok(g.scene), undefined, red); });
   return _ucSoz;
@@ -10446,21 +10455,27 @@ function ikCoz(u, hedef, bukum, duz) {
   if (u.ayak) { u.ayak.quaternion.copy(_ik.q).invert(); if (duz) u.ayak.quaternion.multiply(duz); }
 }
 // Üç teker: Blender modeli + seleye oturmuş sürücü. Dönen: tekerler, gidon takımı, krank, pedallar, bacaklar, kollar.
-function makeTrikeGLB(src, motor) {
-  const g = new THREE.Group(), t = src.getObjectByName('ucteker').clone(true), o = figurKopya(src, 'oyuncu');
+// tt: tuktuk.glb sahnesi (cekcekYukle). Motorluda verilirse hamal üç tekeri kullanılır; düğüm adları aynıdır (gidon, teker_on, teker_L/R, yer_*).
+function makeTrikeGLB(src, motor, tt) {
+  const cek = motor && tt ? tt.getObjectByName('tuktuk') : null;
+  const g = new THREE.Group(), t = (cek || src.getObjectByName('ucteker')).clone(true), o = figurKopya(src, 'oyuncu');
   t.position.set(0, 0, 0); g.add(t);
+  if (cek) {      // yükler ve kırık yumurta modeli bisiklet dosyasından; demir kasanın tabanına oturtulur
+    const yer = new THREE.Group(), us = src.getObjectByName('ucteker'); yer.name = 'yuk_yeri'; yer.position.set(0, CEK.yukY, CEK.yukZ); t.add(yer);
+    for (const ad of ['yuk', 'yuk_kahvalti', 'yuk_yumurta', 'yuk_peynir', 'yuk_ekmek', 'yuk_bal', 'kirik_yumurta']) { const n = us.getObjectByName(ad); if (n) yer.add(n.clone(true)); }
+  }
   t.traverse((m) => { if (m.isMesh) m.castShadow = true; });
   const al = (ad) => t.getObjectByName(ad), gidon = al('gidon'), krank = al('krank'), wheels = [];
   const iz = Math.abs(al('teker_L').position.x) || 0.45;      // arka tekerin orta çizgiye uzaklığı: devrilmede dönme ekseni
   for (const ad of ['teker_on', 'teker_L', 'teker_R']) {
     const n = al(ad), pivot = new THREE.Group(), spin = new THREE.Group();
     pivot.position.copy(n.position); n.parent.add(pivot); pivot.add(spin); spin.add(n); n.position.set(0, 0, 0);
-    if (motor) n.scale.x = 1.9;
-    wheels.push({ pivot, spin, front: 0 });       // ön teker gidon takımıyla döner; ayrıca çevrilmez
+    if (motor && !cek) n.scale.x = 1.9;
+    wheels.push({ pivot, spin, front: 0, r: cek ? (ad === 'teker_on' ? CEK.onR : CEK.arkaR) : 0 });       // ön teker gidon takımıyla döner; ayrıca çevrilmez. r: teker yarıçapı (dönüş hızı)
   }
-  al('motor_parca').visible = motor; krank.visible = !motor;
+  if (!cek) { al('motor_parca').visible = motor; krank.visible = !motor; }
   // Motorlu (kabinli) sürüm: tel yerine dolu jant, kırmızı bisiklet boyası yerine koyu şasi (kabinin altında görünür), tahta kasa yerine demir kasa
-  t.traverse((m) => {
+  if (!cek) t.traverse((m) => {
     if (!m.isMesh) return;
     if (/^motor_disk/.test(m.name)) m.visible = motor; else if (/^tel/.test(m.name)) m.visible = !motor;
     if (motor && m.material && /^ahsap\d$/.test(m.material.name)) m.visible = false;      // motorluda tahta kasa yok: demir kasa (motor_parca)
@@ -10474,7 +10489,7 @@ function makeTrikeGLB(src, motor) {
   let tail = new THREE.MeshStandardMaterial();
   const stop = al('stop');
   if (stop && stop.isMesh) { stop.material = stop.material.clone(); tail = stop.material; }
-  const f = figurKur(o), sele = al('yer_sele').position, egim = motor ? 0.4 : 0.5, KR = 0.155, Y = new THREE.Vector3(0, 1, 0);
+  const f = figurKur(o), sele = al('yer_sele').position, egim = cek ? CEK.egim : motor ? 0.4 : 0.5, KR = 0.155, Y = new THREE.Vector3(0, 1, 0);
   o.position.set(0, 0, 0); t.add(o);
   f.govde.position.set(sele.x, sele.y + 0.085, sele.z); f.govde.rotation.set(egim, 0, 0); f.bas.rotation.set(-egim * 0.75, 0, 0);
   const gqi = new THREE.Quaternion().setFromEuler(f.govde.rotation).invert();
@@ -10568,7 +10583,7 @@ function makeTrikeGLB(src, motor) {
     if (dt > 0) { const hz = Math.abs(c.vf || 0); if (onceHiz - hz > 3.5 || c.devrik > 0 || c.devrikUzak) sasT = 1.3; else if (sasT > 0) sasT -= dt; onceHiz = hz; yuzAdim(f, sasT > 0 ? 'saskin' : 'notr', dt); }      // ani duruşta (çarpma) ve devrilince şaşırır
   }
   anim({ steer: 0, vf: 0 }, 0);
-  return { group: g, wheels, tail, yuk, yukKahvalti, yukler, kirikYumurta, anim, iz, sifirla, sur: () => dus.d };
+  return { group: g, wheels, tail, yuk, yukKahvalti, yukler, kirikYumurta, anim, iz, sifirla, sur: () => dus.d, egzozX: cek ? CEK.egzozX : undefined };
 }
 // yol yüzeyinin araziden yüksekliği (poseCar ile aynı: asfalt 0,15–0,22 m, toprak 0,09 m, kaldırım 0,2 m)
 function yolUstu(x, z) {
@@ -10601,7 +10616,7 @@ function kasaRenk(v, renk) {
 // ------------------------------------------------------------ Blender arabaları
 // Model: yayin/model/arac/arabalar.glb (tools/blender/arabalar.py): spor, sedan, hatch, minibus, kamyonet. Yüklenemezse kod çizimi kalır.
 // Model sürümü: dosya değişince artırılır; tarayıcı (özellikle Safari) eski modeli önbellekten vermesin.
-const MODEL_SURUM = { araba: '2026-11-20b' };
+const MODEL_SURUM = { araba: '2026-11-20b', cekcek: '2026-11-21a' };
 let _arSoz = null;
 function arabaYukle() {
   if (!_arSoz) _arSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/arac/arabalar.glb?s=' + MODEL_SURUM.araba, (g) => ok(g.scene), undefined, red); });
@@ -12970,7 +12985,7 @@ function cokKur(o) {
       }).catch(() => {});
     } else {
       v = makeTrikeMesh(tur === 'motor');
-      ucTekerYukle().then((src) => { const yeni = makeTrikeGLB(src, tur === 'motor'); boyaRenk(yeni.group, U.renk); degistir(U, tur, yeni); }).catch(() => {});
+      Promise.all([ucTekerYukle(), cekcekYukle().catch(() => null)]).then(([src, tt]) => { const yeni = makeTrikeGLB(src, tur === 'motor', tt); boyaRenk(yeni.group, U.renk); degistir(U, tur, yeni); }).catch(() => {});
     }
     if (v.yuk) v.yuk.visible = false;
     v.group.visible = false; o.scene.add(v.group);
@@ -13483,9 +13498,9 @@ function cokKur(o) {
     player.motor = makeTrikeMesh(true); player.motor.group.visible = false; scene.add(player.motor.group);
     player.kasa = AYAR.kasa === 'mavi' ? 'mavi' : 'ahsap';
     // Blender modeli inince kod çiziminin yerini alır (inmezse kod çizimi kalır)
-    ucTekerYukle().then((src) => {
+    Promise.all([ucTekerYukle(), cekcekYukle().catch(() => null)]).then(([src, tt]) => {      // tt: motorlunun hamal üç tekeri; inmezse eski kabinli model
       for (const tur of ['trike', 'motor']) {
-        const eski = player[tur], yeni = makeTrikeGLB(src, tur === 'motor');
+        const eski = player[tur], yeni = makeTrikeGLB(src, tur === 'motor', tt);
         yeni.group.visible = eski.group.visible;
         if (aktifYuk(eski)) { const tur = G.goal && G.goal.yukTur; ((tur && yeni.yukler[tur]) || yeni.yuk).visible = true; }      // işin yükü yeni modelde
         scene.remove(eski.group); scene.add(yeni.group); player[tur] = yeni;
@@ -14874,7 +14889,7 @@ function cokKur(o) {
     const kutu = new THREE.Box3().setFromObject(grp);
     grp.quaternion.copy(q0); grp.position.copy(p0); grp.updateMatrixWorld(true);
     const al = new THREE.Group(), mat = new THREE.SpriteMaterial({ map: alevTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
-    for (const x of v === player.car || v.ikiEgzoz ? [-0.38, 0.38] : [0.12]) for (let k = 0; k < 3; k++) { const s = new THREE.Sprite(mat); s.position.set(x, kutu.min.y + 0.34, kutu.min.z - 0.1 - k * 0.3); s.userData.k = k; al.add(s); }
+    for (const x of v === player.car || v.ikiEgzoz ? [-0.38, 0.38] : [v.egzozX !== undefined ? v.egzozX : 0.12]) for (let k = 0; k < 3; k++) { const s = new THREE.Sprite(mat); s.position.set(x, kutu.min.y + 0.34, kutu.min.z - 0.1 - k * 0.3); s.userData.k = k; al.add(s); }
     al.visible = false; grp.add(al); v.alev = al;
     return al;
   }
