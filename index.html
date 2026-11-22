@@ -10759,7 +10759,7 @@ function kasaRenk(v, renk) {
 // ------------------------------------------------------------ Blender arabaları
 // Model: yayin/model/arac/arabalar.glb (tools/blender/arabalar.py): spor, sedan, hatch, minibus, kamyonet. Yüklenemezse kod çizimi kalır.
 // Model sürümü: dosya değişince artırılır; tarayıcı (özellikle Safari) eski modeli önbellekten vermesin.
-const MODEL_SURUM = { araba: '2026-11-20b', cekcek: '2026-11-21c', yaya: '2026-11-21b' };
+const MODEL_SURUM = { araba: '2026-11-20b', cekcek: '2026-11-21c', yaya: '2026-11-22a' };
 let _arSoz = null;
 function arabaYukle() {
   if (!_arSoz) _arSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/arac/arabalar.glb?s=' + MODEL_SURUM.araba, (g) => ok(g.scene), undefined, red); });
@@ -13419,8 +13419,8 @@ function cokKur(o) {
     { id: 'turist-servisi', bolge: 'abali', ozel: 'servis', rota: 'abali-yolu', markerS: 45, madalya: [19, 15, 11], odeme: 400, laps: 1, ai: 0, solo: true, zemin: 'Asfalt' },
     { id: 'kayak', bolge: 'abali', ozel: 'kayak', len: 2200, madalya: [17, 13, 9], laps: 1, ai: 0, solo: true, zemin: 'Kar' },
     // rakipli kayak (22 Kas 2026, Kış Kupası'nın kayak ayağı): aynı parkurda rakiplerle aynı anda çıkış; kapı kaçıran yavaşlar, arkadan çarpan düşer.
-    // Rakip sayısı eldeki kayakçı modeli kadar: iki (kayakci_2, kayakci_3). Dördüncü kayakçı (kayakci_4) yayalar.glb yeniden üretilince eklenir, ai 3 yapılır.
-    { id: 'kayak-yarisi', bolge: 'abali', ozel: 'kayak', kapi: true, markerS: 16, len: 2200, laps: 1, ai: 2, zemin: 'Kar' },
+    // Rakipler yayalar.glb'deki kayakçılar: kayakci_2 (mavi), kayakci_3 (yeşil), kayakci_4 (mor; 22 Kas'ta eklendi).
+    { id: 'kayak-yarisi', bolge: 'abali', ozel: 'kayak', kapi: true, markerS: 16, len: 2200, laps: 1, ai: 3, zemin: 'Kar' },
     // kampüs: ana yoldan Üniversite Camii'ne, halka yolda tur, öğrenci servisi (servis işinin kampüs metinleriyle)
     { id: 'kampus-yolu', bolge: 'kampus', ad: 'Kampüs Yolu', alt: 'Van-Ağrı yolundan kavşağa, bulvardan Üniversite Camii’ne', laps: 1, ai: 4, zemin: 'Asfalt' },
     { id: 'kampus-halkasi', bolge: 'kampus', ad: 'Kampüs Halkası', alt: 'Fakültelerin çevresinde halka yol, göl kıyısından bir tur', laps: 1, ai: 3, zemin: 'Asfalt' },
@@ -14345,7 +14345,7 @@ function cokKur(o) {
       const p = routePoint(R, 5 + (kayakta ? 0 : Math.ceil(cars.length / 2) - 1 - row) * 9);
       placeCar(c, p.x + p.dz * lat, p.z - p.dx * lat, Math.atan2(p.dx, p.dz));
       c.dus = 0; c.dusKoruma = 0; c.pitch = 0; c.roll = 0;
-      if (kayakta && !c.isPlayer) { c.lane = lat * 0.85; c.vHedef = 24.5 + k * 1.3; }      // tam çömelmeyle inen oyuncu 30 m/sn'yi geçer; rakip kapıları kaçırmadan iner
+      if (kayakta && !c.isPlayer) { c.lane = lat * 0.85; c.vHedef = 24.3 + k * 1.1; }      // tam çömelmeyle inen oyuncu 30 m/sn'yi geçer; rakip kapıları kaçırmadan iner
       if (kayakta && c.isPlayer) { c.lane = 0; c.vHedef = 23; }      // yalnız otomatik sürüşte (sınama) kullanılır
       c.ri = 0; c.lap = 0; c.prog = 0; c.finished = false; c.finishTime = 0; advance(c, R);
       c.mesh.visible = true;
