@@ -10759,7 +10759,7 @@ function kasaRenk(v, renk) {
 // ------------------------------------------------------------ Blender arabaları
 // Model: yayin/model/arac/arabalar.glb (tools/blender/arabalar.py): spor, sedan, hatch, minibus, kamyonet. Yüklenemezse kod çizimi kalır.
 // Model sürümü: dosya değişince artırılır; tarayıcı (özellikle Safari) eski modeli önbellekten vermesin.
-const MODEL_SURUM = { araba: '2026-11-20b', cekcek: '2026-11-21c', yaya: '2026-11-22a' };
+const MODEL_SURUM = { araba: '2026-11-20b', cekcek: '2026-11-21c', yaya: '2026-11-22e' };
 let _arSoz = null;
 function arabaYukle() {
   if (!_arSoz) _arSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/arac/arabalar.glb?s=' + MODEL_SURUM.araba, (g) => ok(g.scene), undefined, red); });
@@ -11549,8 +11549,50 @@ function trafficModel(scene, src) {
 // kemikler oyuncu figürüyle aynı düzendedir ve iki kemikli ters kinematikle sürülür (src/arac.js figurKur, ikCoz).
 let _yaSoz = null;
 function yayaYukle() {
-  if (!_yaSoz) _yaSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/kisi/yayalar.glb?s=' + MODEL_SURUM.yaya, (g) => ok(kumasBagla(g.scene)), undefined, red); });
+  if (!_yaSoz) _yaSoz = new Promise((ok, red) => { if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; } new THREE.GLTFLoader().load('model/kisi/yayalar.glb?s=' + MODEL_SURUM.yaya, (g) => ok(kayakGiysiBagla(kumasBagla(g.scene))), undefined, red); });
   return _yaSoz;
+}
+// Kayak giysisi (22 Kas 2026; kurucu bir kayakçı görseliyle: "kıyafetler çok dandik... çeşitlendir bunu"). Mont ve pantolon ağları GLB'de beyazdır,
+// malzeme adı "kayak_ust_<ad>" / "kayak_alt_<ad>" (tools/blender/figur.py giysi_dokula); deseni burada kodla üretilir: her kayakçıya başka ekose.
+// z: zemin rengi; t: 0,3 m'lik karoda desen tekrarı; b: bantlar [merkez, genişlik, renk, alfa] (karo payı). Bant hem dikey hem yatay çizilir, kesişimler koyulaşır.
+const KAYAK_GIYSI = {
+  kayak_ust_kayakci_1: { z: '#c23b2a', t: 2, b: [[0.25, 0.3, '#5e1a1a', 0.5], [0.72, 0.045, '#f0e6d0', 0.8], [0.86, 0.03, '#141416', 0.85]] },      // oyuncu: kırmızı ekose
+  kayak_alt_kayakci_1: { z: '#1c2438', t: 2, b: [[0.5, 0.03, '#46527a', 0.6]] },                                                                  // lacivert, ince kareli
+  kayak_ust_kayakci_2: { z: '#e9f1f0', t: 2, b: [[0.3, 0.34, '#2aa6a0', 0.55], [0.72, 0.07, '#1b6f78', 0.7], [0.9, 0.025, '#f2c230', 0.85]] },      // beyaz-turkuaz ekose, sarı iplik
+  kayak_alt_kayakci_2: { z: '#2a2440', t: 2, b: [[0.3, 0.25, '#1a1630', 0.5], [0.7, 0.03, '#7a66b8', 0.6]] },                                      // koyu mor ekose
+  kayak_ust_kayakci_3: { z: '#2f9a5a', t: 3, b: [[0.25, 0.5, '#0e1410', 0.6]] },                                                                  // yeşil-siyah oduncu karesi
+  kayak_alt_kayakci_3: { z: '#1b1c20', t: 4, b: [[0.5, 0.5, '#101114', 0.35]] },                                                                  // siyah
+  kayak_ust_kayakci_4: { z: '#6a3a9a', t: 2, b: [[0.3, 0.3, '#8e62bd', 0.4], [0.75, 0.028, '#e8c33a', 0.9]] },                                      // mor, sarı pencere karesi
+  kayak_alt_kayakci_4: { z: '#4a4d55', t: 2, b: [[0.3, 0.3, '#2c2e34', 0.5], [0.8, 0.025, '#e6e6e6', 0.6]] },                                      // gri ekose
+};
+function ekoseDoku(tn) {
+  const N = 256, cv = document.createElement('canvas'); cv.width = cv.height = N;
+  const cx = cv.getContext('2d'), P = N / tn.t;
+  cx.fillStyle = tn.z; cx.fillRect(0, 0, N, N);
+  for (const yatay of [0, 1]) for (const [m, g, renk, alfa] of tn.b) {
+    cx.globalAlpha = alfa; cx.fillStyle = renk;
+    for (let k = -1; k <= tn.t; k++) { const a = (k + m - g / 2) * P; if (yatay) cx.fillRect(0, a, N, g * P); else cx.fillRect(a, 0, g * P, N); }
+  }
+  cx.globalAlpha = 1;
+  const im = cx.getImageData(0, 0, N, N), d = im.data;      // dokuma: çapraz (dimi) iplik ve pürüz
+  let r = 11; const rs = () => { r = (Math.imul(r, 1103515245) + 12345) & 0x7fffffff; return r / 0x7fffffff; };
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const i = (y * N + x) * 4, k = (((x + y) & 3) < 2 ? 1.05 : 0.94) * (0.94 + 0.12 * rs());
+    d[i] = Math.min(255, d[i] * k); d[i + 1] = Math.min(255, d[i + 1] * k); d[i + 2] = Math.min(255, d[i + 2] * k);
+  }
+  cx.putImageData(im, 0, 0);
+  const t = new THREE.CanvasTexture(cv);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.encoding = THREE.sRGBEncoding; t.anisotropy = 8;
+  return t;
+}
+function kayakGiysiBagla(sahne) {
+  sahne.traverse((m) => {
+    if (!m.isMesh || !m.material) return;
+    const tn = KAYAK_GIYSI[m.material.name];
+    if (tn && !m.material.map) { const t = ekoseDoku(tn); m.material.map = m.material.bumpMap = t; m.material.bumpScale = 0.0007; m.material.roughness = 0.9; m.material.needsUpdate = true; }
+    else if (m.material.name === 'parlak') { m.material.roughness = 0.22; m.material.envMapIntensity = 1.15; }      // kask, gözlük camı, bot: ortamı yansıtır
+  });
+  return sahne;
 }
 // boy: figürün ölçeği. om: omuz yarı genişliği (kolun asılı durduğu yer). hiz: yürüme hızı (m/sn). yuk: sağ elde çanta (kol az sallanır).
 const YAYA_TIP = {
@@ -13727,6 +13769,7 @@ function cokKur(o) {
         gate1.visible = gate2.visible = beacon1.visible = beacon2.visible = false;
         for (const r of rivals) r.mesh.visible = false;
         for (const k of KAYAKCI) k.mesh.visible = false;
+        kizTemizle();      // kayak izleri eski bölgede kalır
         cars = [player]; trafficClear(); GIRIS = null; yerYazi = null;
         await say(Rg.msg[0]);
         scene.remove(world);
@@ -14337,6 +14380,7 @@ function cokKur(o) {
     G.lastEvent = ev; G.lastSinif = sn;
     const R = ev.R, laps = ev.laps, cps = makeCps(ev);
     G.race = { ev, R, cps, cpi: 0, t: 0, count: 3.9, lastBeep: 4, done: false, doneT: 0, total: R.loop ? R.L * laps : R.L, place: 1, sinif: sn };
+    kizTemizle();
     const kayakta = ev.ozel === 'kayak', field = kayakta ? kayakcilar().slice(0, ev.ai) : rivals.slice(0, ev.ai);
     if (!kayakta) field.forEach((c, i) => rakipArac(c, i, sn));
     cars = field.concat([player]);
@@ -15272,6 +15316,7 @@ function cokKur(o) {
     else { step(player, pin, dt); if (r && !G.auto) advance(player, r.R); }
     if (player.devrikYeni) { player.devrikYeni = false; devrildi(); }
     ucTepki(STEP);
+    if (player.ski) kizAdim();      // kayak izleri (fizik adımında: görüntüsüz ilerletmede de iz kalır)
     if (r) {
       if (!r.done) r.t += dt;
       for (const c of cars) {
@@ -15344,6 +15389,64 @@ function cokKur(o) {
     DUST.pts = new THREE.Points(geo, mat); DUST.pts.frustumCulled = false; DUST.pts.renderOrder = 5;
     scene.add(DUST.pts);
   }
+  // Kayak izi (22 Kas 2026; kurucu: "kayarken hiç iz çıkmıyor"): her kayağın ardında karda oluk. Tek ağ, halka tampon (KIZ.n dörtgen): dolunca en eski
+  // iz silinir. Düz kayışta iki ince oluk (kayak eni 9 cm); kenar verince (yan kayma) ve kar sabanında iz genişler, düşünce gövdenin izi kalır.
+  // Çarpımlı karışım: iz karı koyultur ve mavileştirir (oluğun gölgesi), gece de parlamaz. Köşe rengi beyaz = iz yok.
+  const KIZ = { n: 9000, i: 0, mesh: null, pos: null, col: null, uc: new Map(), d0: -1, d1: -1 };
+  function initKiz() {
+    const n = KIZ.n, geo = new THREE.BufferGeometry(), idx = new Uint16Array(n * 6);
+    KIZ.pos = new Float32Array(n * 12); KIZ.col = new Float32Array(n * 12).fill(1);
+    for (let q = 0; q < n; q++) idx.set([q * 4, q * 4 + 1, q * 4 + 2, q * 4 + 1, q * 4 + 3, q * 4 + 2], q * 6);
+    geo.setIndex(new THREE.BufferAttribute(idx, 1));
+    geo.setAttribute('position', new THREE.BufferAttribute(KIZ.pos, 3)); geo.setAttribute('color', new THREE.BufferAttribute(KIZ.col, 3));
+    geo.attributes.position.setUsage(THREE.DynamicDrawUsage); geo.attributes.color.setUsage(THREE.DynamicDrawUsage);
+    const mat = new THREE.MeshBasicMaterial({ vertexColors: true, blending: THREE.MultiplyBlending, transparent: true, depthWrite: false, fog: false, toneMapped: false, side: THREE.DoubleSide,
+      polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+    KIZ.mesh = new THREE.Mesh(geo, mat); KIZ.mesh.frustumCulled = false; KIZ.mesh.renderOrder = 2; KIZ.mesh.visible = false;
+    scene.add(KIZ.mesh);
+  }
+  function kizTemizle() {
+    if (!KIZ.mesh) return;
+    KIZ.pos.fill(0); KIZ.col.fill(1); KIZ.i = 0; KIZ.uc.clear(); KIZ.d0 = 0; KIZ.d1 = KIZ.n - 1; KIZ.mesh.visible = false;
+  }
+  const KIZ_RENK = [0.6, 0.71, 0.88];      // doğrusal renk: tam güçte karı bu kadar koyultur
+  function kizDortgen(a, b, x0, z0, x1, z1, guc0, guc1) {      // a, b: önceki sol ve sağ kenar noktası [x, y, z]
+    const q = KIZ.i, P = KIZ.pos, C = KIZ.col, o = q * 12;
+    KIZ.i = (q + 1) % KIZ.n;
+    const y0 = groundH(x0, z0) + 0.035, y1 = groundH(x1, z1) + 0.035;
+    P[o] = a[0]; P[o + 1] = a[1]; P[o + 2] = a[2]; P[o + 3] = b[0]; P[o + 4] = b[1]; P[o + 5] = b[2];
+    P[o + 6] = x0; P[o + 7] = y0; P[o + 8] = z0; P[o + 9] = x1; P[o + 10] = y1; P[o + 11] = z1;
+    for (let v = 0; v < 4; v++) { const g = v < 2 ? guc0 : guc1; for (let k = 0; k < 3; k++) C[o + v * 3 + k] = 1 + (KIZ_RENK[k] - 1) * g; }
+    a[0] = x0; a[1] = y0; a[2] = z0; b[0] = x1; b[1] = y1; b[2] = z1;
+    if (KIZ.d0 < 0) { KIZ.d0 = KIZ.d1 = q; } else if (q < KIZ.d0 || q < KIZ.d1) { KIZ.d0 = 0; KIZ.d1 = KIZ.n - 1; } else KIZ.d1 = q;      // sarınca tamamı yüklenir
+  }
+  function kizAdim() {
+    for (const c of cars) {
+      if (!c.ski || !c.mesh.visible && !(c.skiMesh && c.skiMesh.visible)) continue;
+      let u = KIZ.uc.get(c);
+      const fx = Math.sin(c.h), fz = Math.cos(c.h), lx = fz, lz = -fx, dusuk = c.dus > 0, sab = c.plow ? 1 : 0;
+      if (!u) { u = { x: c.x, z: c.z, k: [null, null], guc: 0 }; KIZ.uc.set(c, u); }
+      const yol = Math.hypot(c.x - u.x, c.z - u.z);
+      if (yol > 6) { u.x = c.x; u.z = c.z; u.k = [null, null]; continue; }      // yer değiştirdi (başlangıç, rotaya dönüş): iz kopar
+      if (yol < 0.8) continue;
+      u.x = c.x; u.z = c.z;
+      const kay = Math.min(1, (c.slip || 0) / 7), gen = dusuk ? 0.5 : 0.075 + 0.22 * kay * kay + 0.1 * sab, guc = dusuk ? 0.9 : 0.5 + 0.45 * Math.max(kay, sab);
+      for (let i = 0; i < (dusuk ? 1 : 2); i++) {
+        const yan = dusuk ? 0 : (i ? -1 : 1) * (0.15 + 0.1 * sab), cx = c.x - fx * 0.5 + lx * yan, cz = c.z - fz * 0.5 + lz * yan;
+        const x0 = cx + lx * gen / 2, z0 = cz + lz * gen / 2, x1 = cx - lx * gen / 2, z1 = cz - lz * gen / 2;
+        if (!u.k[i]) { u.k[i] = [[x0, groundH(x0, z0) + 0.035, z0], [x1, groundH(x1, z1) + 0.035, z1]]; continue; }
+        kizDortgen(u.k[i][0], u.k[i][1], x0, z0, x1, z1, u.guc, guc);
+      }
+      if (dusuk) u.k[1] = null;
+      u.guc = guc;
+    }
+    if (KIZ.d0 >= 0) {
+      const g = KIZ.mesh.geometry, o = KIZ.d0 * 12, m = (KIZ.d1 - KIZ.d0 + 1) * 12;
+      g.attributes.position.updateRange.offset = o; g.attributes.position.updateRange.count = m; g.attributes.position.needsUpdate = true;
+      g.attributes.color.updateRange.offset = o; g.attributes.color.updateRange.count = m; g.attributes.color.needsUpdate = true;
+      KIZ.d0 = KIZ.d1 = -1; KIZ.mesh.visible = true;
+    }
+  }
   function puff(x, y, z, vx, vz, r, g, b) {
     const i = DUST.i; DUST.i = (i + 1) % DUST.n;
     DUST.pos[i * 3] = x; DUST.pos[i * 3 + 1] = y; DUST.pos[i * 3 + 2] = z;
@@ -15357,6 +15460,13 @@ function cokKur(o) {
         DUST.acc = 0;
         for (const c of cars) {
           if (c.air || !c.surf) continue;
+          if (c.ski) {      // kayakçı: kenar verince, kar sabanında ve düşünce kayakların dibinden kar savrulur
+            const hz = Math.hypot(c.vx, c.vz), siddet = c.dus > 0 ? 1 : Math.min(1, (c.slip || 0) / 6) + (c.plow ? 0.6 : 0);
+            if (hz < 4 || siddet < 0.25) continue;
+            const kx = Math.sin(c.h), kz = Math.cos(c.h), dis = (c.steer > 0 ? -1 : 1) * 0.3;      // dönüşün dışına doğru
+            for (let k = 0; k < (siddet > 0.8 ? 2 : 1); k++) { const j = (Math.random() - 0.5) * 1.2; puff(c.x - kx * 0.3 + kz * dis, c.y + 0.12, c.z - kz * 0.3 - kx * dis, c.vx * 0.25 + kz * dis * 5 + j, c.vz * 0.25 - kx * dis * 5 + j, 0.95, 0.96, 0.99); }
+            continue;
+          }
           const sp = Math.hypot(c.vx, c.vz), dirt = c.surf.id !== 0;
           if (!((dirt && sp > 7) || (!dirt && c.slip > 4.5 && sp > 8))) continue;
           const fx = Math.sin(c.h), fz = Math.cos(c.h), side = Math.random() < 0.5 ? 0.85 : -0.85;
@@ -16156,6 +16266,9 @@ function cokKur(o) {
     tus: (k, v) => { keys[k] = !!v; }, girisGec: () => girisBitir(),
     // performans: durum (PERF), ölçüm turu, denetleyiciye yapay kare besleme (sınama: aynı pencere mantığı, gerçek kare gerekmez)
     get oyuncu() { return player; },      // sınama: oyuncunun durumu
+    // sınama: yakın çekim. kare(x, y, z, bx, by, bz, aci) kamerayı oraya koyup bir kare çizer, PNG veri adresi döndürür (model ve giysi denetimi)
+    kare(x, y, z, bx, by, bz, aci) { const f = camera.fov; camera.position.set(x, y, z); camera.lookAt(bx, by, bz); if (aci) { camera.fov = aci; camera.updateProjectionMatrix(); } renderer.render(scene, camera); const u = renderer.domElement.toDataURL('image/jpeg', 0.92); camera.fov = f; camera.updateProjectionMatrix(); return u; },
+    kayakcilar: () => KAYAKCI,
     sacik: SACIK,      // komik devrilme: saçılan parçalar ve kırık yumurtalar
     // yarış sınıfı: sahadaki rakiplerin aracı (oyuncu = true: oyuncunun aracı)
     rakipler: (oyuncu) => (oyuncu ? { arac: player.arac, ucTeker: !!player.ucTeker } : cars.filter((c) => !c.isPlayer).map((c) => ({ arac: c.ski ? 'kayak' : c.arac || 'car', ucTeker: !!c.ucTeker, dus: c.dus > 0, hiz: +Math.hypot(c.vx, c.vz).toFixed(1), devrik: c.devrik > 0, model: !!(c.av && c.av.anim), prog: Math.round(c.prog), bitti: c.finished }))),
@@ -16206,7 +16319,7 @@ function cokKur(o) {
     bench(n) { const gl = renderer.getContext(), t0 = performance.now(); for (let i = 0; i < n; i++) { renderer.render(scene, camera); gl.finish(); } return { ms: (performance.now() - t0) / n, calls: renderer.info.render.calls, tris: renderer.info.render.triangles, geo: renderer.info.memory.geometries, tex: renderer.info.memory.textures, prog: renderer.info.programs.length }; },
   };
 
-  initDust();
+  initDust(); initKiz();
   applyLang(AYAR.dil || LANG, false);
   build().catch((e) => { $('load-text').textContent = T('hata', e.message); console.error(e); });
 })();
