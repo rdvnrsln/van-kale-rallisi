@@ -11677,6 +11677,23 @@ function yayaTezgah(y, durum, barY, barZ) {
   }
   yayaYuz(y, hayir ? 'kizgin' : evet ? 'mutlu' : 'notr');
 }
+// Oturan yolcu (servis minibüsü, 23 Kas 2026). Figürün kökü taban hizasında, koltuğun ortasındadır. h: minder üstünün tabandan yüksekliği (figür ölçüsünde).
+// durus 'telefon': iki eliyle telefonu tutar, başı önde; ötekiler elleri dizlerinde, arada yana bakar.
+function yayaOtur(y, durus, h) {
+  const f = y.f, t = y.t, gy = h + 0.07 + 0.003 * Math.sin(t * 1.3), egim = -0.1, tel = durus === 'telefon';
+  f.govde.position.set(0, gy, 0.02); f.govde.rotation.set(egim, 0.04 * Math.sin(t * 0.3 + y.faz), 0);
+  f.bas.rotation.set(tel ? 0.45 : 0.04 - egim * 0.8, tel ? -0.08 : 0.38 * Math.sin(t * 0.33 + y.faz), 0);
+  const gq = _ya.q.setFromEuler(f.govde.rotation).invert(), yerel = (v) => v.sub(f.govde.position).applyQuaternion(gq);
+  for (const yan of ['L', 'R']) {
+    const sx = yan === 'L' ? 1 : -1;
+    ikCoz(f.bacak[yan], yerel(_ya.v.set(sx * 0.13, 0.065, 0.5)), _ya.b.set(sx * 0.15, 1, 0.6).applyQuaternion(gq), gq);      // ayaklar tabanda, dizler önde
+    const v = _ya.v, b = _ya.b;
+    if (tel) { v.set(sx * 0.035, gy + 0.21, 0.34); b.set(sx * 1, -0.8, -0.1); }      // telefon göğüs önünde
+    else { v.set(sx * 0.15, gy + 0.1, 0.36); b.set(sx * 0.8, -1, -0.2); }      // eller dizlerin üstünde
+    ikCoz(f.kol[yan], yerel(v), b.applyQuaternion(gq));
+  }
+  yayaYuz(y, 'notr');
+}
 // Kayakçı (kayak inişindeki oyuncu). c: araç durumu (tuck: çömelme, plow: kar sabanı, steer).
 function yayaKayak(y, c, dt) {
   const f = y.f, k = Math.min(1, dt * 9);
@@ -13573,6 +13590,35 @@ function cokKur(o) {
     TUR.visible = false; world.add(TUR);
   }
   function putTourists(x, z, h) { TUR.position.set(x, groundH(x, z), z); TUR.rotation.y = h; TUR.visible = true; }
+  // Servis yolcuları minibüste (23 Kas 2026; kurucu: öğrenciler bindikten sonra koltuklarda görünsün). Bekleyen grubun üyeleri binişte araca taşınır ve oturur,
+  // inişte (ya da görev bırakılınca) grubun yerine döner. Yerler minibüs içinde (tools/blender/arabalar.py ic: ön yolcu koltuğu z 0,49; arka sıralar
+  // z −0,25 / −1,05 / −1,8, minder üstü 0,835; taban 0,355). Omuzdaki kayaklar oturunca gizlenir (tavan bagajında sayılır). Model inmediyse grup yalnız gizlenir.
+  // sıra: ön yolcu koltuğu, sonra arkadan öne (oyun kamerası arkadadır: arka camdan en arka sıra görünür)
+  const YOLCU_YER = [[-0.36, 0.5], [0.4, -1.77], [-0.4, -1.77], [0.4, -1.02], [-0.4, -1.02], [0.4, -0.22], [-0.4, -0.22]], YOLCU_TABAN = 0.355, YOLCU_OTURAK = 0.48;
+  const YOLCU = { uye: [], grup: null };
+  function yolcuBindir() {
+    TUR.visible = false;
+    const uye = TUR.userData.uye, kok = player.servis && player.servis.kok;
+    if (!uye || !kok || player.arac !== 'servis') return;
+    yolcuIndir();
+    uye.slice(0, YOLCU_YER.length).forEach((y, i) => {
+      y.eski = { p: y.kok.position.clone(), r: y.kok.rotation.y };
+      kok.add(y.kok); y.kok.position.set(YOLCU_YER[i][0], YOLCU_TABAN, YOLCU_YER[i][1]); y.kok.rotation.set(0, 0, 0);
+      if (y.ek === 'omuz') y.kok.traverse((o) => { if (o.isMesh && o.name.endsWith('ek_omuz')) o.visible = false; });
+      yayaOtur(y, y.durus, YOLCU_OTURAK / y.tip.boy); YOLCU.uye.push(y);
+    });
+    YOLCU.grup = TUR;
+  }
+  function yolcuIndir() {
+    for (const y of YOLCU.uye) {
+      if (y.kok.parent) y.kok.parent.remove(y.kok);
+      if (YOLCU.grup !== TUR) continue;      // bölge değişti: eski grup yok
+      TUR.add(y.kok); y.kok.position.copy(y.eski.p); y.kok.rotation.set(0, y.eski.r, 0);
+      if (y.ek === 'omuz') y.kok.traverse((o) => { if (o.isMesh && o.name.endsWith('ek_omuz')) o.visible = true; });
+      yayaDur(y, y.durus);
+    }
+    YOLCU.uye.length = 0; YOLCU.grup = null;
+  }
   // Araç: araba ya da üç tekerli yük bisikleti (yavaş, pedallı). Yük işi bisikletle yapılır; yarışa her araçla girilir (sınıf).
   // SINIF: itiş, azami hız; taban = en zayıf rakibin itiş ve azami hız katsayısı (üç tekerde oyuncunun turbosu ve ayakta pedalı var, rakip ona göre hızlı);
   // vKat = yapay sürücünün viraj hızı katsayısı (rota hızı araba içindir: yanal 11,5 m/sn²; üç teker eşiğinin altında kalmalı).
@@ -14267,6 +14313,7 @@ function cokKur(o) {
     if (player.ski) setSki(false);
     $('mutfak').hidden = true; $('btn-salon').hidden = true;
     if (TUR && TUR.parent) TUR.visible = false;
+    yolcuIndir();      // görev bırakıldıysa yolcular araçta kalmasın
     for (const r of rivals) r.mesh.visible = false;
     for (const k of KAYAKCI) k.mesh.visible = false;
     cars = [player];
@@ -14765,7 +14812,7 @@ function cokKur(o) {
         const st = gl.stages[gl.si];
         gl.x = st.x; gl.z = st.z; gl.ad = st.ad;
         beacon1.position.set(st.x, groundH(st.x, st.z) - 0.5, st.z);
-        if (gl.ozel.yuk) yukGoster(true, gl.yukTur); else TUR.visible = false;
+        if (gl.ozel.yuk) yukGoster(true, gl.yukTur); else yolcuBindir();      // yolcular minibüse biner
         hudT = 0;
         if (gl.ozel.teslimat) { gl.t = 0; KARS.veda = 2.6; flash(T('tes.yuklendi.' + gl.yukTur), T('tes.gotur.' + gl.hedefTur) + ' ' + T('tes.ipucu.' + gl.yukTur), 4.5); return; }      // süre yüklenince başlar
         flash(T(gl.on + '.bindi'), T(gl.on + '.bindi.alt'), 3);
@@ -14803,7 +14850,7 @@ function cokKur(o) {
   }
   function finishServis(gl) {
     const ev = gl.ozel, st = gl.stages[gl.stages.length - 1], md = ev.madalya, t = gl.t, on = gl.on;
-    if (ev.yuk) { yukGoster(false); sacikTemizle(); } else putTourists(st.kx, st.kz, st.kh);
+    if (ev.yuk) { yukGoster(false); sacikTemizle(); } else { yolcuIndir(); putTourists(st.kx, st.kz, st.kh); }
     const yol = ev.yuk ? gl.yol : ev.R.L, cp = gl.carpan || 1, gold = yol / (md[0] * cp), silver = yol / (md[1] * cp), bronze = yol / (md[2] * cp);
     const kazanc = Math.round((ev.odeme || 0) * cp * (t <= gold ? 1.5 : t <= silver ? 1.25 : t <= bronze ? 1 : 0.7) * (gl.konfor / 100));
     addMoney(kazanc);
@@ -16204,6 +16251,7 @@ function cokKur(o) {
     if (driving) {      // yayalar: gece ve düşük kalitede daha az
       YAYA.hedef = AYAR.trafik === false ? 0 : Math.round((MOBIL ? 4 : AYAR.kalite === 'dusuk' ? 5 : AYAR.kalite === 'orta' ? 9 : 13) * (1 - 0.6 * geceN));
       yayaTick(dt, player);
+      if (YOLCU.uye.length) { if (YOLCU.grup !== TUR) yolcuIndir(); else for (const y of YOLCU.uye) { y.t += dt; yayaOtur(y, y.durus, YOLCU_OTURAK / y.tip.boy); } }      // minibüsteki yolcular
       if (TUR && TUR.visible && TUR.userData.uye) yayaGrupTick(TUR, dt, (TUR.position.x - player.x) ** 2 + (TUR.position.z - player.z) ** 2 < 60 * 60);
     }
     karsTick(dt);      // teslimat karşılayıcıları (sonuç ekranında da)
