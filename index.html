@@ -12943,7 +12943,7 @@ function mutfakKur(api) {
 const ODA_SUNUCU = 'wss://street81-oda.street81.workers.dev';
 const COK_RENK = ['#e2572b', '#2d8fe0', '#f0c419', '#9b59d0'];      // oyuncu 1–4; 1 oyunun kendi turuncusu
 const COK_HARF = 'ABCDEFGHJKLMNPRSTUVYZ';                           // I, O, Q, W, X yok: sesli söylenirken karışmasın
-const COK_BOLGE = ['van', 'abali', 'kampus'], COK_ARAC = ['trike', 'motor', 'car', 'kayak'];
+const COK_BOLGE = ['van', 'abali', 'kampus'], COK_ARAC = ['trike', 'motor', 'car', 'kayak', 'servis'];      // servis sonda: eski istemci 4'ü tanımaz, araba gösterir
 const COK_HIZ = 1000 / 12, COK_GECIKME = 120;                       // saniyede 12 durum; uzak araç 120 ms geriden ara değerle çizilir
 
 // o: { scene, $, oyuncu(), bolge(), durum(), bolgeGit(id), panel(ad), alev(v), bip(frekans, süre) }
@@ -13163,12 +13163,19 @@ function cokKur(o) {
   function kendiBoya() {      // odadayken kendi aracın da numaranın renginde: herkes seni aynı renkte görür
     const p = o.oyuncu(), hex = C.odada || C.yeniden ? COK_RENK[C.no - 1] || null : null;
     if (!p) return;
-    for (const v of [p.car, p.trike, p.motor]) if (v && v.group && (v.group.userData.cokRenk || null) !== hex) boyaRenk(v.group, hex);
+    for (const v of [p.car, p.servis, p.trike, p.motor]) if (v && v.group && (v.group.userData.cokRenk || null) !== hex) boyaRenk(v.group, hex);
   }
   function aracKur(U, tur) {
     if (U.araclar[tur]) return U.araclar[tur];
     let v;
-    if (tur === 'car') {
+    if (tur === 'servis') {      // servis minibüsü: oyuncu numarasının renginde
+      v = makeCarMesh(U.renk, false, 'minibus');
+      arabaYukle().then((src) => {
+        const yeni = makeCarGLB(src, 'minibus', U.renk, { oyuncu: true, plaka: '65 ST 08' + U.no });
+        degistir(U, tur, yeni);
+        ucTekerYukle().then((us) => arabaSurucu(yeni, us)).catch(() => { const s = yeni.kok.getObjectByName('minibus_surucu'); if (s) s.visible = true; });
+      }).catch(() => {});
+    } else if (tur === 'car') {
       v = makeCarMesh(U.renk, false, 'spor');
       arabaYukle().then((src) => {
         const yeni = makeCarGLB(src, 'spor', U.renk, { serit: true, oyuncu: true, plaka: '65 ST 08' + U.no });
@@ -13246,7 +13253,7 @@ function cokKur(o) {
       if (U.v !== v) { aracGec(U, v); c.pitch = c.roll = 0; c.lift = 0; c.devrikA = 0; c.kalkisG = 0; }
       v.group.visible = true;
       // üç teker: 16 ayakta pedal, 32 pedal çeviriyor, 64–192 teker kalkışı (0–3), 256 devrik, 512 kalkan teker solda
-      c.ucTeker = U.arac !== 'car'; c.iz = v.iz || 0.45; c.ayakta = !!(U.bayrak & 16); c.pedalCev = U.arac === 'trike' ? !!(U.bayrak & 32) : undefined;
+      c.ucTeker = U.arac !== 'car' && U.arac !== 'servis'; c.iz = v.iz || 0.45; c.ayakta = !!(U.bayrak & 16); c.pedalCev = U.arac === 'trike' ? !!(U.bayrak & 32) : undefined;
       c.kalkis = ((U.bayrak >> 6) & 3) / 3; c.devrikUzak = !!(U.bayrak & 256); c.kalkisYon = U.bayrak & 512 ? -1 : 1;
       { const kr = U.bayrak & 1024 ? 'mavi' : 'ahsap'; if (c.ucTeker && v.kasa !== kr) kasaRenk(v, kr); }      // 1024: mavi yük kasası
       poseCar(c, dt);
@@ -13257,7 +13264,7 @@ function cokKur(o) {
     // etiket
     if (!U.etiket) etiketKur(U);
     etiketCiz(U);
-    const s = U.etiket.s, yuk = U.arac === 'car' ? 2.05 : 2.35;
+    const s = U.etiket.s, yuk = U.arac === 'servis' ? 2.75 : U.arac === 'car' ? 2.05 : 2.35;
     s.position.set(c.x, c.y + (c.lift || 0) + yuk, c.z);
     const d = _k.copy(s.position).distanceTo(kam);
     s.visible = d < 3000;
@@ -13569,15 +13576,18 @@ function cokKur(o) {
   // Araç: araba ya da üç tekerli yük bisikleti (yavaş, pedallı). Yük işi bisikletle yapılır; yarışa her araçla girilir (sınıf).
   // SINIF: itiş, azami hız; taban = en zayıf rakibin itiş ve azami hız katsayısı (üç tekerde oyuncunun turbosu ve ayakta pedalı var, rakip ona göre hızlı);
   // vKat = yapay sürücünün viraj hızı katsayısı (rota hızı araba içindir: yanal 11,5 m/sn²; üç teker eşiğinin altında kalmalı).
-  const SINIF = { car: { power: 10.5, vmax: 62, taban: 0.93, vKat: 1 }, motor: { power: 6.8, vmax: 19, taban: 0.99, vKat: 0.72 }, trike: { power: 4.4, vmax: 9.5, taban: 1, vKat: 0.62 } };
+  // servis: yolcu servisi minibüsü (23 Kas 2026; kurucu: "öğrenci servisi deniyor ama yarış arabası var, olmaz"). Yalnız servis görevlerinde;
+  // satılmaz, menüde seçilmez. Spor arabadan ağır ve yavaş, turbosu yok.
+  const SINIF = { car: { power: 10.5, vmax: 62, taban: 0.93, vKat: 1 }, motor: { power: 6.8, vmax: 19, taban: 0.99, vKat: 0.72 }, trike: { power: 4.4, vmax: 9.5, taban: 1, vKat: 0.62 },
+    servis: { power: 8, vmax: 40, taban: 0.93, vKat: 0.85 } };
   function setVehicle(kind) {
-    const v = kind === 'trike' ? player.trike : kind === 'motor' ? player.motor : player.car;
+    const v = kind === 'trike' ? player.trike : kind === 'motor' ? player.motor : kind === 'servis' ? player.servis : player.car;
     player.mesh.visible = false;
     player.mesh = v.group; player.wheels = v.wheels; player.tail = v.tail;
     player.mesh.visible = !player.ski;
     player.power = SINIF[kind].power; player.vmax = SINIF[kind].vmax; player.vKat = SINIF[kind].vKat;
     player.pedal = kind === 'trike'; player.arac = kind;
-    player.ucTeker = kind !== 'car'; player.esik = kind === 'motor' ? UC.esikMotor : UC.esik; player.iz = v.iz || 0.45;
+    player.ucTeker = kind !== 'car' && kind !== 'servis'; player.esik = kind === 'motor' ? UC.esikMotor : UC.esik; player.iz = v.iz || 0.45;
     player.kalkis = 0; player.devrik = 0; player.devrikA = 0; player.ayakta = false; player.yuklu = false; player.yukGuc = 0; player.yukEsik = 0;
     if (player.nefes === undefined) player.nefes = 1;
     yukGoster(false); sacikTemizle();
@@ -13697,6 +13707,7 @@ function cokKur(o) {
     }
     player = makeCar('#e2572b', true, 'Sen', 'spor');
     player.car = { group: player.mesh, wheels: player.wheels, tail: player.tail };
+    { const sv = makeCarMesh('#e9e7e1', true, 'minibus'); player.servis = { group: sv.group, wheels: sv.wheels, tail: sv.tail }; sv.group.visible = false; scene.add(sv.group); }      // servis minibüsü (Blender modeli inene kadar kod çizimi)
     player.trike = makeTrikeMesh(false); player.trike.group.visible = false; scene.add(player.trike.group);
     player.motor = makeTrikeMesh(true); player.motor.group.visible = false; scene.add(player.motor.group);
     player.kasa = AYAR.kasa === 'mavi' ? 'mavi' : 'ahsap';
@@ -13727,6 +13738,12 @@ function cokKur(o) {
       pv.group.visible = eski.visible; scene.remove(eski); scene.add(pv.group); player.car = pv;
       ucTekerYukle().then((us) => arabaSurucu(pv, us)).catch(() => { const s = pv.kok.getObjectByName('spor_surucu'); if (s) s.visible = true; });      // oyuncu direksiyonda; figür inmezse siluet
       if (player.mesh === eski) { player.mesh = pv.group; player.wheels = pv.wheels; player.tail = pv.tail; }
+      {      // servis minibüsü: beyaz, mavi hat şeritli; oyuncu direksiyonda
+        const sv = makeCarGLB(src, 'minibus', '#e9e7e1', { oyuncu: true, plaka: '65 ST 081' }), se = player.servis.group;
+        sv.group.visible = se.visible; scene.remove(se); scene.add(sv.group); player.servis = sv;
+        ucTekerYukle().then((us) => arabaSurucu(sv, us)).catch(() => { const s = sv.kok.getObjectByName('minibus_surucu'); if (s) s.visible = true; });
+        if (player.mesh === se) { player.mesh = sv.group; player.wheels = sv.wheels; player.tail = sv.tail; }
+      }
       rivals.forEach((r, i) => degis(r, makeCarGLB(src, rc[i][2] === 'hatch' ? 'hatch' : 'sedan', rc[i][0])));
       trafficModel(scene, src);
     }).catch(() => {});
@@ -14766,7 +14783,7 @@ function cokKur(o) {
   function startServis(ev) {
     clearRace();
     G.lastEvent = ev;
-    const yukAraci = ev.arac ? bestCargo() : 'car';
+    const yukAraci = ev.arac ? bestCargo() : 'servis';      // yolcu servisi minibüsle yapılır
     setVehicle(yukAraci);
     const R = ev.R, on = ev.metin || (ev.yuk ? 'yuk' : 'servis'), sAl = ev.al || 70, sBirak = ev.birak || R.L - 22;
     let p = routePoint(R, 5); placeCar(player, p.x, p.z, Math.atan2(p.dx, p.dz));
@@ -15188,7 +15205,7 @@ function cokKur(o) {
     } else vakitG += clamp(hedef - vakitG, -dt * 0.6, dt * 0.6);
     if (Math.abs(vakitG - vakitUyg) > 0.002 || (vakitG === Math.round(vakitG) && vakitUyg !== vakitG)) vakitUygula(vakitG);
     // far: oyuncunun aracının önünü aydınlatır
-    const fx = Math.sin(player.h), fz = Math.cos(player.h), guc = player.arac === 'car' ? 2.6 : player.arac === 'motor' ? 1.8 : 0.9;
+    const fx = Math.sin(player.h), fz = Math.cos(player.h), guc = player.arac === 'car' || player.arac === 'servis' ? 2.6 : player.arac === 'motor' ? 1.8 : 0.9;
     farIsik.intensity = geceN > 0.04 && !player.ski ? geceN * guc : 0;
     farIsik.position.set(player.x + fx * 1.4, player.y + 0.95, player.z + fz * 1.4); farIsik.target.position.set(player.x + fx * 24, player.y - 0.2, player.z + fz * 24);
     // en yakın iki sokak lambası gerçek ışık verir (ötekiler yalnız parlayan ampul ve ışık havuzudur)
@@ -15499,6 +15516,8 @@ function cokKur(o) {
   let camH = 0, camSnap = true, orbit = 0.6;
   const SKICAM = { d: 5.6, h: 2.5, la: 1.2 };
   const CAMS = [{ d: 7.8, h: 3.0, la: 1.3 }, { d: 12.5, h: 5.2, la: 1.6 }, { d: -0.55, h: 1.28, la: 1.15 }];
+  // minibüs: gövde 5 m boyunda ve 2 m yüksek, sürücü koltuğu öne ve yukarı (minibus_yer_koltuk); kamera ona göre geri ve yukarı
+  const CAMS_SERVIS = [{ d: 9.6, h: 3.9, la: 1.8 }, { d: 14, h: 5.9, la: 2.0 }, { d: -1.1, h: 1.78, la: 1.6 }];
   // Yüz kamerası (21 Kas, kurucu: "sürerken modelin yüzünün göründüğü açı"): araç 2 sn durunca kendiliğinden, F ya da oyun kolunda LB basılıyken,
   // "Yüz" düğmesiyle açık kalır. Kamera sürücünün başına önden ¾ açıdan bakar; gaz verince (durma kaynaklıysa) arkaya döner.
   // _gp/_gl'yi yazar (konum, bakış); 0..1 geçiş oranını döndürür.
@@ -15531,7 +15550,7 @@ function cokKur(o) {
       camSnap = true;
       return lookAt;
     }
-    const c = player, m = c.ski ? SKICAM : CAMS[G.cam], sp = Math.hypot(c.vx, c.vz);
+    const c = player, m = c.ski ? SKICAM : (c.arac === 'servis' ? CAMS_SERVIS : CAMS)[G.cam], sp = Math.hypot(c.vx, c.vz);
     camH += wrapAngle(c.h - camH) * (camSnap ? 1 : Math.min(1, dt * 4.6));
     let dist = m.d + (m.d > 0 ? sp * 0.04 : 0);
     let bx = c.x - Math.sin(camH) * dist, bz = c.z - Math.cos(camH) * dist;
