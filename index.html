@@ -9007,11 +9007,14 @@ function kaleKur(scene, routeNear, bag, blok, koyuTas) {
 // ------------------------------------------------------------ Kserkses yazıtı: kalenin güney yüzünde, Eski Van'a bakan kaya nişi
 // Yeri OSM düğümünden (6665653489, "Xerxes epigraph"). Üç sütun çivi yazısı (Eski Farsça, Elamca, Babilce), 27 satır; işaretler kuralla çizilir, okunacak metin değildir.
 // oran: uçurumun dibinden tepesine yüksekliğin kaçta kaçında durduğu (23 Kas, kurucu: "aşağıda olmuş. gerçeğinde daha yukarıda ve biraz daha büyük").
-const YAZIT = { x: 24.4, z: 70.5, en: 5.6, boy: 3.5, oran: 0.56, yer: null };
+// Ölçü gerçeğinden büyüktür: kurucu aynı akşam "konumu iyi ancak küçük hala 3x büyüt" dedi (5,6 × 3,5 m → 16,8 × 10,5 m); yerden ve yarıştan seçilsin diye.
+const YAZIT = { x: 24.4, z: 70.5, en: 16.8, boy: 10.5, oran: 0.56, yer: null };
 function yazitDoku() {
-  const W = 1024, H = 640, cv = document.createElement('canvas'), kb = document.createElement('canvas');
-  cv.width = kb.width = W; cv.height = kb.height = H;
+  // çizim 1024 × 640 birimlik düzlemde yapılır; masaüstünde tuval iki kat çözünürlükte (levha büyük, yakından da net)
+  const W = 1024, H = 640, K = MOBIL ? 1 : 2, cv = document.createElement('canvas'), kb = document.createElement('canvas');
+  cv.width = kb.width = W * K; cv.height = kb.height = H * K;
   const g = cv.getContext('2d'), b = kb.getContext('2d'), R = rng(486);
+  g.scale(K, K); b.scale(K, K);
   g.fillStyle = '#9d8760'; g.fillRect(0, 0, W, H);
   b.fillStyle = '#b4b4b4'; b.fillRect(0, 0, W, H);
   for (let i = 0; i < 3200; i++) {      // taş yüzeyi: açık ve koyu benek
@@ -9084,18 +9087,19 @@ function yazitKur(scene) {
   const dip = baseH(YAZIT.x + AX.nx * 30, YAZIT.z + AX.nz * 30), tepe = groundH(YAZIT.x, YAZIT.z);      // OSM düğümü kayanın üstünde, uçurumun 15 m gerisinde
   const yc = dip + Math.max(8, (tepe - dip) * YAZIT.oran), he = YAZIT.en / 2 + 0.6, hb = YAZIT.boy / 2 + 0.6;
   const vur = (du, dy) => { o3.set(YAZIT.x + AX.ux * du + AX.nx * 45, yc + dy, YAZIT.z + AX.uz * du + AX.nz * 45); ray.set(o3, d3); const h = ray.intersectObject(kaya, false)[0]; return h ? h.point.clone() : null; };
-  const H = [];
-  for (const dy of [-hb, 0, hb]) for (const du of [-he, 0, he]) { const p = vur(du, dy); if (!p) return null; H.push(p); }
-  const C = H[4], Th = H[5].clone().sub(H[3]).normalize(), Tv = H[7].clone().sub(H[1]).normalize(), N = new THREE.Vector3().crossVectors(Th, Tv).normalize();
+  const NU = 2 * Math.max(1, Math.round(he / 2.5)) + 1, NV = 2 * Math.max(1, Math.round(hb / 2.5)) + 1, H = [];      // vuruş ızgarası: yaklaşık 2,5 m aralık
+  for (let j = 0; j < NV; j++) for (let i = 0; i < NU; i++) { const p = vur(lerp(-he, he, i / (NU - 1)), lerp(-hb, hb, j / (NV - 1))); if (!p) return null; H.push(p); }
+  const yu = NU >> 1, yv = NV >> 1, ort = yv * NU + yu;
+  const C = H[ort], Th = H[ort + yu].clone().sub(H[ort - yu]).normalize(), Tv = H[ort + yv * NU].clone().sub(H[ort - yv * NU]).normalize(), N = new THREE.Vector3().crossVectors(Th, Tv).normalize();
   if (N.x * AX.nx + N.z * AX.nz < 0) N.negate();
   Tv.crossVectors(N, Th).normalize();
   if (Tv.y < 0) { Tv.negate(); Th.negate(); }
-  let one = 0;      // nişin oturacağı düzlem: dokuz vuruşun en dıştaki noktası
+  let one = 0;      // nişin oturacağı düzlem: vuruşların en dıştaki noktası
   for (const p of H) one = Math.max(one, p.clone().sub(C).dot(N));
   const nokta = (u, v, d) => [C.x + Th.x * u + Tv.x * v + N.x * (one + d), C.y + Th.y * u + Tv.y * v + N.y * (one + d), C.z + Th.z * u + Tv.z * v + N.z * (one + d)];
-  // Nişin çevresi: kayayla aynı doku ve renkte yumuşak bir kabartma (dünya konumundan dokulanır, arkasındaki yüzle kaynaşır); niş bunun içine 30 cm oyulur.
+  // Nişin çevresi: kayayla aynı doku ve renkte yumuşak bir kabartma (dünya konumundan dokulanır, arkasındaki yüzle kaynaşır); niş bunun içine oyulur (derinlik ve kabartmanın genişliği levhanın boyuyla artar).
   // Orta ve dış halka kayanın o noktadaki gerçek derinliğine göre konur: dış kenar kayaya gömülür, havada kenar kalmaz.
-  const B = new Bag(), rk = new THREE.Color(), e2 = YAZIT.en / 2, b2 = YAZIT.boy / 2, ON = 0.36, DIP = 0.06, PAR = 4;
+  const B = new Bag(), rk = new THREE.Color(), e2 = YAZIT.en / 2, b2 = YAZIT.boy / 2, OLC = clamp(YAZIT.boy / 3.5, 1, 2), ON = 0.3 * OLC + 0.06, DIP = 0.06, PAR = Math.max(4, Math.round(YAZIT.en / 2.8));
   const rf = (p) => { const n = vnoise(p[0] / 9, p[2] / 9 + p[1] / 4); rk.setRGB(0.5 + n * 0.1, 0.44 + n * 0.09, 0.34 + n * 0.07).convertSRGBToLinear(); };
   const rfIc = (p) => { const n = vnoise(p[0] / 9, p[2] / 9 + p[1] / 4); rk.setRGB(0.36 + n * 0.08, 0.31 + n * 0.07, 0.24 + n * 0.06).convertSRGBToLinear(); };
   const ks = (p, f) => { f(p); B.p.push(p[0], p[1], p[2]); B.c.push(rk.r, rk.g, rk.b); };
@@ -9111,7 +9115,7 @@ function yazitKur(scene) {
   const kos = [[-e2, -b2], [e2, -b2], [e2, b2], [-e2, b2]], ag = [], orta = [], dis = [];
   for (let i = 0; i < 4; i++) for (let k = 0; k < PAR; k++) { const a = kos[i], b = kos[(i + 1) % 4], t = k / PAR; ag.push([lerp(a[0], b[0], t), lerp(a[1], b[1], t)]); }
   ag.forEach(([u, v], i) => {
-    const L = Math.hypot(u / e2, v / b2) || 1, ox = u / e2 / L, oy = v / b2 / L, r1 = 0.9 + 0.25 * hash2(i, 3), r2 = 2.9 + 0.6 * hash2(i, 5);
+    const L = Math.hypot(u / e2, v / b2) || 1, ox = u / e2 / L, oy = v / b2 / L, r1 = (0.9 + 0.25 * hash2(i, 3)) * OLC, r2 = (2.9 + 0.6 * hash2(i, 5)) * OLC;
     orta.push([u + ox * r1, v + oy * r1, clamp(derin(u + ox * r1, v + oy * r1) + 0.18 + 0.06 * hash2(i, 11), ON - 0.3, ON)]);
     dis.push([u + ox * r2, v + oy * r2, derin(u + ox * r2, v + oy * r2) - 0.3]);
   });
@@ -9126,7 +9130,7 @@ function yazitKur(scene) {
   const cerceve = B.mesh(triplanar(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true }), 'kaya', 'kaya_ust', 0.062, 0.11, 1.0, 1.1, true), true);
   scene.add(cerceve);
   const dk = yazitDoku(), pg = new THREE.PlaneGeometry(YAZIT.en, YAZIT.boy);
-  const levha = new THREE.Mesh(pg, new THREE.MeshStandardMaterial({ map: dk.map, bumpMap: MOBIL ? null : dk.bump, bumpScale: 0.018, roughness: 0.96, name: 'kale-yazit' }));
+  const levha = new THREE.Mesh(pg, new THREE.MeshStandardMaterial({ map: dk.map, bumpMap: MOBIL ? null : dk.bump, bumpScale: 0.0052 * YAZIT.boy, roughness: 0.96, name: 'kale-yazit' }));
   levha.matrixAutoUpdate = false;
   levha.matrix.makeBasis(Th, Tv, N).setPosition(C.x + N.x * (one + DIP), C.y + N.y * (one + DIP), C.z + N.z * (one + DIP));
   levha.receiveShadow = true;
