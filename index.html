@@ -14456,7 +14456,8 @@ function cokKur(o) {
   // Model inmediyse grup yalnız gizlenir. Araç yerel ekseni: +x sol (sürücü), −x sağ (kaldırım), +z ön.
   // sıra: en arka sıra (arka camdan görünür), sonra orta ve ön sıra; her sırada önce içerideki koltuk. Ön yolcu koltuğu boş kalır (kapısı açılmaz).
   const YOLCU_YER = [[0.5, -1.77], [0, -1.77], [-0.5, -1.77], [0.5, -1.02], [-0.04, -1.02], [0.5, -0.22], [-0.04, -0.22]], YOLCU_TABAN = 0.355, YOLCU_OTURAK = 0.48;
-  const YOLCU = { uye: [], grup: null, binis: null, kam: 0 };      // kam: biniş kamerasının geçiş oranı
+  const YOLCU = { uye: [], grup: null, binis: null, inis: null, kam: 0 };      // kam: biniş ve iniş kamerasının geçiş oranı
+  const yolcuMesgul = () => !!(YOLCU.binis || YOLCU.inis);      // biniş ya da iniş sürüyor: araç bekler, görev süresi durur
   const _yv = new THREE.Vector3(), yumus = (t) => t * t * (3 - 2 * t);
   function kayakOmuz(y, gor) { if (y.ek === 'omuz' && y.omuzBos !== !gor) { y.omuzBos = !gor; y.kok.traverse((o) => { if (o.isMesh && o.name.endsWith('ek_omuz')) o.visible = gor; }); } }
   function koltugaKoy(y, i) {
@@ -14474,7 +14475,7 @@ function cokKur(o) {
     YOLCU.grup = TUR;
   }
   function yolcuIndir() {
-    if (YOLCU.binis) { surguKoy(player.servis, 0); YOLCU.binis = null; }
+    if (YOLCU.binis || YOLCU.inis) { surguKoy(player.servis, 0); YOLCU.binis = YOLCU.inis = null; }
     for (const y of YOLCU.uye) {
       if (y.kok.parent) y.kok.parent.remove(y.kok);
       delete y.bn;
@@ -14496,7 +14497,11 @@ function cokKur(o) {
     const p0 = s.userData.p0;
     s.position.set(p0.x - 0.07 * yumus(clamp(k / 0.2, 0, 1)), p0.y, p0.z - 1.12 * yumus(clamp((k - 0.2) / 0.8, 0, 1)));
   }
-  function aracYonu(kok) { const e = kok.matrixWorld.elements; return Math.atan2(e[8], e[10]); }
+  // Dışarıdaki yürüyüş için aracın yer düzlemindeki ekseni: konum ve yön (eğim ve yatış hesaba katılmaz; yokuşta eğik eksen yolcuyu kaydırıyordu).
+  const AD = { x: 0, z: 0, c: 1, s: 0 };
+  function aracYonu(kok) { const e = kok.matrixWorld.elements, yon = Math.atan2(e[8], e[10]); AD.x = e[12]; AD.z = e[14]; AD.c = Math.cos(yon); AD.s = Math.sin(yon); return yon; }
+  const dzYerel = (wx, wz) => { const dx = wx - AD.x, dz = wz - AD.z; return [dx * AD.c - dz * AD.s, dx * AD.s + dz * AD.c]; };
+  const dzDunya = (lx, lz) => [AD.x + lx * AD.c + lz * AD.s, AD.z - lx * AD.s + lz * AD.c];
   function dolasKeser(ax, az, bx, bz) {      // [a,b] parçası aracın dikdörtgeninden geçer mi (Liang–Barsky)
     let t0 = 0, t1 = 1; const dx = bx - ax, dz = bz - az, R = DOLAS;
     for (const [p, q] of [[-dx, ax + R.rx], [dx, R.rx - ax], [-dz, az + R.rz], [dz, R.rz - az]]) {
@@ -14523,6 +14528,34 @@ function cokKur(o) {
     }
     return s || [tx, tz];
   }
+  // Dışarıda yürüyüş (biniş ve iniş): yer dünyada tutulur (araç dururken kayarsa yolcu onunla kaymaz), yol aracın ekseninde bulunur.
+  // Hedefe (tx, tz; araç ekseni) varınca hBek yönüne döner ve duruşta bekler. Vardıysa true.
+  function disaridaYuru(y, b, tx, tz, hBek, durus, dt, v, yon) {
+    [b.x, b.z] = dzYerel(y.kok.position.x, y.kok.position.z);
+    const [wx, wz] = dolasYol(b.x, b.z, tx, tz), dx = wx - b.x, dz = wz - b.z, d = Math.hypot(dx, dz), kalan = Math.hypot(tx - b.x, tz - b.z) + (wx !== tx || wz !== tz ? 3 : 0);
+    if (d > 0.04) {
+      const hiz = kalan > 4 ? 2.3 : 1.6, a = kalan > 4 ? 0.42 : 0.34, s = Math.min(d, hiz * dt);
+      b.x += (dx / d) * s; b.z += (dz / d) * s;
+      b.h += wrapAngle(Math.atan2(dx, dz) - b.h) * Math.min(1, dt * 7);
+      y.faz += (hiz * dt / ((2 * a / 0.6) * y.tip.boy)) * TAU; yayaYuru(y, a);
+    } else {
+      b.h += wrapAngle(hBek - b.h) * Math.min(1, dt * 6);
+      yayaDur(y, durus);
+    }
+    const [px, pz] = dzDunya(b.x, b.z);
+    y.kok.position.set(px, groundH(px, pz), pz); y.kok.rotation.set(0, yon + b.h, 0);
+    return d <= 0.04;
+  }
+  function icYuru(y, b, tx, tz, hiz, a, dt) {      // araç içinde eğilerek yürür; vardıysa true
+    const dx = tx - b.x, dz = tz - b.z, d = Math.hypot(dx, dz);
+    if (d > 0.03) {
+      const s = Math.min(d, hiz * dt); b.x += (dx / d) * s; b.z += (dz / d) * s;
+      b.h += wrapAngle(Math.atan2(dx, dz) - b.h) * Math.min(1, dt * 7);
+      y.faz += (hiz * dt / ((2 * a / 0.6) * y.tip.boy)) * TAU;
+    }
+    yayaYuru(y, a, 1);
+    return d <= 0.03;
+  }
   function yolcuBinisBasla(bitti) {      // false: canlandırma kurulamadı (model inmedi ya da araç minibüs değil)
     const uye = TUR && TUR.userData.uye, v = player.servis;
     if (!uye || !v || !v.kok || !v.surgu || player.arac !== 'servis' || !world) return false;
@@ -14532,17 +14565,85 @@ function cokKur(o) {
     let zt = 0;
     for (const y of uye.slice(0, YOLCU_YER.length)) {
       y.eski = { p: y.kok.position.clone(), r: y.kok.rotation.y };
-      y.kok.getWorldPosition(_yv); v.kok.worldToLocal(_yv);
-      y.bn = { evre: 'dis', x: _yv.x, z: _yv.z, y: 0, h: wrapAngle(TUR.rotation.y + y.kok.rotation.y - yon), u: 0, k: -1 };
-      zt += _yv.z; world.attach(y.kok); YOLCU.uye.push(y);      // dünya konumu korunur
+      y.kok.getWorldPosition(_yv); const [lx, lz] = dzYerel(_yv.x, _yv.z);
+      y.bn = { evre: 'dis', x: lx, z: lz, y: 0, h: wrapAngle(TUR.rotation.y + y.kok.rotation.y - yon), u: 0, k: -1 };
+      zt += lz; world.attach(y.kok); YOLCU.uye.push(y);      // dünya konumu korunur
     }
     YOLCU.uye.sort((a, b) => kapiUzak(a) - kapiUzak(b));      // kapıya en yakın önce biner
     YOLCU.grup = TUR; TUR.visible = false;
     YOLCU.binis = { t: 0, kapi: 0, son: -9, gelen: 0, yon: zt / Math.max(1, YOLCU.uye.length) > BINIS.kz ? 1 : -1, bitti };
     return true;
   }
+  // İniş (23 Kas 2026; kurucu: "Evet, inişi de yap"). Bırakma durağında araç bekler, görev süresi durur. Kapı açılır; kapıya en yakın sıradan başlayarak
+  // (sırada önce koridor yanı) yolcular kalkar, sıradan koridora, koridordan kapının önüne eğilerek yürür, basamaktan iner, doğrulur ve durağın kenarındaki
+  // grup yerine yürür (araç aradaysa dolaşır). Son yolcu inince kapı kapanır; hepsi yerine varınca sonuç ekranı açılır.
+  function yolcuInisBasla(st, bitti) {      // false: yürüyerek inemezler (araçta yolcu yok ya da model inmedi): eski yol, bir anda gruba
+    const v = player.servis;
+    if (!YOLCU.uye.length || YOLCU.binis || YOLCU.grup !== TUR || !v || !v.kok || !v.surgu || player.arac !== 'servis' || !world) return false;
+    TUR.position.set(st.kx, groundH(st.kx, st.kz), st.kz); TUR.rotation.y = st.kh; TUR.updateMatrixWorld(true);
+    YOLCU.uye.forEach((y, i) => {
+      const p = y.kok.position, k = y.bn && y.bn.k >= 0 ? y.bn.k : i;
+      y.bn = { evre: 'oturdu', x: p.x, z: p.z, y: YOLCU_TABAN, h: 0, u: 0, k, hedef: TUR.localToWorld(y.eski.p.clone()), hedefH: st.kh + y.eski.r };
+    });
+    const Y = YOLCU_YER;
+    YOLCU.uye.sort((a, b) => Y[b.bn.k][1] - Y[a.bn.k][1] || Y[a.bn.k][0] - Y[b.bn.k][0]);
+    YOLCU.inis = { t: 0, kapi: 0, son: -9, bitti };
+    return true;
+  }
+  function inisTick(dt) {
+    const B = YOLCU.inis, v = player.servis, U = YOLCU.uye;
+    B.t += dt;
+    v.group.updateMatrixWorld(true);
+    const yon = aracYonu(v.kok), disarida = U.every((y) => y.bn.evre === 'git' || y.bn.evre === 'vardi');
+    B.kapi = clamp(B.kapi + (disarida ? -dt : dt) * 1.1, 0, 1); surguKoy(v, B.kapi);
+    if ((disarida && B.kapi <= 0 && U.every((y) => y.bn.evre === 'vardi')) || B.t > BINIS.zaman) {      // hepsi yerinde, kapı kapalı (ya da takıldı)
+      yolcuIndir(); TUR.visible = true; B.bitti(); return;
+    }
+    const kalkti = (y) => y && y.bn.evre !== 'oturdu' && y.bn.evre !== 'kalk';
+    for (let i = 0; i < U.length; i++) {
+      const y = U[i], b = y.bn, boy = y.tip.boy, [xs, zs] = YOLCU_YER[b.k], onde = U[i - 1];
+      y.t += dt;
+      if (b.evre === 'oturdu') {      // sırası gelince kalkar: kapı açık, öndeki koltuğundan ayrılmış
+        if (B.kapi > 0.6 && B.t - B.son > 0.6 && (!onde || kalkti(onde))) { b.evre = 'kalk'; b.u = 0; B.son = B.t; }
+        else yayaOtur(y, y.durus, YOLCU_OTURAK / boy);
+      }
+      if (b.evre === 'kalk') {      // oturuşun tersi: kalça öne ve yukarı, sonra koridora döner
+        b.u = Math.min(1, b.u + dt / 0.8);
+        const k = 1 - smooth(0, 0.8, b.u), hh = lerp(0, -Math.PI / 2, yumus(clamp((b.u - 0.45) / 0.55, 0, 1))), on = lerp(OTUR_ON, 0.02, k) * boy;
+        const pz = lerp(zs + OTUR_ON, zs + 0.02 * boy, k);
+        b.x = xs - Math.sin(hh) * on; b.z = pz - Math.cos(hh) * on; b.h = hh; b.y = YOLCU_TABAN;
+        yayaOtur(y, y.durus, YOLCU_OTURAK / boy, k);
+        if (b.u >= 1) { b.evre = 'cik'; b.x = xs; b.z = zs + OTUR_ON; }
+      } else if (b.evre === 'cik') {      // sıradan koridora
+        if (icYuru(y, b, BINIS.kx, zs + OTUR_ON, 0.75, 0.2, dt)) b.evre = 'kapiya';
+      } else if (b.evre === 'kapiya') {      // koridordan kapının önüne; öndekine 60 cm'den çok yaklaşmaz, öndeki basamaktan inmeden basamağa çıkmaz
+        const ob = onde && onde.bn, bos = !ob || ob.evre === 'git' || ob.evre === 'vardi' || (ob.evre === 'in' && ob.u > 0.5);
+        const sikisik = ob && (ob.evre === 'kapiya' || ob.evre === 'cik') && Math.hypot(ob.x - b.x, ob.z - b.z) < 0.6 && Math.abs(ob.z - BINIS.kz) < Math.abs(b.z - BINIS.kz);
+        if (sikisik) yayaYuru(y, 0.24, 1);
+        else if (icYuru(y, b, BINIS.icX, BINIS.kz, 0.95, 0.24, dt) && bos) { b.evre = 'in'; b.u = 0; }
+      } else if (b.evre === 'in') {      // basamaktan iner, doğrulur
+        b.u = Math.min(1, b.u + dt / 0.65);
+        const s = yumus(b.u);
+        b.x = lerp(BINIS.icX, BINIS.disX, s); b.z += (BINIS.kz - b.z) * Math.min(1, dt * 6); b.y = YOLCU_TABAN * (1 - smooth(0.35, 0.85, b.u));
+        b.h += wrapAngle(-Math.PI / 2 - b.h) * Math.min(1, dt * 8);
+        y.faz += (1.55 * dt / ((2 * 0.28 / 0.6) * boy)) * TAU; yayaYuru(y, 0.28, 1 - s);
+        if (b.u > 0.5) kayakOmuz(y, true);
+        if (b.u >= 1) {      // dışarıda: dünyaya bağlanır
+          y.kok.position.set(b.x, 0, b.z); y.kok.rotation.set(0, b.h, 0); y.kok.updateMatrixWorld(true);
+          world.attach(y.kok); b.evre = 'git'; continue;
+        }
+      }
+      if (b.evre === 'git' || b.evre === 'vardi') {      // durağın kenarındaki yerine yürür, varınca grubun yönüne döner
+        const [hx, hz] = dzYerel(b.hedef.x, b.hedef.z);
+        if (disaridaYuru(y, b, hx, hz, wrapAngle(b.hedefH - yon), y.durus, dt, v, yon)) b.evre = 'vardi';
+        continue;
+      }
+      y.kok.position.set(b.x, b.y, b.z); y.kok.rotation.set(0, b.h, 0);
+    }
+  }
   function yolcuTick(dt) {
     if (YOLCU.grup !== TUR) { yolcuIndir(); return; }
+    if (YOLCU.inis) { inisTick(dt); return; }
     const B = YOLCU.binis, v = player.servis;
     if (B) {
       B.t += dt;
@@ -14558,22 +14659,10 @@ function cokKur(o) {
         for (const y of YOLCU.uye) {
           const b = y.bn, boy = y.tip.boy, adim = (hiz, a) => { y.faz += (hiz * dt / ((2 * a / 0.6) * boy)) * TAU; };
           y.t += dt;
-          if (b.evre === 'dis') {      // kapıya yürür, sırada bekler (yeri dünyada tutulur: araç dururken kayarsa yolcu onunla kaymaz)
-            _yv.copy(y.kok.position); v.kok.worldToLocal(_yv); b.x = _yv.x; b.z = _yv.z;
-            const sira = q++, tx = BINIS.disX - (sira ? 0.1 : 0), tz = BINIS.kz + B.yon * BINIS.kuyruk * sira;
-            const [wx, wz] = dolasYol(b.x, b.z, tx, tz), dx = wx - b.x, dz = wz - b.z, d = Math.hypot(dx, dz), kalan = Math.hypot(tx - b.x, tz - b.z) + (wx !== tx || wz !== tz ? 3 : 0);
-            if (d > 0.04) {
-              const hiz = kalan > 4 ? 2.3 : 1.6, a = kalan > 4 ? 0.42 : 0.34, s = Math.min(d, hiz * dt);
-              b.x += (dx / d) * s; b.z += (dz / d) * s;
-              b.h += wrapAngle(Math.atan2(dx, dz) - b.h) * Math.min(1, dt * 7);
-              adim(hiz, a); yayaYuru(y, a);
-            } else {
-              b.h += wrapAngle((sira ? (B.yon > 0 ? Math.PI : 0) : Math.PI / 2) - b.h) * Math.min(1, dt * 6);      // kapıya ya da öndekine döner
-              yayaDur(y, y.durus === 'salla' ? 'dur' : y.durus);
-            }
-            _yv.set(b.x, 0, b.z); v.kok.localToWorld(_yv);
-            y.kok.position.set(_yv.x, groundH(_yv.x, _yv.z), _yv.z); y.kok.rotation.set(0, yon + b.h, 0);
-            if (!sira && d <= 0.04 && B.kapi > 0.8 && B.t - B.son > 0.45) {      // kapı boş: basamağa
+          if (b.evre === 'dis') {      // kapıya yürür, sırada bekler (kapıya ya da öndekine dönük)
+            const sira = q++, vardi = disaridaYuru(y, b, BINIS.disX - (sira ? 0.1 : 0), BINIS.kz + B.yon * BINIS.kuyruk * sira,
+              sira ? (B.yon > 0 ? Math.PI : 0) : Math.PI / 2, y.durus === 'salla' ? 'dur' : y.durus, dt, v, yon);
+            if (!sira && vardi && B.kapi > 0.8 && B.t - B.son > 0.45) {      // kapı boş: basamağa
               b.evre = 'basamak'; b.u = 0; b.k = B.gelen++; B.son = B.t; v.kok.add(y.kok);
             } else continue;
           }
@@ -15792,7 +15881,7 @@ function cokKur(o) {
     startStory();
   }
   function goalTick(dt) {
-    if (YOLCU.binis) return;      // yolcular biniyor: araç bekler, süre işlemez
+    if (yolcuMesgul()) return;      // yolcular biniyor ya da iniyor: araç bekler, süre işlemez
     const gl = G.goal;
     gl.t += dt;
     const kr = gl.kirilgan || 1;      // teslimat yükünün kırılganlığı: yumurta 1,8, bal 1,4, ekmek 0,7, peynir 0,5
@@ -15810,6 +15899,7 @@ function cokKur(o) {
         sonrakiDurak(gl);
         return;
       }
+      if (gl.ozel && !gl.ozel.erzak && !gl.ozel.teslimat && !gl.ozel.yuk && yolcuInisBasla(gl.stages[gl.stages.length - 1], () => { if (G.goal === gl) { G.goal = null; finishServis(gl); } })) { beacon1.visible = false; return; }      // yolcular yürüyerek iner; bitince sonuç
       G.goal = null; beacon1.visible = false;
       if (gl.ozel && gl.ozel.erzak) finishErzak(gl); else if (gl.ozel && gl.ozel.teslimat) finishTeslimat(gl); else if (gl.ozel) finishServis(gl); else storyAdvance();
     } else if (gl.sure && gl.t > gl.sure) {
@@ -16382,7 +16472,7 @@ function cokKur(o) {
     player.yuklu = !!(player.ucTeker && (aktifYuk() || SACIK.parca.length));
     const step = player.ski ? kayakAdim : stepCar;
     if (r && r.done) { step(player, idle, dt); }
-    else { step(player, YOLCU.binis ? idle : pin, dt); if (r && !G.auto) advance(player, r.R); }      // yolcular binerken araç bekler
+    else { step(player, yolcuMesgul() ? idle : pin, dt); if (r && !G.auto) advance(player, r.R); }      // yolcular binerken araç bekler
     if (player.devrikYeni) { player.devrikYeni = false; devrildi(); }
     ucTepki(STEP);
     if (player.ski || KAR) kizAdim();      // kayak ve teker izleri (fizik adımında: görüntüsüz ilerletmede de iz kalır)
@@ -16616,7 +16706,7 @@ function cokKur(o) {
   function yuzKamera(c, sp, dt) {
     const serbest = (G.state === 'free' || G.state === 'race') && !c.ski && !GIRIS;
     const tus = keys.KeyF || PAD.yuz, gazda = inp.thr > 0 || inp.brk > 0 || Math.abs(inp.steer) > 0;
-    YUZK.dur = G.state === 'free' && serbest && sp < 0.35 && !gazda && !YOLCU.binis ? YUZK.dur + dt : 0;      // yarışta ve yolcu binerken durunca kendiliğinden dönmez
+    YUZK.dur = G.state === 'free' && serbest && sp < 0.35 && !gazda && !yolcuMesgul() ? YUZK.dur + dt : 0;      // yarışta ve yolcu binip inerken durunca kendiliğinden dönmez
     const hedef = serbest && (tus || YUZK.sabit || YUZK.dur > 2) ? 1 : 0;
     YUZK.k = clamp(YUZK.k + (hedef ? dt * 1.6 : -dt * 2.6), 0, 1);
     if (YUZK.k <= 0) return 0;
@@ -16665,8 +16755,8 @@ function cokKur(o) {
       _yq1.setFromUnitVectors(v0.normalize(), v1.normalize()); _yq.slerpQuaternions(_yq0, _yq1, e);
       camera.position.copy(_yb).addScaledVector(v0.applyQuaternion(_yq), L); lookAt.lerp(_gl, Math.sqrt(e)); fov = lerp(fov, 34, e);      // bakış başa erken döner: geçişte sürücü kadrajda kalır
     }
-    YOLCU.kam = clamp(YOLCU.kam + (YOLCU.binis && !c.ski ? dt * 1.2 : -dt * 1.5), 0, 1);
-    if (YOLCU.kam > 0.001) {      // yolcular binerken kamera sağ arka çaprazdan sürgülü kapıya bakar; bitince arkaya döner
+    YOLCU.kam = clamp(YOLCU.kam + (yolcuMesgul() && !c.ski ? dt * 1.2 : -dt * 1.5), 0, 1);
+    if (YOLCU.kam > 0.001) {      // yolcular binip inerken kamera sağ arka çaprazdan sürgülü kapıya bakar; bitince arkaya döner
       const e = yumus(YOLCU.kam), fx = Math.sin(c.h), fz = Math.cos(c.h), rx = -fz, rz = fx, ox = rx * 6.8 - fx * 3.2, oz = rz * 6.8 - fz * 3.2;
       const t = wallRay(c.x, c.z, c.x + ox, c.z + oz), k = t < 1 ? Math.max(0.35, t * 0.9) : 1;
       _gp.set(c.x + ox * k, 0, c.z + oz * k); _gp.y = Math.max(c.y + 2.9, groundH(_gp.x, _gp.z) + 1.2);
