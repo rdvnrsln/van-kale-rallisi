@@ -10312,26 +10312,48 @@ function golGerstner(U) {
   }
 }
 
-// ---- kıyıya uzaklık: arazi ızgarasında göl düzeyinin altındaki hücrelerden en yakın kara hücresine (m; 240 m'de doyar). R8 doku.
-const GOL_KIYI_M = 240;
+// ---- kıyıya işaretli uzaklık (m): arazinin göl düzeyini (y = 0) kestiği çizgiden; suda artı, karada eksi. Kesişim hücre kenarında doğrusal
+// aradeğerle bulunur (kıyı çizgisi arazi ağının çizdiği yerle örtüşür), sonra ızgarada yayılır. R8 doku: −24…240 m.
+const GOL_KIYI_ALT = -24, GOL_KIYI_UST = 240;
 function golKiyiDoku() {
-  const nx = dem.nx, nz = dem.nz, n = nx * nz, d = new Float32Array(n), S2 = Math.SQRT2;
+  const nx = dem.nx, nz = dem.nz, n = nx * nz, d = new Float32Array(n).fill(1e9), st = dem.step, S2 = st * Math.SQRT2;
   let su = 0;
-  for (let i = 0; i < n; i++) { const w = HG[i] < -0.4; d[i] = w ? 1e9 : 0; if (w) su++; }
+  for (let i = 0; i < n; i++) if (HG[i] < 0) su++;
+  const kenar = (i, j) => { const a = HG[i], b = HG[j]; if ((a < 0) === (b < 0)) return; const f = a / (a - b) * st; if (f < d[i]) d[i] = f; if (st - f < d[j]) d[j] = st - f; };
+  for (let z = 0; z < nz; z++) for (let x = 0; x < nx; x++) { const i = z * nx + x; if (x < nx - 1) kenar(i, i + 1); if (z < nz - 1) kenar(i, i + nx); }
   const bak = (i, j, c) => { if (d[j] + c < d[i]) d[i] = d[j] + c; };
   for (let z = 0; z < nz; z++) for (let x = 0; x < nx; x++) {      // ileri geçiş
-    const i = z * nx + x; if (!d[i]) continue;
-    if (x > 0) bak(i, i - 1, 1);
-    if (z > 0) { bak(i, i - nx, 1); if (x > 0) bak(i, i - nx - 1, S2); if (x < nx - 1) bak(i, i - nx + 1, S2); }
+    const i = z * nx + x;
+    if (x > 0) bak(i, i - 1, st);
+    if (z > 0) { bak(i, i - nx, st); if (x > 0) bak(i, i - nx - 1, S2); if (x < nx - 1) bak(i, i - nx + 1, S2); }
   }
   for (let z = nz - 1; z >= 0; z--) for (let x = nx - 1; x >= 0; x--) {      // geri geçiş
-    const i = z * nx + x; if (!d[i]) continue;
-    if (x < nx - 1) bak(i, i + 1, 1);
-    if (z < nz - 1) { bak(i, i + nx, 1); if (x < nx - 1) bak(i, i + nx + 1, S2); if (x > 0) bak(i, i + nx - 1, S2); }
+    const i = z * nx + x;
+    if (x < nx - 1) bak(i, i + 1, st);
+    if (z < nz - 1) { bak(i, i + nx, st); if (x < nx - 1) bak(i, i + nx + 1, S2); if (x > 0) bak(i, i + nx - 1, S2); }
   }
-  const b = new Uint8Array(n);
-  for (let i = 0; i < n; i++) b[i] = Math.min(255, Math.round(Math.min(d[i] * dem.step, 1e6) / GOL_KIYI_M * 255));
-  const t = new THREE.DataTexture(b, nx, nz, THREE.RedFormat, THREE.UnsignedByteType);
+  // açık göl (G kanalı): ızgara kenarına bağlı su; iç kesimdeki göl düzeyi altı çukurlar (gölcük) dalga ve kıyı köpüğü almaz (çevresindeki bir hücre dahil)
+  const acik = new Uint8Array(n), kuyruk = [];
+  for (let z = 0; z < nz; z++) for (let x = 0; x < nx; x++) {
+    if (x > 0 && x < nx - 1 && z > 0 && z < nz - 1) continue;
+    const i = z * nx + x; if (HG[i] < 0 && !acik[i]) { acik[i] = 1; kuyruk.push(i); }
+  }
+  for (let k = 0; k < kuyruk.length; k++) {
+    const i = kuyruk[k], x = i % nx, z = (i - x) / nx;
+    for (const j of [x > 0 ? i - 1 : -1, x < nx - 1 ? i + 1 : -1, z > 0 ? i - nx : -1, z < nz - 1 ? i + nx : -1]) if (j >= 0 && !acik[j] && HG[j] < 0) { acik[j] = 1; kuyruk.push(j); }
+  }
+  const golcuk = new Uint8Array(n);
+  for (let i = 0; i < n; i++) if (HG[i] < 0 && !acik[i]) {
+    const x = i % nx, z = (i - x) / nx;
+    for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) { const xx = x + dx, zz = z + dz; if (xx >= 0 && xx < nx && zz >= 0 && zz < nz) golcuk[zz * nx + xx] = 1; }
+  }
+  const b = new Uint8Array(n * 2);
+  for (let i = 0; i < n; i++) {
+    const s = HG[i] < 0 ? d[i] : -d[i];
+    b[i * 2] = Math.round(clamp((s - GOL_KIYI_ALT) / (GOL_KIYI_UST - GOL_KIYI_ALT), 0, 1) * 255);
+    b[i * 2 + 1] = golcuk[i] && !acik[i] ? 0 : 255;
+  }
+  const t = new THREE.DataTexture(b, nx, nz, THREE.RGFormat, THREE.UnsignedByteType);
   t.minFilter = t.magFilter = THREE.LinearFilter; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; t.generateMipmaps = false; t.needsUpdate = true;
   return { t, su };
 }
@@ -10358,16 +10380,18 @@ const GOL_ORTAK_U = [
   'uniform vec3 uGolOlcek; uniform vec3 uGolAgir; uniform float uGolCop; uniform float uGolT; uniform float uGolDalga; uniform float uGolNormal;',
   'uniform vec2 uGolMerkez; uniform vec4 uGolSinir; uniform vec4 uGolKiyiUv; uniform vec2 uGerD[ 6 ]; uniform vec4 uGerP[ 6 ];',
   'uniform vec3 uGolDerin; uniform vec3 uGolSig; uniform vec3 uGolGunes; uniform vec3 uGolGunesYon; uniform float uGolSac;',
-  'varying vec3 vGolW; varying vec3 vGolNG; varying float vGolH; varying float vGolKiyi;',
+  'varying vec3 vGolW; varying vec3 vGolNG; varying float vGolH; varying float vGolKiyi; varying float vGolAcik;',
 ].join('\n');
 const GOL_VS = `
 vec3 transformed = vec3( position );
-vGolNG = vec3( 0.0, 1.0, 0.0 ); vGolH = 0.0; vGolKiyi = 1.0;
+vGolNG = vec3( 0.0, 1.0, 0.0 ); vGolH = 0.0; vGolKiyi = 1000.0; vGolAcik = 1.0;
 #ifdef GOL_YEREL
 {
   vec2 gw = clamp( position.xz + uGolMerkez, uGolSinir.xy, uGolSinir.zw );
-  float gKy = texture( tGolKiyi, ( gw - uGolKiyiUv.xy ) * uGolKiyiUv.zw ).r;
-  float gS = smoothstep( 0.0, 0.35, gKy ) * ( 1.0 - smoothstep( 400.0, 1200.0, length( gw - cameraPosition.xz ) ) ) * uGolDalga;
+  vec2 gKt = texture( tGolKiyi, ( gw - uGolKiyiUv.xy ) * uGolKiyiUv.zw ).rg;
+  float gKy = gKt.r * ${GOL_KIYI_UST - GOL_KIYI_ALT}.0 + ${GOL_KIYI_ALT}.0;      // kıyıya uzaklık (m)
+  vGolAcik = gKt.g;      // 0: iç kesimdeki gölcük (dalga ve kıyı köpüğü yok)
+  float gS = smoothstep( 0.0, 80.0, gKy ) * gKt.g * ( 1.0 - smoothstep( 400.0, 1200.0, length( gw - cameraPosition.xz ) ) ) * uGolDalga;
   vec3 gD = vec3( 0.0 ), gN = vec3( 0.0, 1.0, 0.0 );
   if ( gS > 0.001 ) {
 #ifdef GOL_FFT
@@ -10417,7 +10441,7 @@ const GOL_FS = `
 vec2 gxz = vGolW.xz;
 vec3 gV = normalize( cameraPosition - vGolW );
 float gUz = length( cameraPosition - vGolW );
-float gSak = mix( 0.3, 1.0, smoothstep( 0.0, 0.35, vGolKiyi ) );      // kıyıda dalga söner, ince kırışık kalır
+float gSak = mix( 0.3, 1.0, smoothstep( 0.0, 80.0, vGolKiyi ) );      // kıyıda dalga söner, ince kırışık kalır
 vec2 gSl = vec2( 0.0 ); float gXX = 0.0, gZZ = 0.0, gXZ = 0.0;
 #ifdef GOL_FFT
 for ( int i = 0; i < 3; i ++ ) {
@@ -10454,6 +10478,16 @@ if ( gYak > 0.0 ) {
 // köpük
 float gJ = ( 1.0 + gXX ) * ( 1.0 + gZZ ) - gXZ * gXZ;
 float gKop = golKopuk( gJ, clamp( length( gSl ) * 0.6 + ( 1.0 - gJ ), 0.0, 1.0 ), gxz, uGolT ) * 0.95;
+// kıyı köpüğü (23 Kas; kurucu istedi): su–kara çizgisinde vurup çekilen ince köpük ve kıyıya doğru ilerleyen kırık şeritler (≈ 8 m aralık, 1,5 m/sn), 25 m'de söner
+if ( vGolKiyi < 30.0 && vGolAcik > 0.02 ) {
+  float gKm = vGolKiyi, gNs = golFbm( mod( gxz * 0.11, 289.0 ) + uGolT * 0.03 );
+  float gLif = smoothstep( 0.42, 0.62, golFbm( mod( gxz * 1.4, 289.0 ) + vec2( uGolT * 0.15, -uGolT * 0.1 ) ) );      // dantel: ince, kırık köpük
+  gLif = mix( 0.45, gLif, 1.0 - smoothstep( 60.0, 250.0, gUz ) );      // uzakta ince desen titremesin
+  float gCek = 0.5 + 0.5 * sin( uGolT * 0.9 + gNs * 5.0 );
+  float gKenar = 1.0 - smoothstep( 0.3 + 1.2 * gCek, 1.2 + 1.8 * gCek, gKm + ( gNs - 0.5 ) * 1.5 );
+  float gSerit = smoothstep( 0.82, 0.97, 0.5 + 0.5 * sin( gKm * 0.8 + uGolT * 1.2 + gNs * 6.0 ) ) * ( 1.0 - smoothstep( 4.0, 22.0, gKm ) );
+  gKop = max( gKop, clamp( gKenar * mix( 0.5, 1.0, gLif ) + gSerit * gLif * 0.7, 0.0, 1.0 ) * vGolAcik );
+}
 diffuseColor.rgb = mix( gGovde, vec3( 0.86, 0.9, 0.93 ), gKop );
 diffuseColor.a = mix( diffuseColor.a, 1.0, gKop );
 // pürüzlülük: uzakta FFT normali mip'le düzleşir; mikro yüzeylerin dağılımı pürüzlülüğe geçer
