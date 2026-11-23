@@ -9466,12 +9466,16 @@ function terrainPatch(mat, maskTex, katman) {
   // Renk haritası burada bozkırdır; ayrıntı ona göre ölçeklenir (tsT = TASLI_RENK / harita rengi).
   const TO = TEX_AVG.tasli, TP = (TO[0] + TO[1] + TO[2]) / 3, TASLI_RENK = TO.map((v) => (TP + (v - TP) * 0.7) * 1.2);
   const TASLI_DET = ['vec3 tasliDet(vec2 p, vec3 dz, float dc) {',
-    '  vec3 c = tasliRenk(p), d = c / ' + glv3(TEX_AVG.tasli) + ';',
+    // Yosun yeşili gri-kahve toprağa çevrilir (23 Kas 2026, kurucu: "zemini de düzelt, gri kahve toprak olsun"): dokunun yeşil payı (c.g > c.r) aynı
+    // parlaklıkta toprak rengine döner, %12'si kalır; kaya levhaları olduğu gibi durur. c0: özgün renk (aşağıda kaya payını ayırır).
+    '  vec3 c0 = tasliRenk(p), c = c0;',
+    '  c = mix(c, dot(c, vec3(0.3, 0.59, 0.11)) * vec3(1.55, 1.3, 1.07), smoothstep(0.0, 0.035, c.g - c.r) * 0.88);',
+    '  vec3 d = c / ' + glv3(TEX_AVG.tasli) + ';',
     '  d = mix(vec3(dot(d, vec3(0.333))), d, 0.7);',
   ].concat(MOBIL ? [] : [
     '  float yk = 1.0 - smoothstep(6.0, 35.0, dc);',
     '  if (yk > 0.0) {',
-    '    float kp = smoothstep(0.0, 0.05, c.r - c.g);',      // kaya payı: kumtaşı kırmızımsı, ot yeşil
+    '    float kp = smoothstep(0.0, 0.05, c0.r - c0.g);',      // kaya payı: kumtaşı kırmızımsı, ot yeşil
     '    float lk = dot(oku(t_kayalik, p, ' + f(O.kayalik * 1.6) + ', false, vec2(0.21)).rgb / ' + glv3(TEX_AVG.kayalik) + ', vec3(0.333)), lz = dot(dz, vec3(0.333));',
     '    d *= mix(1.0, mix(lz, lk, kp), 0.45 * yk); }',
   ], ['  return d; }']);
@@ -9591,6 +9595,8 @@ function terrainPatch(mat, maskTex, katman) {
         // taşlı zemin: maskenin yumuşak kenarı (20 m) iki ölçekte (33 ve 9 m) gürültüyle kırılır, sınır düz çizgi olmaz
         : KL !== 'tasli' ? '' : 'float tb = smoothstep(0.35, 0.65, msk.b + (gurultu(wp * 0.03 + 2.3) - 0.5) * 0.5 + (gurultu(wp * 0.11 + 0.7) - 0.5) * 0.2);\n' +
           'tsN = gurultu(wp * 0.013 + 7.7) * 0.7 + gurultu(wp * 0.041 + 1.9) * 0.3;\nfloat tbE = 0.0;\n' +
+          // taşlı katmanın otlu tabanı gri-kahve toprağa çekilir (23 Kas 2026, kurucu: "gri kahve toprak olsun"): renk haritasının yeşili aynı parlaklıkta toprak tonuna
+          'diffuseColor.rgb = mix(diffuseColor.rgb, dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11)) * vec3(0.9, 0.72, 0.54), tb * 0.9);\n' +
           'vec3 tsT = ' + glv3(TASLI_RENK) + ' / max(diffuseColor.rgb, vec3(0.02));\n' +
           'if (tb > 0.004) { dS = tasliDet(wp, dZ, dcam) * tsT;\n' +
           '  float tsE = mix(0.55, 0.12, smoothstep(0.3, 0.7, gurultu(wp * 0.008 + 4.1) * 0.65 + gurultu(wp * 0.027 + 8.3) * 0.35));\n' +      // seyrek yerde yüksekliğin üst %15'i, ortada yarısı, yoğunda hepsi
@@ -16195,7 +16201,9 @@ function cokKur(o) {
   // ---- Efsane (23 Kas 2026, kurucu: "ejderhalar olsun, van gölünden çıktığı sahne. burası önce bir animasyon olup sonra oyuna girilebilir"; isteğe bağlı):
   // menüdeki düğme açılış videosunu oynatır; video sürerken arkada kalenin güney dibinde fırtınalı serbest sürüş kurulur, video bitince ya da geçilince
   // perde solarak açılır. Yer ve ışık videonun son karesine göredir (tools/bakis-ejderha.json). var: masterGain açılışta bu satırdan önce çağrılabilir.
-  var EFSANE = { acik: false, bitir: null, video: 'video/ejderha-acilis.mp4?s=1', yer: [-54, 240, 2.547] };
+  // Videonun son çekimi oyunun kendi karesinde başlar ve biter (kamera EFSANE.kam ile dondurulur); perde açılırken görüntü kıpırdamaz, sonra kamera takibe geçer.
+  // kam: aracın 6,6 m gerisi ve yerden 1,9 m; bakış 45 m ileri ve yerden 11 m (tools/bakis-ejderha.json ile aynı). Video değişince ?s= artır.
+  var EFSANE = { acik: false, bitir: null, video: 'video/ejderha-acilis.mp4?s=2', yer: [-54, 240, 2.547], kam: [6.6, 1.9, 45, 11] };
   async function efsaneAc() {
     if (EFSANE.acik) return;
     EFSANE.acik = true; initAudio();
@@ -16208,8 +16216,10 @@ function cokKur(o) {
     $('btn-efsane-gec').focus();
     try {
       await loadRegion('van'); startFree(); girisBitir();
-      if (owns('motor')) setVehicle('motor');      // videodaki araç kırmızı hamal üç tekeri; oyuncuda yoksa kendi aracı kalır
-      placeCar(player, EFSANE.yer[0], EFSANE.yer[1], EFSANE.yer[2]); vakitZorlaAyarla(3); camSnap = true;
+      setVehicle('motor');      // videodaki araç kırmızı hamal üç tekeri: bu sahnede oyuncuda olmasa da onunla başlar (satın alma değişmez; yeni serbest sürüşte kendi aracına döner)
+      placeCar(player, EFSANE.yer[0], EFSANE.yer[1], EFSANE.yer[2]); vakitZorlaAyarla(3); trafficClear();
+      { const [x, z, h] = EFSANE.yer, [geri, yuk, ileri, th] = EFSANE.kam, s = Math.sin(h), c = Math.cos(h), cx = x - s * geri, cz = z - c * geri, tx = x + s * ileri, tz = z + c * ileri;
+        G.freeze = [cx, groundH(cx, cz) + yuk, cz, tx, groundH(tx, tz) + th, tz]; }
     } catch (e) { /* sahne kurulamazsa menü yerinde kalır; perde yine açılır */ }
     await bitti;
     v.pause(); v.onended = v.onerror = null; EFSANE.bitir = null; EFSANE.acik = false;
@@ -16217,7 +16227,11 @@ function cokKur(o) {
     YUZK.dur = -4; YUZK.k = 0; camSnap = true;      // perde açılınca arkadan görünüş (videonun son karesi); yüz kamerası 6 sn sonra
     if (A.master) A.master.gain.value = masterGain();
     kat.classList.add('soluyor');
-    setTimeout(() => { if (!EFSANE.acik) { kat.hidden = true; v.removeAttribute('src'); v.load(); } }, 950);
+    setTimeout(() => {
+      if (EFSANE.acik) return;
+      kat.hidden = true; v.removeAttribute('src'); v.load();
+      if (G.freeze) { camPos.set(G.freeze[0], G.freeze[1], G.freeze[2]); G.freeze = null; camSnap = false; }      // dondurulmuş kareden takip kamerasına yumuşak geçiş
+    }, 950);
   }
   $('btn-efsane').addEventListener('click', efsaneAc);
   $('btn-efsane-gec').addEventListener('click', () => { if (EFSANE.bitir) EFSANE.bitir(); });
