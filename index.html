@@ -184,6 +184,12 @@ button:focus-visible { outline: 2px solid var(--gol); outline-offset: 2px; }
 .m-ikili { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .m-ikili .ikincil { border-radius: 6px; background: rgba(255, 255, 255, 0.06); border: 1.5px solid rgba(255, 255, 255, 0.55); font-size: 17px; padding-inline: 10px; }
 .m-metin { background: transparent; border: 0; color: var(--soluk); font-size: 14px; padding: 4px; align-self: flex-start; }
+/* Efsane: ejderha açılış videosu (23 Kas 2026). Bitince ya da geçilince solarak oyunu açar. */
+.efsane { position: fixed; inset: 0; z-index: 90; background: #000; opacity: 1; transition: opacity 0.9s ease; }
+.efsane.soluyor { opacity: 0; pointer-events: none; }
+.efsane video { width: 100%; height: 100%; object-fit: contain; display: block; }      /* dik telefonda kırpılmasın: üstte ve altta siyah bant */
+.efsane-gec { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); padding: 8px 16px; border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35); background: rgba(0, 0, 0, 0.35); color: #fff; font-size: 14px; }
 .m-kunye { margin: 2px 0 0; font-size: 11px; color: var(--soluk); }
 .m-sayfa { background: rgba(8, 14, 22, 0.78); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 14px; padding: 14px 16px 16px; max-height: calc(100vh - 120px); overflow-y: auto; }
 .m-baslik { display: flex; align-items: center; gap: 12px; }
@@ -437,6 +443,10 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
   </div>
 </div>
 
+<div id="efsane" class="efsane" hidden>
+  <video id="efsane-video" playsinline preload="none"></video>
+  <button id="btn-efsane-gec" class="efsane-gec" type="button" data-i18n="efsane.gec">Geç</button>
+</div>
 <div id="menu" class="kat" hidden>
   <!-- Ana menü (20 Kas 2026, kurucu: "arayüz çok karışık, modern ve minimalistik olsun"): arka planda drone çekimi; ana ekranda yalnız başlık ve
        üç eylem; bölge, araç ve yarış listesi alt sayfalarda. Perde yalnız altta, sahne açıkta. -->
@@ -463,6 +473,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
           <button id="btn-serbest" class="ikincil" type="button" data-i18n="menu.serbest">Serbest sürüş</button>
           <button id="btn-yarislar" class="ikincil" type="button" data-i18n="menu.yarislar">Yarışlar</button>
         </div>
+        <button id="btn-efsane" class="m-metin" type="button" data-i18n="menu.efsane">Efsane</button>
         <button id="btn-cikis" class="m-metin" type="button" hidden data-i18n="menu.cikis">Çıkış</button>
       </div>
       <p class="m-kunye">© OpenStreetMap · SRTM · Poly Haven</p>
@@ -6407,7 +6418,7 @@ const DIL = {
     'menu.konum': 'İpekyolu · Tuşba — 38,50° K 43,34° D', 'menu.baslik': 'Street <em>81</em>',
     'menu.tanitim': 'Gerçek Van sokaklarında, kalenin gölgesinde yarış. Göl kıyısından Eski Van’a kadar şehir açık.',
     'menu.devam': 'Devam et', 'menu.hikaye': 'Hikâye', 'menu.hikaye.bolum': 'Hikâye · Bölüm {0}: {1}', 'menu.hikaye.bastan': 'Hikâye · baştan',
-    'menu.serbest': 'Serbest sürüş', 'menu.ayarlar': 'Ayarlar', 'menu.cikis': 'Çıkış', 'menu.bolgeSec': 'Serbest sürüş bölgesi', 'menu.yarislar': 'Yarışlar', 'menu.sur': 'Sür',
+    'menu.efsane': 'Efsane', 'efsane.gec': 'Geç', 'menu.serbest': 'Serbest sürüş', 'menu.ayarlar': 'Ayarlar', 'menu.cikis': 'Çıkış', 'menu.bolgeSec': 'Serbest sürüş bölgesi', 'menu.yarislar': 'Yarışlar', 'menu.sur': 'Sür',
     'cok.baslik': 'Birlikte sür', 'cok.aciklama': 'Oda kur, kodu arkadaşlarına ver. Bir odada en çok dört kişi olur.', 'cok.kur': 'Oda kur', 'cok.katil': 'Katıl',
     'cok.kodEtiket': 'Oda kodu', 'cok.ayril': 'Odadan çık', 'cok.sen': 'Sen {0}. oyuncusun', 'cok.cip': 'Oda {0}, {1} oyuncu',
     'cok.baglaniyor': 'Bağlanıyor…', 'cok.kuruldu': 'Oda açıldı. Kodu arkadaşlarına ver, sonra Sür’e bas.', 'cok.katildin': 'Odaya katıldın, içeride {1} kişi var. Sür’e bas.', 'cok.odada': 'Odada {0} kişi var.',
@@ -6580,7 +6591,7 @@ const DIL = {
     'menu.konum': 'İpekyolu · Tuşba — 38.50° N 43.34° E', 'menu.baslik': 'Street <em>81</em>',
     'menu.tanitim': 'Race on the real streets of Van, in the shadow of the castle. The city is open from the lake shore to Old Van.',
     'menu.devam': 'Continue', 'menu.hikaye': 'Story', 'menu.hikaye.bolum': 'Story · Chapter {0}: {1}', 'menu.hikaye.bastan': 'Story · restart',
-    'menu.serbest': 'Free roam', 'menu.ayarlar': 'Settings', 'menu.cikis': 'Quit', 'menu.bolgeSec': 'Free roam region', 'menu.yarislar': 'Races', 'menu.sur': 'Drive',
+    'menu.efsane': 'Legend', 'efsane.gec': 'Skip', 'menu.serbest': 'Free roam', 'menu.ayarlar': 'Settings', 'menu.cikis': 'Quit', 'menu.bolgeSec': 'Free roam region', 'menu.yarislar': 'Races', 'menu.sur': 'Drive',
     'cok.baslik': 'Drive together', 'cok.aciklama': 'Create a room and share the code. A room holds up to four players.', 'cok.kur': 'Create room', 'cok.katil': 'Join',
     'cok.kodEtiket': 'Room code', 'cok.ayril': 'Leave room', 'cok.sen': 'You are player {0}', 'cok.cip': 'Room {0}, {1} players',
     'cok.baglaniyor': 'Connecting…', 'cok.kuruldu': 'The room is open. Share the code with your friends, then press Drive.', 'cok.katildin': 'You joined. {1} players in the room. Press Drive.', 'cok.odada': '{0} players in the room.',
@@ -6753,7 +6764,7 @@ const DIL = {
     'menu.konum': 'ایپک‌یولو · توشبا — 38.50° شمالی، 43.34° شرقی', 'menu.baslik': 'Street <em>81</em>',
     'menu.tanitim': 'در خیابان‌های واقعی وان، زیر سایه قلعه مسابقه بده. شهر از ساحل دریاچه تا وان قدیم باز است.',
     'menu.devam': 'ادامه', 'menu.hikaye': 'داستان', 'menu.hikaye.bolum': 'داستان · فصل {0}: {1}', 'menu.hikaye.bastan': 'داستان · از نو',
-    'menu.serbest': 'رانندگی آزاد', 'menu.ayarlar': 'تنظیمات', 'menu.cikis': 'خروج', 'menu.bolgeSec': 'منطقه رانندگی آزاد', 'menu.yarislar': 'مسابقه‌ها', 'menu.sur': 'برو',
+    'menu.efsane': 'افسانه', 'efsane.gec': 'رد کردن', 'menu.serbest': 'رانندگی آزاد', 'menu.ayarlar': 'تنظیمات', 'menu.cikis': 'خروج', 'menu.bolgeSec': 'منطقه رانندگی آزاد', 'menu.yarislar': 'مسابقه‌ها', 'menu.sur': 'برو',
     'cok.baslik': 'رانندگی با هم', 'cok.aciklama': 'اتاق بساز و کد را به دوستانت بده. هر اتاق حداکثر چهار نفر دارد.', 'cok.kur': 'ساخت اتاق', 'cok.katil': 'پیوستن',
     'cok.kodEtiket': 'کد اتاق', 'cok.ayril': 'خروج از اتاق', 'cok.sen': 'تو بازیکن {0} هستی', 'cok.cip': 'اتاق {0}، {1} بازیکن',
     'cok.baglaniyor': 'در حال اتصال…', 'cok.kuruldu': 'اتاق باز شد. کد را به دوستانت بده، بعد «برو» را بزن.', 'cok.katildin': 'به اتاق پیوستی. {1} نفر در اتاق هستند. «برو» را بزن.', 'cok.odada': '{0} نفر در اتاق هستند.',
@@ -8552,7 +8563,7 @@ function buildSky(scene, sunDir) {
   if (foto) { const t = TEX.gok; t.wrapT = THREE.ClampToEdgeWrapping; t.generateMipmaps = false; t.minFilter = THREE.LinearFilter; t.needsUpdate = true; }
   const mat = new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false,
-    uniforms: { sun: { value: sunDir }, uTime: { value: 0 }, harita: { value: foto ? TEX.gok : null }, ufuk: { value: new THREE.Color(0.6, 0.71, 0.79) }, ton: { value: new THREE.Color(1, 1, 1) }, gece: { value: 0 },
+    uniforms: { sun: { value: sunDir }, uTime: { value: 0 }, harita: { value: foto ? TEX.gok : null }, ufuk: { value: new THREE.Color(0.6, 0.71, 0.79) }, ton: { value: new THREE.Color(1, 1, 1) }, gece: { value: 0 }, firtina: { value: 0 },
       donme: { value: 0.6 - (Math.atan2(sunDir.z, sunDir.x) / TAU + 0.5) }, gunesOyun: { value: Math.asin(sunDir.y) }, parlak: { value: 1.18 } },
     vertexShader: 'varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
     fragmentShader: foto ? SKY_FOTO : SKY_FRAG,
@@ -9781,7 +9792,10 @@ function facadeStyles(maxAniso) {
 // ------------------------------------------------------------ gök fotoğrafı: eş dikdörtgen görüntünün üst %56'sı
 // Görüntüde güneş u = 0,60 ve 38,8° yükseklikte; oyunun güneş yönüne döndürülür ve yüksekliği oyunun güneşine eşlenir.
 const SKY_FOTO = [
-  'varying vec3 vDir; uniform vec3 sun; uniform float uTime; uniform sampler2D harita; uniform float donme; uniform float gunesOyun; uniform float parlak; uniform vec3 ufuk; uniform vec3 ton; uniform float gece;',
+  'varying vec3 vDir; uniform vec3 sun; uniform float uTime; uniform sampler2D harita; uniform float donme; uniform float gunesOyun; uniform float parlak; uniform vec3 ufuk; uniform vec3 ton; uniform float gece; uniform float firtina;',
+  'float fh21(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }',
+  'float fns(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(fh21(i), fh21(i + vec2(1.0, 0.0)), f.x), mix(fh21(i + vec2(0.0, 1.0)), fh21(i + vec2(1.0, 1.0)), f.x), f.y); }',
+  'float ffbm(vec2 p){ float a = 0.5, s = 0.0; for (int i = 0; i < 5; i++){ s += a * fns(p); p = p * 2.03 + 11.7; a *= 0.5; } return s; }',
   'void main(){ vec3 d = normalize(vDir);',
   ' float e = asin(clamp(d.y, -1.0, 1.0));',
   ' float eg = e <= gunesOyun ? e * (0.6772 / gunesOyun) : 0.6772 + (e - gunesOyun) * ((1.5708 - 0.6772) / (1.5708 - gunesOyun));',    // 0,6772 rad = 38,8°
@@ -9792,7 +9806,7 @@ const SKY_FOTO = [
   ' c = mix(c, hor, smoothstep(0.11, -0.01, d.y) * 0.9);',
   ' if (d.y < 0.0) c = mix(hor, vec3(0.19, 0.16, 0.12), smoothstep(0.0, -0.22, d.y));',
   ' float s = max(dot(d, sun), 0.0);',
-  ' c += vec3(1.0, 0.88, 0.66) * (pow(s, 1400.0) * 18.0 + pow(s, 60.0) * 0.22) * (1.0 - gece);',
+  ' c += vec3(1.0, 0.88, 0.66) * (pow(s, 1400.0) * 18.0 + pow(s, 60.0) * 0.22) * (1.0 - gece) * (1.0 - firtina);',
   ' if (gece > 0.001) {',           // gece göğü: koyu lacivert, yıldızlar, ay (sun birimi gece ay yönünü taşır), soluk bulut
   '  vec3 gk = mix(vec3(0.02, 0.035, 0.08), vec3(0.003, 0.006, 0.02), clamp(d.y * 1.4, 0.0, 1.0));',
   '  vec3 q = d * 420.0; float hs = fract(sin(dot(floor(q), vec3(12.9898, 78.233, 37.719))) * 43758.5453);',
@@ -9802,6 +9816,16 @@ const SKY_FOTO = [
   '  gk += bulut * vec3(0.03, 0.04, 0.07);',
   '  if (d.y < 0.0) gk = mix(gk, vec3(0.006, 0.008, 0.012), smoothstep(0.0, -0.2, d.y));',
   '  c = mix(c, gk, gece);',
+  ' }',
+  ' if (firtina > 0.001) {',           // kapalı, fırtınalı gök (23 Kas 2026): fotoğrafın bulutları koyu kütle olur, aralarına gürültüyle kat eklenir; ufukta açık bant
+  '  float lum = dot(bulut, vec3(0.3, 0.59, 0.11));',
+  '  vec2 fu = d.xz / (abs(d.y) + 0.16) * 0.9 + vec2(uTime * 0.006, uTime * 0.002);',
+  '  float fb = ffbm(fu) * 0.7 + ffbm(fu * 2.7 + 5.0) * 0.3;',
+  '  float fk = smoothstep(0.30, 0.78, fb * 0.75 + lum * 0.35);',
+  '  vec3 st = mix(vec3(0.03, 0.055, 0.07), vec3(0.27, 0.40, 0.45), fk * fk);',
+  '  st = mix(st, ufuk * 1.25, smoothstep(0.22, 0.0, d.y) * 0.75);',
+  '  if (d.y < 0.0) st = mix(ufuk, vec3(0.10, 0.10, 0.09), smoothstep(0.0, -0.22, d.y));',
+  '  c = mix(c, st, firtina);',
   ' }',
   ' gl_FragColor = vec4(c, 1.0);',
   '#include <tonemapping_fragment>',
@@ -10799,12 +10823,18 @@ const ORTU_TUR = [
   // kuru çim kartı (paketin LOD2'si, çapraz): 13–16 m'de açılır, 42–52 m'de söner; yakındaki 3B öbeklerin devamı
   { ad: 'kk', model: ['kk_a', 'kk_b'], P: 110, sik: [0.2, 0.2], ic: [13, 16.5], dis: [42, 52], boy: [0.45, 0.75], oran: [0.85, 1.2], gom: 0.02, cim: true, kalite: 'yuksek',
     yog: '(1.0 - smoothstep(0.12, 0.35, oM.g)) * (1.0 - oM.r * 0.9) * (1.0 - oM.b * 0.35) * smoothstep(0.8, 0.88, oNy)' },
-  { ad: 'tu', model: ['tu_b', 'tu_c', 'tu_f', 'tu_g'], P: 34, sik: [0.08, 0.08, 0.08, 0.08], dis: [12.5, 16.5], boy: [0.3, 0.55], oran: [0.85, 1.15], gom: 0.02, cim: true, kalite: 'yuksek',
-    yog: 'smoothstep(0.55, 0.85, oM.r) * (1.0 - smoothstep(0.12, 0.35, oM.g)) * smoothstep(0.8, 0.88, oNy)' },
-  { ad: 'cm', model: ['cm_a', 'cm_b', 'cm_c'], P: 34, sik: [0.07, 0.05, 0.08], dis: [12.5, 16.5], boy: [0.22, 0.5], oran: [0.85, 1.2], gom: 0.02, cim: true, kalite: 'yuksek',
-    yog: 'smoothstep(0.55, 0.85, oM.r) * (1.0 - smoothstep(0.12, 0.35, oM.g)) * smoothstep(0.8, 0.88, oNy)' },
-  { ad: 'ky', model: ['ky_1', 'ky_2', 'ky_3', 'ky_4', 'ky_5', 'ky_6'], P: 90, sik: [0.0035, 0.0035, 0.002, 0.0035, 0.0035, 0.0035], dis: [36, 44], boy: [0.22, 1.1], oran: [0.5, 0.75], gom: 0.18, cim: false, kalite: 'orta',
+  // 23 Kas 2026 (kurucu: "oyunu son karedeki kalitede yap", kale güney dibi). Maske: R çayır, G çakıl ve şehir, B taşlı ve kuru zemin.
+  // Tundra otu ve çim öbekleri eskiden yalnız çayırdaydı; artık taşlı zeminde de (oM.b) var, görüş 16 m'den 30 m'ye çıktı (yama 34 → 60 m).
+  { ad: 'tu', model: ['tu_b', 'tu_c', 'tu_f', 'tu_g'], P: 60, sik: [0.075, 0.075, 0.075, 0.075], dis: [24, 30], boy: [0.3, 0.6], oran: [0.85, 1.15], gom: 0.02, cim: true, kalite: 'yuksek',
+    yog: 'max(smoothstep(0.55, 0.85, oM.r), oM.b * 0.85) * (1.0 - smoothstep(0.12, 0.35, oM.g)) * smoothstep(0.8, 0.88, oNy)' },
+  { ad: 'cm', model: ['cm_a', 'cm_b', 'cm_c'], P: 60, sik: [0.09, 0.07, 0.1], dis: [24, 30], boy: [0.22, 0.55], oran: [0.85, 1.2], gom: 0.02, cim: true, kalite: 'yuksek',
+    yog: 'max(smoothstep(0.55, 0.85, oM.r), oM.b * 0.85) * (1.0 - smoothstep(0.12, 0.35, oM.g)) * smoothstep(0.8, 0.88, oNy)' },
+  // iri kaya: m²'de 0,02'den 0,07'ye (taşlı ve kuru zeminde birkaç adımda bir taş)
+  { ad: 'ky', model: ['ky_1', 'ky_2', 'ky_3', 'ky_4', 'ky_5', 'ky_6'], P: 90, sik: [0.012, 0.012, 0.007, 0.012, 0.012, 0.012], dis: [36, 44], boy: [0.22, 1.1], oran: [0.5, 0.75], gom: 0.18, cim: false, kalite: 'orta',
     yog: '(1.0 - smoothstep(0.1, 0.3, oM.g)) * (1.0 - oM.r * 0.9) * (0.06 + oM.b * 0.9) * smoothstep(0.7, 0.85, oNy)' },
+  // çakıl ve küçük taş (aynı kaya modelleri, 5–20 cm): taşlı ve kuru zeminde m²'de ~0,45; yakında yüzeyi kırar
+  { ad: 'kt', doku: 'ky', model: ['ky_2', 'ky_4', 'ky_6'], P: 44, sik: [0.15, 0.15, 0.15], dis: [17, 22], boy: [0.05, 0.2], oran: [0.55, 0.85], gom: 0.2, cim: false, kalite: 'yuksek',
+    yog: '(1.0 - smoothstep(0.1, 0.3, oM.g)) * (1.0 - oM.r * 0.9) * (0.1 + oM.b * 0.9) * smoothstep(0.7, 0.85, oNy)' },
 ];
 function ortuGovde(tur) {
   return [
@@ -11962,6 +11992,8 @@ function makeTrikeGLB(src, motor, tt) {
     if (dt > 0) { const hz = Math.abs(c.vf || 0); if (onceHiz - hz > 3.5 || c.devrik > 0 || c.devrikUzak) sasT = 1.3; else if (sasT > 0) sasT -= dt; onceHiz = hz; yuzAdim(f, sasT > 0 ? 'saskin' : 'notr', dt); }      // ani duruşta (çarpma) ve devrilince şaşırır
   }
   anim({ steer: 0, vf: 0 }, 0);
+  // temas gölgesi (23 Kas 2026): kapalı havada ve alçak güneşte araç yerden kopuk görünmesin; arabalardaki yumuşak leke
+  { const b = new THREE.Box3().setFromObject(g), golge = arabaGolge((b.max.z - b.min.z) * 1.06, (b.max.x - b.min.x) * 1.1); golge.position.z = (b.max.z + b.min.z) / 2; g.add(golge); }
   return { group: g, wheels, tail, yuk, yukKahvalti, yukler, kirikYumurta, anim, iz, sifirla, sur: () => dus.d, egzozX: cek ? CEK.egzozX : undefined };
 }
 // yol yüzeyinin araziden yüksekliği (poseCar ile aynı: asfalt 0,15–0,22 m, toprak 0,09 m, kaldırım 0,2 m)
@@ -15807,6 +15839,7 @@ function cokKur(o) {
   let flashLater = null;
   function clearRace() {
     G.race = null; G.goal = null; flashLater = null;
+    vakitZorlaAyarla(null);      // fırtına gibi geçici vakit yalnız onu açan sahnede kalır
     if (player.ski) setSki(false);
     $('mutfak').hidden = true; $('btn-salon').hidden = true;
     if (TUR && TUR.parent) TUR.visible = false;
@@ -16089,7 +16122,41 @@ function cokKur(o) {
   for (const el of document.querySelectorAll('[data-kasa]')) el.addEventListener('click', () => { kasaSec(el.getAttribute('data-kasa')); store.set('ayar', AYAR); });
   kasaSec(AYAR.kasa);
   $('btn-test-ac').addEventListener('click', () => { SAHIP = ['trike', 'motor', 'car']; store.set('sahip', SAHIP); updateArac(); $('btn-test-ac').disabled = true; });
-  function masterGain() { return G.muted ? 0 : (0.55 * AYAR.ses) / 100; }
+  // ---- Efsane (23 Kas 2026, kurucu: "ejderhalar olsun, van gölünden çıktığı sahne. burası önce bir animasyon olup sonra oyuna girilebilir"; isteğe bağlı):
+  // menüdeki düğme açılış videosunu oynatır; video sürerken arkada kalenin güney dibinde fırtınalı serbest sürüş kurulur, video bitince ya da geçilince
+  // perde solarak açılır. Yer ve ışık videonun son karesine göredir (tools/bakis-ejderha.json). var: masterGain açılışta bu satırdan önce çağrılabilir.
+  var EFSANE = { acik: false, bitir: null, video: 'video/ejderha-acilis.mp4?s=1', yer: [-54, 240, 2.547] };
+  async function efsaneAc() {
+    if (EFSANE.acik) return;
+    EFSANE.acik = true; initAudio();
+    const kat = $('efsane'), v = $('efsane-video');
+    kat.classList.remove('soluyor'); kat.hidden = false;
+    if (A.master) A.master.gain.value = masterGain();      // video sürerken oyunun sesi kısık
+    v.src = EFSANE.video; v.muted = !!G.muted; v.volume = clamp(AYAR.ses / 100, 0, 1);
+    const bitti = new Promise((ok) => { EFSANE.bitir = ok; v.onended = ok; v.onerror = ok; });
+    const oyna = v.play(); if (oyna && oyna.catch) oyna.catch(() => EFSANE.bitir());      // oynatılamazsa doğrudan oyuna geçilir
+    $('btn-efsane-gec').focus();
+    try {
+      await loadRegion('van'); startFree(); girisBitir();
+      if (owns('motor')) setVehicle('motor');      // videodaki araç kırmızı hamal üç tekeri; oyuncuda yoksa kendi aracı kalır
+      placeCar(player, EFSANE.yer[0], EFSANE.yer[1], EFSANE.yer[2]); vakitZorlaAyarla(3); camSnap = true;
+    } catch (e) { /* sahne kurulamazsa menü yerinde kalır; perde yine açılır */ }
+    await bitti;
+    v.pause(); v.onended = v.onerror = null; EFSANE.bitir = null; EFSANE.acik = false;
+    trafficClear();      // video sürerken yaklaşan trafik aracı perde açılınca oyuncunun önünde durmasın; araçlar uzakta yeniden doğar
+    YUZK.dur = -4; YUZK.k = 0; camSnap = true;      // perde açılınca arkadan görünüş (videonun son karesi); yüz kamerası 6 sn sonra
+    if (A.master) A.master.gain.value = masterGain();
+    kat.classList.add('soluyor');
+    setTimeout(() => { if (!EFSANE.acik) { kat.hidden = true; v.removeAttribute('src'); v.load(); } }, 950);
+  }
+  $('btn-efsane').addEventListener('click', efsaneAc);
+  $('btn-efsane-gec').addEventListener('click', () => { if (EFSANE.bitir) EFSANE.bitir(); });
+  window.addEventListener('keydown', (e) => {      // video sürerken tuşlar oyuna gitmez; Esc, Enter ve boşluk videoyu geçer
+    if (!EFSANE.acik) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    if ((e.code === 'Escape' || e.code === 'Enter' || e.code === 'Space') && EFSANE.bitir) EFSANE.bitir();
+  }, true);
+  function masterGain() { return G.muted || EFSANE.acik ? 0 : (0.55 * AYAR.ses) / 100; }
   function cycleCam() { G.cam = (G.cam + 1) % 3; camSnap = true; AYAR.kamera = G.cam; store.set('ayar', AYAR); }
   function applySettings(save) {
     const q = AYAR.kalite, dpr = window.devicePixelRatio || 1;
@@ -16118,7 +16185,7 @@ function cokKur(o) {
     trafikHedef();
     if (CIM) CIM.kalite(q);
     AGAC_U.uYakin.value = MOBIL ? 40 : q === 'dusuk' ? 0 : q === 'orta' ? 70 : q === 'ultra' ? 200 : 120;      // yakın düzey ağaç yarıçapı
-    { const g = GORUS[q] || GORUS.yuksek; scene.fog.near = g.sis[0]; scene.fog.far = g.sis[1]; parcaGorunur(0, true); }
+    { const g = GORUS[q] || GORUS.yuksek; sisTaban = g.sis; sisUygula(); parcaGorunur(0, true); }
     $('ayar-oto').checked = !!AYAR.oto; $('ayar-trafik').checked = AYAR.trafik !== false; $('ayar-ses').value = AYAR.ses; $('ayar-ses-n').textContent = AYAR.ses;
   }
   function openSettings() { $('menu').hidden = true; $('ayarlar').hidden = false; $('sifirla-onay').hidden = true; applySettings(false); $('btn-ayar-geri').focus(); }
@@ -16706,12 +16773,22 @@ function cokKur(o) {
     { yuk: 25.5, gunes: LIN('#ffdfae'), gs: 1.75, gok: LIN('#cfe0ff'), yer: LIN('#927f5f'), hs: 0.32, sis: [0.6, 0.71, 0.79], poz: 0.98, ton: [1, 1, 1], gece: 0, dag: [1, 1, 1], n: 0 },
     { yuk: 5.5, gunes: LIN('#ff9a4a'), gs: 1.3, gok: LIN('#e8b7a0'), yer: LIN('#6a5a4a'), hs: 0.3, sis: [0.72, 0.5, 0.37], poz: 1.02, ton: [1.08, 0.74, 0.55], gece: 0.05, dag: [0.95, 0.63, 0.5], n: 0.3 },
     { yuk: 46, gunes: LIN('#a9c0ff'), gs: 0.26, gok: LIN('#2a3a62'), yer: LIN('#141820'), hs: 0.36, sis: [0.02, 0.032, 0.062], poz: 1.06, ton: [0.2, 0.25, 0.4], gece: 1, dag: [0.05, 0.066, 0.11], n: 1 },
+    // 3: fırtınalı kapalı hava (23 Kas 2026; ejderha videosunun son karesindeki ışık). Ayarlar'da ve T tuşunda yok; yalnız vakitZorla ile açılır.
+    { yuk: 34, gunes: LIN('#c2d6e0'), gs: 0.55, gok: LIN('#9dbac8'), yer: LIN('#4b4a44'), hs: 0.62, sis: [0.25, 0.35, 0.40], poz: 0.92, ton: [0.55, 0.6, 0.62], gece: 0, dag: [0.42, 0.5, 0.55], n: 0 },
   ];
   const GUN_YON = [-0.8853, 0.4648], AY_YON = [0.55, -0.835], DONGU = [[480, 0, 0], [40, 0, 1], [60, 1, 1], [40, 1, 2], [240, 2, 2], [40, 2, 1], [30, 1, 1], [40, 1, 0]];
   let cevreKaynak = 'gok', gunduzCevre = null, vakitG = 0, vakitUyg = -1, cevreG = 0, donguT = 0, geceN = 0, lambaT = 0;
+  // vakitZorla: ayarı değiştirmeden geçici vakit (3 = fırtına); firtinaK 0–1; sisTaban kalite ayarının sis uzaklıkları.
+  // var: applySettings ve clearRace bu satırdan önce (açılışta) çalışır; let olsaydı erişim hatası verirdi.
+  var vakitZorla = null, firtinaK = 0, sisTaban = sisTaban || [700, 7600];
+  // fırtınada sis yakından başlar (70 m – 2,4 km): derinlik ve pus
+  function sisUygula() { const f = firtinaK || 0; scene.fog.near = sisTaban[0] + (70 - sisTaban[0]) * f; scene.fog.far = sisTaban[1] + (2400 - sisTaban[1]) * f; }
+  function vakitZorlaAyarla(v) { if (v == null) { if (vakitZorla != null) { vakitZorla = null; vakitG = AYAR.vakit === 'gunbatimi' ? 1 : AYAR.vakit === 'gece' ? 2 : 0; } } else { vakitZorla = v; vakitG = v; } }
   const _vc = new THREE.Color();
   function vakitUygula(g) {
-    const i = Math.min(1, Math.floor(g)), k = g - i, A = VAKIT[i], B = VAKIT[i + 1], L = (a, b) => a + (b - a) * k;
+    g = clamp(g, 0, VAKIT.length - 1);      // ilk karede dt eksi gelirse g sıfırın altına iner (sabit gün batımı ya da gece seçiliyken açılışta hata veriyordu)
+    const i = g > 2 ? 2 : Math.min(1, Math.floor(g)), k = g - i, A = VAKIT[i], B = VAKIT[i + 1], L = (a, b) => a + (b - a) * k;
+    firtinaK = i === 2 ? k : 0; sisUygula();
     let yuk = L(A.yuk, B.yuk), gs = L(A.gs, B.gs), yon = GUN_YON;
     _vc.copy(A.gunes).lerp(B.gunes, k);
     if (i === 1) {      // gün batımından geceye: güneş söner, sonra ay doğar (ışık yönü gökte savrulmasın)
@@ -16729,6 +16806,7 @@ function cokKur(o) {
     if (env) {
       const u = env.sky.material.uniforms;
       u.ufuk.value.copy(scene.fog.color); u.ton.value.setRGB(L(A.ton[0], B.ton[0]), L(A.ton[1], B.ton[1]), L(A.ton[2], B.ton[2])); u.gece.value = L(A.gece, B.gece);
+      if (u.firtina) u.firtina.value = firtinaK;
       u.gunesOyun.value = Math.asin(SUN.y);
       for (const m of env.mountains.children) { const t = m.material.uniforms ? m.material.uniforms.ton.value : m.material.color; t.setRGB(L(A.dag[0], B.dag[0]), L(A.dag[1], B.dag[1]), L(A.dag[2], B.dag[2])); }
     }
@@ -16748,7 +16826,8 @@ function cokKur(o) {
   }
   function vakitAdim(dt) {
     let hedef = AYAR.vakit === 'gunbatimi' ? 1 : AYAR.vakit === 'gece' ? 2 : 0;
-    if (AYAR.vakit === 'dongu') {
+    if (vakitZorla != null) vakitG = vakitZorla;
+    else if (AYAR.vakit === 'dongu') {
       donguT += dt;
       let t = donguT, top = 0;
       for (const d of DONGU) top += d[0];
@@ -16770,7 +16849,7 @@ function cokKur(o) {
       if (b2 >= 0) lambaIsik[1].position.set(a[b2], a[b2 + 1], a[b2 + 2]);
     }
   }
-  function vakitSec(ad) { AYAR.vakit = ad; if (ad === 'dongu') { donguT = vakitG < 0.5 ? 0 : vakitG < 1.5 ? 530 : 640; } store.set('ayar', AYAR); applySettings(false); }
+  function vakitSec(ad) { vakitZorlaAyarla(null); AYAR.vakit = ad; if (ad === 'dongu') { donguT = vakitG < 0.5 ? 0 : vakitG < 1.5 ? 530 : 640; } store.set('ayar', AYAR); applySettings(false); }
   function trafikHedef() {
     const n = AYAR.trafik === false ? 0 : AYAR.kalite === 'dusuk' ? 6 : AYAR.kalite === 'orta' ? 10 : 14;
     TRF.hedef = Math.round((MOBIL ? Math.min(n, 6) : n) * (!REGION || REGION.id === 'van' ? 1 : REGION.id === 'kampus' ? 0.7 : 0.4));
@@ -17115,7 +17194,7 @@ function cokKur(o) {
   // _gp/_gl'yi yazar (konum, bakış); 0..1 geçiş oranını döndürür.
   const YUZK = { k: 0, dur: 0, sabit: false, bas: null, kaynak: null }, _yb = new THREE.Vector3(), _yv0 = new THREE.Vector3(), _yv1 = new THREE.Vector3(), _yq = new THREE.Quaternion(), _yq0 = new THREE.Quaternion(), _yq1 = new THREE.Quaternion();
   function yuzKamera(c, sp, dt) {
-    const serbest = (G.state === 'free' || G.state === 'race') && !c.ski && !GIRIS;
+    const serbest = (G.state === 'free' || G.state === 'race') && !c.ski && !GIRIS && !EFSANE.acik;      // Efsane videosu sürerken araç durur; yüz kamerasına dönmesin
     const tus = keys.KeyF || PAD.yuz, gazda = inp.thr > 0 || inp.brk > 0 || Math.abs(inp.steer) > 0;
     YUZK.dur = G.state === 'free' && serbest && sp < 0.35 && !gazda && !yolcuMesgul() ? YUZK.dur + dt : 0;      // yarışta ve yolcu binip inerken durunca kendiliğinden dönmez
     const hedef = serbest && (tus || YUZK.sabit || YUZK.dur > 2) ? 1 : 0;
@@ -17878,7 +17957,7 @@ function cokKur(o) {
     G, EVENTS, STORY, S, startStory, nextLine, loadRegion, get bolge() { return REGION.id; }, get tur() { return TUR; }, get detay() { return G.detay; }, get cim() { return CIM ? { yaprak: CIM.yaprak, ortu: CIM.ortu } : null; }, get zemin() { return terrTex; }, get player() { return player; }, get cars() { return cars; }, startEvent, startFree, tick,
     sim(sec) { const n = Math.round(sec / STEP); for (let i = 0; i < n; i++) { if (G.state === 'free' || G.state === 'race' || G.state === 'count') tick(STEP); } },
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
-    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
+    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, efsane: { get acik() { return EFSANE.acik; }, ac: efsaneAc, gec: () => { if (EFSANE.bitir) EFSANE.bitir(); } }, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     cok: COK,      // birlikte sürüş: .durum, .kur(), .katil(kod), .ayril(), .sunucuAyarla(adres)
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
     kediler: () => cats.map((c) => ({ canli: !!c.kedi, gorunur: c.mesh.visible, got: c.got })),
