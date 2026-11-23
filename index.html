@@ -8545,33 +8545,7 @@ function buildTrees(scene) {
 }
 
 // ------------------------------------------------------------ göl, gök, dağlar
-function buildWater(scene) {
-  const size = 256, cv = document.createElement('canvas'); cv.width = cv.height = size;
-  const g = cv.getContext('2d'), im = g.createImageData(size, size);
-  const hgt = (x, y) => vnoise(x / 9, y / 9) * 0.6 + vnoise(x / 3.1, y / 3.1) * 0.4;
-  const wrapH = (x, y) => {   // kenarlarda dikişsiz
-    const u = x / size, v = y / size;
-    return lerp(lerp(hgt(x, y), hgt(x - size, y), u), lerp(hgt(x, y - size), hgt(x - size, y - size), u), v);
-  };
-  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
-    const dx = wrapH((x + 1) % size, y) - wrapH((x + size - 1) % size, y), dy = wrapH(x, (y + 1) % size) - wrapH(x, (y + size - 1) % size);
-    const k = (y * size + x) * 4;
-    im.data[k] = 128 + dx * 420; im.data[k + 1] = 128 + dy * 420; im.data[k + 2] = 255; im.data[k + 3] = 255;
-  }
-  g.putImageData(im, 0, 0);
-  const nt = new THREE.CanvasTexture(cv); nt.wrapS = nt.wrapT = THREE.RepeatWrapping; nt.repeat.set(1400, 1400);
-  const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0x1e9fb4).convertSRGBToLinear(), roughness: 0.07, metalness: 0.0, envMapIntensity: 1.25, normalMap: nt, normalScale: new THREE.Vector2(0.55, 0.55), transparent: true, opacity: 0.94 });
-  // Gerçek dağ ağı varsa yerel düzlem yalnız ızgarayı ve eteğini örter; gölün devamı uzak sahnededir (src/dag.js dagSu, dünya hizalı uv: dikişsiz)
-  const gw = (dem.nx - 1) * dem.step + 2 * DAG_ETEK + 200, gh = (dem.nz - 1) * dem.step + 2 * DAG_ETEK + 200;
-  const gx = dem.x0 + (dem.nx - 1) * dem.step / 2, gz = dem.z0 + (dem.nz - 1) * dem.step / 2;
-  const geo = DAG.hazir ? new THREE.PlaneGeometry(gw, gh) : new THREE.PlaneGeometry(60000, 60000);
-  if (DAG.hazir) suUv(geo, gx, gz);
-  const m = new THREE.Mesh(geo, mat);
-  m.rotation.x = -Math.PI / 2; m.position.y = 0; m.receiveShadow = true;
-  if (DAG.hazir) m.position.set(gx, 0, gz);
-  scene.add(m);
-  return nt;
-}
+// göl yüzeyi: buildWater, src/gol.js (FFT dalgaları, 23 Kas 2026)
 function buildSky(scene, sunDir) {
   // Gök: fotoğraf yüklendiyse o, yüklenemediyse kodla çizilen bulutlar
   const foto = TEX.gok && TEX.gok.image && TEX.gok.image.width > 8;
@@ -10137,29 +10111,432 @@ function buildDag(sahne, suDoku) {
   return mesh;
 }
 
-// Uzak göl yüzeyi: yerel su düzleminin (yalnız yerel ızgara) devamı; aynı malzeme ve dalga dokusu, dünya hizalı uv, yer eğriliğiyle.
-function dagSu(sahne, nt) {
+// Uzak göl yüzeyi: yerel su ağının (yalnız yerel ızgara) devamı; aynı FFT su malzemesi (src/gol.js golMalzeme), köşe kayması yok, yer eğriliğiyle.
+function dagSu(sahne, gol) {
   if (DAG.su) { sahne.remove(DAG.su); DAG.su.geometry.dispose(); DAG.su.material.dispose(); DAG.su = null; }
-  if (!nt) return;
+  if (!gol) return;
   const S = 320000, g = new THREE.PlaneGeometry(S, S, 128, 128);
-  suUv(g, 0, 0);
-  const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0x1e9fb4).convertSRGBToLinear(), roughness: 0.07, metalness: 0.0, envMapIntensity: 1.25, normalMap: nt, normalScale: new THREE.Vector2(0.55, 0.55), transparent: true, opacity: 0.94 });
-  mat.name = 'su-uzak';
-  mat.onBeforeCompile = (sh) => {
-    sh.vertexShader = sh.vertexShader.replace('#include <project_vertex>', DAG_EGRI);
-    sh.fragmentShader = sh.fragmentShader.replace('#include <fog_fragment>', dagSis());
-  };
-  mat.customProgramCacheKey = () => 'su-uzak';
-  const m = new THREE.Mesh(g, mat);
-  m.rotation.x = -Math.PI / 2; m.frustumCulled = false;
+  g.rotateX(-Math.PI / 2);
+  const m = new THREE.Mesh(g, golMalzeme(true));
+  m.frustumCulled = false;
   sahne.add(m);
   DAG.su = m;
 }
-// su düzleminin uv'si dünya konumundan (dalga dokusu yerel ve uzak düzlemde dikişsiz): 60 km'de 1 (doku tekrarı 1400)
-function suUv(g, px, pz) {
-  const p = g.attributes.position.array, u = g.attributes.uv.array;
-  for (let i = 0, k = 0; i < p.length; i += 3, k += 2) { u[k] = (p[i] + px) / 60000; u[k + 1] = (p[i + 1] - pz) / 60000; }
-  g.attributes.uv.needsUpdate = true;
+
+// ------------------------------------------------------------ Van Gölü yüzeyi (23 Kas 2026)
+// Dalga hesabı ve su gölgelendiricisi achrefelouafi/OceanThreejs (MIT, © 2026 mohamedachrefelouafi) projesinden three 0.149'a uyarlandı:
+// GPU FFT (Tessendorf; JONSWAP tayfı, radix-2 kelebek geçişleri, iki dalga alanı tek karmaşık FFT'de), Gerstner kabarması,
+// Jacobian köpüğü, Beer–Lambert su gövdesi rengi, sırtta içten parlama, güneş pırıltısı. Çekirdekler ve tayf özgün kodun birebir karşılığıdır.
+// Oyuna uyum: ışık, gölge, sis, ton eşleme ve gök yansıması three'nin MeshStandardMaterial'ından gelir (gün vakti kendiliğinden işler);
+// gölgelendirici normali, su gövdesinin rengini, köpüğü ve pürüzlülüğü yazar. Yerel sahnede kamerayla giden halka ağ (yakında köşe kayması,
+// eski düz su düzleminin sınırında kırpılır); uzak sahnede (src/dag.js dagSu) aynı malzeme düz ve yer eğriliğiyle.
+// Kıyı: arazi ızgarasından kıyıya uzaklık dokusu; kıyıya yaklaşınca dalga söner (dalga çukuru kıyı toprağını delmez).
+// Göl ayarı (GOL_AYAR): 7 m/sn rüzgâr, 40 km açıklık → anlamlı dalga yüksekliği ≈ 0,85 m; okyanus kabarması çok düşük.
+// Özgün koddan iki ayrılık: ters FFT'deki fazladan 1/N² bölmesi kaldırıldı (GOL_SIRA notu); kum zemin kırılması yerine yerel arazi saydamlıkla görünür.
+const GOL = { U: null, fft: null, hata: '', yakinSu: false, renderer: null, yerel: null, kiyi: null, N: 0 };
+const GOL_AYAR = {
+  ruzgar: 7.0, yon: 15, aciklik: 40000, yayilim: 4.0,      // m/sn, derece (x doğu, z güney), m, yönsel yayılım üssü
+  genlik: 0.8, cop: 1.1, yama: 96, kademe: [1, 0.27, 0.072], agirlik: [1, 0.55, 0.28],      // FFT karosu 96 m; üç ölçekte örneklenir (tekrar görünmez)
+  kabarma: 0.12, kabarmaYon: 10, kabarma2: 0.07, kabarma2Yon: 95,
+  derin: '#0a3550', sig: '#1d9ab0',      // derin su ve saçılan su rengi (özgün ayarlar)
+};
+const GOL_G = 9.81;
+
+// ---- FFT çekirdekleri (GLSL3, tam ekran geçişleri)
+const GOL_ORTAK = [
+  '#define PI 3.141592653589793',
+  'const float G = 9.81;',
+  'vec2 cmul(vec2 a, vec2 b){ return vec2(a.x*b.x - a.y*b.y, a.x*b.y + a.y*b.x); }',
+  'vec2 packFG(vec2 F, vec2 Gc){ return vec2(F.x - Gc.y, F.y + Gc.x); }',      // F + i·G tek ters FFT girdisi
+].join('\n');
+const GOL_TAM_VS = 'out vec2 vUv;\nvoid main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
+// 1) h0(k) → h(k,t); 0. küme: Dy, Dx, Dz, ∂Dy/∂x · 1. küme: ∂Dy/∂z, ∂Dx/∂x, ∂Dz/∂z, ∂Dx/∂z
+const GOL_TAYF = GOL_ORTAK + `
+in vec2 vUv;
+out vec4 frag;
+uniform sampler2D uH0;
+uniform float uTime, uN, uL, uWaveSpeed, uLoopPeriod;
+uniform int uTarget;
+void main(){
+  float N = uN;
+  vec2 id = floor(vUv * N);
+  vec2 m  = id - N * 0.5;
+  vec2 k  = (2.0 * PI / uL) * m;
+  float kLen = length(k);
+  vec2 khat = kLen > 1e-6 ? k / kLen : vec2(0.0);
+  vec4 h0data = texture(uH0, vUv);
+  vec2 h0 = h0data.xy;
+  vec2 h0mkConj = vec2(h0data.z, -h0data.w);
+  float w0 = 2.0 * PI / max(uLoopPeriod, 1e-3);
+  float w  = floor(sqrt(G * max(kLen, 1e-8)) / w0) * w0 * uWaveSpeed;      // derin su dağılımı, döngüye nicelenmiş
+  float c = cos(w * uTime), s = sin(w * uTime);
+  vec2 h = cmul(h0, vec2(c, s)) + cmul(h0mkConj, vec2(c, -s));
+  vec2 ih = vec2(-h.y, h.x);
+  if (uTarget == 0) {
+    frag = vec4(packFG(h, -khat.x * ih), packFG(-khat.y * ih, k.x * ih));
+  } else {
+    float ik = kLen > 1e-6 ? 1.0 / kLen : 0.0;
+    frag = vec4(packFG(k.y * ih, k.x * k.x * ik * h), packFG(k.y * k.y * ik * h, k.x * k.y * ik * h));
+  }
+}`;
+// 2) Cooley–Tukey radix-2 tek basamak (önce yatay log2 N, sonra dikey log2 N geçiş)
+const GOL_KELEBEK = GOL_ORTAK + `
+in vec2 vUv;
+out vec4 frag;
+uniform sampler2D uButterfly;
+uniform sampler2D uSource;
+uniform int uStage;
+uniform int uDirection;
+void main(){
+  ivec2 coord = ivec2(gl_FragCoord.xy);
+  int axis = (uDirection == 0) ? coord.x : coord.y;
+  vec4 bf = texelFetch(uButterfly, ivec2(uStage, axis), 0);
+  int ia = int(bf.z), ib = int(bf.w);
+  ivec2 ca = (uDirection == 0) ? ivec2(ia, coord.y) : ivec2(coord.x, ia);
+  ivec2 cb = (uDirection == 0) ? ivec2(ib, coord.y) : ivec2(coord.x, ib);
+  vec4 p = texelFetch(uSource, ca, 0), q = texelFetch(uSource, cb, 0);
+  frag = vec4(p.rg + cmul(bf.xy, q.rg), p.ba + cmul(bf.xy, q.ba));
+}`;
+// 3) (−1)^(x+y) yeniden ortalama. Özgün kod burada bir de 1/N² ile böler; ama h0 zaten alan = Σ h(k)·e^{ikx} olacak biçimde hedef dalga
+// yüksekliğine ölçeklendiği için bu ikinci bölme dalgayı N² kat (256'da 65 536) küçültüyordu (ölçüm: Hs 0,58 m beklenirken ~1e-5 m). Kaldırıldı.
+const GOL_SIRA = GOL_ORTAK + `
+in vec2 vUv;
+out vec4 frag;
+uniform sampler2D uSource;
+void main(){
+  ivec2 c = ivec2(gl_FragCoord.xy);
+  float sgn = ((c.x + c.y) & 1) == 0 ? 1.0 : -1.0;
+  frag = texelFetch(uSource, c, 0) * sgn;
+}`;
+
+// ---- tayf (JONSWAP) ve rastgele sayılar
+function golRng(seed) {
+  let a = seed >>> 0;
+  return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+function golGauss(rng) { const u1 = Math.max(rng(), 1e-7), u2 = rng(), r = Math.sqrt(-2 * Math.log(u1)), t = 2 * Math.PI * u2; return [r * Math.cos(t), r * Math.sin(t)]; }
+function golJonswap(kx, kz, A) {
+  const k = Math.hypot(kx, kz);
+  if (k < 1e-6) return 0;
+  const om = Math.sqrt(GOL_G * k), V = A.ruzgar, F = Math.max(A.aciklik, 1), X = (GOL_G * F) / (V * V);
+  const alfa = 0.076 * Math.pow(X, -0.22), omP = 22 * Math.pow((GOL_G * GOL_G) / (V * F), 1 / 3), sg = om <= omP ? 0.07 : 0.09;
+  const r = Math.exp(-Math.pow(om - omP, 2) / (2 * sg * sg * omP * omP));
+  const Sw = (alfa * GOL_G * GOL_G / Math.pow(om, 5)) * Math.exp(-1.25 * Math.pow(omP / om, 4)) * Math.pow(3.3, r);
+  const Sk = Sw * 0.5 * Math.sqrt(GOL_G / k) / k;
+  const wa = A.yon * Math.PI / 180, ct = (kx * Math.cos(wa) + kz * Math.sin(wa)) / k;
+  const yon = Math.pow(Math.max(ct, 0), 2 * A.yayilim) + 0.07 * Math.pow(Math.max(-ct, 0), 2 * A.yayilim);
+  return Sk * yon;
+}
+
+// ---- GPU FFT: h0 dokusu, kelebek dokusu, ileri-geri hedefler; çıktı iki yarım-kayan dokusu (mip'li: uzakta normal titreşmez)
+function golFftKur(renderer) {
+  if (!renderer.capabilities.isWebGL2) return 'webgl1';
+  if (!renderer.extensions.has('EXT_color_buffer_float')) return 'EXT_color_buffer_float yok';
+  const N = MOBIL ? 128 : 256, st = Math.log2(N);
+  const hedef = (dogrusal) => new THREE.WebGLRenderTarget(N, N, {
+    type: dogrusal ? THREE.HalfFloatType : THREE.FloatType, format: THREE.RGBAFormat, wrapS: THREE.RepeatWrapping, wrapT: THREE.RepeatWrapping,
+    minFilter: dogrusal ? THREE.LinearMipmapLinearFilter : THREE.NearestFilter, magFilter: dogrusal ? THREE.LinearFilter : THREE.NearestFilter,
+    generateMipmaps: dogrusal, anisotropy: dogrusal ? 8 : 1, depthBuffer: false, stencilBuffer: false,
+  });
+  const F = { N, st, ping: [hedef(false), hedef(false)], yer: hedef(true), tur: hedef(true) };
+  F.yer.texture.name = 'gol-fft-yer'; F.tur.texture.name = 'gol-fft-tur';
+  // kelebek: genişlik log2 N basamak, yükseklik N; (döndürme çarpanı re, im, okuma A, okuma B); 0. basamak bit ters sıradan okur
+  const bd = new Float32Array(st * N * 4), ters = new Int32Array(N);
+  for (let i = 0; i < N; i++) { let x = i, r = 0; for (let b = 0; b < st; b++) { r = (r << 1) | (x & 1); x >>= 1; } ters[i] = r; }
+  for (let s = 0; s < st; s++) for (let y = 0; y < N; y++) {
+    const k = (y * (N >> (s + 1))) % N, a = (2 * Math.PI * k) / N, sp = 1 << s, ust = (y % (1 << (s + 1))) < sp;
+    let ia, ib;
+    if (s === 0) { if (ust) { ia = ters[y]; ib = ters[y + 1]; } else { ia = ters[y - 1]; ib = ters[y]; } } else if (ust) { ia = y; ib = y + sp; } else { ia = y - sp; ib = y; }
+    const j = (s + y * st) * 4;
+    bd[j] = Math.cos(a); bd[j + 1] = Math.sin(a); bd[j + 2] = ia; bd[j + 3] = ib;
+  }
+  const veri = (d, w, h) => { const t = new THREE.DataTexture(d, w, h, THREE.RGBAFormat, THREE.FloatType); t.minFilter = t.magFilter = THREE.NearestFilter; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.needsUpdate = true; return t; };
+  F.kelebekT = veri(bd, st, N);
+  F.h0 = veri(new Float32Array(N * N * 4), N, N);
+  const mal = (fs, u) => new THREE.ShaderMaterial({ uniforms: u, vertexShader: GOL_TAM_VS, fragmentShader: fs, depthTest: false, depthWrite: false, glslVersion: THREE.GLSL3, toneMapped: false });
+  F.tayf = mal(GOL_TAYF, { uH0: { value: F.h0 }, uTime: { value: 0 }, uN: { value: N }, uL: { value: 100 }, uWaveSpeed: { value: 1 }, uLoopPeriod: { value: 200 }, uTarget: { value: 0 } });
+  F.kelebek = mal(GOL_KELEBEK, { uButterfly: { value: F.kelebekT }, uSource: { value: null }, uStage: { value: 0 }, uDirection: { value: 0 } });
+  F.sira = mal(GOL_SIRA, { uSource: { value: null } });
+  F.kam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  F.ag = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), F.tayf); F.ag.frustumCulled = false;
+  F.sahne = new THREE.Scene(); F.sahne.add(F.ag);
+  // h0(k): JONSWAP varyansı × Gauss; anlamlı dalga yüksekliği Hs = 0,21 V²/g × genlik olacak biçimde ölçeklenir
+  const A = GOL_AYAR, L = A.yama, d = F.h0.image.data, rng = golRng(1337 + 9973), kb = (2 * Math.PI) / L;
+  const amp = (m, n) => { let s = golJonswap(kb * m, kb * n, A); if (!isFinite(s) || s < 0) s = 0; return Math.sqrt(s * 0.5); };
+  let top = 0;
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const m = x - N / 2, n = y - N / 2, a = amp(m, n), am = amp(-m, -n), [g1, g2] = golGauss(rng), [g3, g4] = golGauss(rng), j = (x + y * N) * 4;
+    d[j] = a * g1; d[j + 1] = a * g2; d[j + 2] = am * g3; d[j + 3] = am * g4;
+    top += d[j] * d[j] + d[j + 1] * d[j + 1];
+  }
+  const Hs = 4 * (Math.sqrt(2 * top) || 1e-6), HsH = clamp(0.21 * A.ruzgar * A.ruzgar / GOL_G, 0.05, 14) * A.genlik;
+  for (let i = 0; i < d.length; i++) d[i] *= HsH / Hs;
+  F.h0.needsUpdate = true;
+  F.tayf.uniforms.uL.value = L;
+  F.tayf.uniforms.uLoopPeriod.value = (2 * Math.PI) / Math.sqrt(GOL_G * kb) * 8;
+  F.Hs = HsH;
+  GOL.fft = F; GOL.N = N;
+  return '';
+}
+function golGecis(r, mat, hedef) { const F = GOL.fft; F.ag.material = mat; r.setRenderTarget(hedef); r.render(F.sahne, F.kam); }
+function golFftAdim(t) {
+  const F = GOL.fft, r = GOL.renderer, once = r.getRenderTarget();
+  F.tayf.uniforms.uTime.value = t;
+  for (let k = 0; k < 2; k++) {
+    F.tayf.uniforms.uTarget.value = k;
+    golGecis(r, F.tayf, F.ping[0]);
+    let s = 0;
+    for (let yon = 0; yon < 2; yon++) {
+      F.kelebek.uniforms.uDirection.value = yon;
+      for (let b = 0; b < F.st; b++) {
+        F.kelebek.uniforms.uStage.value = b; F.kelebek.uniforms.uSource.value = F.ping[s].texture;
+        golGecis(r, F.kelebek, F.ping[1 - s]); s = 1 - s;
+      }
+    }
+    F.sira.uniforms.uSource.value = F.ping[s].texture;
+    golGecis(r, F.sira, k === 0 ? F.yer : F.tur);
+  }
+  r.setRenderTarget(once);
+}
+
+// ---- Gerstner kabarması (uzun, yönlü; FFT karosunun büyük ölçekte tekrarını da kırar)
+function golGerstner(U) {
+  const A = GOL_AYAR, D = U.uGerD.value, P = U.uGerP.value;
+  const dl = [[A.kabarmaYon - 8, 180, 1.4 * A.kabarma, 0.62, 1], [A.kabarmaYon + 6, 120, 0.95 * A.kabarma, 0.55, 1.05], [A.kabarmaYon + 17, 78, 0.55 * A.kabarma, 0.48, 1.1],
+    [A.kabarma2Yon - 5, 96, 0.85 * A.kabarma2, 0.5, 1], [A.kabarma2Yon + 12, 61, 0.5 * A.kabarma2, 0.45, 1.08]];
+  for (let i = 0; i < 6; i++) {
+    const w = dl[i];
+    if (!w) { D[i].set(1, 0); P[i].set(0, 0, 0, 0); continue; }
+    const a = w[0] * Math.PI / 180, k = 2 * Math.PI / w[1];
+    D[i].set(Math.cos(a), Math.sin(a)); P[i].set(k, w[2], w[3], Math.sqrt(GOL_G * k) * w[4]);
+  }
+}
+
+// ---- kıyıya uzaklık: arazi ızgarasında göl düzeyinin altındaki hücrelerden en yakın kara hücresine (m; 240 m'de doyar). R8 doku.
+const GOL_KIYI_M = 240;
+function golKiyiDoku() {
+  const nx = dem.nx, nz = dem.nz, n = nx * nz, d = new Float32Array(n), S2 = Math.SQRT2;
+  let su = 0;
+  for (let i = 0; i < n; i++) { const w = HG[i] < -0.4; d[i] = w ? 1e9 : 0; if (w) su++; }
+  const bak = (i, j, c) => { if (d[j] + c < d[i]) d[i] = d[j] + c; };
+  for (let z = 0; z < nz; z++) for (let x = 0; x < nx; x++) {      // ileri geçiş
+    const i = z * nx + x; if (!d[i]) continue;
+    if (x > 0) bak(i, i - 1, 1);
+    if (z > 0) { bak(i, i - nx, 1); if (x > 0) bak(i, i - nx - 1, S2); if (x < nx - 1) bak(i, i - nx + 1, S2); }
+  }
+  for (let z = nz - 1; z >= 0; z--) for (let x = nx - 1; x >= 0; x--) {      // geri geçiş
+    const i = z * nx + x; if (!d[i]) continue;
+    if (x < nx - 1) bak(i, i + 1, 1);
+    if (z < nz - 1) { bak(i, i + nx, 1); if (x < nx - 1) bak(i, i + nx + 1, S2); if (x > 0) bak(i, i + nx - 1, S2); }
+  }
+  const b = new Uint8Array(n);
+  for (let i = 0; i < n; i++) b[i] = Math.min(255, Math.round(Math.min(d[i] * dem.step, 1e6) / GOL_KIYI_M * 255));
+  const t = new THREE.DataTexture(b, nx, nz, THREE.RedFormat, THREE.UnsignedByteType);
+  t.minFilter = t.magFilter = THREE.LinearFilter; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; t.generateMipmaps = false; t.needsUpdate = true;
+  return { t, su };
+}
+
+function golUniform() {
+  if (GOL.U) return GOL.U;
+  const L = (h) => new THREE.Color(h).convertSRGBToLinear(), A = GOL_AYAR;
+  GOL.U = {
+    tGolD: { value: null }, tGolT: { value: null }, tGolKiyi: { value: null },
+    uGolOlcek: { value: new THREE.Vector3(A.yama * A.kademe[0], A.yama * A.kademe[1], A.yama * A.kademe[2]) },
+    uGolAgir: { value: new THREE.Vector3(A.agirlik[0], A.agirlik[1], A.agirlik[2]) }, uGolCop: { value: A.cop },
+    uGolMerkez: { value: new THREE.Vector2() }, uGolSinir: { value: new THREE.Vector4(-1e6, -1e6, 1e6, 1e6) }, uGolKiyiUv: { value: new THREE.Vector4(0, 0, 1, 1) },
+    uGerD: { value: [0, 1, 2, 3, 4, 5].map(() => new THREE.Vector2(1, 0)) }, uGerP: { value: [0, 1, 2, 3, 4, 5].map(() => new THREE.Vector4()) },
+    uGolT: { value: 0 }, uGolDalga: { value: 1 }, uGolNormal: { value: 1.3 }, uGolSac: { value: 1.2 },      // gövde parlaklığı oyunun ışığına göre (önizlemede ayarlandı)
+    uGolDerin: { value: L(A.derin) }, uGolSig: { value: L(A.sig) }, uGolGunes: { value: new THREE.Color(1, 1, 1) }, uGolGunesYon: { value: new THREE.Vector3(0, 1, 0) },
+  };
+  golGerstner(GOL.U);
+  return GOL.U;
+}
+
+// ---- su malzemesi: MeshStandardMaterial + köşe kayması (yerel) + FFT normali, su gövdesi, köpük (her iki sahne)
+const GOL_ORTAK_U = [
+  'uniform sampler2D tGolD; uniform sampler2D tGolT; uniform sampler2D tGolKiyi;',
+  'uniform vec3 uGolOlcek; uniform vec3 uGolAgir; uniform float uGolCop; uniform float uGolT; uniform float uGolDalga; uniform float uGolNormal;',
+  'uniform vec2 uGolMerkez; uniform vec4 uGolSinir; uniform vec4 uGolKiyiUv; uniform vec2 uGerD[ 6 ]; uniform vec4 uGerP[ 6 ];',
+  'uniform vec3 uGolDerin; uniform vec3 uGolSig; uniform vec3 uGolGunes; uniform vec3 uGolGunesYon; uniform float uGolSac;',
+  'varying vec3 vGolW; varying vec3 vGolNG; varying float vGolH; varying float vGolKiyi;',
+].join('\n');
+const GOL_VS = `
+vec3 transformed = vec3( position );
+vGolNG = vec3( 0.0, 1.0, 0.0 ); vGolH = 0.0; vGolKiyi = 1.0;
+#ifdef GOL_YEREL
+{
+  vec2 gw = clamp( position.xz + uGolMerkez, uGolSinir.xy, uGolSinir.zw );
+  float gKy = texture( tGolKiyi, ( gw - uGolKiyiUv.xy ) * uGolKiyiUv.zw ).r;
+  float gS = smoothstep( 0.0, 0.35, gKy ) * ( 1.0 - smoothstep( 400.0, 1200.0, length( gw - cameraPosition.xz ) ) ) * uGolDalga;
+  vec3 gD = vec3( 0.0 ), gN = vec3( 0.0, 1.0, 0.0 );
+  if ( gS > 0.001 ) {
+#ifdef GOL_FFT
+    for ( int i = 0; i < 3; i ++ ) {      // FFT kayması üç ölçekte: R yükseklik, G/B yatay (dalga sırtı sivrilir)
+      vec4 d = textureLod( tGolD, gw / uGolOlcek[ i ], 0.0 );
+      gD += vec3( d.g * uGolCop, d.r, d.b * uGolCop ) * uGolAgir[ i ];
+    }
+#endif
+    for ( int i = 0; i < 6; i ++ ) {      // Gerstner kabarması ve çözümsel normali (GPU Gems)
+      vec4 P = uGerP[ i ];
+      if ( P.x <= 0.0 ) continue;
+      vec2 Dv = uGerD[ i ];
+      float ph = P.x * dot( Dv, gw ) - P.w * uGolT, c = cos( ph ), s = sin( ph ), WA = P.x * P.y;
+      gD += vec3( P.z * P.y * Dv.x * c, P.y * s, P.z * P.y * Dv.y * c );
+      gN -= vec3( Dv.x * WA * c, P.z * WA * s, Dv.y * WA * c );
+    }
+    gD *= gS; gN = mix( vec3( 0.0, 1.0, 0.0 ), gN, gS );
+  }
+  transformed = vec3( gw.x + gD.x, gD.y, gw.y + gD.z );
+  vGolNG = gN; vGolH = gD.y; vGolKiyi = gKy;
+}
+#endif
+vGolW = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;
+`;
+const GOL_FS_UST = `
+float golHash( vec2 p ){ p = fract( p * vec2( 123.34, 456.21 ) ); p += dot( p, p + 45.32 ); return fract( p.x * p.y ); }
+float golNoise( vec2 p ){      // dönemli kafes (289): dünya koordinatı büyüse de hash bozulmaz
+  vec2 i = floor( p ), f = fract( p ); f = f * f * ( 3.0 - 2.0 * f );
+  vec2 a = mod( i, 289.0 ), b = mod( i + 1.0, 289.0 );
+  return mix( mix( golHash( a ), golHash( vec2( b.x, a.y ) ), f.x ), mix( golHash( vec2( a.x, b.y ) ), golHash( b ), f.x ), f.y );
+}
+float golFbm( vec2 p ){ float v = 0.0, a = 0.5; for ( int i = 0; i < 4; i ++ ){ v += a * golNoise( p ); p = p * 2.07 + 17.3; a *= 0.5; } return v; }
+// Jacobian köpüğü (özgün Foam.js ayarları: eşik 0,62, yumuşaklık 0,35, kaplama 0,5, sırt 0,6, kalıcılık 0,55, karşıtlık 1,4)
+float golKopuk( float J, float egri, vec2 xz, float t ){
+  float fold = smoothstep( 0.62, 0.27, J );
+  fold = mix( fold, 1.0, 0.5 * fold );
+  float mask = clamp( fold + 0.6 * smoothstep( 0.35, 1.0, egri ), 0.0, 1.0 );
+  if ( mask <= 0.0 ) return 0.0;
+  vec2 fp = mod( xz * 0.12, 289.0 );
+  float n = golFbm( fp + t * 0.35 * vec2( 0.3, -0.2 ) );
+  n = mix( n, golFbm( fp * 2.3 - t * 0.175 ), 0.5 );
+  float f = max( mask * mix( 0.6, 1.0, n ), mask * 0.55 * smoothstep( 0.2, 0.8, n ) );
+  return clamp( pow( clamp( f, 0.0, 1.0 ), 1.6 ) * 1.4, 0.0, 1.0 );
+}
+`;
+const GOL_FS = `
+vec2 gxz = vGolW.xz;
+vec3 gV = normalize( cameraPosition - vGolW );
+float gUz = length( cameraPosition - vGolW );
+float gSak = mix( 0.3, 1.0, smoothstep( 0.0, 0.35, vGolKiyi ) );      // kıyıda dalga söner, ince kırışık kalır
+vec2 gSl = vec2( 0.0 ); float gXX = 0.0, gZZ = 0.0, gXZ = 0.0;
+#ifdef GOL_FFT
+for ( int i = 0; i < 3; i ++ ) {
+  vec2 uv = gxz / uGolOlcek[ i ];
+  vec4 d0 = texture( tGolD, uv ), d1 = texture( tGolT, uv );
+  float w = uGolAgir[ i ], wc = w * uGolCop;
+  gSl += vec2( d0.a, d1.r ) * w;
+  gXX += d1.g * wc; gZZ += d1.b * wc; gXZ += d1.a * wc;
+}
+{      // ince ayrıntı: en küçük ölçek döndürülüp bir kez daha (yakın planda karo tekrarı görünmez)
+  const mat2 R = mat2( 0.7986, 0.6018, -0.6018, 0.7986 );
+  vec2 uv = R * gxz / ( uGolOlcek.z * 0.61 );
+  gSl += ( vec2( texture( tGolD, uv ).a, texture( tGolT, uv ).r ) * R ) * uGolAgir.z * 0.6;
+}
+#endif
+gSl *= gSak; gXX *= gSak; gZZ *= gSak; gXZ *= gSak;
+vec3 gNg = normalize( vGolNG );
+vec3 gN = normalize( vec3( -gSl.x * uGolNormal + gNg.x / max( gNg.y, 0.05 ), 1.0, -gSl.y * uGolNormal + gNg.z / max( gNg.y, 0.05 ) ) );
+normal = normalize( ( viewMatrix * vec4( gN, 0.0 ) ).xyz );
+// su gövdesi: kırılan bakış ışını 7 m derinliğe iner; yol uzadıkça (yatık bakış) saçılan turkuazdan derin maviye (Beer–Lambert)
+vec3 gRf = refract( -gV, gN, 1.0 / 1.333 );
+float gYol = 7.0 / max( -gRf.y, 0.06 );
+vec3 gGovde = mix( uGolSig, uGolDerin, clamp( gYol / 28.0, 0.0, 1.0 ) ) * ( 1.0 - exp( -vec3( 0.32, 0.085, 0.06 ) * gYol ) ) * uGolSac;
+vec3 gGy = normalize( uGolGunesYon );
+// dalga sırtının içten parlaması (ışık sırtın arkasından gelir) ve güneş pırıltısı
+float gTepe = clamp( vGolH * 0.9 + 0.5, 0.0, 1.0 );
+totalEmissiveRadiance += uGolSig * uGolGunes * pow( gTepe, 3.0 ) * max( dot( gN, gGy ) * 0.5 + 0.5, 0.0 ) * 0.12;
+float gYak = 1.0 - smoothstep( 150.0, 450.0, gUz );
+if ( gYak > 0.0 ) {
+  float gGlint = pow( max( dot( reflect( -gV, gN ), gGy ), 0.0 ), 350.0 );
+  float gPir = smoothstep( 0.55, 0.95, golFbm( mod( gxz * 2.5, 289.0 ) + uGolT * 0.5 ) );
+  totalEmissiveRadiance += uGolGunes * gGlint * gPir * gYak * 1.5;
+}
+// köpük
+float gJ = ( 1.0 + gXX ) * ( 1.0 + gZZ ) - gXZ * gXZ;
+float gKop = golKopuk( gJ, clamp( length( gSl ) * 0.6 + ( 1.0 - gJ ), 0.0, 1.0 ), gxz, uGolT ) * 0.95;
+diffuseColor.rgb = mix( gGovde, vec3( 0.86, 0.9, 0.93 ), gKop );
+diffuseColor.a = mix( diffuseColor.a, 1.0, gKop );
+// pürüzlülük: uzakta FFT normali mip'le düzleşir; mikro yüzeylerin dağılımı pürüzlülüğe geçer
+roughnessFactor = mix( mix( 0.045, 0.22, smoothstep( 120.0, 6000.0, gUz ) ), 0.65, gKop );
+`;
+function golMalzeme(uzak) {
+  const U = golUniform(), fft = !!GOL.fft;
+  const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.05, metalness: 0, envMapIntensity: 0.8, transparent: true, opacity: 0.95 });      // bulutlu göğün beyaz yansıması suyu sütlü göstermesin
+  mat.name = uzak ? 'su-uzak' : 'su';
+  mat.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, U);
+    const tanim = (fft ? '#define GOL_FFT\n' : '') + (uzak ? '' : '#define GOL_YEREL\n');
+    let vs = sh.vertexShader.replace('#include <common>', '#include <common>\n' + tanim + GOL_ORTAK_U).replace('#include <begin_vertex>', GOL_VS);
+    if (uzak) vs = vs.replace('#include <project_vertex>', DAG_EGRI);
+    sh.vertexShader = vs;
+    let fs = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + tanim + GOL_ORTAK_U + GOL_FS_UST).replace('#include <normal_fragment_maps>', GOL_FS);
+    if (uzak) fs = fs.replace('#include <fog_fragment>', dagSis());
+    sh.fragmentShader = fs;
+  };
+  mat.customProgramCacheKey = () => (uzak ? 'su-uzak' : 'su-yerel') + (fft ? '-fft' : '');
+  return mat;
+}
+
+// ---- yerel ağ: kamera çevresinde halkalar (yakında sık, 1,6 km'den sonra seyrek); uç halka eski düz su düzleminin köşegenini aşar
+function golHalkaAg(Rmax) {
+  const A = MOBIL ? 96 : 192, q = 1 + (2 * Math.PI) / A, hal = [];
+  for (let r = 1.2; r < 1600; r *= q) hal.push(r);
+  for (let r = hal[hal.length - 1] * 1.6; r < Rmax; r *= 1.6) hal.push(r);
+  hal.push(Rmax);
+  const NR = hal.length, nv = 1 + NR * A, pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), idx = [];
+  for (let i = 0; i < nv; i++) nor[i * 3 + 1] = 1;
+  for (let i = 0; i < NR; i++) for (let j = 0; j < A; j++) {
+    const a = ((j + (i & 1) * 0.5) / A) * 2 * Math.PI, k = 1 + i * A + j;
+    pos[k * 3] = Math.cos(a) * hal[i]; pos[k * 3 + 2] = Math.sin(a) * hal[i];
+  }
+  for (let j = 0; j < A; j++) idx.push(0, 1 + ((j + 1) % A), 1 + j);      // merkez yelpazesi (normal yukarı)
+  for (let i = 0; i < NR - 1; i++) for (let j = 0; j < A; j++) {
+    const j1 = (j + 1) % A, a = 1 + i * A + j, b = 1 + i * A + j1, c = 1 + (i + 1) * A + j, d = 1 + (i + 1) * A + j1;
+    if (i & 1) idx.push(a, d, c, a, b, d); else idx.push(a, b, c, b, d, c);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+  g.setIndex(nv > 65535 ? new THREE.Uint32BufferAttribute(idx, 1) : new THREE.Uint16BufferAttribute(idx, 1));
+  g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), Rmax);
+  return g;
+}
+
+// Yerel göl yüzeyi. Gerçek dağ ağı varsa yalnız ızgarayı ve eteğini örter; gölün devamı uzak sahnededir (src/dag.js dagSu).
+function buildWater(scene, renderer) {
+  const U = golUniform();
+  if (renderer && !GOL.renderer) {
+    GOL.renderer = renderer;
+    try { GOL.hata = golFftKur(renderer); } catch (e) { GOL.hata = String(e && e.message || e); GOL.fft = null; }
+    if (GOL.fft) { U.tGolD.value = GOL.fft.yer.texture; U.tGolT.value = GOL.fft.tur.texture; golFftAdim(0); }
+  }
+  if (GOL.kiyi) GOL.kiyi.dispose();
+  const ky = golKiyiDoku();
+  GOL.kiyi = U.tGolKiyi.value = ky.t; GOL.yakinSu = ky.su > 0;
+  U.uGolKiyiUv.value.set(dem.x0 - dem.step / 2, dem.z0 - dem.step / 2, 1 / (dem.nx * dem.step), 1 / (dem.nz * dem.step));
+  let gw = 60000, gh = 60000, gx = 0, gz = 0;
+  if (DAG.hazir) {
+    gw = (dem.nx - 1) * dem.step + 2 * DAG_ETEK + 200; gh = (dem.nz - 1) * dem.step + 2 * DAG_ETEK + 200;
+    gx = dem.x0 + (dem.nx - 1) * dem.step / 2; gz = dem.z0 + (dem.nz - 1) * dem.step / 2;
+  }
+  U.uGolSinir.value.set(gx - gw / 2, gz - gh / 2, gx + gw / 2, gz + gh / 2);
+  const m = new THREE.Mesh(golHalkaAg(Math.hypot(gw, gh) * 1.02), golMalzeme(false));
+  m.frustumCulled = false; m.receiveShadow = true; m.matrixAutoUpdate = false;
+  m.visible = GOL.yakinSu || !DAG.hazir;
+  scene.add(m);
+  GOL.yerel = m;
+  return GOL;
+}
+
+// Her kare: zaman, ağ merkezi (0,5 m'ye oturtulur: köşeler kayarken titremez), güneş ve FFT
+function golAdim(t, kam, gunes, yon) {
+  const U = GOL.U;
+  if (!U) return;
+  U.uGolT.value = t;
+  U.uGolMerkez.value.set(Math.round(kam.position.x * 2) / 2, Math.round(kam.position.z * 2) / 2);
+  U.uGolGunes.value.copy(gunes.color).multiplyScalar(gunes.intensity);
+  U.uGolGunesYon.value.copy(yon);
+  if (GOL.fft && GOL.yakinSu) golFftAdim(t);
 }
 
 'use strict';
@@ -14958,7 +15335,7 @@ function cokKur(o) {
       buildTrees(world);
       CIM = buildCim(world, terrTex);
       if (CIM) { terrTex.push(CIM.doku); CIM.kalite(AYAR.kalite); }
-      waterTex = buildWater(world);
+      waterTex = buildWater(world, renderer);
       if (DAG.hazir) { buildDag(UZAK.sahne, waterTex); DAG.U.uKarSin.value = Rg.karSin || 2450; }
       evMarkers = []; cats = [];
       buildMarkers();
@@ -17407,7 +17784,7 @@ function cokKur(o) {
     sun.target.position.copy(focus); sun.position.copy(focus).addScaledVector(SUN, 420);
     env.sky.position.copy(camera.position);
     env.mountains.position.set(camera.position.x, env.mountains.userData.y || 0, camera.position.z);
-    waterTex.offset.x = G.t * 0.006; waterTex.offset.y = G.t * 0.004;
+    golAdim(G.t, camera, sun, SUN);      // göl: FFT dalgaları, güneş (src/gol.js)
     env.sky.material.uniforms.uTime.value = G.t;
     if (CIM) CIM.adim(camera, G.t);
     kirikAdim(dt, player);      // devrilen çit ve direkler
@@ -17467,7 +17844,7 @@ function cokKur(o) {
     G, EVENTS, STORY, S, startStory, nextLine, loadRegion, get bolge() { return REGION.id; }, get tur() { return TUR; }, get detay() { return G.detay; }, get cim() { return CIM ? { yaprak: CIM.yaprak, ortu: CIM.ortu } : null; }, get zemin() { return terrTex; }, get player() { return player; }, get cars() { return cars; }, startEvent, startFree, tick,
     sim(sec) { const n = Math.round(sec / STEP); for (let i = 0; i < n; i++) { if (G.state === 'free' || G.state === 'race' || G.state === 'count') tick(STEP); } },
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
-    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
+    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     cok: COK,      // birlikte sürüş: .durum, .kur(), .katil(kod), .ayril(), .sunucuAyarla(adres)
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
     kediler: () => cats.map((c) => ({ canli: !!c.kedi, gorunur: c.mesh.visible, got: c.got })),
