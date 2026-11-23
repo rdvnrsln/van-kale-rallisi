@@ -7426,8 +7426,11 @@ function buildTerrain(scene, groundCanvas, maxAniso) {
 
 // ------------------------------------------------------------ yollar
 function buildRoads(scene) {
-  const mk = () => ({ P: [], C: [], U: [], I: [], K: [] });
+  const mk = () => ({ P: [], C: [], U: [], I: [], K: [], E: [] });
   const asph = mk(), dirt = mk(), M = new Bag();
+  // Eski Van'da asfalt eskidir (23 Kas 2026, kurucu: "oyunu son karedeki kalitede yap", "evet, bu bölgede"): her köşe aEski taşır =
+  // (bölge ağırlığı: OSM'deki Eski Van alanının içinde 1, enine konum −1..1, yarı genişlik m). Gölgelendirici eskiYolPatch (src/doku.js).
+  const EP = !KAR && D.eskivan ? pairs(D.eskivan) : null, ew = (x, z) => (EP && pip(x, z, EP) ? 1 : 0);
   const tint = [0.92, 0.95, 1.0, 1.05, 1.14, 1.2, 1.34, 1.0, 1.12];
   const white = new THREE.Color(KAR ? '#f7f6f1' : '#e9e6dc').convertSRGBToLinear();      // Abalı'da çizgi yeni boyanmış
   const TS = 4.5;   // bir doku karosu 4,5 m
@@ -7476,6 +7479,7 @@ function buildRoads(scene) {
         along += Math.hypot(x - ox, z - oz); ox = x; oz = z;
         const sh = ken && b === asph ? 1 : tint[r.cls] * (0.93 + vnoise(x / 19, z / 19) * 0.14);      // karlı bölgede asfalt yeni: her sınıf aynı koyu ton
         const l = v(b, x + kx * hwG, z + kz * hwG, lift, sh, 0, along / TS), rr = v(b, x - kx * hwG, z - kz * hwG, lift, sh, r.w / TS, along / TS);
+        b.E.push(ew(x + kx * hwG, z + kz * hwG), -1, hwG, ew(x - kx * hwG, z - kz * hwG), 1, hwG);
         if (ken) { const sL = icDer(x + kx * hwG, z + kz * hwG, ri), sR = icDer(x - kx * hwG, z - kz * hwG, ri); b.K.push(0, 2 * hwG, sL, sR, 2 * hwG, 0, sL, sR); }
         if (prevL >= 0) b.I.push(prevL, prevR, l, prevR, rr, l);
         prevL = l; prevR = rr;
@@ -7485,9 +7489,11 @@ function buildRoads(scene) {
     for (const e of [pts[0], pts[n - 1]]) {
       const kl = lift - (ken ? (ri % 4) * 0.002 + 0.004 : 0), ks = ken && b === asph ? 1 : tint[r.cls];
       const c0 = v(b, e.x, e.z, kl, ks, e.x / TS, e.z / TS), first = b.P.length / 3;
+      b.E.push(ew(e.x, e.z), 0, hwG);
       if (ken) b.K.push(hwG, hwG, 0, 0);
       for (let k = 0; k < 10; k++) {
         const a = (k / 10) * TAU, x = e.x + Math.cos(a) * hwG, z = e.z + Math.sin(a) * hwG; v(b, x, z, kl, ks, x / TS, z / TS);
+        b.E.push(ew(x, z), 1, hwG);
         if (ken) { const s = icDer(x, z, -1); b.K.push(0, 0, s, s); }      // kapağın çevresi: yolun kendi gövdesinin ya da başka yolun içindeyse kar yok
       }
       for (let k = 0; k < 10; k++) b.I.push(c0, first + ((k + 1) % 10), first + k);
@@ -7499,6 +7505,7 @@ function buildRoads(scene) {
     g.setAttribute('color', new THREE.Float32BufferAttribute(b.C, 3));
     g.setAttribute('uv', new THREE.Float32BufferAttribute(b.U, 2));
     if (b.K.length) g.setAttribute('aKen', new THREE.Float32BufferAttribute(b.K, 4));
+    if (EP && b === asph && b.E.length === b.P.length) g.setAttribute('aEski', new THREE.Float32BufferAttribute(b.E, 3));
     g.setIndex(b.I); g.computeVertexNormals();
     const mesh = new THREE.Mesh(g, mat);
     mesh.receiveShadow = true; scene.add(mesh);
@@ -7506,6 +7513,7 @@ function buildRoads(scene) {
   };
   const asfM = new THREE.MeshStandardMaterial({ map: TEX.asfalt, normalMap: TEX.asfalt_n, normalScale: new THREE.Vector2(0.9, 0.9), vertexColors: true, roughness: kAs ? 0.8 : 0.86, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
   if (kAs) { karYolPatch(asfM, KP); asfM.name = 'yol-asfalt-kar'; }
+  else if (EP && asph.E.length === asph.P.length) { eskiYolPatch(asfM); asfM.name = 'yol-asfalt-eski'; }
   const asfMesh = add(asph, asfM);
   if (kAs) asfMesh.renderOrder = -5;      // kenarı saydam: saydam sıranın başında çizilir (gölge lekesi, cam, toz bunun üstüne gelir)
   const dirtM = new THREE.MeshStandardMaterial({ map: TEX.cakil, vertexColors: true, roughness: 1, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
@@ -9011,40 +9019,47 @@ function yazitDoku() {
   const civi = (c, x, y, uz, yon, kal, renk) => {
     c.save(); c.translate(x, y); c.rotate(yon === 1 ? Math.PI / 2 : yon === 2 ? Math.PI / 4 : 0); c.fillStyle = renk; c.beginPath();
     if (yon === 3) { c.moveTo(uz * 0.9, -uz * 0.55); c.lineTo(0, 0); c.lineTo(uz * 0.9, uz * 0.55); c.lineTo(uz * 0.5, 0); }
-    else { c.moveTo(0, -kal); c.lineTo(kal * 1.6, -kal * 0.16); c.lineTo(uz, 0); c.lineTo(kal * 1.6, kal * 0.16); c.lineTo(0, kal); }
+    else { c.moveTo(0, -kal); c.lineTo(kal * 1.5, -kal * 0.3); c.lineTo(uz, 0); c.lineTo(kal * 1.5, kal * 0.3); c.lineTo(0, kal); }
     c.closePath(); c.fill(); c.restore();
   };
-  const SATIR = 27, ust = 24, sh = (H - 48) / SATIR, sut = [[30, 474], [506, 736], [768, 994]];
+  // İşaretler iri ve koyu (23 Kas, kurucu: "harfleri biraz daha belirgin yap, düz duvar gibi görünüyor"): gerçekteki 27 satır yerine 20 satır, kalın çivi,
+  // koyu oyuk + ışık alan kenar, satır kuşağı zeminden bir ton koyu (uzaktan satır satır yazı okunur), sütun araları açık ve kabarık.
+  const SATIR = 20, ust = 24, sh = (H - 48) / SATIR, sut = [[30, 474], [506, 736], [768, 994]];
+  for (const xa of [490, 752]) {      // sütun arası: açık, kabarık şerit; iki yanında koyu kenar
+    g.fillStyle = 'rgba(226,210,176,0.4)'; g.fillRect(xa - 9, ust - 4, 18, H - 48 + 8);
+    g.fillStyle = 'rgba(40,31,20,0.6)'; g.fillRect(xa - 11, ust - 4, 2, H - 48 + 8); g.fillRect(xa + 9, ust - 4, 2, H - 48 + 8);
+  }
   for (const [x0, x1] of sut) {
     b.fillStyle = '#9c9c9c'; b.fillRect(x0 - 6, ust - 4, x1 - x0 + 12, H - 48 + 8);      // yazı alanı sütun aralarından biraz çukur
     for (let r = 0; r <= SATIR; r++) {      // satır çizgileri
       const y = ust + r * sh;
-      g.fillStyle = 'rgba(62,50,36,0.5)'; g.fillRect(x0 - 4, y - 0.7, x1 - x0 + 8, 1.4);
-      b.fillStyle = '#7c7c7c'; b.fillRect(x0 - 4, y - 0.8, x1 - x0 + 8, 1.6);
+      g.fillStyle = 'rgba(46,36,24,0.66)'; g.fillRect(x0 - 4, y - 1, x1 - x0 + 8, 2);
+      b.fillStyle = '#6a6a6a'; b.fillRect(x0 - 4, y - 1.1, x1 - x0 + 8, 2.2);
     }
     for (let r = 0; r < SATIR; r++) {
-      const y = ust + r * sh + sh * 0.12, gh = sh * 0.76, kal = gh * 0.14;
+      const y = ust + r * sh + sh * 0.11, gh = sh * 0.78, kal = gh * 0.17;
+      g.fillStyle = 'rgba(70,54,34,0.13)'; g.fillRect(x0 - 4, y - gh * 0.04, x1 - x0 + 8, gh * 1.08);      // satır kuşağı
       const ciz = (xx, yy, uz, yon) => {
-        civi(g, xx + 1.1, yy + 1.1, uz, yon, kal, 'rgba(226,212,184,0.45)');      // oyuğun ışık alan kenarı
-        civi(g, xx, yy, uz, yon, kal, 'rgba(44,35,24,0.95)');
-        civi(b, xx, yy, uz, yon, kal * 1.15, '#2e2e2e');
+        civi(g, xx + kal * 0.42, yy + kal * 0.42, uz, yon, kal, 'rgba(240,228,200,0.62)');      // oyuğun ışık alan kenarı
+        civi(g, xx, yy, uz, yon, kal, 'rgba(26,19,12,1)');
+        civi(b, xx, yy, uz, yon, kal * 1.2, '#0c0c0c');
       };
       let x = x0 + R() * 3;
-      while (x < x1 - gh * 1.5) {
+      while (x < x1 - gh * 1.7) {
         const tip = R();
-        if (tip < 0.13) { ciz(x + 1, y + gh * 0.16, gh * 0.62, 2); x += gh * 0.62; continue; }      // sözcük ayıracı
-        if (tip > 0.8) { ciz(x, y + gh * 0.5, gh * 0.4, 3); x += gh * 0.44; }
-        const yatay = tip < 0.62 ? 1 + Math.floor(R() * 3) : 0, dikey = 1 + Math.floor(R() * 3);
-        if (yatay) { for (let k = 0; k < yatay; k++) ciz(x, y + gh * (0.16 + (0.68 * (k + 0.5)) / yatay), gh * 0.56, 0); x += gh * 0.6; }
-        for (let k = 0; k < dikey; k++) { ciz(x + gh * 0.13, y + gh * 0.06, gh * 0.86, 1); x += gh * 0.27; }
-        x += gh * 0.2;
+        if (tip < 0.13) { ciz(x + 1, y + gh * 0.16, gh * 0.62, 2); x += gh * 0.7; continue; }      // sözcük ayıracı
+        if (tip > 0.8) { ciz(x, y + gh * 0.5, gh * 0.42, 3); x += gh * 0.5; }
+        const yatay = tip < 0.62 ? 1 + Math.floor(R() * 2) : 0, dikey = 1 + Math.floor(R() * 3);
+        if (yatay) { for (let k = 0; k < yatay; k++) ciz(x, y + gh * (0.14 + (0.72 * (k + 0.5)) / yatay), gh * 0.6, 0); x += gh * 0.66; }
+        for (let k = 0; k < dikey; k++) { ciz(x + gh * 0.18, y + gh * 0.05, gh * 0.88, 1); x += gh * 0.38; }
+        x += gh * 0.24;
       }
     }
   }
-  for (let i = 0; i < 22; i++) {      // aşınmış yamalar: yazı yer yer silik
+  for (let i = 0; i < 12; i++) {      // aşınmış yamalar: yazı yer yer silik
     const x = R() * W, y = R() * H, r = 14 + R() * 46, gr = g.createRadialGradient(x, y, 0, x, y, r), br = b.createRadialGradient(x, y, 0, x, y, r);
-    gr.addColorStop(0, 'rgba(160,140,104,0.6)'); gr.addColorStop(1, 'rgba(160,140,104,0)');
-    br.addColorStop(0, 'rgba(165,165,165,0.8)'); br.addColorStop(1, 'rgba(165,165,165,0)');
+    gr.addColorStop(0, 'rgba(160,140,104,0.42)'); gr.addColorStop(1, 'rgba(160,140,104,0)');
+    br.addColorStop(0, 'rgba(165,165,165,0.6)'); br.addColorStop(1, 'rgba(165,165,165,0)');
     g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); b.fillStyle = br; b.fillRect(x - r, y - r, r * 2, r * 2);
   }
   for (let i = 0; i < 9; i++) {      // kayadaki gibi pas rengi lekeler
@@ -9115,7 +9130,7 @@ function yazitKur(scene) {
   const cerceve = B.mesh(triplanar(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true }), 'kaya', 'kaya_ust', 0.062, 0.11, 1.0, 1.1, true), true);
   scene.add(cerceve);
   const dk = yazitDoku(), pg = new THREE.PlaneGeometry(YAZIT.en, YAZIT.boy);
-  const levha = new THREE.Mesh(pg, new THREE.MeshStandardMaterial({ map: dk.map, bumpMap: MOBIL ? null : dk.bump, bumpScale: 0.0052 * YAZIT.boy, roughness: 0.96, name: 'kale-yazit' }));
+  const levha = new THREE.Mesh(pg, new THREE.MeshStandardMaterial({ map: dk.map, bumpMap: MOBIL ? null : dk.bump, bumpScale: 0.009 * YAZIT.boy, roughness: 0.96, name: 'kale-yazit' }));
   levha.matrixAutoUpdate = false;
   levha.matrix.makeBasis(Th, Tv, N).setPosition(C.x + N.x * (one + DIP), C.y + N.y * (one + DIP), C.z + N.z * (one + DIP));
   levha.receiveShadow = true;
@@ -9647,6 +9662,45 @@ function terrainPatch(mat, maskTex, katman) {
 //    yumuşak geçişle biter; ince taneli gürültü geçişi toz kar gibi dağıtır. En dış 0,6 m saydamlaşır ve alttaki arazinin karı görünür: kenar çizgisi kalmaz.
 //    pay: şeridin yoldan geniş çizilen kısmı (0,5 m; sınırın çoğu bu payın içinde kalır, asfaltın kendisi dar görünmez).
 //  - Toprak yol (o.toprak): çakıl dokusu soluk gri-kahve; kar sınırı kenara yakın ve keskin taneli, ortada ince kar (iki teker izi açık; izler 7 m'lik gürültüyle dalgalı).
+// Eski Van'ın eski asfaltı (23 Kas 2026). Yol ağı köşeleri aEski taşır (buildRoads, src/dunya.js): bölge ağırlığı, enine konum, yarı genişlik.
+// Bölgenin içinde: renk açılır ve grileşir (yıpranmış), timsah sırtı çatlak ağı (0,3 m hücre, yer yer) ve seyrek uzun çatlaklar (2,4 m hücre) koyulaşır,
+// kenar gürültüyle kırılıp çakıl dokusuna (doku/cakil.jpg) karışır. Çatlak deseni gölgelendiricide hücre gürültüsüyle üretilir; 45–110 m'de söner.
+// Kurucunun indirdiği Asphalt025C paketi kullanılmadı: çatlak değil, yeni ve düz asfalt (mevcut dokudan daha yeni görünür).
+function eskiYolPatch(mat) {
+  mat.extensions = Object.assign({}, mat.extensions, { derivatives: true });
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.tCakil = { value: TEX.cakil };
+    sh.vertexShader = 'attribute vec3 aEski; varying vec3 vEski; varying vec2 vYolP;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n\tvEski = aEski; vYolP = position.xz;');
+    sh.fragmentShader = [
+      'varying vec3 vEski; varying vec2 vYolP; uniform sampler2D tCakil;',
+      'float eyH(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }',
+      'vec2 eyH2(vec2 p){ return fract(sin(vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)))) * 43758.5453); }',
+      'float eyN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(eyH(i), eyH(i + vec2(1.0, 0.0)), f.x), mix(eyH(i + vec2(0.0, 1.0)), eyH(i + vec2(1.0, 1.0)), f.x), f.y); }',
+      'float eyV(vec2 p){ vec2 i = floor(p), f = fract(p); float d1 = 8.0, d2 = 8.0;',      // hücre sınırına uzaklık (F2 − F1)
+      '  for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) { vec2 g = vec2(float(x), float(y)); float d = length(g + eyH2(i + g) * 0.8 + 0.1 - f); if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d; }',
+      '  return d2 - d1; }',
+    ].join('\n') + '\n' + sh.fragmentShader.replace('#include <map_fragment>', ['#include <map_fragment>',
+      'if (vEski.x > 0.002) {',
+      '  float eW = vEski.x, eUz = 1.0 - smoothstep(45.0, 110.0, length(vViewPosition));',
+      '  vec2 eP = vYolP + (vec2(eyN(vYolP * 0.45), eyN(vYolP * 0.45 + 17.3)) - 0.5) * 0.7;',
+      '  float eC1 = eyV(eP * 3.3), eC2 = eyV(eP * 0.42 + 3.1);',
+      '  float eYama = smoothstep(0.38, 0.62, eyN(vYolP * 0.11 + 5.0));',
+      '  float eF1 = fwidth(eC1), eF2 = fwidth(eC2);',      // çizgi ince kalır; pikselden inceyse kalınlaşmak yerine solar (uzakta ve yatık açıda kıpırdamaz)
+      '  float eK1 = (1.0 - smoothstep(0.0, 0.085 + eF1 * 0.8, eC1)) * mix(0.75, 1.0, eYama) * (1.0 - smoothstep(0.35, 1.1, eF1));',
+      '  float eK2 = (1.0 - smoothstep(0.0, 0.014 + eF2 * 0.7, eC2)) * (1.0 - smoothstep(0.06, 0.25, eF2));',
+      '  float eCat = max(eK1 * 0.9, eK2) * eUz;',
+      '  float eLum = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11));',
+      '  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(eLum) * vec3(1.5, 1.56, 1.66) + 0.012, 0.6 * eW);',
+      '  diffuseColor.rgb *= 1.0 - 0.16 * (eyN(vYolP * 0.6) - 0.5) * eW;',
+      '  diffuseColor.rgb *= mix(1.0, 0.38, eCat * eW);',
+      '  float eKd = (1.0 - abs(vEski.y)) * vEski.z;',
+      '  float eKen = 1.0 - smoothstep(0.0, 0.7, eKd - 0.15 + (eyN(vYolP * 1.1) - 0.5) * 1.0 + (eyN(vYolP * 4.7) - 0.5) * 0.3);',
+      '  vec3 eCk = texture2D(tCakil, vYolP / 3.2).rgb; eCk = mix(vec3(dot(eCk, vec3(0.3, 0.5, 0.2))) * vec3(1.06, 1.0, 0.9), eCk, 0.35) * 0.95;',
+      '  diffuseColor.rgb = mix(diffuseColor.rgb, eCk, eKen * eW);',
+      '}'].join('\n'));
+  };
+  mat.customProgramCacheKey = () => 'yol-asfalt-eski';
+}
 const KAR_ASFALT_KOYU = 0.55;      // yeni asfalt: doku ortalamasının (0,10) bu katı
 const KAR_YOL_RENK = [0.60, 0.63, 0.69];      // yol kenarındaki kirli kar (doğrusal); arazideki yol banketiyle aynı ton
 function karYolPatch(mat, pay, o) {
@@ -14892,7 +14946,23 @@ function cokKur(o) {
     });
     TUR.visible = false; world.add(TUR);
   }
-  function putTourists(x, z, h) { TUR.position.set(x, groundH(x, z), z); TUR.rotation.y = h; TUR.visible = true; }
+  // Bekleyen grup yol yüzeyine oturur: asfalt araziden 15–22 cm, kaldırım 20 cm yukarıda çizilir (yolUstu); her üye kendi yerinin yüksekliğine
+  // (23 Kas 2026; kurucu ekran görüntüsüyle: "yolcuların ayakları batmış asfalta gibi").
+  function turYerlestir(x, z, h) {
+    TUR.position.set(x, groundH(x, z) + yolUstu(x, z), z); TUR.rotation.y = h; TUR.updateMatrixWorld(true);
+    for (const o of TUR.children) { o.getWorldPosition(_yv); o.position.y += groundH(_yv.x, _yv.z) + yolUstu(_yv.x, _yv.z) - _yv.y; }
+  }
+  function putTourists(x, z, h) { turYerlestir(x, z, h); TUR.visible = true; }
+  // Durak yeri (23 Kas 2026; kurucu: bekleme ve bırakma yeri kapı tarafına, "evet al"): rotanın sağında (sürüş yönüne göre; minibüsün kapısı sağda),
+  // asfaltın hemen dışında: yol yarı genişliği + 2,2 m (4–8 m). Arada duvar (bina, sur) varsa sol yana, o da kapalıysa eski yere (7 m sol) konur.
+  function durakYeri(p) {
+    const rd = roadAt(p.x, p.z), off = rd ? clamp(rd.hw + 2.2, 4, 8) : 7;
+    for (const s of [-1, 1]) {      // −1 sağ, 1 sol
+      const x = p.x + s * p.dz * off, z = p.z - s * p.dx * off;
+      if (wallRay(p.x, p.z, x, z) >= 1) return { x, z, h: Math.atan2(-s * p.dz, s * p.dx) };
+    }
+    return { x: p.x + p.dz * 7, z: p.z - p.dx * 7, h: Math.atan2(-p.dz, p.dx) };
+  }
   // Servis yolcuları minibüste (23 Kas 2026; kurucu: öğrenciler bindikten sonra koltuklarda görünsün). Bekleyen grubun üyeleri binişte araca taşınır ve oturur,
   // inişte (ya da görev bırakılınca) grubun yerine döner. Yerler minibüs içinde (tools/blender/arabalar.py ic: arka sıralar z −0,25 / −1,05 / −1,8,
   // minder üstü 0,835; taban 0,355; arka iki sıranın sağında koridor, en arka sıra boydan boya). Omuzdaki kayaklar binerken gizlenir (tavan bagajında sayılır).
@@ -14986,7 +15056,7 @@ function cokKur(o) {
       yayaDur(y, durus);
     }
     const [px, pz] = dzDunya(b.x, b.z);
-    y.kok.position.set(px, groundH(px, pz), pz); y.kok.rotation.set(0, yon + b.h, 0);
+    y.kok.position.set(px, groundH(px, pz) + yolUstu(px, pz), pz);      // asfalt ve kaldırım araziden yukarıda çizilir y.kok.rotation.set(0, yon + b.h, 0);
     return d <= 0.04;
   }
   function icYuru(y, b, tx, tz, hiz, a, dt) {      // araç içinde eğilerek yürür; vardıysa true
@@ -15023,7 +15093,7 @@ function cokKur(o) {
   function yolcuInisBasla(st, bitti) {      // false: yürüyerek inemezler (araçta yolcu yok ya da model inmedi): eski yol, bir anda gruba
     const v = player.servis;
     if (!YOLCU.uye.length || YOLCU.binis || YOLCU.grup !== TUR || !v || !v.kok || !v.surgu || player.arac !== 'servis' || !world) return false;
-    TUR.position.set(st.kx, groundH(st.kx, st.kz), st.kz); TUR.rotation.y = st.kh; TUR.updateMatrixWorld(true);
+    turYerlestir(st.kx, st.kz, st.kh);
     YOLCU.uye.forEach((y, i) => {
       const p = y.kok.position, k = y.bn && y.bn.k >= 0 ? y.bn.k : i;
       y.bn = { evre: 'oturdu', x: p.x, z: p.z, y: YOLCU_TABAN, h: 0, u: 0, k, hedef: TUR.localToWorld(y.eski.p.clone()), hedefH: st.kh + y.eski.r };
@@ -16405,10 +16475,10 @@ function cokKur(o) {
     const R = ev.R, on = ev.metin || (ev.yuk ? 'yuk' : 'servis'), sAl = ev.al || 70, sBirak = ev.birak || R.L - 22;
     let p = routePoint(R, 5); placeCar(player, p.x, p.z, Math.atan2(p.dx, p.dz));
     p = routePoint(R, sAl);
-    const a = { x: p.x, z: p.z, ad: T(on + '.al') };
-    if (!ev.yuk) putTourists(p.x + p.dz * 7, p.z - p.dx * 7, Math.atan2(-p.dz, p.dx));
+    const a = { x: p.x, z: p.z, ad: T(on + '.al'), h: Math.atan2(p.dx, p.dz) };      // h: rotanın oradaki yönü
+    if (!ev.yuk) { const k = durakYeri(p); putTourists(k.x, k.z, k.h); }
     p = routePoint(R, sBirak);
-    const b = { x: p.x, z: p.z, ad: T(on + '.birak'), kx: p.x + p.dz * 7, kz: p.z - p.dx * 7, kh: Math.atan2(-p.dz, p.dx) };
+    const kb = durakYeri(p), b = { x: p.x, z: p.z, ad: T(on + '.birak'), h: Math.atan2(p.dx, p.dz), kx: kb.x, kz: kb.z, kh: kb.h };
     G.goal = { stages: [a, b], si: 0, x: a.x, z: a.z, ad: a.ad, t: 0, sure: 0, R, ozel: ev, on, konfor: 100, stop: true, yol: sBirak - sAl, carpan: yukAraci === 'motor' ? 1.8 : 1 };
     G.state = 'free'; G.near = null;
     for (const m of evMarkers) m.mesh.visible = false;
@@ -17048,20 +17118,42 @@ function cokKur(o) {
     for (let q = 0; q < n; q++) idx.set([q * 4, q * 4 + 1, q * 4 + 2, q * 4 + 1, q * 4 + 3, q * 4 + 2], q * 6);
     geo.setIndex(new THREE.BufferAttribute(idx, 1));
     geo.setAttribute('position', new THREE.BufferAttribute(KIZ.pos, 3)); geo.setAttribute('color', new THREE.BufferAttribute(KIZ.col, 3));
-    geo.attributes.position.setUsage(THREE.DynamicDrawUsage); geo.attributes.color.setUsage(THREE.DynamicDrawUsage);
-    const mat = new THREE.MeshBasicMaterial({ vertexColors: true, blending: THREE.MultiplyBlending, transparent: true, depthWrite: false, fog: false, toneMapped: false, side: THREE.DoubleSide,
+    KIZ.uv = new Float32Array(n * 8).fill(-1); geo.setAttribute('uv', new THREE.BufferAttribute(KIZ.uv, 2));
+    geo.attributes.position.setUsage(THREE.DynamicDrawUsage); geo.attributes.color.setUsage(THREE.DynamicDrawUsage); geo.attributes.uv.setUsage(THREE.DynamicDrawUsage);
+    // Lastik deseni (23 Kas 2026; kurucu: "izden çok gölge gibi görünüyor": düz mavi bant gölgeye benziyordu). İz boyunca tekrar eden doku: iki kenarda
+    // oluğun duvarı (koyu ince çizgi), içte balıksırtı diş blokları, ortada kanal. Değerler çarpan (1 = iz yok). Kayak izi dokusuzdur (uv.x = -1).
+    const B = 64, px = new Uint8Array(B * B * 4);
+    for (let y = 0; y < B; y++) for (let x = 0; x < B; x++) {
+      const e = Math.min(x, B - 1 - x), m = Math.abs(x - (B - 1) / 2);
+      let r = 0.8, g = 0.85, b = 0.93;      // ezilmiş taban
+      if (e < 2) { r = g = b = 1; }      // kenar pikseli: iz dışı (kenar temiz biter)
+      else if (e < 7) { r = 0.44; g = 0.53; b = 0.72; }      // oluğun duvarı
+      else if (m < 3) { r = 0.6; g = 0.68; b = 0.83; }      // orta kanal
+      else if ((y + m * 0.9) % 16 < 7) { r = 0.5; g = 0.59; b = 0.77; }      // diş bloğu
+      px.set([r * 255, g * 255, b * 255, 255], (y * B + x) * 4);
+    }
+    const doku = new THREE.DataTexture(px, B, B, THREE.RGBAFormat);
+    doku.wrapT = THREE.RepeatWrapping; doku.magFilter = THREE.LinearFilter; doku.minFilter = THREE.LinearMipmapLinearFilter; doku.generateMipmaps = true;
+    doku.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); doku.needsUpdate = true;
+    const mat = new THREE.MeshBasicMaterial({ map: doku, vertexColors: true, blending: THREE.MultiplyBlending, transparent: true, depthWrite: false, fog: false, toneMapped: false, side: THREE.DoubleSide,
       polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+    mat.name = 'iz-kar';
+    mat.onBeforeCompile = (sh) => {      // köşe rengi güçtür: doku o kadar karışır; kayak izinde (uv.x < 0) eski düz renk
+      sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', '').replace('#include <color_fragment>',
+        'diffuseColor.rgb = vUv.x < -0.5 ? vColor.rgb : mix( vec3( 1.0 ), texture2D( map, vUv ).rgb, clamp( ( 1.0 - vColor.r ) / 0.4, 0.0, 1.0 ) );');
+    };
     KIZ.mesh = new THREE.Mesh(geo, mat); KIZ.mesh.frustumCulled = false; KIZ.mesh.renderOrder = 2; KIZ.mesh.visible = false;
     scene.add(KIZ.mesh);
   }
   function kizTemizle() {
     if (!KIZ.mesh) return;
-    KIZ.pos.fill(0); KIZ.col.fill(1); KIZ.i = 0; KIZ.uc.clear(); KIZ.d0 = 0; KIZ.d1 = KIZ.n - 1; KIZ.mesh.visible = false;
+    KIZ.pos.fill(0); KIZ.col.fill(1); KIZ.uv.fill(-1); KIZ.mesh.geometry.attributes.uv.needsUpdate = true; KIZ.i = 0; KIZ.uc.clear(); KIZ.d0 = 0; KIZ.d1 = KIZ.n - 1; KIZ.mesh.visible = false;
   }
   const KIZ_RENK = [0.6, 0.71, 0.88];      // doğrusal renk: tam güçte karı bu kadar koyultur
-  function kizDortgen(a, b, x0, z0, x1, z1, guc0, guc1, yuk) {      // a, b: önceki sol ve sağ kenar noktası [x, y, z]
-    const q = KIZ.i, P = KIZ.pos, C = KIZ.col, o = q * 12;
+  function kizDortgen(a, b, x0, z0, x1, z1, guc0, guc1, yuk, v0, v1) {      // a, b: önceki sol ve sağ kenar noktası [x, y, z]. v0, v1: lastik deseninin iz boyunca konumu (verilmezse dokusuz)
+    const q = KIZ.i, P = KIZ.pos, C = KIZ.col, o = q * 12, U = KIZ.uv, ou = q * 8, dk = v1 !== undefined;
     KIZ.i = (q + 1) % KIZ.n;
+    U[ou] = dk ? 0 : -1; U[ou + 1] = dk ? v0 : 0; U[ou + 2] = dk ? 1 : -1; U[ou + 3] = dk ? v0 : 0; U[ou + 4] = dk ? 0 : -1; U[ou + 5] = dk ? v1 : 0; U[ou + 6] = dk ? 1 : -1; U[ou + 7] = dk ? v1 : 0;
     const y0 = groundH(x0, z0) + (yuk || 0.035), y1 = groundH(x1, z1) + (yuk || 0.035);
     P[o] = a[0]; P[o + 1] = a[1]; P[o + 2] = a[2]; P[o + 3] = b[0]; P[o + 4] = b[1]; P[o + 5] = b[2];
     P[o + 6] = x0; P[o + 7] = y0; P[o + 8] = z0; P[o + 9] = x1; P[o + 10] = y1; P[o + 11] = z1;
@@ -17092,17 +17184,20 @@ function cokKur(o) {
     if (!u) { u = { x: c.x, z: c.z, k: [], guc: 0 }; KIZ.uc.set(c, u); }
     if (u.kayak) { u.kayak = false; u.k = []; }      // kayaktan araca geçti: kayak izinin ucuna bağlanmaz
     const yol = Math.hypot(c.x - u.x, c.z - u.z);
-    if (yol > 6 || c.air || c.devrik > 0 || !c.surf || c.surf.id !== 3) { u.x = c.x; u.z = c.z; u.k = []; return; }      // kar dışı, havada, devrik ya da yer değiştirdi: iz kopar
+    u.hava = c.air ? (u.hava || 0) + 1 : 0;      // tümsekte bir iki adımlık havalanma izi koparmaz
+    if (yol > 6 || u.hava > 0.2 / STEP || c.devrik > 0 || !c.surf || c.surf.id !== 3) { u.x = c.x; u.z = c.z; u.k = []; return; }      // kar dışı, havada, devrik ya da yer değiştirdi: iz kopar
     if (yol < 0.7) return;
     u.x = c.x; u.z = c.z;
     const H = tizHat(c), fx = Math.sin(c.h), fz = Math.cos(c.h), lx = fz, lz = -fx, yuk = c.onRoad ? 0.125 : 0.035;      // pist yolu ağı araziden 9 cm yukarıda
-    const kay = Math.min(1, (c.slip || 0) / 7), guc = (c.onRoad ? 0.3 : 0.62) + 0.3 * kay;
+    const kay = Math.min(1, (c.slip || 0) / 7), guc = (c.onRoad ? 0.45 : 0.85) + 0.15 * kay;
+    const v0 = u.v || 0, v1 = (v0 + yol / 0.55) % 64;      // desen 55 cm'de bir yinelenir
+    u.v = v1;
     if (u.k.length !== H.length) u.k = H.map(() => null);
     for (let i = 0; i < H.length; i++) {
-      const h = H[i], gen = h[2] * (1 + 1.6 * kay * kay), cx = c.x + fx * h[1] + lx * h[0], cz = c.z + fz * h[1] + lz * h[0];
+      const h = H[i], gen = h[2] * (1 + 0.45 * kay * kay), cx = c.x + fx * h[1] + lx * h[0], cz = c.z + fz * h[1] + lz * h[0];
       const x0 = cx + lx * gen / 2, z0 = cz + lz * gen / 2, x1 = cx - lx * gen / 2, z1 = cz - lz * gen / 2;
       if (!u.k[i]) { u.k[i] = [[x0, groundH(x0, z0) + yuk, z0], [x1, groundH(x1, z1) + yuk, z1]]; continue; }
-      kizDortgen(u.k[i][0], u.k[i][1], x0, z0, x1, z1, u.guc, guc, yuk);
+      kizDortgen(u.k[i][0], u.k[i][1], x0, z0, x1, z1, u.guc, guc, yuk, v0, v0 + yol / 0.55);
     }
     u.guc = guc;
   }
@@ -17132,6 +17227,7 @@ function cokKur(o) {
       const g = KIZ.mesh.geometry, o = KIZ.d0 * 12, m = (KIZ.d1 - KIZ.d0 + 1) * 12;
       g.attributes.position.updateRange.offset = o; g.attributes.position.updateRange.count = m; g.attributes.position.needsUpdate = true;
       g.attributes.color.updateRange.offset = o; g.attributes.color.updateRange.count = m; g.attributes.color.needsUpdate = true;
+      g.attributes.uv.updateRange.offset = KIZ.d0 * 8; g.attributes.uv.updateRange.count = (KIZ.d1 - KIZ.d0 + 1) * 8; g.attributes.uv.needsUpdate = true;
       KIZ.d0 = KIZ.d1 = -1; KIZ.mesh.visible = true;
     }
   }
