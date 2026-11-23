@@ -7136,12 +7136,23 @@ Bag.prototype.geom = function (g, m4, col) {
     this.p.push(v.x, v.y, v.z); this.c.push(col.r, col.g, col.b);
   }
 };
+// Normalleri koruyarak ekler (pürüzsüz yüzey: kubbe, külah). Torbaya yalnız geomN ile eklenmişse mesh() bu normalleri kullanır; yoksa yüz normalleri hesaplanır (köşeli).
+Bag.n3 = new THREE.Matrix3();
+Bag.prototype.geomN = function (g, m4, col) {
+  const a = g.attributes.position.array, nn = g.attributes.normal.array, v = Bag.v, nm = Bag.n3.getNormalMatrix(m4);
+  if (!this.n) this.n = [];
+  for (let i = 0; i < a.length; i += 3) {
+    v.set(a[i], a[i + 1], a[i + 2]).applyMatrix4(m4); this.p.push(v.x, v.y, v.z); this.c.push(col.r, col.g, col.b);
+    v.set(nn[i], nn[i + 1], nn[i + 2]).applyMatrix3(nm).normalize(); this.n.push(v.x, v.y, v.z);
+  }
+};
 Bag.prototype.mesh = function (mat, shadow) {
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(this.p, 3));
   g.setAttribute('color', new THREE.Float32BufferAttribute(this.c, 3));
   if (this.u.length) g.setAttribute('uv', new THREE.Float32BufferAttribute(this.u, 2));
-  g.computeVertexNormals();
+  if (this.n && this.n.length === this.p.length) g.setAttribute('normal', new THREE.Float32BufferAttribute(this.n, 3));
+  else g.computeVertexNormals();
   const m = new THREE.Mesh(g, mat);
   m.castShadow = !!shadow; m.receiveShadow = true;
   return m;
@@ -7516,6 +7527,8 @@ function buildBuildings(scene, maxAniso, webgl2) {
   const flatMat = triplanar(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, side: THREE.DoubleSide }), 'siva', 'beton', 0.21, 0.17, 1.0);
   if (!DZ) { wallMats.forEach((m, i) => { m.name = 'bina-cephe' + i; }); evMat.name = 'bina-ev'; depoMat.name = 'bina-depo'; kirMat.name = 'bina-kiremit'; sacMat.name = 'bina-sac'; }
   vitMat.name = 'bina-vitrin'; stoneMat.name = 'bina-tas'; flatMat.name = 'bina-duz';
+  // kubbe, kasnak üstü, külah ve alem: pürüzsüz normalli ayrı torba (ch.k); kurşunun hafif parlaklığı (23 Kas; kurucu: "kubbe bitmemiş 3d gibi")
+  const kubbeMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5, metalness: 0.3 }); kubbeMat.name = 'bina-kubbe';
   const renkler = (l) => l.map((h) => new THREE.Color(h).convertSRGBToLinear());
   const pal = renkler(['#e2d2ae', '#d2bd92', '#e3c79a', '#c3ccd0', '#d9a78a', '#cf9c63', '#b9c6a2', '#e9dcc0', '#a9b9c6', '#d9b3ab', '#bfa982', '#ece7dc', '#c98f6e', '#d8cf9a']);
   const evPal = renkler(['#f3ead8', '#e9d9b8', '#f0d6c2', '#d7e1e6', '#f1e2a8', '#e6c9a0', '#dfe6d0', '#f4f1ea', '#e2b9a0']);
@@ -7529,7 +7542,9 @@ function buildBuildings(scene, maxAniso, webgl2) {
   const kursun = new THREE.Color('#969b94').convertSRGBToLinear();      // alacalı camilerin ve kümbetin kubbe ve külahı: kurşun kaplama (fotoğraftaki gri-yeşil)      // fotoğraftaki tonlar (sur dokusu açar)
   const museum = new THREE.Color('#d8c39a').convertSRGBToLinear(), beyaz = new THREE.Color(0.92, 0.92, 0.9);
   const panelCol = new THREE.Color('#1d2b44').convertSRGBToLinear(), tankCol = new THREE.Color('#cfd4d9').convertSRGBToLinear(), bacaCol = new THREE.Color('#9a6a52').convertSRGBToLinear();
-  const dome = new THREE.SphereGeometry(1, 14, 7, 0, TAU, 0, Math.PI / 2).toNonIndexed();
+  const dome = new THREE.SphereGeometry(1, 40, 14, 0, TAU, 0, Math.PI / 2).toNonIndexed();
+  const kasnakG = new THREE.CylinderGeometry(1, 1, 1, 40, 1, true).toNonIndexed(), koniP = new THREE.ConeGeometry(1, 1, 20).toNonIndexed(), kureK = new THREE.SphereGeometry(1, 12, 8).toNonIndexed();
+  const alemCol = new THREE.Color('#c9a23a').convertSRGBToLinear();
   const cyl = new THREE.CylinderGeometry(1, 1, 1, 10).toNonIndexed();
   const cone = new THREE.ConeGeometry(1, 1, 10).toNonIndexed();
   const kutuG = new THREE.BoxGeometry(1, 1, 1).toNonIndexed();
@@ -7538,7 +7553,7 @@ function buildBuildings(scene, maxAniso, webgl2) {
   function chunkOf(x, z) {
     const key = Math.floor((x - XMIN) / 520) + '_' + Math.floor((z - ZMIN) / 520);
     let ch = chunks.get(key);
-    if (!ch) { ch = { w: [new Bag(), new Bag(), new Bag()], ev: new Bag(), depo: new Bag(), vit: new Bag(), kir: new Bag(), sac: new Bag(), f: new Bag(), s: new Bag() }; chunks.set(key, ch); }
+    if (!ch) { ch = { w: [new Bag(), new Bag(), new Bag()], ev: new Bag(), depo: new Bag(), vit: new Bag(), kir: new Bag(), sac: new Bag(), f: new Bag(), s: new Bag(), k: new Bag() }; chunks.set(key, ch); }
     return ch;
   }
   // duvar dörtgeni; u0 verilirse dokulu (v0 alt, v1 üst)
@@ -7647,7 +7662,14 @@ function buildBuildings(scene, maxAniso, webgl2) {
     }
     if (kind === 1) {
       const r = clamp(Math.sqrt(area) * 0.36, 3, 9);
-      m4.makeScale(r, r * 0.92, r).setPosition(cx, top - 0.2, cz); ch.f.geom(dome, m4, alaca ? kursun : domeCol);
+      // kasnak (kubbenin oturduğu kısa silindir, duvar taşından), kubbe, tepesinde alem
+      const kh = r * 0.26, kc = alaca ? alacaTas : tmpC;
+      m4.makeScale(r * 1.02, kh, r * 1.02).setPosition(cx, top - 0.2 + kh / 2, cz); ch.k.geomN(kasnakG, m4, kc);
+      m4.makeScale(r * 1.06, 0.22, r * 1.06).setPosition(cx, top - 0.2 + kh, cz); ch.k.geomN(kasnakG, m4, kc);
+      m4.makeScale(r, r * 0.92, r).setPosition(cx, top - 0.2 + kh, cz); ch.k.geomN(dome, m4, alaca ? kursun : domeCol);
+      const ay = top - 0.2 + kh + r * 0.92;
+      m4.makeScale(0.07, 1.1, 0.07).setPosition(cx, ay + 0.5, cz); ch.k.geomN(kasnakG, m4, alemCol);
+      m4.makeScale(0.28, 0.28, 0.28).setPosition(cx, ay + 0.75, cz); ch.k.geomN(kureK, m4, alemCol);
       const mx = lerp(b[3], cx, 0.08), mz = lerp(b[4], cz, 0.08), mh = 20 + rnd * 8;
       if (alaca) {      // tuğla gövde, her 1,3 m'de açık taş bilezik; şerefe taş
         let y = base, k = 0;
@@ -7657,7 +7679,7 @@ function buildBuildings(scene, maxAniso, webgl2) {
         m4.makeScale(0.85, mh, 0.85).setPosition(mx, base + mh / 2, mz); ch.f.geom(cyl, m4, minCol);
         m4.makeScale(1.45, 0.7, 1.45).setPosition(mx, base + mh * 0.72, mz); ch.f.geom(cyl, m4, minCol);
       }
-      m4.makeScale(1.1, 4.6, 1.1).setPosition(mx, base + mh + 2.3, mz); ch.f.geom(cone, m4, alaca ? kursun : domeCol);
+      m4.makeScale(1.1, 4.6, 1.1).setPosition(mx, base + mh + 2.3, mz); ch.k.geomN(koniP, m4, alaca ? kursun : domeCol);
     }
   }
   // Kümbet (D.kumbet ← tools/hazirla.py, bölge ayarı "kumbet"): Hüsrev Paşa Türbesi. OSM'de kaydı yok; kurucu fotoğrafla istedi (23 Kas), yeri fotoğraftan
@@ -7693,7 +7715,7 @@ function buildBuildings(scene, maxAniso, webgl2) {
       if (B.p.length) { const m = B.mesh(diziMat, true); m.geometry.setAttribute('kat', new THREE.Float32BufferAttribute(kat, 1)); scene.add(m); parca.mesh.push(m); }
     } else { ch.w.forEach((bg, k) => ekle(bg, wallMats[k])); ekle(ch.ev, evMat); ekle(ch.depo, depoMat); ekle(ch.kir, kirMat); ekle(ch.sac, sacMat); }
     ekle(ch.vit, vitMat);
-    ekle(ch.f, flatMat); ekle(ch.s, stoneMat);
+    ekle(ch.f, flatMat); ekle(ch.s, stoneMat); ekle(ch.k, kubbeMat);
     PARCA.bina.push(parca);
   }
 }
@@ -8005,6 +8027,36 @@ function buildCastle(scene, routeNear) {
       if (x > minx - 40 && x < maxx + 40 && z > minz - 40 && z < maxz + 40) yapi.push(x, z);
     }
     const yapiYakin = (x, z) => { for (let i = 0; i < yapi.length; i += 2) if ((yapi[i] - x) ** 2 + (yapi[i + 1] - z) ** 2 < 22 * 22) return true; return false; };
+    // Aşınmış kerpiç duvar (23 Kas; kurucu: "texture olmayan bitmemiş ham çit"): 0,9 m'lik dilimler, tepe inişli çıkışlı ve uçlara doğru alçalır, taban biraz
+    // kalın; yüzeyde kuru toprak dokusu (çatlak kerpiç) ve kabartması. Kendi torbası (kb) ve malzemesi; sur torbasına karışmaz.
+    const kb = new Bag();
+    const kerpic = (ax, az, bx, bz, th, h, g0) => {
+      const L = Math.hypot(bx - ax, bz - az) || 1, tx = (bx - ax) / L, tz = (bz - az) / L, nx = tz, nz = -tx, n = Math.max(3, Math.round(L / 0.6));
+      const tep = [];
+      for (let i = 0; i <= n; i++) {
+        const t = i / n, uc = Math.min(1, Math.min(t, 1 - t) * 5), cent = R() < 0.12 ? 0.55 : 1;      // ara sıra derin çentik (düşmüş tuğlalar)
+        tep.push(g0 + h * (0.5 + 0.5 * uc) * (0.7 + R() * 0.3) * cent);
+      }
+      for (let tur = 0; tur < 2; tur++) { const t0 = tep.slice(); for (let i = 1; i < n; i++) tep[i] = (t0[i - 1] + 2 * t0[i] + t0[i + 1]) / 4; }      // aşınma: sivri dişler yuvarlanır
+      // yan yüz 35 cm'lik sıralara bölünür, her sıranın tonu biraz oynar: kerpiç tuğla dizileri seçilsin
+      const P = (i, yan, y, k) => { const t = (i / n) * L, w = th * (1 - 0.22 * k) * yan; return [ax + tx * t + nx * w, y, az + tz * t + nz * w]; };
+      const ton = new THREE.Color();
+      for (let i = 0; i < n; i++) {
+        const y0 = g0 - 1;
+        for (const yan of [1, -1]) {
+          let ya = y0, yb = y0, sira = 0;
+          while (ya < tep[i] - 0.01 || yb < tep[i + 1] - 0.01) {
+            const na = Math.min(tep[i], g0 + Math.floor((ya - g0) / 0.35 + 1.001) * 0.35), nb = Math.min(tep[i + 1], g0 + Math.floor((yb - g0) / 0.35 + 1.001) * 0.35);
+            const ka = (ya - y0) / Math.max(tep[i] - y0, 0.01), kb2 = (yb - y0) / Math.max(tep[i + 1] - y0, 0.01), ka1 = (na - y0) / Math.max(tep[i] - y0, 0.01), kb1 = (nb - y0) / Math.max(tep[i + 1] - y0, 0.01);
+            ton.copy(mud).multiplyScalar(0.9 + ((sira * 7 + i * 3) % 5) * 0.045);
+            kb.quad(P(i, yan, ya, ka), P(i + 1, yan, yb, kb2), P(i + 1, yan, nb, kb1), P(i, yan, na, ka1), ton);      // üste doğru incelir
+            ya = na; yb = nb; sira++;
+          }
+        }
+        kb.quad(P(i, 1, tep[i], 1), P(i + 1, 1, tep[i + 1], 1), P(i + 1, -1, tep[i + 1], 1), P(i, -1, tep[i], 1), mud);      // aşınmış tepe
+      }
+      for (const [i, y] of [[0, tep[0]], [n, tep[n]]]) kb.quad(P(i, 1, g0 - 1, 0), P(i, -1, g0 - 1, 0), P(i, -1, y, 1), P(i, 1, y, 1), mud);      // uçlar
+    };
     let made = 0, tries = 0;
     while (made < 60 && tries++ < 4000) {
       const x = lerp(minx, maxx, R()), z = lerp(minz, maxz, R());
@@ -8012,19 +8064,25 @@ function buildCastle(scene, routeNear) {
       const rd = roadAt(x, z);
       if (rd && rd.d < rd.hw + 7) continue;
       if (routeNear(x, z, 16) || wallDist(x, z) < 9 || yapiYakin(x, z)) continue;
-      const ang = Math.floor(R() * 4) * (Math.PI / 2) + (R() - 0.5) * 0.5, len = 3 + R() * 8, h = 0.9 + R() * 2.4;
+      const ang = Math.floor(R() * 4) * (Math.PI / 2) + (R() - 0.5) * 0.5, len = 3 + R() * 8, h = 1.2 + R() * 2.0;
       const dx = (Math.cos(ang) * len) / 2, dz = (Math.sin(ang) * len) / 2;
       const g0 = groundH(x, z);
-      box(x - dx, z - dz, x + dx, z + dz, 0.45 + R() * 0.3, g0 - 1, g0 + h, mud);
+      kerpic(x - dx, z - dz, x + dx, z + dz, 0.3 + R() * 0.18, h, g0);
       addWall(x - dx, z - dz, x + dx, z + dz);
       if (R() < 0.45) {   // köşe yapan ikinci duvar
         const l2 = 2 + R() * 5, ex = -Math.sin(ang) * l2, ez = Math.cos(ang) * l2;
-        box(x + dx, z + dz, x + dx + ex, z + dz + ez, 0.45, g0 - 1, g0 + h * (0.5 + R() * 0.5), mud);
+        kerpic(x + dx, z + dz, x + dx + ex, z + dz + ez, 0.3, h * (0.5 + R() * 0.5), g0);
         addWall(x + dx, z + dz, x + dx + ex, z + dz + ez);
       }
       made++;
     }
     KERPIC.sayi = made;
+    if (kb.p.length) {
+      if (!TEX.kuru_k && TEX.kuru_n) TEX.kuru_k = TEX.kuru_n;      // kuru toprağın gerçek normal haritası kabartma olarak (triplanar; telefonda yok)
+      const km = kb.mesh(triplanar(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, side: THREE.DoubleSide }), 'kuru', 'kuru', 0.42, 0.42, 1.0, 1.0), true);
+      km.material.name = 'kale-kerpic';
+      scene.add(km);
+    }
   }
   const mesh = bag.mesh(triplanar(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true }), 'sur', 'sur', 0.21, 0.21, 1.12, 1.0), true);
   scene.add(mesh);
@@ -8215,8 +8273,18 @@ function buildDetay(scene) {
   };
   for (const f of T.iskele || []) doseme(f, 1.6, -2.5, beton);                     // göl düzeyi 0: güverte suyun 1,6 m üstünde (tipik değer)
   for (const f of T.peron || []) { const P = pairs(f); let g1 = -1e9, g0 = 1e9; for (const p of P) { const g = groundH(p.x, p.z); g1 = Math.max(g1, g); g0 = Math.min(g0, g); } doseme(f, g1 + 0.95, g0 - 0.3, beton); }
-  // ---- bahçe ve sınır duvarları (OSM barrier=wall): 1,8 m (tipik değer)
-  for (const f of T.duvar || []) { const P = resample(pairs(f), 5); for (let i = 1; i < P.length; i++) { const a = P[i - 1], b = P[i], L = Math.hypot(b.x - a.x, b.z - a.z), g = (groundH(a.x, a.z) + groundH(b.x, b.z)) / 2; kutu((a.x + b.x) / 2, g + 0.75, (a.z + b.z) / 2, 0.32, 2.1, L + 0.05, Math.atan2(b.x - a.x, b.z - a.z), R('#b7ad99')); } }
+  // ---- bahçe ve sınır duvarları (OSM barrier=wall): 2,1 m (tipik değer). 23 Kas (kurucu: "texture olmayan bitmemiş ham çit"): düz renkli kutu yerine
+  // taş örgü (sur dokusu ve kabartması, kendi torbası) ve üstte biraz taşan taş harpuşta.
+  const tasDuvar = new Bag(), duvarTas = R('#b7ad99'), harpusta = R('#a39a88');
+  for (const f of T.duvar || []) {
+    const P = resample(pairs(f), 5);
+    for (let i = 1; i < P.length; i++) {
+      const a = P[i - 1], b = P[i], L = Math.hypot(b.x - a.x, b.z - a.z), g = (groundH(a.x, a.z) + groundH(b.x, b.z)) / 2, yon = Math.atan2(b.x - a.x, b.z - a.z), mx = (a.x + b.x) / 2, mz = (a.z + b.z) / 2;
+      q.setFromEuler(e3.set(0, yon, 0)); m4.compose(va.set(mx, g + 0.75, mz), q, vs.set(0.36, 2.1, L + 0.05)); tasDuvar.geom(kutuG, m4, duvarTas);
+      m4.compose(va.set(mx, g + 1.86, mz), q, vs.set(0.5, 0.14, L + 0.08)); tasDuvar.geom(kutuG, m4, harpusta);
+    }
+  }
+  if (tasDuvar.p.length) { const dm = tasDuvar.mesh(triplanar(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 }), 'sur', 'sur', 0.3, 0.3, 1.05, 1.0), true); dm.material.name = 'detay-duvar'; scene.add(dm); }
   // ---- otobüs durakları (OSM highway=bus_stop): levha direği; yalnız shelter=yes olanlarda bekleme yeri
   const durakMavi = R('#1c6fb8'), durakSari = R('#f2b824'), camR = R('#9fc3d6');
   for (let i = 0; i < (T.durak || []).length; i += 3) {
@@ -15731,7 +15799,7 @@ function cokKur(o) {
     else { step(player, pin, dt); if (r && !G.auto) advance(player, r.R); }
     if (player.devrikYeni) { player.devrikYeni = false; devrildi(); }
     ucTepki(STEP);
-    if (player.ski) kizAdim();      // kayak izleri (fizik adımında: görüntüsüz ilerletmede de iz kalır)
+    if (player.ski || KAR) kizAdim();      // kayak ve teker izleri (fizik adımında: görüntüsüz ilerletmede de iz kalır)
     if (r) {
       if (!r.done) r.t += dt;
       for (const c of cars) {
@@ -15825,22 +15893,61 @@ function cokKur(o) {
     KIZ.pos.fill(0); KIZ.col.fill(1); KIZ.i = 0; KIZ.uc.clear(); KIZ.d0 = 0; KIZ.d1 = KIZ.n - 1; KIZ.mesh.visible = false;
   }
   const KIZ_RENK = [0.6, 0.71, 0.88];      // doğrusal renk: tam güçte karı bu kadar koyultur
-  function kizDortgen(a, b, x0, z0, x1, z1, guc0, guc1) {      // a, b: önceki sol ve sağ kenar noktası [x, y, z]
+  function kizDortgen(a, b, x0, z0, x1, z1, guc0, guc1, yuk) {      // a, b: önceki sol ve sağ kenar noktası [x, y, z]
     const q = KIZ.i, P = KIZ.pos, C = KIZ.col, o = q * 12;
     KIZ.i = (q + 1) % KIZ.n;
-    const y0 = groundH(x0, z0) + 0.035, y1 = groundH(x1, z1) + 0.035;
+    const y0 = groundH(x0, z0) + (yuk || 0.035), y1 = groundH(x1, z1) + (yuk || 0.035);
     P[o] = a[0]; P[o + 1] = a[1]; P[o + 2] = a[2]; P[o + 3] = b[0]; P[o + 4] = b[1]; P[o + 5] = b[2];
     P[o + 6] = x0; P[o + 7] = y0; P[o + 8] = z0; P[o + 9] = x1; P[o + 10] = y1; P[o + 11] = z1;
     for (let v = 0; v < 4; v++) { const g = v < 2 ? guc0 : guc1; for (let k = 0; k < 3; k++) C[o + v * 3 + k] = 1 + (KIZ_RENK[k] - 1) * g; }
     a[0] = x0; a[1] = y0; a[2] = z0; b[0] = x1; b[1] = y1; b[2] = z1;
     if (KIZ.d0 < 0) { KIZ.d0 = KIZ.d1 = q; } else if (q < KIZ.d0 || q < KIZ.d1) { KIZ.d0 = 0; KIZ.d1 = KIZ.n - 1; } else KIZ.d1 = q;      // sarınca tamamı yüklenir
   }
+  // Teker izi (23 Kas 2026; kurucu: "araba karda gidiyor ama hiç iz yok"): karda (zemin türü 3) her teker hattı için oluk; aynı ağ ve halka tampon.
+  // Teker yerleri modelin teker düğümlerinden okunur (araba: iki hat, üç teker: üç hat). Derin karda iz koyu, ezilmiş pist yolunda soluk;
+  // yan kaymada genişler. Asfaltta, havada ve devrikken iz kopar.
+  const TIZ_HAT = new WeakMap(), _tizV = new THREE.Vector3();
+  function tizHat(c) {      // [yan, boy, en]: araç uzayında teker hattı (aynı yandaki tekerlerden en arkadaki)
+    let H = TIZ_HAT.get(c.wheels);
+    if (H) return H;
+    H = []; c.mesh.updateWorldMatrix(true, true);
+    const ol = c.mesh.scale.x || 1;
+    for (const w of c.wheels) {
+      c.mesh.worldToLocal(w.pivot.getWorldPosition(_tizV));
+      const x = _tizV.x * ol, z = _tizV.z * ol, e = H.find((h) => Math.abs(h[0] - x) < 0.12);
+      if (e) { if (z < e[1]) e[1] = z; } else H.push([x, z, c.ucTeker ? (c.pedal ? 0.07 : 0.11) : 0.21]);
+    }
+    TIZ_HAT.set(c.wheels, H);
+    return H;
+  }
+  function tizAdim(c) {
+    if (!c.mesh.visible || !c.wheels || !c.wheels.length) return;
+    let u = KIZ.uc.get(c);
+    if (!u) { u = { x: c.x, z: c.z, k: [], guc: 0 }; KIZ.uc.set(c, u); }
+    if (u.kayak) { u.kayak = false; u.k = []; }      // kayaktan araca geçti: kayak izinin ucuna bağlanmaz
+    const yol = Math.hypot(c.x - u.x, c.z - u.z);
+    if (yol > 6 || c.air || c.devrik > 0 || !c.surf || c.surf.id !== 3) { u.x = c.x; u.z = c.z; u.k = []; return; }      // kar dışı, havada, devrik ya da yer değiştirdi: iz kopar
+    if (yol < 0.7) return;
+    u.x = c.x; u.z = c.z;
+    const H = tizHat(c), fx = Math.sin(c.h), fz = Math.cos(c.h), lx = fz, lz = -fx, yuk = c.onRoad ? 0.125 : 0.035;      // pist yolu ağı araziden 9 cm yukarıda
+    const kay = Math.min(1, (c.slip || 0) / 7), guc = (c.onRoad ? 0.3 : 0.62) + 0.3 * kay;
+    if (u.k.length !== H.length) u.k = H.map(() => null);
+    for (let i = 0; i < H.length; i++) {
+      const h = H[i], gen = h[2] * (1 + 1.6 * kay * kay), cx = c.x + fx * h[1] + lx * h[0], cz = c.z + fz * h[1] + lz * h[0];
+      const x0 = cx + lx * gen / 2, z0 = cz + lz * gen / 2, x1 = cx - lx * gen / 2, z1 = cz - lz * gen / 2;
+      if (!u.k[i]) { u.k[i] = [[x0, groundH(x0, z0) + yuk, z0], [x1, groundH(x1, z1) + yuk, z1]]; continue; }
+      kizDortgen(u.k[i][0], u.k[i][1], x0, z0, x1, z1, u.guc, guc, yuk);
+    }
+    u.guc = guc;
+  }
   function kizAdim() {
     for (const c of cars) {
-      if (!c.ski || !c.mesh.visible && !(c.skiMesh && c.skiMesh.visible)) continue;
+      if (!c.ski) { if (KAR) tizAdim(c); continue; }
+      if (!c.mesh.visible && !(c.skiMesh && c.skiMesh.visible)) continue;
       let u = KIZ.uc.get(c);
       const fx = Math.sin(c.h), fz = Math.cos(c.h), lx = fz, lz = -fx, dusuk = c.dus > 0, sab = c.plow ? 1 : 0;
       if (!u) { u = { x: c.x, z: c.z, k: [null, null], guc: 0 }; KIZ.uc.set(c, u); }
+      if (!u.kayak) { u.kayak = true; u.k = [null, null]; }
       const yol = Math.hypot(c.x - u.x, c.z - u.z);
       if (yol > 6) { u.x = c.x; u.z = c.z; u.k = [null, null]; continue; }      // yer değiştirdi (başlangıç, rotaya dönüş): iz kopar
       if (yol < 0.8) continue;
