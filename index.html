@@ -9006,7 +9006,8 @@ function kaleKur(scene, routeNear, bag, blok, koyuTas) {
 
 // ------------------------------------------------------------ Kserkses yazıtı: kalenin güney yüzünde, Eski Van'a bakan kaya nişi
 // Yeri OSM düğümünden (6665653489, "Xerxes epigraph"). Üç sütun çivi yazısı (Eski Farsça, Elamca, Babilce), 27 satır; işaretler kuralla çizilir, okunacak metin değildir.
-const YAZIT = { x: 24.4, z: 70.5, en: 4.4, boy: 2.75, yuk: 15.5, yer: null };
+// oran: uçurumun dibinden tepesine yüksekliğin kaçta kaçında durduğu (23 Kas, kurucu: "aşağıda olmuş. gerçeğinde daha yukarıda ve biraz daha büyük").
+const YAZIT = { x: 24.4, z: 70.5, en: 5.6, boy: 3.5, oran: 0.56, yer: null };
 function yazitDoku() {
   const W = 1024, H = 640, cv = document.createElement('canvas'), kb = document.createElement('canvas');
   cv.width = kb.width = W; cv.height = kb.height = H;
@@ -9080,7 +9081,8 @@ function yazitKur(scene) {
   scene.traverse((o) => { if (o.isMesh && o.material && o.material.customProgramCacheKey && String(o.material.customProgramCacheKey()).indexOf('tri-kayakaya_ust') === 0) kaya = o; });
   if (!kaya) return null;
   const ray = new THREE.Raycaster(), o3 = new THREE.Vector3(), d3 = new THREE.Vector3(-AX.nx, 0, -AX.nz);
-  const yc = baseH(YAZIT.x + AX.nx * 30, YAZIT.z + AX.nz * 30) + YAZIT.yuk, he = YAZIT.en / 2 + 0.6, hb = YAZIT.boy / 2 + 0.6;
+  const dip = baseH(YAZIT.x + AX.nx * 30, YAZIT.z + AX.nz * 30), tepe = groundH(YAZIT.x, YAZIT.z);      // OSM düğümü kayanın üstünde, uçurumun 15 m gerisinde
+  const yc = dip + Math.max(8, (tepe - dip) * YAZIT.oran), he = YAZIT.en / 2 + 0.6, hb = YAZIT.boy / 2 + 0.6;
   const vur = (du, dy) => { o3.set(YAZIT.x + AX.ux * du + AX.nx * 45, yc + dy, YAZIT.z + AX.uz * du + AX.nz * 45); ray.set(o3, d3); const h = ray.intersectObject(kaya, false)[0]; return h ? h.point.clone() : null; };
   const H = [];
   for (const dy of [-hb, 0, hb]) for (const du of [-he, 0, he]) { const p = vur(du, dy); if (!p) return null; H.push(p); }
