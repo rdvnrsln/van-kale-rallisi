@@ -16487,9 +16487,9 @@ function cokKur(o) {
   // ---- Yarış donanımı (24 Kas 2026; kurucu: "yarış malzemeler klasöründe gerekli materyaller var. kullan"). Modeller vinish.dev, CC BY 4.0
   // (asset indirilen/yarış malzemeler → yayin/model/yaris/): start ışıkları, lastik bariyer, damalı bayrak. Yalnız yarış sürerken görünür, haritaya öğe eklenmez.
   // Start ışıkları: çıkış sırasının 16 m önünde; geri sayımda beş kırmızı sırayla yanar, yarış başlayınca söner.
-  // Lastik bariyer: keskin virajların (yarıçap < 45 m) dışına, asfaltın kenarına dizilir; katıdır (src/kirik.js, tip 2), araç içinden geçemez. En çok YD.enCok blok.
+  // Lastik duvar: keskin virajların dışında asfaltın kenarına kesintisiz dizilir (ydBariyerYer); katıdır (src/kirik.js, tip 2), araç içinden geçemez. En çok YD.enCok blok.
   // Bayrak: bitiş çizgisinin iki yanında. Bariyer yerleri etkinlik başına bir kez hesaplanır (YD.cache); bölge değişince silinir.
-  const YD = { surum: '2026-11-24a', soz: null, isik: null, lamba: [], bayrak: [], cache: {}, acik: null, enCok: 48 };
+  const YD = { surum: '2026-11-24a', soz: null, isik: null, lamba: [], bayrak: [], cache: {}, acik: null, enCok: 160, olcek: 1.4, kat: 2 };
   function ydYukle() {
     if (!YD.soz) YD.soz = Promise.all(['start-lights', 'tyre-barrier', 'chequered-flag'].map((ad) => new Promise((ok) => {
       if (!THREE.GLTFLoader) { ok(null); return; }
@@ -16505,21 +16505,50 @@ function cokKur(o) {
     });
     return YD.soz;
   }
-  function ydBariyerYer(R, sehir) {      // keskin virajların dışında asfalt kenarı; rota üstüne, binaya ve suya konmaz. sehir: asfalt 13 m içinde bitmiyorsa (kavşak, yan cadde) konmaz
-    const kv = rotaEgrilik(R), yer = [], ix = (s) => clamp(Math.round((s / R.L) * (R.n - 1)), 0, R.n - 1);
-    for (let s = 30; s < R.L - 30 && yer.length < YD.enCok; s += 2.3) {
-      const i = ix(s), k = kv[i]; if (Math.abs(k) < 1 / 45) continue;
-      const nk = (q) => { const t = routePoint(R, q); return { x: t.x, z: t.z, dx: t.dx, dz: t.dz }; };      // routePoint ortak nesne döndürür: kopyalanır
-      const p = nk(s), a = nk(Math.max(0, s - 8)), b = nk(Math.min(R.L, s + 8));
-      let ox = -((b.x - p.x) - (p.x - a.x)), oz = -((b.z - p.z) - (p.z - a.z)); const ol = Math.hypot(ox, oz); if (ol < 0.05) continue;      // merkezin tersi: virajın dışı
-      ox /= ol; oz /= ol; const yon = ox * p.dz - oz * p.dx > 0 ? 1 : -1, nx = p.dz * yon, nz = -p.dx * yon;      // rota dikmesi, dış yana
-      let d = 3; for (; d <= 13; d += 0.5) { const q = roadAt(p.x + nx * d, p.z + nz * d); if (!q || !q.on) break; }
-      if (sehir && d > 13) continue;
-      const x = p.x + nx * (d + 0.9), z = p.z + nz * (d + 0.9), g = groundH(x, z);
-      if (g < 0.4 || binaUst(x, z) > g + 0.5 || Math.abs(g - groundH(p.x, p.z)) > 2.5) continue;
-      let yakin = false; for (let j = 0; j < R.n && !yakin; j += 2) if ((R.x[j] - x) ** 2 + (R.z[j] - z) ** 2 < 3.2 * 3.2) yakin = true;      // rotanın başka bir kolunun üstü
-      if (yakin) continue;
-      yer.push({ x, y: g, z, h: Math.atan2(-p.dz, p.dx) });
+  // Lastik duvar (25 Kas 2026; kurucu: "engel ya da tampon lastik duvarlar çok küçük, bazı yerlerde saçma duruyor"). Model YD.olcek kat büyütülür ve iki sıra üst üste
+  // dizilir (≈ 2,5 m uzun, 2,2 m yüksek bloklar). Yalnız en az 20 m süren keskin virajların (yarıçap < 50 m) dışında, girişten 12 m önce çıkıştan 12 m sonrasına kadar,
+  // asfaltın kenarına kesintisiz duvar. Duvarın geçeceği yer bir yolun üstündeyse (kavşak, yan yol ağzı), binada, suda, dik yamaçta ya da rotanın başka bir kolunun
+  // yanındaysa duvar orada kesilir; 3 bloktan (şehirde 5) kısa parçalar konmaz (yalnız duran tek tük blok olmasın). Kayalık tırmanışta (zemin 'Kaya') duvar yok.
+  // Dönen dizi: { x, y, z, h } blok merkezleri (h: blok uzun ekseni duvar boyunca).
+  function ydBariyerYer(R, sehir) {
+    ytAg();
+    const kv = rotaEgrilik(R), ix = (s) => clamp(Math.round((s / R.L) * (R.n - 1)), 0, R.n - 1), W = 1.8 * YD.olcek, DER = 1.24 * YD.olcek, yer = [];
+    const bolum = []; let bas = -1, isa = 0;
+    for (let s = 20; s <= R.L - 20; s += 2) {      // keskin viraj bölümleri
+      const k = kv[ix(s)], keskin = Math.abs(k) > 1 / 50 && (bas < 0 || Math.sign(k) === isa);
+      if (keskin && bas < 0) { bas = s; isa = Math.sign(k); }
+      else if (!keskin && bas >= 0) { if (s - bas >= 20) bolum.push([bas, s]); bas = -1; if (Math.abs(k) > 1 / 50) { bas = s; isa = Math.sign(k); } }
+    }
+    const nk = (q) => { const t = routePoint(R, q); return { x: t.x, z: t.z, dx: t.dx, dz: t.dz }; };      // routePoint ortak nesne döndürür: kopyalanır
+    for (const [b0, b1] of bolum) {
+      const orta = (b0 + b1) / 2, p = nk(orta), a = nk(orta - 10), b = nk(orta + 10);
+      const ox = -((b.x - p.x) - (p.x - a.x)), oz = -((b.z - p.z) - (p.z - a.z)), yon = ox * p.dz - oz * p.dx > 0 ? 1 : -1;      // merkezin tersi: virajın dışı
+      const parca = []; let cizgi = [];
+      const kes = () => { if (cizgi.length > 1) parca.push(cizgi); cizgi = []; };
+      for (let s = Math.max(4, b0 - 12); s <= Math.min(R.L - 4, b1 + 12); s += 1) {
+        const q = nk(s), nx = q.dz * yon, nz = -q.dx * yon;
+        let d = 3; for (; d <= 13; d += 0.5) { const r = roadAt(q.x + nx * d, q.z + nz * d); if (!r || !r.on) break; }
+        if (d > 13) { kes(); continue; }      // dışarısı da asfalt: kavşak ya da meydan
+        const x = q.x + nx * (d + DER / 2 + 0.3), z = q.z + nz * (d + DER / 2 + 0.3), g = groundH(x, z), rd = roadAt(x, z);
+        let ok = g >= 0.4 && binaUst(x, z) <= g + 0.5 && Math.abs(g - groundH(q.x, q.z)) <= 2.5 && !(rd && rd.d < rd.hw + 1.2) && wallDist(x, z) > 1.6;
+        if (ok && sehir) { const cell = gridCell(YT.izg, x, z); if (cell) for (const ni of cell) { const n = YT.dug[ni]; if ((n.x - x) ** 2 + (n.z - z) ** 2 < 20 * 20) ok = false; } }      // şehirde kavşak ağzına duvar yok
+        for (const geri of [4, 10]) if (ok) { const rb = roadAt(x + nx * geri, z + nz * geri); ok = !(rb && rb.d < rb.hw + 0.5); }      // arkası da yol değil (kavşak içindeki ada, iki şerit arası)
+        for (let j = 0; ok && j < R.n; j += 2) if (Math.abs(R.s[j] - s) > 30 && (R.x[j] - x) ** 2 + (R.z[j] - z) ** 2 < 7 * 7) ok = false;      // rotanın başka bir kolu
+        if (!ok) { kes(); continue; }
+        cizgi.push({ x, z, g });
+      }
+      kes();
+      for (const c of parca) {      // çizgi boyunca W aralıkla blok; 3 bloktan kısa parça atılır
+        let L = 0; const cs = [0]; for (let i = 1; i < c.length; i++) { L += Math.hypot(c[i].x - c[i - 1].x, c[i].z - c[i - 1].z); cs.push(L); }
+        const adet = Math.floor((L + 0.4) / W); if (adet < (sehir ? 5 : 3)) continue;      // şehirde kısa duvar köşe adasında kalıyor
+        const bos = (L - adet * W) / 2;
+        for (let k = 0; k < adet && yer.length < YD.enCok; k++) {
+          const t = bos + (k + 0.5) * W; let i = 1; while (i < c.length - 1 && cs[i] < t) i++;
+          const f = clamp((t - cs[i - 1]) / ((cs[i] - cs[i - 1]) || 1), 0, 1), x = c[i - 1].x + (c[i].x - c[i - 1].x) * f, z = c[i - 1].z + (c[i].z - c[i - 1].z) * f;
+          const j0 = Math.max(0, i - 3), j1 = Math.min(c.length - 1, i + 2), tx = c[j1].x - c[j0].x, tz = c[j1].z - c[j0].z;
+          yer.push({ x, y: groundH(x, z), z, h: Math.atan2(-tz, tx) });
+        }
+      }
     }
     return yer;
   }
@@ -16534,15 +16563,18 @@ function cokKur(o) {
       if (!YD.bariyer) return;
       const ad = REGION.id + '.' + ev.id; let c = YD.cache[ad];
       if (!c) {
-        const yer = ydBariyerYer(R, ev.sehir), kok = new THREE.Group(), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), yuk = new THREE.Vector3(0, 1, 0), bir = new THREE.Vector3(1, 1, 1), v = new THREE.Vector3();
+        const yer = ev.zemin === 'Kaya' ? [] : ydBariyerYer(R, ev.sehir), kok = new THREE.Group(), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), yuk = new THREE.Vector3(0, 1, 0), olc = new THREE.Vector3(YD.olcek, YD.olcek, YD.olcek), v = new THREE.Vector3();
+        const H = 0.8 * YD.olcek, W = 1.8 * YD.olcek, n = yer.length * YD.kat;
         if (yer.length) YD.bariyer.traverse((m) => {
           if (!m.isMesh) return;
-          const im = new THREE.InstancedMesh(m.geometry, m.material, yer.length); im.castShadow = true; im.frustumCulled = false;
-          yer.forEach((e, i) => im.setMatrixAt(i, m4.compose(v.set(e.x, e.y, e.z), q.setFromAxisAngle(yuk, e.h), bir)));
+          const im = new THREE.InstancedMesh(m.geometry, m.material, n); im.castShadow = true; im.receiveShadow = true; im.frustumCulled = false;
+          yer.forEach((e, i) => { for (let k = 0; k < YD.kat; k++) im.setMatrixAt(i * YD.kat + k, m4.compose(v.set(e.x, e.y - 0.05 + k * H, e.z), q.setFromAxisAngle(yuk, e.h + (k % 2) * Math.PI + ((i * 7 + k * 3) % 5 - 2) * 0.012), olc)); });      // üst sıra ters çevrilir, hafif dağınık
           kok.add(im);
         });
         scene.add(kok);
-        c = YD.cache[ad] = { kok, oge: yer.map((e) => Object.assign(kirikAgac(e.x, e.z, 0.8), { tur: 'lastik', lastik: true, kapali: true })) };
+        const oge = [];      // çarpışma: blok başına iki daire (uzun eksen boyunca)
+        for (const e of yer) for (const u of [-0.25, 0.25]) { const x = e.x + Math.cos(e.h) * u * W, z = e.z - Math.sin(e.h) * u * W; oge.push(Object.assign(kirikAgac(x, z, 0.62 * YD.olcek), { tur: 'lastik', lastik: true, kapali: true })); }
+        c = YD.cache[ad] = { kok, oge, blok: yer.length };
       }
       c.kok.visible = true; for (const e of c.oge) e.kapali = false;
       YD.acik = c;
@@ -18543,7 +18575,7 @@ function cokKur(o) {
       }
     }
     YT.izg = makeGrid(32); YT.kizg = makeGrid(48);
-    dug.forEach((d, i) => { if (d.kol >= 3) gridAdd(YT.izg, i, d.x, d.z, d.x, d.z, 8); });
+    dug.forEach((d, i) => { if (d.kol >= 3) gridAdd(YT.izg, i, d.x, d.z, d.x, d.z, 20); });
     ken.forEach((e, i) => { for (let q = 1; q < e.x.length; q++) gridAdd(YT.kizg, i, e.x[q - 1], e.z[q - 1], e.x[q], e.z[q], 45); });
     const bil = new Int32Array(dug.length).fill(-1); let enB = 0, enN = 0;      // bağlı parçalar: yol bulma ana ağda başlar ve biter (kopuk köprü, bölge sınırında kesilen yol)
     for (let i = 0; i < dug.length; i++) {
