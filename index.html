@@ -12238,6 +12238,86 @@ function arabaSurucu(v, src) {
   return v;
 }
 
+// ------------------------------------------------------------ yarış arabaları (24 Kas 2026; kurucu: "arabaların tasarımından da çok memnun değilim ama ben
+// vereceğim sana"; "yarış malzemeler klasöründe gerekli materyaller var. kullan"). Modeller vinish.dev, CC BY 4.0 (asset indirilen/yarış malzemeler →
+// yayin/model/yaris/<ad>.glb). Düzen: Body (kökü yerde, +z ön, +x sol), Wheel_FL/FR/RL/RR, Steering_Wheel (simit yerel xy düzleminde).
+// Her model ~110 bin üçgen, 94 parça: dokusuz ve opak parçalar köşe rengiyle dört kovada birleştirilir (mat / parlak × metal / değil), parça sayısı ~25'e iner.
+// Ana boya (adı Paint ile başlayan, Stripe olmayan ilk malzeme) araca göre renklenir; stop lambası LED_Red malzemesinin kopyasıdır (fren ışığı).
+// Oyuncu figürü Blender arabasındaki gibi oturur (arabaSurucu): koltuk ve pedal yeri direksiyondan türetilir. Telefonda yüklenmez (boyut ve çizim yükü).
+const YARIS_SURUM = '2026-11-24a', _yrSoz = {};
+function yarisArabaYukle(ad) {
+  if (!_yrSoz[ad]) _yrSoz[ad] = new Promise((ok, red) => {
+    if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; }
+    new THREE.GLTFLoader().load('model/yaris/' + ad + '.glb?s=' + YARIS_SURUM, (g) => { try { ok(yarisArabaHazirla(g.scene, ad)); } catch (e) { red(e); } }, undefined, red);
+  });
+  return _yrSoz[ad];
+}
+// Bir düğümün kendi parçalarını (alt düğümleri değil) birleştirir. Dokulu, saydam, ışıklı ve boya parçaları olduğu gibi kalır.
+function yarisBirlestir(dugum) {
+  const parca = dugum.isMesh ? [dugum] : dugum.children.filter((m) => m.isMesh), kova = {}, renk = new THREE.Color();
+  for (const m of parca) {
+    const mt = m.material, g0 = m.geometry;
+    const ayri = !g0.index || !g0.attributes.normal || mt.map || mt.normalMap || mt.roughnessMap || mt.metalnessMap || mt.emissiveMap || mt.transparent || mt.opacity < 1 || (mt.emissive && mt.emissive.getHex() !== 0)
+      || /^(Paint|Lens|LED|Lamp|Glass|Plate|Screens|Mirror$)/.test(mt.name);
+    if (ayri) continue;
+    const g = new THREE.BufferGeometry(); g.setIndex(g0.index.clone()); g.setAttribute('position', g0.attributes.position.clone()); g.setAttribute('normal', g0.attributes.normal.clone());
+    if (m !== dugum) g.applyMatrix4(m.matrix);
+    const n = g.attributes.position.count, c = new Float32Array(n * 3); renk.copy(mt.color);
+    for (let i = 0; i < n; i++) { c[i * 3] = renk.r; c[i * 3 + 1] = renk.g; c[i * 3 + 2] = renk.b; }
+    g.setAttribute('color', new THREE.BufferAttribute(c, 3));
+    const k = (mt.metalness > 0.5 ? 'M' : 'D') + (mt.roughness < 0.4 ? 'p' : 'm');
+    (kova[k] || (kova[k] = { g: [], m: [], pur: 0, met: 0 })).g.push(g); kova[k].m.push(m); kova[k].pur += mt.roughness; kova[k].met += mt.metalness;
+  }
+  for (const k in kova) {
+    const K = kova[k]; if (K.g.length < 2) continue;
+    const g = THREE.BufferGeometryUtils.mergeBufferGeometries(K.g, false); if (!g) continue;
+    const y = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: K.pur / K.g.length, metalness: K.met / K.g.length, name: 'yaris-' + k }));
+    y.name = 'birlesik_' + k;
+    for (const m of K.m) { if (m === dugum) return; m.parent.remove(m); m.geometry.dispose(); }
+    dugum.add(y);
+  }
+}
+function yarisArabaHazirla(sahne, ad) {
+  const govde = sahne.getObjectByName('Body'); if (!govde) throw new Error('Body yok: ' + ad);
+  sahne.updateMatrixWorld(true);
+  yarisBirlestir(govde);
+  for (const t of ['FL', 'FR', 'RL', 'RR']) { const w = govde.getObjectByName('Wheel_' + t); if (w) yarisBirlestir(w); }
+  return { kok: govde, ad };
+}
+function makeCarYaris(src, renkHex, sec) {
+  const kok = src.kok.clone(true), g = new THREE.Group(), wheels = [], tip = 'spor';      // tip 'spor': arabaSurucu'nun oturuş eğimi
+  kok.position.set(0, 0, 0); kok.rotation.set(0, 0, 0); g.add(kok);
+  let tail = null, boya = null;
+  kok.traverse((m) => {
+    if (!m.isMesh) return;
+    const ad = m.material.name || '';
+    m.castShadow = /^(Paint|yaris-|Tyre|Under|Plastic|Carbon)/.test(ad);
+    if (/^Paint/.test(ad) && !/Stripe/.test(ad) && (!boya || boya.ad === ad)) {
+      if (!boya) { const b = m.material.clone(); b.color.copy(LIN(renkHex)); b.envMapIntensity = 1.0; boya = { ad, b }; }
+      m.material = boya.b;
+    } else if (/^LED_Red$/.test(ad)) { if (!tail) { tail = m.material.clone(); tail.emissive = new THREE.Color(0xff1a0a); tail.emissiveIntensity = 0.45; } m.material = tail; }
+    else if (/^Glass/.test(ad)) m.renderOrder = 2;
+  });
+  if (!tail) tail = new THREE.MeshStandardMaterial();
+  for (const ad of ['FL', 'FR', 'RL', 'RR']) {
+    const n = kok.getObjectByName('Wheel_' + ad), pivot = new THREE.Group(), spin = new THREE.Group();
+    pivot.position.copy(n.position); n.parent.add(pivot); pivot.add(spin); spin.add(n); n.position.set(0, 0, 0);
+    wheels.push({ pivot, spin, front: ad[0] === 'F' ? 1 : 0, r: pivot.position.y });
+  }
+  const dr0 = kok.getObjectByName('Steering_Wheel');
+  if (dr0) {      // direksiyon ekseni: simit yerel xy'de, eksen yerel z. arabaSurucu ekseni yerel y bekler: ara düğüm çevirir (y sürücüye bakar).
+    const p = new THREE.Group(), qx = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
+    p.name = tip + '_direksiyon'; p.position.copy(dr0.position); p.quaternion.copy(dr0.quaternion).multiply(qx);
+    dr0.parent.add(p); p.add(dr0); dr0.position.set(0, 0, 0); dr0.quaternion.copy(qx).invert();
+    const yer = (ad2, x, y, z) => { const o = new THREE.Object3D(); o.name = tip + '_' + ad2; o.position.set(x, y, z); kok.add(o); };
+    yer('yer_koltuk', p.position.x, Math.max(0.2, p.position.y - 0.36), p.position.z - 0.44);
+    yer('yer_pedal', p.position.x, Math.max(0.16, p.position.y - 0.44), p.position.z + 0.5);
+  }
+  if (!ARABA['boy_' + src.ad]) { const b = new THREE.Box3().setFromObject(kok); ARABA['boy_' + src.ad] = [b.max.z - b.min.z, b.max.x - b.min.x, (b.max.z + b.min.z) / 2]; }
+  const [uz, gn, oz] = ARABA['boy_' + src.ad], golge = arabaGolge(uz * 1.08, gn * 1.12); golge.position.z = oz; g.add(golge);
+  return { group: g, wheels, tail, kok, tip, yaris: src.ad };
+}
+
 // ------------------------------------------------------------ rota
 function prepRoute(pts0, loop) {
   const pts = resample(pts0, 4);
@@ -15439,7 +15519,18 @@ function cokKur(o) {
       }
       rivals.forEach((r, i) => degis(r, makeCarGLB(src, rc[i][2] === 'hatch' ? 'hatch' : 'sedan', rc[i][0])));
       trafficModel(scene, src);
-    }).catch(() => {});
+    }).catch(() => {}).then(() => {
+      // Yarış arabaları (kurucunun getirdiği modeller; src/arac.js makeCarYaris): oyuncunun arabası ve dört rakip. Blender arabalarından sonra takılır;
+      // biri inmezse o araç Blender modeliyle kalır. Telefonda yüklenmez. Trafik, servis ve birlikte sürüşteki uzak oyuncular Blender arabasında kalır.
+      if (MOBIL) return;
+      const takim = [['gt-race-supercar', '#e2572b'], ['four-door-super-saloon', rc[0][0]], ['american-v8-supercar', rc[1][0]], ['wedge-supercar', rc[2][0]], ['electric-hypercar', rc[3][0]]];
+      takim.forEach(([ad, renk], i) => yarisArabaYukle(ad).then((src) => {
+        const v = makeCarYaris(src, renk, { oyuncu: i === 0 }), c = i === 0 ? player : rivals[i - 1], e = c.car.group;
+        v.group.visible = e.visible; v.group.position.copy(e.position); v.group.rotation.copy(e.rotation); scene.remove(e); scene.add(v.group); c.car = v;
+        if (c.mesh === e) { c.mesh = v.group; c.wheels = v.wheels; c.tail = v.tail; }
+        if (i === 0) ucTekerYukle().then((us) => arabaSurucu(v, us)).catch(() => {});
+      }).catch((h) => console.warn('yarış arabası yüklenemedi: ' + ad, h)));
+    });
     // Blender yayaları: kayakçı, bekleyen gruplar, kaldırımda yürüyenler. İnmezse kod çizimi kalır, kaldırım boş olur.
     YAYA.sahne = scene;
     yayaYukle().then((src) => {
