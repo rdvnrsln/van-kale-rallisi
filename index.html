@@ -23,6 +23,9 @@ body {
   overflow: hidden; overscroll-behavior: none; -webkit-user-select: none; user-select: none; touch-action: none;
 }
 #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+/* hız hissi (src/oyun.js HH): hız çizgileri ve nitroda mavi kenar ışığı; sahnenin üstünde, göstergenin altında */
+#hizcizgi, #nitro-kenar { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#nitro-kenar { opacity: 0; background: radial-gradient(ellipse 75% 70% at 50% 45%, rgba(40, 150, 255, 0) 55%, rgba(40, 150, 255, 0.35) 82%, rgba(90, 200, 255, 0.7) 100%); }
 .gl-hata { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-top: 16px; }
 .gl-kod { font-size: 12px; color: var(--soluk); font-variant-numeric: tabular-nums; word-break: break-word; }
 .gl-kayip { position: fixed; left: 50%; top: 40%; transform: translateX(-50%); z-index: 50; background: rgba(8, 14, 22, 0.86); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; padding: 14px 18px; max-width: 86vw; text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center; }
@@ -408,6 +411,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
 </style>
 
 <canvas id="gl" aria-label="Van Kalesi çevresinde üç boyutlu yarış sahnesi"></canvas>
+<canvas id="hizcizgi" aria-hidden="true"></canvas><div id="nitro-kenar" aria-hidden="true"></div>
 
 <div id="hud" class="kat" hidden>
   <!-- performans göstergesi (?tani=perf ya da Ayarlar): fps, kare süresi yüzdelikleri, işlemci ve ekran kartı süresi, çizim sayıları, çözünürlük -->
@@ -11881,7 +11885,7 @@ function stepCar(c, inp, dt) {
     c.vy -= GRAV * dt; c.y += c.vy * dt;
     if (c.y <= gy) {      // iniş: düşey hız zeminin eğimine eşitlenir (eskiden 0'a iniyordu, dik yokuş aşağı araç durmadan sekiyordu; 25 Kas 2026). Darbe yüzeye dik bileşen.
       const yer = (zeminY(c.x + c.vx * 0.05, c.z + c.vz * 0.05) - gy) / 0.05, darbe = yer - c.vy;
-      c.y = gy; c.air = false; if (darbe > 10) c.hit = Math.max(c.hit, darbe * 0.5); c.vy = clamp(yer, -40, 13);
+      c.y = gy; c.air = false; if (darbe > 10) { c.hit = Math.max(c.hit, darbe * 0.5); c.inisDarbe = true; } c.vy = clamp(yer, -40, 13);      // inisDarbe: kıvılcım çıkmaz (oyun.js HH)
     }
   } else {
     const gvy = (gy - c.y) / dt;
@@ -18000,7 +18004,7 @@ function cokKur(o) {
     if (yerYazi) yerYazi.t = 0;
     if (G.state === 'free') flash(T('flash.serbest'), T('flash.serbest.alt'));
   }
-  // turbo: egzoz alevi (iki egzozda üçer parlak leke; araç grubunun arka ucuna bağlı)
+  // turbo: egzoz alevi (iki egzozda beşer parlak leke; araç grubunun arka ucuna bağlı)
   let alevTex = null;
   function turboAlev(v) {
     if (v.alev) return v.alev;
@@ -18015,7 +18019,7 @@ function cokKur(o) {
     const kutu = new THREE.Box3().setFromObject(grp);
     grp.quaternion.copy(q0); grp.position.copy(p0); grp.updateMatrixWorld(true);
     const al = new THREE.Group(), mat = new THREE.SpriteMaterial({ map: alevTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
-    for (const x of v === player.car || v.ikiEgzoz ? [-0.38, 0.38] : [v.egzozX !== undefined ? v.egzozX : 0.12]) for (let k = 0; k < 3; k++) { const s = new THREE.Sprite(mat); s.position.set(x, kutu.min.y + 0.34, kutu.min.z - 0.1 - k * 0.3); s.userData.k = k; al.add(s); }
+    for (const x of v === player.car || v.ikiEgzoz ? [-0.38, 0.38] : [v.egzozX !== undefined ? v.egzozX : 0.12]) for (let k = 0; k < 5; k++) { const s = new THREE.Sprite(mat); s.position.set(x, kutu.min.y + 0.34, kutu.min.z - 0.1 - k * 0.34); s.userData.k = k; al.add(s); }
     al.visible = false; grp.add(al); v.alev = al;
     return al;
   }
@@ -18107,6 +18111,8 @@ function cokKur(o) {
       player.devrik = UC.devrikSure; player.kalkis = 1; devrildi();
     }
     if (player.hit > 4) { thud(player.hit); }
+    for (const c of cars) { if (c.hit > 3.5 && !c.ski && !c.inisDarbe) kivilcim(c, c.hit); c.inisDarbe = false; }      // çarpma kıvılcımı (HH); inişte çıkmaz
+    if (player.hit > 6 && hhAcik(player)) G.sars = Math.max(G.sars, Math.min(0.4, player.hit * 0.025));
     yhAdim(dt, r);
     for (const c of cars) c.hit = 0;
     if (player.water > 1.0) { flash(T('flash.gol'), T('flash.gol.alt')); respawn(); }
@@ -18325,6 +18331,93 @@ function cokKur(o) {
     _gp.set(px, Math.max(_yb.y + 0.12, groundH(px, pz) + 0.5), pz); _gl.copy(_yb).y -= 0.06;
     return YUZK.k;
   }
+  // ---- Hız hissi (25 Kas 2026; kurucu: "hala bir asphalt zevki alamıyorum"; neyi kastettiği sorulunca: hız hissi ve kamera, efektler, "ikisi de").
+  // Kamera (updateCamera): hızlandıkça araca yaklaşır ve alçalır, görüş açısı 57°'den 79°'e açılır; nitro basınca +10° sıçrar ve kamera 1,1 m geri düşer (araç öne
+  // fırlar); virajda kamera en çok 2,6° yatar; 35 m/sn üstünde ve nitroda ince titreşim; inişte ve sert çarpmada sarsıntı. Efekt: ekran kenarından içe akan hız
+  // çizgileri (28 m/sn üstünde; nitroda mavi ve yoğun), nitroda mavi kenar ışığı, uzun egzoz alevi, çarpınca kıvılcım (KIV), inişte kar ya da toz patlaması.
+  // Yalnız arka kamerada, araba, motor ve takside; kayak, binek ve kokpit kamerası eski hâlinde. HH.kapali: karşılaştırma görüntüsü için eski kamera.
+  const HH = { tb: 0, egim: 0, havaT: 0, havada: false, cv: null, g: null, cizgi: [], w: 0, h: 0, ciz: false, kenar: -1, kapali: false };
+  const hhAcik = (c) => !c.ski && !c.binek && (c.arac === 'car' || c.arac === 'motor' || c.arac === 'taksi') && G.cam !== 2;
+  function hhAdim(dt, surus) {
+    const c = player, sp = Math.hypot(c.vx, c.vz), acik = surus && hhAcik(c) && !HH.kapali && !GIRIS;
+    if (acik) {
+      const k = 0.025 * clamp((sp - 35) / 25, 0, 1) + HH.tb * 0.035;      // ince titreşim
+      if (k > 0.001) { camera.position.x += (Math.random() - 0.5) * k; camera.position.y += (Math.random() - 0.5) * k; }
+      if (c.air) HH.havaT += dt;
+      else if (HH.havada) {      // iniş
+        if (HH.havaT > 0.35) {
+          G.sars = Math.max(G.sars, Math.min(0.45, 0.12 + HH.havaT * 0.12));
+          const kar = KAR || (c.surf && c.surf.id === 3), r_ = kar ? 0.95 : 0.78, g_ = kar ? 0.96 : 0.69, b_ = kar ? 0.99 : 0.53;
+          for (let i = 0; i < 12; i++) { const a = (i / 12) * TAU; puff(c.x + Math.cos(a) * 1.4, c.y + 0.2, c.z + Math.sin(a) * 1.4, Math.cos(a) * 5 + c.vx * 0.2, Math.sin(a) * 5 + c.vz * 0.2, r_, g_, b_); }
+        }
+        HH.havaT = 0;
+      }
+      HH.havada = !!c.air;
+    } else { HH.havada = false; HH.havaT = 0; }
+    // nitro kenar ışığı
+    const ke = acik ? Math.round(HH.tb * 100) / 100 : 0;
+    if (ke !== HH.kenar) { HH.kenar = ke; $('nitro-kenar').style.opacity = (ke * 0.75).toFixed(2); }
+    hizCizgi(dt, acik ? sp : 0);
+  }
+  function hizCizgi(dt, sp) {      // ekran kenarından içe değil, kaçış noktasından dışa akan ince çizgiler (yarım çözünürlüklü 2B tuval)
+    const a = clamp((sp - 25) / 22, 0, 1) * 0.6 + HH.tb * 0.6;
+    if (!HH.cv) { HH.cv = $('hizcizgi'); HH.g = HH.cv.getContext('2d'); }
+    const cv = HH.cv, g = HH.g;
+    if (a < 0.02) { if (HH.ciz) { g.clearRect(0, 0, cv.width, cv.height); HH.ciz = false; } return; }
+    const w = Math.round(innerWidth / 2), h = Math.round(innerHeight / 2);
+    if (w !== HH.w || h !== HH.h) { cv.width = HH.w = w; cv.height = HH.h = h; }
+    const N = MOBIL ? 30 : 60;
+    while (HH.cizgi.length < N) HH.cizgi.push({ aci: Math.random() * TAU, r: 0.45 + Math.random() * 0.8, hiz: 0.7 + Math.random() * 0.6, k: Math.random() });
+    g.clearRect(0, 0, w, h); g.lineCap = 'round'; HH.ciz = true;
+    const cx = w / 2, cy = h * 0.43, R = Math.hypot(w, h) / 2, mavi = HH.tb > 0.3;
+    for (const l of HH.cizgi) {
+      l.r += dt * l.hiz * (1.4 + sp / 28) * (1 + HH.tb * 0.8);
+      if (l.r > 1.3) { l.r = 0.45 + Math.random() * 0.25; l.aci = Math.random() * TAU; l.hiz = 0.7 + Math.random() * 0.6; l.k = Math.random(); }
+      const uz = (0.08 + sp * 0.004 + HH.tb * 0.12) * l.hiz, ca = Math.cos(l.aci), sa = Math.sin(l.aci) * 0.8;
+      const al = a * clamp((l.r - 0.45) * 2.2, 0, 1) * (0.35 + 0.65 * l.k);
+      if (al < 0.01) continue;
+      g.strokeStyle = mavi && l.k > 0.4 ? 'rgba(150,215,255,' + al.toFixed(3) + ')' : 'rgba(255,255,255,' + (al * 0.8).toFixed(3) + ')';
+      g.lineWidth = 1 + l.k * 2.2;
+      g.beginPath(); g.moveTo(cx + ca * l.r * R, cy + sa * l.r * R); g.lineTo(cx + ca * (l.r + uz) * R, cy + sa * (l.r + uz) * R); g.stroke();
+    }
+  }
+  // Kıvılcım: katkılı parlak noktalar, yerçekimiyle düşer, yerde seker (çarpmada; KIV.n halka tampon)
+  const KIV = { n: 240, i: 0, pts: null, pos: null, vel: null, life: null };
+  function initKiv() {
+    const n = KIV.n, geo = new THREE.BufferGeometry();
+    KIV.pos = new Float32Array(n * 3); KIV.vel = new Float32Array(n * 3); KIV.life = new Float32Array(n);
+    geo.setAttribute('position', new THREE.BufferAttribute(KIV.pos, 3)); geo.setAttribute('aLife', new THREE.BufferAttribute(KIV.life, 1));
+    const mat = new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, uniforms: { uScale: { value: 600 } },
+      vertexShader: 'attribute float aLife; varying float vL; uniform float uScale;\nvoid main(){ vL = aLife; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = aLife > 0.0 ? uScale * 0.12 * (0.4 + aLife) / max(0.5, -mv.z) : 0.0; gl_Position = projectionMatrix * mv; }',
+      fragmentShader: 'varying float vL;\nvoid main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d, d); if (r > 0.25) discard; vec3 c = mix(vec3(1.0, 0.3, 0.03), vec3(1.0, 0.72, 0.3), vL * vL); gl_FragColor = vec4(c * 0.95, smoothstep(0.25, 0.0, r) * vL); }',
+    });
+    KIV.pts = new THREE.Points(geo, mat); KIV.pts.frustumCulled = false; KIV.pts.renderOrder = 6; scene.add(KIV.pts);
+  }
+  function kivilcim(c, siddet) {
+    if (!KIV.pts) return;
+    const n = Math.min(22, 4 + Math.round(siddet * 0.9)), sp = Math.hypot(c.vx, c.vz) || 1, fx = c.vx / sp, fz = c.vz / sp;
+    for (let k = 0; k < n; k++) {
+      const i = KIV.i, yan = (Math.random() - 0.5) * 2; KIV.i = (i + 1) % KIV.n;
+      KIV.pos[i * 3] = c.x + fx * 1.6 + fz * yan; KIV.pos[i * 3 + 1] = c.y + 0.4 + Math.random() * 0.5; KIV.pos[i * 3 + 2] = c.z + fz * 1.6 - fx * yan;
+      KIV.vel[i * 3] = c.vx * 0.35 + (Math.random() - 0.5) * 9; KIV.vel[i * 3 + 1] = 2 + Math.random() * 5; KIV.vel[i * 3 + 2] = c.vz * 0.35 + (Math.random() - 0.5) * 9;
+      KIV.life[i] = 0.7 + Math.random() * 0.3;
+    }
+  }
+  function kivAdim(dt) {
+    if (!KIV.pts) return;
+    KIV.pts.material.uniforms.uScale.value = (renderer.domElement.height * 0.5) / Math.tan((camera.fov * Math.PI) / 360);
+    let var_ = false;
+    for (let i = 0; i < KIV.n; i++) {
+      if (KIV.life[i] <= 0) continue;
+      var_ = true; KIV.life[i] -= dt * 1.8; KIV.vel[i * 3 + 1] -= 20 * dt;
+      KIV.pos[i * 3] += KIV.vel[i * 3] * dt; KIV.pos[i * 3 + 1] += KIV.vel[i * 3 + 1] * dt; KIV.pos[i * 3 + 2] += KIV.vel[i * 3 + 2] * dt;
+      const gy = groundH(KIV.pos[i * 3], KIV.pos[i * 3 + 2]) + 0.1;
+      if (KIV.pos[i * 3 + 1] < gy) { KIV.pos[i * 3 + 1] = gy; KIV.vel[i * 3 + 1] *= -0.35; KIV.vel[i * 3] *= 0.6; KIV.vel[i * 3 + 2] *= 0.6; }
+    }
+    if (var_ || KIV.kirli) { KIV.pts.geometry.attributes.position.needsUpdate = true; KIV.pts.geometry.attributes.aLife.needsUpdate = true; }
+    KIV.kirli = var_;
+  }
   function updateCamera(dt) {
     if (G.freeze) { camera.position.set(G.freeze[0], G.freeze[1], G.freeze[2]); lookAt.set(G.freeze[3], G.freeze[4], G.freeze[5]); camera.lookAt(lookAt); camera.fov = 55; camera.updateProjectionMatrix(); return lookAt; }
     if (G.state === 'menu') {      // menüde her zaman bölgenin drone çekimi (duraklatınca da); Devam et kamerayı oyuncuya geri oturtur
@@ -18338,24 +18431,27 @@ function cokKur(o) {
       return lookAt;
     }
     const c = player, m = c.binek && EK.binek ? EK.binek.kam(c) : c.ski ? SKICAM : (c.arac === 'servis' ? CAMS_SERVIS : CAMS)[G.cam], sp = Math.hypot(c.vx, c.vz);
+    const hh = hhAcik(c) && m.d > 0 && !HH.kapali;      // hız hissi (HH): arka kamerada
+    HH.tb = lerp(HH.tb, hh && c.tbAktif ? 1 : 0, Math.min(1, dt * (c.tbAktif ? 9 : 2.2)));
     // ejderha uçarken kamera nişana (c.ah, c.ap) bağlıdır: fare kamerayı çevirir, ejderha ardından döner
     const ucan = !!c.binek && c.binek !== 'yer' && c.ah != null, nap = ucan ? c.ap || 0 : 0;
     camH += wrapAngle((ucan ? c.ah : c.h) - camH) * (camSnap ? 1 : Math.min(1, dt * (ucan ? 16 : 4.6)));
-    let dist = m.d + (m.d > 0 ? Math.min(sp, 70) * 0.04 : 0);
+    let dist = hh ? m.d * (0.86 - 0.08 * smooth(10, 55, sp)) + HH.tb * 1.1 : m.d + (m.d > 0 ? Math.min(sp, 70) * 0.04 : 0);      // hızda kamera araca yaklaşır (geniş açıda araba küçülmesin), nitroda araç öne fırlar
     let bx = c.x - Math.sin(camH) * dist * Math.cos(nap * 0.8), bz = c.z - Math.cos(camH) * dist * Math.cos(nap * 0.8);
     if (m.d > 0 && !c.binek) {
       const t = wallRay(c.x, c.z, bx, bz);
       if (t < 1) { dist *= Math.max(0.28, t * 0.88); bx = c.x - Math.sin(camH) * dist; bz = c.z - Math.cos(camH) * dist; }
     }
-    let by = c.y + m.h - Math.sin(nap) * dist * 0.85;      // nişan aşağıdayken kamera yukarıda, yukarıdayken aşağıda kalır
+    let by = c.y + m.h - Math.sin(nap) * dist * 0.85 - (hh ? 0.45 * smooth(15, 55, sp) : 0);      // nişan aşağıdayken kamera yukarıda, yukarıdayken aşağıda kalır; hızda alçalır
     const gh = groundH(bx, bz) + 1.3;
     if (by < gh) by = gh;
     camWant.set(bx, by, bz);
-    if (camSnap) camPos.copy(camWant); else { camPos.x = lerp(camPos.x, camWant.x, Math.min(1, dt * 12)); camPos.z = lerp(camPos.z, camWant.z, Math.min(1, dt * 12)); camPos.y = lerp(camPos.y, camWant.y, Math.min(1, dt * 6)); }
+    const kh = hh ? 22 : 12;      // hız hissinde kamera araca sıkı bağlı (12/sn'de 50 m/sn'de 4 m geride kalıyor, araba küçülüyordu)
+    if (camSnap) camPos.copy(camWant); else { camPos.x = lerp(camPos.x, camWant.x, Math.min(1, dt * kh)); camPos.z = lerp(camPos.z, camWant.z, Math.min(1, dt * kh)); camPos.y = lerp(camPos.y, camWant.y, Math.min(1, dt * 6)); }
     camSnap = false;
     camera.position.copy(camPos);
     { const lh = ucan ? camH : c.h, lu = c.binek ? 9 : 5; lookAt.set(c.x + Math.sin(lh) * lu, c.y + m.la + Math.sin(nap) * 9, c.z + Math.cos(lh) * lu); }
-    let fov = 60 + Math.min(ucan ? 32 : 20, sp * (ucan ? 0.3 : 0.34)) + (c.tbAktif ? 9 : 0);      // turboda görüş açısı genişler
+    let fov = hh ? 57 + 22 * smooth(6, 62, sp) + HH.tb * 10 : 60 + Math.min(ucan ? 32 : 20, sp * (ucan ? 0.3 : 0.34)) + (c.tbAktif ? 9 : 0);      // turboda görüş açısı genişler
     const yk = yuzKamera(c, sp, dt);
     if (yk > 0.001) {      // sürücünün yüzü: önden ¾ açı; arka kameradan yumuşak geçiş
       const e = yk * yk * (3 - 2 * yk);      // başın çevresinde yay çizer: düz geçişte kamera sürücünün içinden geçiyordu
@@ -18373,7 +18469,9 @@ function cokKur(o) {
       camera.position.lerp(_gp, e); lookAt.lerp(_gl, e); fov = lerp(fov, 52, e);
     }
     camera.lookAt(lookAt);
-    if (Math.abs(fov - camera.fov) > 0.05) { camera.fov = yk > 0.001 ? fov : lerp(camera.fov, fov, Math.min(1, dt * 3)); camera.updateProjectionMatrix(); }
+    HH.egim = lerp(HH.egim, hh && yk < 0.001 ? -(c.steer || 0) * clamp(sp / 40, 0, 1) * 0.045 : 0, Math.min(1, dt * 4));      // virajda kamera hafif yatar
+    if (Math.abs(HH.egim) > 1e-4) camera.rotateZ(HH.egim);
+    if (Math.abs(fov - camera.fov) > 0.05) { camera.fov = yk > 0.001 ? fov : lerp(camera.fov, fov, Math.min(1, dt * (hh ? 6 : 3))); camera.updateProjectionMatrix(); }
     if (GIRIS) {      // giriş: drone yazının arkasından yüksekten bakar, alçalıp yaklaşır, sonra arabanın arkasına süzülür
       const g = GIRIS, k = clamp(g.t / g.dur, 0, 1), pT = routePoint(g.R, g.s + g.L * 0.5), fx = pT.dx, fz = pT.dz, ty = groundH(pT.x, pT.z);
       const a = smooth(0, 0.62, k), b = smooth(0.52, 1, k), rx = -fz, rz = fx;
@@ -19215,6 +19313,7 @@ function cokKur(o) {
     if (!(G.goal && G.goal.ozel && G.goal.ozel.taksi)) taksiTick(dt);      // taksi yolcusu sonuç ekranında: kaldırıma yürür, el sallar
     parkTick(dt);      // park halindeki hamal üç tekerleri: uzaktakiler gizlenir
     const f = updateCamera(dt);
+    hhAdim(dt, driving);      // hız hissi: titreşim, iniş, nitro kenarı, hız çizgileri
     if (G.sars > 0) { G.sars -= dt; const k = G.sars * 0.35; camera.position.x += (Math.random() - 0.5) * k; camera.position.y += (Math.random() - 0.5) * k; camera.position.z += (Math.random() - 0.5) * k; }
     vakitAdim(dt);
     parcaGorunur(dt, false);
@@ -19232,9 +19331,9 @@ function cokKur(o) {
       const v = player[player.arac], tb = !!player.tbAktif && !player.ski;
       if (v && v.group && (player.arac === 'car' || player.arac === 'motor' || player.arac === 'taksi')) {
         const al = turboAlev(v); al.visible = tb;
-        if (tb) for (const s of al.children) { const z = (0.62 - s.userData.k * 0.16) * (0.75 + Math.random() * 0.5); s.scale.set(z, z, 1); }
+        if (tb) for (const s of al.children) { const z = (0.95 - s.userData.k * 0.15) * (0.75 + Math.random() * 0.5); s.scale.set(z, z * 0.8, 1); }      // uzun, titrek alev (HH)
       }
-      if (tb && !tbOnce) turboSes();
+      if (tb && !tbOnce) { turboSes(); if (hhAcik(player)) G.sars = Math.max(G.sars, 0.18); }      // nitro açılışı: kısa sarsıntı
       tbOnce = tb;
     }
     if (yerYazi && !GIRIS) {      // asfalttaki yer adı: çekimden 7 sn sonra 2,5 sn'de silinir (haritada kalıcı değil)
@@ -19248,7 +19347,7 @@ function cokKur(o) {
     beacon1.material.opacity = pulse;
     for (const ct of cats) if (ct.mesh.visible) { if (ct.kedi) kediAdim(ct.kedi, dt, G.t, player.x, player.z, (ct.x - camera.position.x) ** 2 + (ct.z - camera.position.z) ** 2); else ct.mesh.rotation.y = G.t * 1.2; }
     if (G.state === 'cook') MUTFAK.tick(dt);
-    updateDust(dt, driving);
+    updateDust(dt, driving); kivAdim(dt);
     if (driving) { updateHud(dt); drawMini(); }
     if (driving || G.state === 'result') updateAudio(driving);
     // mutfak açıkken dünya çizilmez: 3B mutfak kendi sahnesini çizer, salon ekranı ve 2B mutfak tuvali zaten örter
@@ -19283,7 +19382,7 @@ function cokKur(o) {
     G, EVENTS, STORY, S, startStory, nextLine, loadRegion, get bolge() { return REGION.id; }, get tur() { return TUR; }, get detay() { return G.detay; }, get cim() { return CIM ? { yaprak: CIM.yaprak, ortu: CIM.ortu } : null; }, get zemin() { return terrTex; }, get player() { return player; }, get cars() { return cars; }, startEvent, startFree, tick,
     sim(sec) { const n = Math.round(sec / STEP); for (let i = 0; i < n; i++) { if (G.state === 'free' || G.state === 'race' || G.state === 'count') tick(STEP); } },
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
-    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, YH, YD, ydYukle, ydBariyerYer, PRK, PARKUR, parkurYer, YT, ytKarar, ytYolBul, okAdim, galeri: { liste: GALERI, get durum() { return GAL; }, sec: galeriSec, tak: galeriTak, ciz: galeriCiz }, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
+    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, HH, KIV, kivilcim, get kamFov() { return camera.fov; }, YH, YD, ydYukle, ydBariyerYer, PRK, PARKUR, parkurYer, YT, ytKarar, ytYolBul, okAdim, galeri: { liste: GALERI, get durum() { return GAL; }, sec: galeriSec, tak: galeriTak, ciz: galeriCiz }, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     cok: COK,      // birlikte sürüş: .durum, .kur(), .katil(kod), .ayril(), .sunucuAyarla(adres)
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
     kediler: () => cats.map((c) => ({ canli: !!c.kedi, gorunur: c.mesh.visible, got: c.got })),
@@ -19347,7 +19446,7 @@ function cokKur(o) {
     bench(n) { const gl = renderer.getContext(), t0 = performance.now(); for (let i = 0; i < n; i++) { ciz(); gl.finish(); } return { ms: (performance.now() - t0) / n, calls: renderer.info.render.calls, tris: renderer.info.render.triangles, geo: renderer.info.memory.geometries, tex: renderer.info.memory.textures, prog: renderer.info.programs.length }; },
   };
 
-  initDust(); initKiz();
+  initDust(); initKiz(); initKiv();
   applyLang(AYAR.dil || LANG, false);
   build().catch((e) => { $('load-text').textContent = T('hata', e.message); console.error(e); });
   ekYukle();
