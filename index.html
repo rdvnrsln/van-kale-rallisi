@@ -67,6 +67,14 @@ button:focus-visible { outline: 2px solid var(--gol); outline-offset: 2px; }
 #mesaj { grid-area: 2 / 1 / 3 / 4; align-self: start; justify-self: center; margin-top: 1vh; text-align: center; text-shadow: 0 3px 18px rgba(0, 0, 0, 0.75); }
 #mesaj b { display: block; font-family: var(--f-baslik); font-style: italic; font-weight: 800; font-size: clamp(34px, 6.4vw, 66px); line-height: 1; letter-spacing: 0.01em; text-transform: uppercase; }
 #mesaj span { display: block; font-size: 16px; margin-top: 4px; }
+/* Yarış ödülü yazısı (kayma, havada kalma, rüzgâr gölgesi, nitro): hız göstergesinin üstünde kısa süre görünür. */
+#odul { grid-area: 2 / 1 / 3 / 4; align-self: end; justify-self: center; margin-bottom: 14vh; font-family: var(--f-baslik); font-style: italic; font-weight: 700; font-size: clamp(18px, 2.6vw, 26px);
+  letter-spacing: 0.04em; text-transform: uppercase; color: #6fd8ff; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8); opacity: 0; transform: translateY(8px); transition: opacity 0.25s ease, transform 0.25s ease; pointer-events: none; }
+#odul.gor { opacity: 1; transform: none; }
+/* Araç sağlığı: turbonun yanında ince çubuk; yalnız hasar varken görünür. */
+#can { width: 6px; height: 64px; align-self: flex-end; margin-bottom: 4px; position: relative; overflow: hidden; border: 1.5px solid rgba(255, 255, 255, 0.55); border-radius: 4px; background: rgba(16, 20, 26, 0.25); }
+#can-d { position: absolute; left: 0; right: 0; bottom: 0; height: 100%; background: #7fe0a4; }
+#can.az #can-d { background: #ff6f5e; }
 #ipucu { grid-area: 3 / 2; align-self: end; pointer-events: auto; background: var(--kehribar); color: #1a1206; border: 0; padding: 10px 18px; font-weight: 600; border-radius: 2px; max-width: 46vw; }
 .sag-alt { grid-area: 3 / 3; justify-self: end; align-self: end; display: flex; align-items: flex-end; gap: 10px; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6); }
 #hiz-n { font-family: var(--f-baslik); font-style: italic; font-weight: 800; font-size: 86px; line-height: 0.82; font-variant-numeric: tabular-nums; min-width: 2.1ch; text-align: right; }
@@ -421,6 +429,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
     </div>
   </div>
   <div id="mesaj" aria-live="polite"></div>
+  <div id="odul" aria-hidden="true"></div>
   <!-- viraj uyarısı: klasik yarış oyunlarındaki çift ok; yön ve keskinlik (beyaz, kehribar, kırmızı üç ok) -->
   <div id="viraj" hidden><svg viewBox="0 0 76 32" aria-hidden="true"><path d="M27 4L15 16l12 12"/><path d="M42 4L30 16l12 12"/><path class="v3" d="M57 4L45 16l12 12"/></svg><span class="yazi" data-i18n="hud.viraj">Viraj</span></div>
   <div id="giris-gec" data-i18n="hud.gec">Geçmek için dokun ya da bir tuşa bas</div>
@@ -431,6 +440,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
   <div class="dokun dokun-sag"><button type="button" data-t="h" aria-label="El freni" data-i18n-aria="hud.elFreni"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M10.2 16.6V7.6h2.9a2.55 2.55 0 0 1 0 5.1h-2.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" data-t="b" aria-label="Fren" data-i18n-aria="hud.fren"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.2" y="7.2" width="15.6" height="10.4" rx="2.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.2 10.4v4M12 10.4v4M15.8 10.4v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button><button type="button" data-t="g" aria-label="Gaz" data-i18n-aria="hud.gaz"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="2.8" width="8" height="18.4" rx="2.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10.6 7.6h2.8M10.6 11.8h2.8M10.6 16h2.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
   <div class="dokun dokun-turbo"><button type="button" id="dokun-zil" aria-label="Zil" data-i18n-aria="hud.zil"><svg class="ikon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.6h12l-1.7-2.3V10a4.3 4.3 0 0 0-8.6 0v4.3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M10.2 19.2a1.9 1.9 0 0 0 3.6 0M12 3.6v1.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><button type="button" id="dokun-n" data-t="n" aria-label="Turbo" data-i18n-aria="hud.turbo"><svg class="ikon ikon-pedal" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="11" r="4"/><path d="M10 11l5.5 6.5M13 18.5h6M4.2 6.6a8 8 0 0 1 9.6-2.9"/></g></svg><svg class="ikon ikon-alev" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8c.9 3.4 5 5.2 5 10.2a5 5 0 0 1-10 0c0-2.4 1.3-4 2.7-5.1.2 1.9 1.1 2.9 2.3 3.3.3-3.3-1-5.8 0-8.4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button></div>
   <div class="sag-alt">
+    <div id="can" role="meter" aria-label="Araç sağlığı" data-i18n-aria="hud.can" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" hidden><div id="can-d"></div></div>
     <div id="turbo" role="meter" aria-label="Turbo" data-i18n-aria="hud.turbo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="turbo-d"></div></div>
     <div id="hiz-n">0</div>
     <div class="hiz-yan"><div id="vites">B</div><div class="etiket" data-i18n="hud.kmsa">km/sa</div></div>
@@ -465,7 +475,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
         </div>
         <button id="btn-cikis" class="m-metin" type="button" hidden data-i18n="menu.cikis">Çıkış</button>
       </div>
-      <p class="m-kunye">© OpenStreetMap · SRTM · Poly Haven</p>
+      <p class="m-kunye">© OpenStreetMap · SRTM · Poly Haven · vinish.dev</p>
     </section>
     <section class="m-panel m-sayfa" data-panel="serbest" hidden>
       <div class="m-baslik"><button type="button" class="m-yuvarlak" data-panel-git="ana" data-i18n-aria="ayar.geri" aria-label="Geri"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2 data-i18n="menu.serbest">Serbest sürüş</h2></div>
@@ -6343,6 +6353,7 @@ const DIL = {
     'ev.kale-turu': 'Kale Turu', 'ev.kale-turu.alt': 'Kalenin ve Eski Van’ın çevresinde asfalt tur',
     'ev.eski-van': 'Eski Van Rallisi', 'ev.eski-van.alt': 'Güney uçurumun dibinde, yıkık şehrin toprak yolları',
     'ev.iskele': 'İskele Sprinti', 'ev.iskele.alt': 'Melen Caddesi, kalenin kuzey yüzü, Van Gölü iskelesi',
+    'hud.can': 'Araç sağlığı', 'yh.kayma': 'Kayma', 'yh.hava': 'Havada {0} sn', 'yh.golge': 'Rüzgâr gölgesi', 'yh.devir': '{0} saf dışı', 'yh.nitro': 'Nitro', 'yh.kaza': 'Kaza!', 'yh.kaza.alt': 'Araç yola geri alınıyor', 'yh.prim': 'gösteri primi +{0} ₺',
     'ev.turnuva': 'Kale Tırmanış Turnuvası', 'ev.turnuva.alt': 'Sekiz yarışmacı, üç tur eleme: her turda bir rakiple zirveye yarış',
     'trn.adlar': ['Tuşba', 'Erek', 'Edremit', 'Gevaş', 'Muradiye', 'Çaldıran', 'Erciş'], 'trn.ad.0': 'Çeyrek final', 'trn.ad.1': 'Yarı final', 'trn.ad.2': 'Final',
     'trn.cikti.1': 'Yarı finaldesin', 'trn.cikti.2': 'Finaldesin', 'trn.elendin': 'Elendin', 'trn.sampiyon': 'Şampiyon oldun', 'trn.siradaki': 'Sıradaki rakibin {0}',
@@ -6422,7 +6433,7 @@ const DIL = {
     'hud.turbo': 'Turbo', 'hud.nefes': 'Nefes', 'hud.ayakta': 'Ayakta pedal', 'uc.nefes': 'Nefesin tükendi', 'uc.devrildi': 'Devrildin', 'uc.devrildi.alt': 'Virajda yavaşla; yükle daha çabuk devrilirsin', 'hud.gec': 'Geçmek için dokun ya da bir tuşa bas', 'hud.viraj': 'Viraj',
     'hud.zil': 'Zil', 'uc.kilPayi': 'Kıl payı!', 'uc.kilPayi.alt': 'Yoldakiler alkışlıyor',
     'menu.tuslar': '<b>W A S D</b> ya da <b>ok tuşları</b> sürüş · <b>Shift</b> turbo (bisiklette ayakta pedal) · <b>Boşluk</b> el freni · <b>R</b> yola dön · <b>C</b> kamera · <b>F</b> (basılı tut) sürücünün yüzü · <b>H</b> korna ya da zil · <b>N</b> ses · <b>M</b> menü. Oyun kolu: sol çubuk, RT gaz, LT fren, X ya da RB turbo, A el freni, B yola dön, Y kamera, LB sürücünün yüzü.',
-    'menu.kunye': 'Sokaklar, binalar ve surlar: © OpenStreetMap katkıcıları (ODbL). Yükseklik: SRTM, Mapzen arazi karoları. Dokular: Poly Haven (CC0). Kale kayasının biçimi OSM sınırından yeniden kurulmuştur.',
+    'menu.kunye': 'Sokaklar, binalar ve surlar: © OpenStreetMap katkıcıları (ODbL). Yükseklik: SRTM, Mapzen arazi karoları. Dokular: Poly Haven (CC0). Kale kayasının biçimi OSM sınırından yeniden kurulmuştur. Yarış arabaları ve donanımı: vinish.dev (CC BY 4.0).',
     'etk.km': 'km', 'etk.tur': '{0} tur', 'etk.zamanaKarsi': 'zamana karşı', 'etk.rakip': '{0} rakip', 'etk.enIyi': 'en iyi {0}',
     'hud.kedi': 'Van kedisi', 'hud.menu': 'Menü', 'hud.kamera': 'Kamera', 'hud.yuz': 'Yüz', 'hud.yolaDon': 'Yola dön', 'hud.sesAcik': 'Ses açık', 'hud.sesKapali': 'Ses kapalı', 'hud.yanCevir': 'Daha geniş görüş için telefonu yan çevir',
     'hud.kmsa': 'km/sa', 'hud.el': 'El', 'hud.fren': 'Fren', 'hud.gaz': 'Gaz', 'hud.tur': 'Tur {0}/{1}', 'hud.nokta': 'Nokta {0}/{1}', 'hud.hedef': 'Hedef: {0}',
@@ -6521,6 +6532,7 @@ const DIL = {
     'ev.kale-turu': 'Castle Circuit', 'ev.kale-turu.alt': 'An asphalt lap around the castle and Old Van',
     'ev.eski-van': 'Old Van Rally', 'ev.eski-van.alt': 'Dirt roads of the ruined city, below the south cliff',
     'ev.iskele': 'Pier Sprint', 'ev.iskele.alt': 'Melen Street, the north face of the castle, the Lake Van pier',
+    'hud.can': 'Car health', 'yh.kayma': 'Drift', 'yh.hava': 'Air time {0} s', 'yh.golge': 'Slipstream', 'yh.devir': '{0} knocked out', 'yh.nitro': 'Nitro', 'yh.kaza': 'Wrecked!', 'yh.kaza.alt': 'Putting the car back on the road', 'yh.prim': 'stunt bonus +{0} ₺',
     'ev.turnuva': 'Castle Climb Tournament', 'ev.turnuva.alt': 'Eight drivers, three knockout rounds: race one rival to the summit each round',
     'trn.adlar': ['Tuşba', 'Erek', 'Edremit', 'Gevaş', 'Muradiye', 'Çaldıran', 'Erciş'], 'trn.ad.0': 'Quarter-final', 'trn.ad.1': 'Semi-final', 'trn.ad.2': 'Final',
     'trn.cikti.1': 'You are in the semi-final', 'trn.cikti.2': 'You are in the final', 'trn.elendin': 'Knocked out', 'trn.sampiyon': 'You are the champion', 'trn.siradaki': 'Next rival: {0}',
@@ -6600,7 +6612,7 @@ const DIL = {
     'hud.turbo': 'Turbo', 'hud.nefes': 'Breath', 'hud.ayakta': 'Stand and pedal', 'uc.nefes': 'Out of breath', 'uc.devrildi': 'You tipped over', 'uc.devrildi.alt': 'Slow down in corners; with a load you tip sooner', 'hud.gec': 'Tap or press any key to skip', 'hud.viraj': 'Bend',
     'hud.zil': 'Bell', 'uc.kilPayi': 'Close call!', 'uc.kilPayi.alt': 'People on the street are clapping',
     'menu.tuslar': '<b>W A S D</b> or <b>arrow keys</b> drive · <b>Shift</b> turbo (on the bicycle: stand and pedal) · <b>Space</b> handbrake · <b>R</b> back to road · <b>C</b> camera · <b>F</b> (hold) driver’s face · <b>H</b> horn or bell · <b>N</b> sound · <b>M</b> menu. Gamepad: left stick, RT throttle, LT brake, X or RB turbo, A handbrake, B back to road, Y camera, LB driver’s face.',
-    'menu.kunye': 'Streets, buildings and walls: © OpenStreetMap contributors (ODbL). Elevation: SRTM, Mapzen terrain tiles. Textures: Poly Haven (CC0). The shape of the castle rock is rebuilt from the OSM outline.',
+    'menu.kunye': 'Streets, buildings and walls: © OpenStreetMap contributors (ODbL). Elevation: SRTM, Mapzen terrain tiles. Textures: Poly Haven (CC0). The shape of the castle rock is rebuilt from the OSM outline. Race cars and props: vinish.dev (CC BY 4.0).',
     'etk.km': 'km', 'etk.tur': '{0} laps', 'etk.zamanaKarsi': 'time trial', 'etk.rakip': '{0} rivals', 'etk.enIyi': 'best {0}',
     'hud.kedi': 'Van cats', 'hud.menu': 'Menu', 'hud.kamera': 'Camera', 'hud.yuz': 'Face', 'hud.yolaDon': 'Back to road', 'hud.sesAcik': 'Sound on', 'hud.sesKapali': 'Sound off', 'hud.yanCevir': 'Turn your phone sideways for a wider view',
     'hud.kmsa': 'km/h', 'hud.el': 'Hand', 'hud.fren': 'Brake', 'hud.gaz': 'Gas', 'hud.tur': 'Lap {0}/{1}', 'hud.nokta': 'Gate {0}/{1}', 'hud.hedef': 'Target: {0}',
@@ -6699,6 +6711,7 @@ const DIL = {
     'ev.kale-turu': 'دور قلعه', 'ev.kale-turu.alt': 'یک دور آسفالت پیرامون قلعه و وان قدیم',
     'ev.eski-van': 'رالی وان قدیم', 'ev.eski-van.alt': 'راه‌های خاکی شهر ویران، پای صخره جنوبی',
     'ev.iskele': 'سرعت اسکله', 'ev.iskele.alt': 'خیابان ملن، دیواره شمالی قلعه، اسکله دریاچه وان',
+    'hud.can': 'سلامت خودرو', 'yh.kayma': 'دریفت', 'yh.hava': '{0} ثانیه در هوا', 'yh.golge': 'بادپناه', 'yh.devir': '{0} از دور خارج شد', 'yh.nitro': 'نیترو', 'yh.kaza': 'تصادف!', 'yh.kaza.alt': 'خودرو به مسیر برمی‌گردد', 'yh.prim': 'پاداش نمایش +{0} ₺',
     'ev.turnuva': 'تورنمنت صعود به قلعه', 'ev.turnuva.alt': 'هشت شرکت‌کننده، سه دور حذفی: در هر دور با یک رقیب تا قله مسابقه بده',
     'trn.adlar': ['توشبا', 'ارک', 'ادرمیت', 'گواش', 'مرادیه', 'چالدران', 'ارجیش'], 'trn.ad.0': 'یک‌چهارم نهایی', 'trn.ad.1': 'نیمه‌نهایی', 'trn.ad.2': 'فینال',
     'trn.cikti.1': 'به نیمه‌نهایی رسیدی', 'trn.cikti.2': 'به فینال رسیدی', 'trn.elendin': 'حذف شدی', 'trn.sampiyon': 'قهرمان شدی', 'trn.siradaki': 'رقیب بعدی: {0}',
@@ -6778,7 +6791,7 @@ const DIL = {
     'hud.turbo': 'توربو', 'hud.nefes': 'نفس', 'hud.ayakta': 'رکاب ایستاده', 'uc.nefes': 'نفست بند آمد', 'uc.devrildi': 'واژگون شدی', 'uc.devrildi.alt': 'سر پیچ آهسته‌تر برو؛ با بار زودتر واژگون می‌شوی', 'hud.gec': 'برای رد کردن لمس کنید یا کلیدی بزنید', 'hud.viraj': 'پیچ',
     'hud.zil': 'زنگ', 'uc.kilPayi': 'به مو رسید!', 'uc.kilPayi.alt': 'رهگذرها برایت دست می‌زنند',
     'menu.tuslar': '<b>W A S D</b> یا <b>کلیدهای جهت</b> رانندگی · <b>Shift</b> توربو (روی دوچرخه: رکاب ایستاده) · <b>Space</b> ترمز دستی · <b>R</b> بازگشت به جاده · <b>C</b> دوربین · <b>F</b> (نگه دارید) چهرهٔ راننده · <b>H</b> بوق یا زنگ · <b>N</b> صدا · <b>M</b> منو. دسته بازی: اهرم چپ، RT گاز، LT ترمز، X یا RB توربو، A ترمز دستی، B بازگشت به جاده، Y دوربین، LB چهرهٔ راننده.',
-    'menu.kunye': 'خیابان‌ها، ساختمان‌ها و باروها: © مشارکت‌کنندگان OpenStreetMap (ODbL). ارتفاع: SRTM، کاشی‌های Mapzen. بافت‌ها: Poly Haven (CC0). شکل صخره قلعه از روی محدوده OSM بازسازی شده است.',
+    'menu.kunye': 'خیابان‌ها، ساختمان‌ها و باروها: © مشارکت‌کنندگان OpenStreetMap (ODbL). ارتفاع: SRTM، کاشی‌های Mapzen. بافت‌ها: Poly Haven (CC0). شکل صخره قلعه از روی محدوده OSM بازسازی شده است. خودروها و تجهیزات مسابقه: vinish.dev (CC BY 4.0).',
     'etk.km': 'کیلومتر', 'etk.tur': '{0} دور', 'etk.zamanaKarsi': 'با زمان', 'etk.rakip': '{0} رقیب', 'etk.enIyi': 'بهترین {0}',
     'hud.kedi': 'گربه وان', 'hud.menu': 'منو', 'hud.kamera': 'دوربین', 'hud.yuz': 'چهره', 'hud.yolaDon': 'بازگشت به جاده', 'hud.sesAcik': 'صدا روشن', 'hud.sesKapali': 'صدا خاموش', 'hud.yanCevir': 'برای دید بازتر، گوشی را افقی بگیرید',
     'hud.kmsa': 'km/h', 'hud.el': 'دستی', 'hud.fren': 'ترمز', 'hud.gaz': 'گاز', 'hud.tur': 'دور {0}/{1}', 'hud.nokta': 'نقطه {0}/{1}', 'hud.hedef': 'مقصد: {0}',
@@ -11223,7 +11236,7 @@ function kirikCarp(c, nfx, nfz) {
     for (let i = Math.floor((px - CAR_R) / KIRIK_H); i <= Math.floor((px + CAR_R) / KIRIK_H); i++) for (let j = Math.floor((pz - CAR_R) / KIRIK_H); j <= Math.floor((pz + CAR_R) / KIRIK_H); j++) {
       const h = KIRIK.izg.get(i * 100003 + j); if (!h) continue;
       for (const o of h) {
-        if (o.durum !== 0 || o.damga === damga) continue;
+        if (o.durum !== 0 || o.kapali || o.damga === damga) continue;      // kapali: yarış dışında lastik bariyer (src/oyun.js YD)
         let cx, cz, R;
         if (o.tip !== 1) { cx = o.x; cz = o.z; R = CAR_R + o.r; }      // direk ve ağaç: daire; çit rayı: doğru parçası
         else { const ex = o.bx - o.ax, ez = o.bz - o.az, L2 = ex * ex + ez * ez, t = L2 > 0 ? clamp(((px - o.ax) * ex + (pz - o.az) * ez) / L2, 0, 1) : 0; cx = o.ax + ex * t; cz = o.az + ez * t; R = CAR_R; }
@@ -11237,7 +11250,7 @@ function kirikCarp(c, nfx, nfz) {
             c.vx -= nx * vn * 1.25; c.vz -= nz * vn * 1.25; c.vx *= 0.97; c.vz *= 0.97;
             if (-vn > c.hit) c.hit = -vn;
             c.h -= (nx * -nfz + nz * nfx) * Math.min(0.06, -vn * 0.005) * (part ? -1 : 1);
-            if (-vn > 2) { AGAC_U.uVur.value.set(o.x, o.z, AGAC_U.uZaman.value, Math.min(1, -vn / 12)); if (-vn > 3) KIRIK.ses.push({ tur: 'agac', v: -vn, x: o.x, z: o.z }); }
+            if (-vn > 2 && !o.lastik) { AGAC_U.uVur.value.set(o.x, o.z, AGAC_U.uZaman.value, Math.min(1, -vn / 12)); if (-vn > 3) KIRIK.ses.push({ tur: 'agac', v: -vn, x: o.x, z: o.z }); }
           }
           continue;
         }
@@ -15509,7 +15522,7 @@ function cokKur(o) {
       if (CIM) { terrTex.push(CIM.doku); CIM.kalite(AYAR.kalite); }
       waterTex = buildWater(world, renderer);
       if (DAG.hazir) { buildDag(UZAK.sahne, waterTex); DAG.U.uKarSin.value = Rg.karSin || 2450; }
-      evMarkers = []; cats = [];
+      evMarkers = []; cats = []; YH.n.length = 0; YH.bos.length = 0; for (const k in YD.cache) { scene.remove(YD.cache[k].kok); for (const m of YD.cache[k].kok.children) m.dispose(); } YD.cache = {}; YD.acik = null;      // eski bölgenin ışıkları dünyayla birlikte silindi; bariyerlerin çarpışma kaydı kirikSifirla ile gitti
       buildMarkers();
       if (id === 'van') buildCats();
       updateCatHud();
@@ -15991,9 +16004,208 @@ function cokKur(o) {
     $('btn-tekrar').textContent = T(U.bitti ? 'trn.yeni' : 'trn.sonraki'); $('btn-tekrar').focus();
     r.odul = odul; r.turSonuc = kazandi ? (k === 2 ? 'sampiyon' : 'gecti') : 'elendi';
   }
+  // ---- Yarış heyecanı (24 Kas 2026; kurucu: "mevcut rakipler çok uysallar, bunları biraz hırslı ve çirkef yapmalısın ... arabalar hasar görmeli darbe aldıkça.
+  // asphalttaki pekiştireç ve cezalar mantığını aynen istiyorum. ayrıca harita güzergahında da yarışa uyarlamalısın"). Dört parça:
+  // 1) Hırslı rakip (rakipHirs): arkadan gelen oyuncunun önünü keser, yan yana gelince üstüne kırar (korna çalar), geride kalınca nitroyla yetişir, öndeyken beklemez.
+  // 2) Hasar (c.can 1 → 0): her sert darbe canı düşürür; kaputtan duman çıkar (can < 0,6 gri, < 0,3 siyah). Can bitince kaza: araç durur, YH.kazaSure sonra
+  //    rotaya geri konur (ceza: süre kaybı, nitronun yarısı). Geri konunca YH.koruma sn hasar almaz. Rakipler de hasar alır ve kaza yapar.
+  // 3) Ödül: kayma, havada kalma, rakibin arkasında rüzgâr gölgesi, rakibi saf dışı bırakma ve yoldaki nitro noktaları nitro doldurur, puan verir;
+  //    puan yarış sonunda gösteri primine döner (20 puan = 1 ₺, en çok YH.primTavan). Yarışta nitro kendiliğinden çok yavaş dolar: kazanmak gerekir.
+  // 4) Güzergâh: yarış süresince rotanın hızlı bölümlerine mavi nitro noktaları dizilir (kontrol noktası sütunları gibi geçici ışık; haritaya öğe eklenmez).
+  // Servis, yük, kayak ve mutfak işlerinde çalışmaz. Pedallı üç tekerde nitro yerine nefes dolar.
+  const YH = { esik: 3.5, kat: 0.03, kazaSure: 2.6, koruma: 3, serit: 3.4, primTavan: 300, nitroAra: 380, nitroYari: 2.8, nitroPay: 0.35, n: [], bos: [], odulT: 0, kayT: 0, golT: 0, havaT: 0 };
+  const yhVar = () => !!G.race && !G.race.ev.ozel && !player.ski && !player.binek;
+  function yhBasla(r, tur) {      // yarış başında: can dolu, rakiplerin huyu, nitro noktaları
+    r.puan = 0; r.say = { kayma: 0, hava: 0, golge: 0, devir: 0, nitro: 0, kaza: 0 };
+    cars.forEach((c, k) => {
+      c.can = 1; c.kazaT = 0; c.kazaSay = 0; c.koruma = 0; c.sonTemas = -9; c.lane0 = c.lane || 0; c.cirVur = 0; c.cirBekle = 2 + k; c.nitroT = 0; c.nitroBekle = 5 + k * 1.5; c.tbAktif = false;
+      c.hirs = tur ? 0.5 + 0.25 * tur.tur : [0.55, 0.75, 0.9, 1][k % 4];
+    });
+    yhNitroDiz(r.R);
+  }
+  function yhNitroDiz(R) {      // rotanın hızlı (düz) bölümlerine, yaklaşık YH.nitroAra metrede bir; sağlı sollu
+    yhNitroSil();
+    if (R.L < 500) return;
+    const adet = Math.min(12, Math.max(2, Math.round(R.L / YH.nitroAra)));
+    for (let k = 0; k < adet; k++) {
+      let s = ((k + 0.5) * R.L) / adet, en = -1;
+      for (let d = -70; d <= 70; d += 10) { const q = clamp(s + d, 40, R.L - 30), i = Math.min(R.n - 1, Math.round((q / R.L) * (R.n - 1))); if (R.v[i] > en) { en = R.v[i]; s = q; } }      // çevredeki en hızlı nokta
+      const p = routePoint(R, s), yan = k % 2 ? -1.8 : 1.8, x = p.x + p.dz * yan, z = p.z - p.dx * yan;
+      const m = YH.bos.pop() || beam(0.8, 2.6, LIN('#35b6ff'), 0.6, world);
+      m.position.set(x, groundH(x, z) - 0.2, z); m.visible = true;
+      YH.n.push({ x, z, mesh: m, t: 0 });
+    }
+  }
+  function yhNitroSil() { for (const n of YH.n) { n.mesh.visible = false; YH.bos.push(n.mesh); } YH.n.length = 0; }
+  function yhOdul(metin, nitro, puan) {      // küçük ödül yazısı + nitro (pedallıda nefes) + puan
+    const c = player, r = G.race;
+    if (nitro) { if (c.pedal) c.nefes = Math.min(1, (c.nefes || 0) + nitro); else c.turbo = Math.min(1, (c.turbo || 0) + nitro); }
+    if (r && puan) r.puan += puan;
+    if (metin) { const el = $('odul'); el.textContent = metin; el.classList.remove('gor'); void el.offsetWidth; el.classList.add('gor'); YH.odulT = 1.5; beep(1320, 0.07, 0.12, 'triangle'); }
+  }
+  // Rakibin hırsı: şerit hedefi ve hız bandı. ds > 0: oyuncu önde. Şerit işareti aiInput ile aynı (rota eksenine dik, sağ +).
+  function rakipHirs(c, r, dt) {
+    const R = r.R, P = player, ds = P.prog - c.prog, h = c.hirs || 0.6;
+    const i = Math.min(R.n - 2, c.ri), ex = R.x[i + 1] - R.x[i], ez = R.z[i + 1] - R.z[i], L = Math.hypot(ex, ez) || 1;
+    const pl = ((P.x - R.x[i]) * ez - (P.z - R.z[i]) * ex) / L, hiz = Math.hypot(c.vx, c.vz);
+    let hedef = c.lane0, oran = 3;
+    c.cirBekle -= dt;
+    const mesgul = P.kazaT > 0 || P.finished || P.devrik > 0;
+    if (!mesgul && c.cirVur <= 0 && c.cirBekle <= 0 && Math.abs(ds) < 6 && Math.hypot(P.x - c.x, P.z - c.z) < 9 && hiz > 5) {      // yan yana: üstüne kırar
+      c.cirVur = 0.8 + 0.7 * h; c.cirBekle = c.cirVur + 2.5 + 3.5 * (1 - h) + Math.random() * 1.5;
+      const v = clamp(1 - Math.hypot(P.x - c.x, P.z - c.z) / 60, 0, 1) * 0.13; beep(415, 0.28, v, 'square'); beep(523, 0.28, v * 0.85, 'square');
+    }
+    if (c.cirVur > 0) { c.cirVur -= dt; hedef = pl + Math.sign(pl - c.lane || 1) * 0.9; oran = 6.5; }
+    else if (!mesgul && ds < -3 && ds > -30) { hedef = pl; oran = 3.6 + 1.6 * h; }      // oyuncu arkada ve yakın: önünü keser
+    hedef = clamp(hedef, -YH.serit, YH.serit);
+    c.lane += clamp(hedef - c.lane, -oran * dt, oran * dt);
+    let band = ds > 0 ? 1 + Math.min(0.12, ds / 260) * (0.6 + 0.4 * h) : Math.max(0.93, 1 + ds / 1500);      // geride: yetişir; önde: pek beklemez
+    c.nitroBekle -= dt;
+    if (c.nitroT <= 0 && c.nitroBekle <= 0 && ds > 10 && hiz > 7 && !mesgul) { c.nitroT = 1.4 + 0.6 * h; c.nitroBekle = 9 - 3 * h + Math.random() * 3; }
+    if (c.nitroT > 0) { c.nitroT -= dt; band *= 1.1; c.tbAktif = true; } else c.tbAktif = false;
+    return band;
+  }
+  function yhKaza(c, r) {      // can bitti: araç durur, süre dolunca rotaya döner
+    c.kazaT = YH.kazaSure; c.can = 0; c.tbAktif = false; c.nitroT = 0; c.kazaSay = (c.kazaSay || 0) + 1;
+    for (let k = 0; k < 6; k++) puff(c.x + (Math.random() - 0.5) * 2, c.y + 0.7 + Math.random(), c.z + (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, 0.08, 0.08, 0.08);
+    if (c.isPlayer) {
+      if (r) r.say.kaza++;
+      if (!c.pedal) c.turbo = (c.turbo || 0) * 0.5;
+      thud(14); flash(T('yh.kaza'), T('yh.kaza.alt'), YH.kazaSure);
+    } else if (r && r.t - c.sonTemas < 2) { r.say.devir++; yhOdul(T('yh.devir', c.name), 0.6, 500); }      // oyuncunun darbesiyle: saf dışı
+  }
+  function yhAdim(dt, r) {      // fizik adımının sonunda (c.hit sıfırlanmadan önce)
+    if (YH.odulT > 0) { YH.odulT -= dt; if (YH.odulT <= 0) $('odul').classList.remove('gor'); }
+    if (player.ski || player.binek || G.goal || (r && r.ev.ozel) || G.state === 'menu') return;
+    const P = player;
+    for (const c of cars) {
+      if (c.can === undefined) c.can = 1;
+      if (c.koruma > 0) c.koruma -= dt;
+      if (c.kazaT > 0) {
+        c.kazaT -= dt; c.vx *= 1 - Math.min(1, 3 * dt); c.vz *= 1 - Math.min(1, 3 * dt);
+        if (Math.random() < dt * 7) puff(c.x + Math.sin(c.h) * 1.2, c.y + 0.9, c.z + Math.cos(c.h) * 1.2, (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 1.5, 0.07, 0.07, 0.07);
+        if (c.kazaT <= 0) {
+          c.can = 1; c.koruma = YH.koruma; c.devrik = 0;
+          if (c.isPlayer) { respawn(); if ($('mesaj').textContent) flashT = Math.min(flashT, 0.01); } else if (r) resetToRoute(c, r.R, 0);
+          c.vx = c.vz = 0;
+        }
+        continue;
+      }
+      if (!c.isPlayer && c.hit > 0 && Math.hypot(P.x - c.x, P.z - c.z) < 3.6 && r) c.sonTemas = r.t;
+      if (c.hit > YH.esik && !(c.koruma > 0) && !(r && (r.done || c.finished))) {
+        c.can -= (c.hit - YH.esik) * YH.kat * (c.isPlayer ? 1 : 1.25);
+        for (let k = 0; k < 3; k++) puff(c.x, c.y + 0.6, c.z, (Math.random() - 0.5) * 7, (Math.random() - 0.5) * 7, 1, 0.62, 0.18);      // kıvılcım
+        if (c.can <= 0) { yhKaza(c, r); continue; }
+      }
+      // duman seyrek: parçacık yakında büyük görünür, sık atılınca oyuncunun görüşünü kapatıyordu (ölçüldü: sn'de 16 parçacık ekranı karartıyor)
+      if (c.can < 0.6 && Math.random() < dt * (c.can < 0.3 ? 4.5 : 2)) { const g = c.can < 0.3 ? 0.2 : 0.5; puff(c.x + Math.sin(c.h) * 1.4, c.y + 1.0, c.z + Math.cos(c.h) * 1.4, c.vx * 0.55 + (Math.random() - 0.5), c.vz * 0.55 + (Math.random() - 0.5), g, g, g); }
+    }
+    if (!r || r.done || G.state !== 'race' || P.kazaT > 0) { YH.kayT = YH.golT = 0; return; }
+    const hiz = Math.hypot(P.vx, P.vz);
+    // kayma: yan kayarak hızlı gitmek
+    if (!P.air && P.slip > 4.5 && hiz > 10) { YH.kayT += dt; if (P.pedal) P.nefes = Math.min(1, (P.nefes || 0) + dt * 0.08); else P.turbo = Math.min(1, (P.turbo || 0) + dt * 0.1); r.puan += dt * 40; if (YH.kayT > 0.8) { YH.kayT = -1.2; r.say.kayma++; yhOdul(T('yh.kayma'), 0, 0); } }
+    else if (YH.kayT > 0) YH.kayT = 0; else if (YH.kayT < 0) YH.kayT = Math.min(0, YH.kayT + dt);
+    // havada kalma: konunca ödül
+    if (P.air) YH.havaT += dt;
+    else { if (YH.havaT > 0.45) { r.say.hava++; yhOdul(T('yh.hava', YH.havaT.toFixed(1).replace('.', LANG === 'en' ? '.' : ',')), Math.min(0.3, YH.havaT * 0.22), Math.round(YH.havaT * 150)); } YH.havaT = 0; }
+    // rüzgâr gölgesi: rakibin 4-15 m arkasında, aynı hizada
+    let golge = false;
+    if (hiz > 11) for (const c of cars) {
+      if (c.isPlayer || c.kazaT > 0) continue;
+      const dx = c.x - P.x, dz = c.z - P.z, ileri = dx * Math.sin(P.h) + dz * Math.cos(P.h), yan = dx * Math.cos(P.h) - dz * Math.sin(P.h);
+      if (ileri > 4 && ileri < 15 && Math.abs(yan) < 2.2 && Math.abs(wrapAngle(c.h - P.h)) < 0.5) { golge = true; break; }
+    }
+    if (golge) { YH.golT += dt; if (P.pedal) P.nefes = Math.min(1, (P.nefes || 0) + dt * 0.07); else P.turbo = Math.min(1, (P.turbo || 0) + dt * 0.07); r.puan += dt * 10; if (YH.golT > 1.2) { YH.golT = -8; r.say.golge++; yhOdul(T('yh.golge'), 0, 0); } }
+    else if (YH.golT > 0) YH.golT = 0; else if (YH.golT < 0) YH.golT = Math.min(0, YH.golT + dt);
+    // nitro noktaları: oyuncu alırsa dolar ve nokta 12 sn kaybolur (turlu yarışta sonraki tura hazır); rakip üstünden geçerse nitrosu açılır, nokta kalır.
+    for (const n of YH.n) {
+      if (n.t > 0) { n.t -= dt; if (n.t <= 0) n.mesh.visible = true; }
+      for (const c of cars) {
+        if (c.kazaT > 0 || (c.x - n.x) ** 2 + (c.z - n.z) ** 2 > YH.nitroYari * YH.nitroYari) continue;
+        if (c.isPlayer) { if (n.t > 0) continue; n.t = 12; n.mesh.visible = false; r.say.nitro++; yhOdul(T('yh.nitro'), YH.nitroPay, 100); beep(880, 0.1, 0.2, 'triangle'); beep(1760, 0.16, 0.18, 'triangle', 0.07); }
+        else if (c.nitroBekle < 6) { c.nitroT = 1.6; c.nitroBekle = 8; }      // rakip noktayı tüketmez: oyuncuya kalır
+      }
+    }
+  }
+  // ---- Yarış donanımı (24 Kas 2026; kurucu: "yarış malzemeler klasöründe gerekli materyaller var. kullan"). Modeller vinish.dev, CC BY 4.0
+  // (asset indirilen/yarış malzemeler → yayin/model/yaris/): start ışıkları, lastik bariyer, damalı bayrak. Yalnız yarış sürerken görünür, haritaya öğe eklenmez.
+  // Start ışıkları: çıkış sırasının 16 m önünde; geri sayımda beş kırmızı sırayla yanar, yarış başlayınca söner.
+  // Lastik bariyer: keskin virajların (yarıçap < 45 m) dışına, asfaltın kenarına dizilir; katıdır (src/kirik.js, tip 2), araç içinden geçemez. En çok YD.enCok blok.
+  // Bayrak: bitiş çizgisinin iki yanında. Bariyer yerleri etkinlik başına bir kez hesaplanır (YD.cache); bölge değişince silinir.
+  const YD = { surum: '2026-11-24a', soz: null, isik: null, lamba: [], bayrak: [], cache: {}, acik: null, enCok: 48 };
+  function ydYukle() {
+    if (!YD.soz) YD.soz = Promise.all(['start-lights', 'tyre-barrier', 'chequered-flag'].map((ad) => new Promise((ok) => {
+      if (!THREE.GLTFLoader) { ok(null); return; }
+      new THREE.GLTFLoader().load('model/yaris/' + ad + '.glb?s=' + YD.surum, (g) => ok(g.scene), undefined, () => ok(null));
+    }))).then(([isik, bariyer, bayrak]) => {
+      if (isik) {
+        isik.traverse((m) => { if (m.isMesh) { m.castShadow = true; if (/^Light_/.test(m.name) || (m.parent && /^Light_/.test(m.parent.name))) { m.material = (Array.isArray(m.material) ? m.material[0] : m.material).clone(); YD.lamba.push(m); } } });
+        YD.lamba.sort((a, b) => (a.parent.name + a.name < b.parent.name + b.name ? -1 : 1)); isik.visible = false; scene.add(isik); YD.isik = isik;
+      }
+      if (bayrak) for (const yan of [-1, 1]) { const b = bayrak.clone(); b.scale.setScalar(2.6); b.traverse((m) => { if (m.isMesh) m.castShadow = true; }); b.visible = false; b.userData.yan = yan; scene.add(b); YD.bayrak.push(b); }
+      YD.bariyer = bariyer;
+      return YD;
+    });
+    return YD.soz;
+  }
+  function ydBariyerYer(R) {      // keskin virajların dışında asfalt kenarı; rota üstüne, binaya ve suya konmaz
+    const kv = rotaEgrilik(R), yer = [], ix = (s) => clamp(Math.round((s / R.L) * (R.n - 1)), 0, R.n - 1);
+    for (let s = 30; s < R.L - 30 && yer.length < YD.enCok; s += 2.3) {
+      const i = ix(s), k = kv[i]; if (Math.abs(k) < 1 / 45) continue;
+      const nk = (q) => { const t = routePoint(R, q); return { x: t.x, z: t.z, dx: t.dx, dz: t.dz }; };      // routePoint ortak nesne döndürür: kopyalanır
+      const p = nk(s), a = nk(Math.max(0, s - 8)), b = nk(Math.min(R.L, s + 8));
+      let ox = -((b.x - p.x) - (p.x - a.x)), oz = -((b.z - p.z) - (p.z - a.z)); const ol = Math.hypot(ox, oz); if (ol < 0.05) continue;      // merkezin tersi: virajın dışı
+      ox /= ol; oz /= ol; const yon = ox * p.dz - oz * p.dx > 0 ? 1 : -1, nx = p.dz * yon, nz = -p.dx * yon;      // rota dikmesi, dış yana
+      let d = 3; for (; d <= 13; d += 0.5) { const q = roadAt(p.x + nx * d, p.z + nz * d); if (!q || !q.on) break; }
+      const x = p.x + nx * (d + 0.9), z = p.z + nz * (d + 0.9), g = groundH(x, z);
+      if (g < 0.4 || binaUst(x, z) > g + 0.5 || Math.abs(g - groundH(p.x, p.z)) > 2.5) continue;
+      let yakin = false; for (let j = 0; j < R.n && !yakin; j += 2) if ((R.x[j] - x) ** 2 + (R.z[j] - z) ** 2 < 3.2 * 3.2) yakin = true;      // rotanın başka bir kolunun üstü
+      if (yakin) continue;
+      yer.push({ x, y: g, z, h: Math.atan2(-p.dz, p.dx) });
+    }
+    return yer;
+  }
+  function ydBasla(r) {
+    const ev = r.ev, R = r.R;
+    ydYukle().then(() => {
+      if (G.race !== r) return;
+      let on = routePoint(R, Math.min(R.L - 5, 5 + (Math.ceil(cars.length / 2) - 1) * 9 + 16)); on = { x: on.x, z: on.z, dx: on.dx, dz: on.dz };
+      if (YD.isik) { YD.isik.position.set(on.x, groundH(on.x, on.z), on.z); YD.isik.rotation.y = Math.atan2(on.dx, on.dz); YD.isik.visible = true; }
+      const bt = routePoint(R, R.loop ? 0 : R.L - 0.05);
+      for (const b of YD.bayrak) { const x = bt.x + bt.dz * 10.5 * b.userData.yan, z = bt.z - bt.dx * 10.5 * b.userData.yan; b.position.set(x, groundH(x, z), z); b.rotation.y = Math.atan2(bt.dx, bt.dz); b.visible = true; }
+      if (!YD.bariyer) return;
+      const ad = REGION.id + '.' + ev.id; let c = YD.cache[ad];
+      if (!c) {
+        const yer = ydBariyerYer(R), kok = new THREE.Group(), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), yuk = new THREE.Vector3(0, 1, 0), bir = new THREE.Vector3(1, 1, 1), v = new THREE.Vector3();
+        if (yer.length) YD.bariyer.traverse((m) => {
+          if (!m.isMesh) return;
+          const im = new THREE.InstancedMesh(m.geometry, m.material, yer.length); im.castShadow = true; im.frustumCulled = false;
+          yer.forEach((e, i) => im.setMatrixAt(i, m4.compose(v.set(e.x, e.y, e.z), q.setFromAxisAngle(yuk, e.h), bir)));
+          kok.add(im);
+        });
+        scene.add(kok);
+        c = YD.cache[ad] = { kok, oge: yer.map((e) => Object.assign(kirikAgac(e.x, e.z, 0.8), { tur: 'lastik', lastik: true, kapali: true })) };
+      }
+      c.kok.visible = true; for (const e of c.oge) e.kapali = false;
+      YD.acik = c;
+    });
+  }
+  function ydBitir() {
+    if (YD.isik) YD.isik.visible = false;
+    for (const b of YD.bayrak) b.visible = false;
+    if (YD.acik) { YD.acik.kok.visible = false; for (const e of YD.acik.oge) e.kapali = true; YD.acik = null; }
+  }
+  function ydIsik() {      // her karede: geri sayımda kırmızılar sırayla yanar, çıkışta söner
+    if (!YD.isik || !YD.isik.visible) return;
+    const r = G.race, yanan = r && G.state === 'count' ? clamp(Math.floor((3.9 - r.count) / 0.72) + 1, 0, 5) : 0;
+    if (yanan === YD.yanan) return;
+    YD.yanan = yanan;
+    YD.lamba.forEach((m, i) => { const acik = i < yanan; m.material.emissive.set(acik ? 0xff1a0a : 0x000000); m.material.emissiveIntensity = acik ? 2.4 : 0; m.material.color.set(acik ? 0xff3020 : 0x30100c); });
+  }
   let flashLater = null;
   function clearRace() {
     G.race = null; G.goal = null; flashLater = null;
+    yhNitroSil(); ydBitir(); for (const c of cars) { c.kazaT = 0; c.can = 1; c.tbAktif = false; }
     nisanBirak(); ekCagir('sahneSifirla'); vakitZorlaAyarla(null);      // binek ve fırtına gibi geçici vakit yalnız onu açan sahnede kalır
     if (player.ski) setSki(false);
     $('mutfak').hidden = true; $('btn-salon').hidden = true;
@@ -16149,6 +16361,7 @@ function cokKur(o) {
       if (!c.isPlayer && !kayakta) { const B = SINIF[sn]; c.skill = 0.9 + k * 0.03; c.power = B.power * (B.taban + k * 0.02); c.vmax = B.vmax * (B.taban + k * 0.018); c.vKat = B.vKat; c.lane = k % 2 ? -1.6 : 1.6;
         if (tur) { const f = TURNUVA.hiz[tur.tur]; c.skill = f; c.power = B.power * B.taban * (1 - (1 - f) * 0.3); c.vmax = B.vmax * B.taban * f; } }
     });
+    if (!ev.ozel) { yhBasla(G.race, tur); ydBasla(G.race); }
     putGate(gate1, R, 0);
     if (!R.loop) putGate(gate2, R, R.L - 0.05);
     setSki(ev.ozel === 'kayak');
@@ -16232,6 +16445,7 @@ function cokKur(o) {
     });
     (okStory ? $('btn-hikaye-devam') : $('btn-tekrar')).focus();
     if (ev.turnuva) turnuvaSonuc(r);
+    if (r.puan > 0 && !r.prim) { r.prim = Math.min(YH.primTavan, Math.round(r.puan / 20)); if (r.prim > 0) { addMoney(r.prim); $('sonuc-not').textContent += ($('sonuc-not').textContent ? ' · ' : '') + T('yh.prim', para(r.prim)); } }
   }
 
   // ---------------------------------------------------------------- ayarlar
@@ -17121,13 +17335,13 @@ function cokKur(o) {
     const pin = G.auto && (r || G.autoR) ? (player.ski && r && r.ev.kapi ? kayakAI(player, r.R, 1, dt) : aiInput(player, r ? r.R : G.autoR, 1, dt)) : readInput();   // G.autoR: serbest sürüşte sınama rotası
     // klasik turbo (araba ve motor): Shift / X·RB / alev düğmesi; dolu depo 4,5 sn yeter, boşken 14 sn'de dolar
     const tbVar = !player.ski && !player.binek && (player.arac === 'car' || player.arac === 'motor') && !(r && r.done);
-    player.tbAktif = tbVar && !!pin.turbo && pin.thr > 0 && player.turbo > 0.01 && !player.air;
-    player.turbo = player.tbAktif ? Math.max(0, player.turbo - dt / 4.5) : Math.min(1, (player.turbo || 0) + dt / 14);
+    player.tbAktif = tbVar && !!pin.turbo && pin.thr > 0 && player.turbo > 0.01 && !player.air && !(player.kazaT > 0);
+    player.turbo = player.tbAktif ? Math.max(0, player.turbo - dt / 4.5) : Math.min(1, (player.turbo || 0) + dt / (yhVar() ? 45 : 14));      // yarışta nitro kazanılır (YH)
     nefesAdim(pin, dt, r);
     player.yuklu = !!(player.ucTeker && (aktifYuk() || SACIK.parca.length));
     const step = player.binek && EK.binek ? EK.binek.adim : player.ski ? kayakAdim : stepCar;
     if (r && r.done) { step(player, idle, dt); }
-    else { step(player, yolcuMesgul() ? idle : pin, dt); if (r && !G.auto) advance(player, r.R); }      // yolcular binerken araç bekler
+    else { step(player, yolcuMesgul() || player.kazaT > 0 ? idle : pin, dt); if (r && !G.auto) advance(player, r.R); }      // yolcular binerken araç bekler
     if (player.devrikYeni) { player.devrikYeni = false; devrildi(); }
     if (!player.binek) ucTepki(STEP);
     if (player.ski || KAR) kizAdim();      // kayak ve teker izleri (fizik adımında: görüntüsüz ilerletmede de iz kalır)
@@ -17142,8 +17356,8 @@ function cokKur(o) {
           if (c.ri >= r.R.n - 2) { c.finished = true; c.finishTime = r.t; }
           continue;
         }
-        if (c.finished) { stepCar(c, idle, dt); continue; }
-        const band = clamp(1 + (player.prog - c.prog) / 1500, 0.9, 1.08);
+        if (c.finished || c.kazaT > 0) { stepCar(c, idle, dt); continue; }
+        const band = rakipHirs(c, r, dt);
         stepCar(c, aiInput(c, r.R, band, dt), dt);
         c.devrikYeni = false;
         if (c.stuck > 2.5 && !(c.devrik > 0)) resetToRoute(c, r.R, 0);
@@ -17184,6 +17398,7 @@ function cokKur(o) {
       player.devrik = UC.devrikSure; player.kalkis = 1; devrildi();
     }
     if (player.hit > 4) { thud(player.hit); }
+    yhAdim(dt, r);
     for (const c of cars) c.hit = 0;
     if (player.water > 1.0) { flash(T('flash.gol'), T('flash.gol.alt')); respawn(); }
   }
@@ -17693,7 +17908,8 @@ function cokKur(o) {
   }
   function updateHud(dt) {
     const c = player, kmh = Math.round(Math.abs(c.vf) * 3.6);
-    turboHud(c); virajAdim(c, G.race);
+    turboHud(c); virajAdim(c, G.race); ydIsik();
+    { const cn = Math.round(clamp(c.can === undefined ? 1 : c.can, 0, 1) * 100); if (cn !== YH.canHud) { YH.canHud = cn; const el = $('can'); el.hidden = cn >= 100; el.setAttribute('aria-valuenow', cn); $('can-d').style.height = cn + '%'; el.classList.toggle('az', cn < 30); } }
     if (kmh !== lastSpeed) { $('hiz-n').textContent = kmh; lastSpeed = kmh; }
     hudT -= dt;
     if (flashT > 0) { flashT -= dt; if (flashT <= 0) $('mesaj').textContent = ''; }
@@ -18152,7 +18368,7 @@ function cokKur(o) {
     G, EVENTS, STORY, S, startStory, nextLine, loadRegion, get bolge() { return REGION.id; }, get tur() { return TUR; }, get detay() { return G.detay; }, get cim() { return CIM ? { yaprak: CIM.yaprak, ortu: CIM.ortu } : null; }, get zemin() { return terrTex; }, get player() { return player; }, get cars() { return cars; }, startEvent, startFree, tick,
     sim(sec) { const n = Math.round(sec / STEP); for (let i = 0; i < n; i++) { if (G.state === 'free' || G.state === 'race' || G.state === 'count') tick(STEP); } },
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
-    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
+    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, YH, YD, ydYukle, ydBariyerYer, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     cok: COK,      // birlikte sürüş: .durum, .kur(), .katil(kod), .ayril(), .sunucuAyarla(adres)
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
     kediler: () => cats.map((c) => ({ canli: !!c.kedi, gorunur: c.mesh.visible, got: c.got })),
