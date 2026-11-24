@@ -9818,6 +9818,7 @@ function terrainPatch(mat, maskTex, katman) {
 // Bölgenin içinde: renk açılır ve grileşir (yıpranmış), timsah sırtı çatlak ağı (0,3 m hücre, yer yer) ve seyrek uzun çatlaklar (2,4 m hücre) koyulaşır,
 // kenar gürültüyle kırılıp çakıl dokusuna (doku/cakil.jpg) karışır. Çatlak deseni gölgelendiricide hücre gürültüsüyle üretilir; 45–110 m'de söner.
 // Kurucunun indirdiği Asphalt025C paketi kullanılmadı: çatlak değil, yeni ve düz asfalt (mevcut dokudan daha yeni görünür).
+const EY_TON = '0.98, 1.02, 1.1', EY_IZ = '0.5';      // eski asfaltın tonu (parlaklık katı) ve teker izinin koyuluğu
 function eskiYolPatch(mat) {
   mat.extensions = Object.assign({}, mat.extensions, { derivatives: true });
   mat.onBeforeCompile = (sh) => {
@@ -9842,9 +9843,15 @@ function eskiYolPatch(mat) {
       '  float eK2 = (1.0 - smoothstep(0.0, 0.014 + eF2 * 0.7, eC2)) * (1.0 - smoothstep(0.06, 0.25, eF2));',
       '  float eCat = max(eK1 * 0.9, eK2) * eUz;',
       '  float eLum = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11));',
-      '  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(eLum) * vec3(1.5, 1.56, 1.66) + 0.012, 0.6 * eW);',
+      // 25 Kas 2026 (Codex incelemesi, kurucu: "Eski Van yolu görünür"): yol eskiden ×1,5 açılıp kızıl taşlıkla aynı tona düşüyordu; artık koyu, soğuk gri
+      '  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(eLum) * vec3(' + EY_TON + ') + 0.004, 0.6 * eW);',
       '  diffuseColor.rgb *= 1.0 - 0.16 * (eyN(vYolP * 0.6) - 0.5) * eW;',
       '  diffuseColor.rgb *= mix(1.0, 0.38, eCat * eW);',
+      // iki şeritte aşınmış teker izi: şerit ortasının 0,85 m sağı ve solu (vEski.y enine konum −1..1, vEski.z yarı genişlik); kenarı gürültüyle kırık, yer yer silik
+      '  float eLat = vEski.y * vEski.z, eSer = vEski.z * 0.5, eKay = (eyN(vYolP * 0.21 + 9.0) - 0.5) * 0.3, eIz = 0.0;',
+      '  for (int q = 0; q < 4; q++) { float eM = (q < 2 ? -eSer : eSer) + (mod(float(q), 2.0) < 0.5 ? -0.85 : 0.85); eIz = max(eIz, 1.0 - smoothstep(0.2, 0.45, abs(eLat - eM + eKay))); }',
+      '  eIz *= 0.55 + 0.45 * smoothstep(0.25, 0.7, eyN(vYolP * 0.35 + 2.0));',
+      '  diffuseColor.rgb *= mix(1.0, ' + EY_IZ + ', eIz * eW * step(2.4, vEski.z));',
       '  float eKd = (1.0 - abs(vEski.y)) * vEski.z;',
       '  float eKen = 1.0 - smoothstep(0.0, 0.7, eKd - 0.15 + (eyN(vYolP * 1.1) - 0.5) * 1.0 + (eyN(vYolP * 4.7) - 0.5) * 0.3);',
       '  vec3 eCk = texture2D(tCakil, vYolP / 3.2).rgb; eCk = mix(vec3(dot(eCk, vec3(0.3, 0.5, 0.2))) * vec3(1.06, 1.0, 0.9), eCk, 0.35) * 0.95;',
