@@ -6417,6 +6417,8 @@ const DIL = {
     'tes.sayi': 'toplam {0} teslimat',
     // taksi işi (src/oyun.js TKS_TIP; yer türleri data/van-taksi.json)
     'ev.merkez-halkasi': 'Merkez Halkası', 'ev.merkez-halkasi.alt': 'Sıhke Caddesi, Kazım Karabekir Bulvarı, İpek Yolu ve İskele Caddesi; şehir trafiğinin içinde iki tur',
+    'ev.tanitim': 'İpek Yolu Akşamı', 'ev.tanitim.alt': 'Ödünç yarış arabasıyla kısa bir yarış', 'tan.ipucu.1': 'Araba ödünç, tadını çıkar', 'tan.ipucu.2': 'Shift ile nitro, öndekileri geç',
+    'tan.not': 'Bu araba ödünçtü. Kendi arabanı kazanman lazım: önce üç tekerle iş, sonra galeri. Yarıştığın V8 orada, {0} ₺.', 'tan.devam': 'Hikâyeye başla',
     'ev.ipekyolu': 'İpek Yolu Sprinti', 'ev.ipekyolu.alt': 'İpek Yolu’nda güneyden İskele Caddesi kavşağına; trafiğin arasından dümdüz 2,6 km',
     'ev.cumhuriyet-turu': 'Cumhuriyet Turu', 'ev.cumhuriyet-turu.alt': 'Fevzi Çakmak Caddesi’nden Cumhuriyet ve Hafiziye mahallelerinin çevresinde tek tur',
     'sehir.odulVeri': 'birinciye {0} ₺', 'sehir.odul': 'Ödül {0} ₺', 'sehir.odulYok': 'Bu sıraya ödül yok', 'yh.kil': 'Kıl payı',
@@ -6615,6 +6617,8 @@ const DIL = {
     'tes.konfor': 'intact {0}%', 'tes.sicak': 'hot {0}%', 'tes.soguk': 'The bread went cold', 'tes.vardi': 'Delivered', 'tes.sonraki': 'Next delivery',
     'tes.sayi': 'deliveries so far: {0}',
     'ev.merkez-halkasi': 'Centre Loop', 'ev.merkez-halkasi.alt': 'Sıhke Street, Kazım Karabekir Boulevard, İpek Yolu and İskele Street; two laps through city traffic',
+    'ev.tanitim': 'İpek Yolu Evening', 'ev.tanitim.alt': 'A short race in a borrowed race car', 'tan.ipucu.1': 'The car is borrowed, enjoy it', 'tan.ipucu.2': 'Shift for nitro, pass the cars ahead',
+    'tan.not': 'That car was borrowed. You have to earn your own: first work with the three-wheeler, then the showroom. The V8 you raced is there for {0} ₺.', 'tan.devam': 'Start the story',
     'ev.ipekyolu': 'İpek Yolu Sprint', 'ev.ipekyolu.alt': 'North along İpek Yolu to the İskele Street junction; 2.6 km flat out through traffic',
     'ev.cumhuriyet-turu': 'Cumhuriyet Circuit', 'ev.cumhuriyet-turu.alt': 'From Fevzi Çakmak Street around the Cumhuriyet and Hafiziye neighbourhoods; one lap',
     'sehir.odulVeri': '₺{0} for first', 'sehir.odul': 'Prize ₺{0}', 'sehir.odulYok': 'No prize for this place', 'yh.kil': 'Near miss',
@@ -6813,6 +6817,8 @@ const DIL = {
     'tes.konfor': 'سالم {0}٪', 'tes.sicak': 'داغ {0}٪', 'tes.soguk': 'نان‌ها سرد شد', 'tes.vardi': 'تحویل شد', 'tes.sonraki': 'تحویل بعدی',
     'tes.sayi': 'روی هم {0} تحویل',
     'ev.merkez-halkasi': 'حلقه مرکز شهر', 'ev.merkez-halkasi.alt': 'خیابان سیحکه، بلوار کاظم قره‌بکر، ایپک‌یولو و خیابان اسکله؛ دو دور در میان ترافیک شهر',
+    'ev.tanitim': 'عصر ایپک‌یولو', 'ev.tanitim.alt': 'مسابقه‌ای کوتاه با یک ماشین مسابقه‌ی قرضی', 'tan.ipucu.1': 'ماشین قرضی است، لذت ببر', 'tan.ipucu.2': 'با Shift نیترو بزن و از جلویی‌ها سبقت بگیر',
+    'tan.not': 'این ماشین قرضی بود. باید ماشین خودت را به دست بیاوری: اول کار با سه‌چرخه، بعد نمایشگاه. آن ماشین هشت‌سیلندر هم آنجاست، {0} ₺.', 'tan.devam': 'شروع داستان',
     'ev.ipekyolu': 'سرعت ایپک‌یولو', 'ev.ipekyolu.alt': 'در ایپک‌یولو از جنوب تا تقاطع خیابان اسکله؛ ۲٫۶ کیلومتر مستقیم از میان ترافیک',
     'ev.cumhuriyet-turu': 'دور جمهوریت', 'ev.cumhuriyet-turu.alt': 'از خیابان فوزی چاکماک، دور محله‌های جمهوریت و حافظیه؛ یک دور',
     'sehir.odulVeri': '{0} ₺ برای نفر اول', 'sehir.odul': 'جایزه {0} ₺', 'sehir.odulYok': 'این رتبه جایزه ندارد', 'yh.kil': 'از بیخ گوش',
@@ -15089,6 +15095,9 @@ function cokKur(o) {
     // şeritlere uyan üç güzergâh (tools/rotalar.json). Yalnız arabayla; beş rakip; yolda şehir trafiği akar. Sıraya göre para ödülü (odul). Kurallar: SEHIR.
     { id: 'merkez-halkasi', bolge: 'van', sehir: true, laps: 2, ai: 5, odul: [1500, 900, 500, 250, 100, 0], zemin: 'Asfalt' },
     { id: 'ipekyolu', bolge: 'van', sehir: true, laps: 1, ai: 5, odul: [700, 400, 220, 100, 50, 0], zemin: 'Asfalt' },
+    // Tanıtım yarışı (25 Kas 2026; Codex incelemesi, kurucu: "İlk girişte kısa yarış"): yeni oyunda Hikâye'ye basınca önce ödünç yarış arabasıyla İpek Yolu'nda
+    // ~80 sn'lik yarış (startTanitim). Menüde görünmez; bitince "Hikâyeye başla" üç teker bölümüne geçer.
+    { id: 'tanitim', bolge: 'van', tanitim: true, gizli: true, rampa: true, rota: 'ipekyolu', laps: 1, ai: 3, zemin: 'Asfalt' },
     { id: 'cumhuriyet-turu', bolge: 'van', sehir: true, laps: 1, ai: 5, odul: [1200, 700, 400, 200, 80, 0], zemin: 'Asfalt' },
     // üç tekerli bisikletle yük taşıma: Eski Van yolunda al, 700 m ötede teslim et; kazanç kasaya girer
     { id: 'yuk-tasima', bolge: 'van', ozel: 'servis', yuk: true, arac: 'trike', rota: 'eski-van', markerS: 30, al: 60, birak: 760, madalya: [6.6, 5.2, 3.6], odeme: 250, laps: 1, ai: 0, solo: true, zemin: 'Toprak' },
@@ -15540,11 +15549,11 @@ function cokKur(o) {
   ];
   var GAL = Object.assign({ sahip: [GALERI[0].id], sec: GALERI[0].id }, store.get('galeri', {}));
   if (!GALERI.some((m) => m.id === GAL.sec)) GAL.sec = GALERI[0].id;
-  const galeriModel = () => (MOBIL ? GALERI[0] : GALERI.find((m) => m.id === GAL.sec) || GALERI[0]);
+  const galeriModel = () => (MOBIL ? GALERI[0] : GALERI.find((m) => m.id === (GAL.odunc || GAL.sec)) || GALERI[0]);      // GAL.odunc: tanıtım yarışının ödünç arabası (kaydedilmez)
   function galeriTak(id) {      // seçili modeli oyuncunun arabası yapar (model iner, eskisinin yerine geçer)
     if (MOBIL) return Promise.resolve(false);
     return yarisArabaYukle(id).then((src) => {
-      if (GAL.sec !== id || (player.car && player.car.yaris === id)) return false;      // bu arada başka model seçildi ya da zaten takılı
+      if ((GAL.odunc || GAL.sec) !== id || (player.car && player.car.yaris === id)) return false;      // bu arada başka model seçildi ya da zaten takılı
       const v = makeCarYaris(src, '#e2572b', { oyuncu: true }), e = player.car.group;
       v.group.visible = e.visible; v.group.position.copy(e.position); v.group.rotation.copy(e.rotation); scene.remove(e); scene.add(v.group); player.car = v;
       if (player.mesh === e) { player.mesh = v.group; player.wheels = v.wheels; player.tail = v.tail; }
@@ -16282,7 +16291,7 @@ function cokKur(o) {
   }
   $('btn-tekrar').addEventListener('click', () => { startEvent(G.lastEvent, G.lastSinif); if (G.lastStory && G.race) G.race.story = G.lastStory; });
   $('btn-hikaye').addEventListener('click', () => { initAudio(); startStory(); });
-  $('btn-hikaye-devam').addEventListener('click', () => { if (paraReady() || (STORY[S.i] && STORY[S.i].gorev.tip === 'para')) startStory(); else storyAdvance(); });
+  $('btn-hikaye-devam').addEventListener('click', () => { if (G.race && G.race.ev.tanitim) { startStory(); return; } if (paraReady() || (STORY[S.i] && STORY[S.i].gorev.tip === 'para')) startStory(); else storyAdvance(); });
   $('btn-konusma').addEventListener('click', () => { initAudio(); nextLine(); });
   $('btn-son-serbest').addEventListener('click', () => startFree(true));
   $('btn-son-menu').addEventListener('click', () => showMenu(false));
@@ -16745,6 +16754,7 @@ function cokKur(o) {
     for (const c of cats) { c.mesh.visible = c.kedi ? true : !c.got; c.beam.visible = !c.got; }
   }
   function startFree(keepPlace) {
+    oduncBitir();
     clearRace();
     updateArac();
     setVehicle(G.aracSecim);      // seçilen araç her bölgede geçerlidir
@@ -16868,6 +16878,7 @@ function cokKur(o) {
     if (ev.taksi) { startTaksi(ev); return; }
     if (ev.ozel === 'servis') { startServis(ev); return; }
     if (ev.ozel === 'pisir') { startCooking(ev); return; }
+    if (!ev.tanitim) oduncBitir();
     clearRace(); trafficClear();
     sn = yarisMi(ev) && SINIF[sn] ? sn : sinifSec(ev);
     setVehicle(sn);
@@ -16894,6 +16905,7 @@ function cokKur(o) {
       c.mesh.visible = true;
       if (!c.isPlayer && !kayakta) { const gm = sn === 'car' ? galeriModel() : null, B = gm ? { power: SINIF.car.power * (1 + (gm.guc - 1) * 0.7), vmax: SINIF.car.vmax * (1 + (gm.hiz - 1) * 0.7), taban: SINIF.car.taban, vKat: 1 } : SINIF[sn]; const kk = ev.sehir ? (k * 3) / Math.max(1, field.length - 1) : k;      // şehir yarışında beş rakip aynı güç aralığına yayılır
         c.skill = 0.9 + kk * 0.03 + (gm ? (gm.hiz - 1) * 0.5 : 0); c.power = B.power * (B.taban + kk * 0.02); c.vmax = B.vmax * (B.taban + kk * 0.018); c.vKat = B.vKat; c.lane = k % 2 ? -1.6 : 1.6;
+        if (ev.tanitim) { c.power *= TAN.guc; c.vmax *= TAN.hiz; }      // ilk yarış: nitroyu kullanan yeni oyuncu yetişip geçebilsin
         if (tur) { const f = TURNUVA.hiz[tur.tur]; c.skill = f + (gm ? (gm.hiz - 1) * 0.5 : 0); c.power = B.power * B.taban * (1 - (1 - f) * 0.3); c.vmax = B.vmax * B.taban * f; } }
     });
     if (!ev.ozel) { yhBasla(G.race, tur); ydBasla(G.race); }
@@ -16970,8 +16982,9 @@ function cokKur(o) {
       if (r.odulPara === undefined) { r.odulPara = ev.odul[r.place - 1] || 0; if (r.odulPara) addMoney(r.odulPara); }
       $('sonuc-not').textContent = (r.odulPara ? T('sehir.odul', para(r.odulPara)) : T('sehir.odulYok')) + ' · ' + $('sonuc-not').textContent;
     }
-    const okStory = r.story && r.place <= r.story;
-    $('btn-hikaye-devam').hidden = !okStory;
+    const okStory = (r.story && r.place <= r.story) || !!ev.tanitim;
+    $('btn-hikaye-devam').hidden = !okStory; $('btn-hikaye-devam').textContent = T(ev.tanitim ? 'tan.devam' : 'sonuc.hikayeDevam'); $('btn-tekrar').hidden = !!ev.tanitim;
+    if (ev.tanitim) { store.set('tanitim', 1); $('sonuc-not').textContent = T('tan.not', para(GALERI[1].fiyat)); }
     if (r.story && !okStory) $('sonuc-not').textContent = r.story === 1 ? T('sonuc.hikayeBirinci') : T('sonuc.hikayeIlk', r.story);
     $('btn-tekrar').textContent = T(r.story && !okStory ? 'sonuc.tekrarDene' : 'sonuc.tekrar');
     $('sonuc-baslik').textContent = title; $('sonuc-ad').textContent = ev.ad + (r.sinif && r.sinif !== 'car' ? ' · ' + T(ARAC_AD[r.sinif]) : '');
@@ -17234,7 +17247,21 @@ function cokKur(o) {
     const f = S.after; S.after = null; S.lines = null;
     if (f) f();
   }
+  // Tanıtım yarışı: ödünç TAN.model (galeride 28.000 ₺), gün batımı, üç rakip (biri galerinin ilk alınabilen arabası V8), oyuncu en arkadan çıkar.
+  const TAN = { model: 'gt-race-supercar', vakit: 1, guc: 0.86, hiz: 0.9 };
+  async function startTanitim() {
+    await loadRegion('van');
+    if (REGION.id !== 'van') return;
+    GAL.odunc = TAN.model;
+    await galeriTak(TAN.model);
+    startEvent(EVENTS.find((e) => e.tanitim), 'car');
+    vakitZorlaAyarla(TAN.vakit);      // clearRace geri alır
+    flashLater = [T('tan.ipucu.1'), T('tan.ipucu.2')];
+  }
+  function oduncBitir() { if (!GAL.odunc) return; GAL.odunc = null; galeriTak(GAL.sec); }
   async function startStory() {
+    if (S.i === 0 && !store.get('tanitim', 0)) { startTanitim(); return; }      // yeni oyun: önce tanıtım yarışı
+    oduncBitir();
     if (S.i >= STORY.length) { S.i = 0; store.set('story', 0); S.last = null; }
     const ch = STORY[S.i], gv = ch.gorev;
     const sev = gv.tip !== 'git' ? EVENTS.find((e) => e.id === gv.id) : null, bolge = sev ? sev.bolge : gv.bolge || 'van';
@@ -19540,7 +19567,7 @@ function cokKur(o) {
     G, EVENTS, STORY, S, startStory, nextLine, loadRegion, get bolge() { return REGION.id; }, get tur() { return TUR; }, get detay() { return G.detay; }, get cim() { return CIM ? { yaprak: CIM.yaprak, ortu: CIM.ortu } : null; }, get zemin() { return terrTex; }, get player() { return player; }, get cars() { return cars; }, startEvent, startFree, tick,
     sim(sec) { const n = Math.round(sec / STEP); for (let i = 0; i < n; i++) { if (G.state === 'free' || G.state === 'race' || G.state === 'count') tick(STEP); } },
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
-    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, HH, KIV, kivilcim, IZL, LIZ, finishRace, showResult, get kamFov() { return camera.fov; }, YH, YD, ydYukle, ydBariyerYer, PRK, PARKUR, parkurYer, YOLR, yolRampaYer, YT, ytKarar, ytYolBul, okAdim, galeri: { liste: GALERI, get durum() { return GAL; }, sec: galeriSec, tak: galeriTak, ciz: galeriCiz }, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
+    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, HH, KIV, kivilcim, IZL, LIZ, finishRace, showResult, startTanitim, TAN, startStory, get kamFov() { return camera.fov; }, YH, YD, ydYukle, ydBariyerYer, PRK, PARKUR, parkurYer, YOLR, yolRampaYer, YT, ytKarar, ytYolBul, okAdim, galeri: { liste: GALERI, get durum() { return GAL; }, sec: galeriSec, tak: galeriTak, ciz: galeriCiz }, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     cok: COK,      // birlikte sürüş: .durum, .kur(), .katil(kod), .ayril(), .sunucuAyarla(adres)
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
     kediler: () => cats.map((c) => ({ canli: !!c.kedi, gorunur: c.mesh.visible, got: c.got })),
