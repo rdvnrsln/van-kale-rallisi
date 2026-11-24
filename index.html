@@ -234,6 +234,8 @@ h1 em { font-style: inherit; color: var(--kehribar); }
 .bolge-sec { display: flex; flex-direction: column; gap: 6px; }
 .kilitli { opacity: 0.62; }
 .kasa { font-family: var(--f-baslik); font-weight: 700; font-size: 22px; color: var(--kehribar); font-variant-numeric: tabular-nums; }
+.kasa-yan { font-size: 17px; margin: -4px 0 10px; }      /* 25 Kas (Codex incelemesi): kasa ve "para yetmez" uyarısı galeri ve yarış listesinde de görünsün */
+.kasa.uyari { color: #ff7a63; }
 .etk-bolge { color: var(--kehribar); padding: 10px 8px 4px; border-top: 1px solid var(--cizgi); }
 .etk { display: grid; gap: 1px; text-align: start; background: transparent; border: 0; border-top: 1px solid var(--cizgi); padding: 10px 8px 11px; }
 .etk:hover, .etk:focus-visible { background: rgba(242, 169, 59, 0.13); }
@@ -496,6 +498,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
     </section>
     <section class="m-panel m-sayfa" data-panel="serbest" hidden>
       <div class="m-baslik"><button type="button" class="m-yuvarlak" data-panel-git="ana" data-i18n-aria="ayar.geri" aria-label="Geri"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2 data-i18n="menu.serbest">Serbest sürüş</h2></div>
+      <div class="kasa kasa-yan" aria-live="polite"></div>
       <div class="bolge-sec">
         <div class="etiket" id="lbl-bolge" data-i18n="menu.bolgeSec">Serbest sürüş bölgesi</div>
         <div class="seg" role="group" aria-labelledby="lbl-bolge">
@@ -543,6 +546,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
     </section>
     <section class="m-panel m-sayfa" data-panel="yaris" hidden>
       <div class="m-baslik"><button type="button" class="m-yuvarlak" data-panel-git="ana" data-i18n-aria="ayar.geri" aria-label="Geri"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2 data-i18n="menu.yarislar">Yarışlar</h2></div>
+      <div class="kasa kasa-yan" aria-live="polite"></div>
       <div id="etkinlikler"></div>
       <p class="kucuk tus-yardim" data-i18n-html="menu.tuslar"><b>W A S D</b> ya da <b>ok tuşları</b> sürüş · <b>Shift</b> turbo · <b>Boşluk</b> el freni · <b>R</b> yola dön · <b>C</b> kamera · <b>H</b> korna · <b>N</b> ses · <b>M</b> menü. Oyun kolu: sol çubuk, RT gaz, LT fren, X ya da RB turbo, A el freni, B yola dön, Y kamera.</p>
       <p class="kucuk" data-i18n="menu.kunye">Sokaklar, binalar ve surlar: © OpenStreetMap katkıcıları (ODbL). Yükseklik: SRTM, Mapzen arazi karoları. Dokular: Poly Haven (CC0). Kale kayasının biçimi OSM sınırından yeniden kurulmuştur.</p>
@@ -15102,7 +15106,7 @@ function cokKur(o) {
     // yarı final, final). Her tur aynı tırmanışta bire bir yarış; kaybeden elenir, rakip her turda hızlanır. Kurallar ve ödüller: TURNUVA.
     { id: 'turnuva', bolge: 'van', turnuva: true, markerS: 26, laps: 1, ai: 1, zemin: 'Kaya' },
     { id: 'abali-yolu', bolge: 'abali', rampa: true, ad: 'Abalı Yolu', alt: 'Köyün içinden kayak merkezine: rampalardan uç, lastik duvarlara dikkat', laps: 1, ai: 3, zemin: 'Asfalt' },
-    { id: 'pist-inisi', bolge: 'abali', parkur: true, ad: 'Pist Atlayışı', alt: 'Zirveden kayak merkezine: rampalar, lastik duvarlar, bol uçuş', laps: 1, ai: 3, zemin: 'Kar' },
+    { id: 'pist-inisi', bolge: 'abali', parkur: true, len: 2250, ad: 'Pist Atlayışı', alt: 'Zirveden kayak merkezine: rampalar, lastik duvarlar, bol uçuş', laps: 1, ai: 3, zemin: 'Kar' },
     // özel etkinlikler: turist servisi (bindir, taşı, indir) ve kayak inişi (sürücü kayakla iner)
     { id: 'turist-servisi', bolge: 'abali', ozel: 'servis', rota: 'abali-yolu', markerS: 45, madalya: [19, 15, 11], odeme: 400, laps: 1, ai: 0, solo: true, zemin: 'Asfalt' },
     { id: 'kayak', bolge: 'abali', ozel: 'kayak', len: 2200, madalya: [17, 13, 9], laps: 1, ai: 0, solo: true, zemin: 'Kar' },
@@ -15573,7 +15577,7 @@ function cokKur(o) {
       b.children[2].textContent = secili ? T('gal.secili') : var_ ? T('gal.garajda') : para(m.fiyat) + ' ₺';
       b.addEventListener('click', () => {
         initAudio();
-        if (!galeriSec(m.id)) { $('kasa').textContent = T('al.yetmez', para(m.fiyat), para(G.para || 0)); beep(180, 0.2, 0.25, 'square'); return; }
+        if (!galeriSec(m.id)) { kasaUyar(T('al.yetmez', para(m.fiyat), para(G.para || 0))); return; }
         galeriCiz();
         if (G.resume === 'free' && !G.goal && !player.ski && player.arac === 'car') camSnap = true;
       });
@@ -15608,12 +15612,16 @@ function cokKur(o) {
   const enIyi = (ev, sn) => { sn = sn || sinifSec(ev); return sn === 'car' ? ev.best : store.get(bestAd(ev, sn), null); };
   function canStart(ev) {
     if (ev.arac || owns('car') || aracsiz(ev)) return true;
-    $('kasa').textContent = T('kilit.araba', para(FIYAT.car));
-    beep(180, 0.2, 0.25, 'square');
+    kasaUyar(T('kilit.araba', para(FIYAT.car)));
     return false;
   }
   function addMoney(n) { G.para = Math.max(0, Math.round((G.para || 0) + n)); store.set('para', G.para); updateKasa(); }
-  function updateKasa() { $('kasa').textContent = T('menu.kasa', (G.para || 0).toLocaleString(LOCALE[LANG])); }
+  function kasaYaz(t, uyari) {      // ana paneldeki kasa ve galeri / yarış listesindeki kopyası (uyarı oyuncunun baktığı panelde görünsün)
+    for (const el of [$('kasa'), ...document.querySelectorAll('.kasa-yan')]) { el.textContent = t; el.classList.toggle('uyari', !!uyari); }
+    clearTimeout(kasaYaz.z); if (uyari) kasaYaz.z = setTimeout(updateKasa, 4000);
+  }
+  function updateKasa() { kasaYaz(T('menu.kasa', (G.para || 0).toLocaleString(LOCALE[LANG]))); }
+  function kasaUyar(t) { kasaYaz(t, true); beep(180, 0.2, 0.25, 'square'); }
   function setSki(on) {
     player.ski = on; player.skiMesh.visible = on; player.mesh.visible = !on;
     if (on) { player.pitch = 0; player.roll = 0; player.steer = 0; }
@@ -15642,7 +15650,7 @@ function cokKur(o) {
   async function build() {
     for (const ev of EVENTS) {
       const src = REGIONS[ev.bolge].data().routes.find((r) => r.id === (ev.rota || ev.id));
-      ev.len = src ? src.len : ev.len || 820; ev.loop = src ? src.loop : false; ev.best = store.get('best.' + ev.id, null);
+      ev.len = src && !ev.parkur ? src.len : ev.len || 820; ev.loop = src ? src.loop : false; ev.best = store.get('best.' + ev.id, null);      // parkur kendi yolunu kurar (skiCourse); bölge yüklenene kadar ev.len
     }
     await say(T('yuk.doku'));
     await loadTextures(maxAniso);
@@ -16180,7 +16188,8 @@ function cokKur(o) {
   // düğme basılı sürükleme de çalışır. Dokunmatikte düğmelerin dışında ekranı sürüklemek aynı işi görür. Birikim readInput'ta okunur (inp.ax, inp.ay).
   var NISAN = { dx: 0, dy: 0, dokun: null, x: 0, y: 0 };      // var: clearRace açılışta bu satırdan önce çağrılabilir
   const nisanDisi = (h) => !h || !h.closest || !!h.closest('[data-t], button, a, input, select, label, video');      // düğmelerin üstünde nişan alınmaz
-  const nisanVar = () => !!player.binek && player.binek !== 'yer' && (G.state === 'free' || G.state === 'race');
+  const nisanVar = () => !!player && !!player.binek &&      // player kurulmadan önce imleç oynayabilir (25 Kas, Codex incelemesi)
+    player.binek !== 'yer' && (G.state === 'free' || G.state === 'race');
   document.addEventListener('pointerdown', (e) => {
     if (nisanDisi(e.target) || !nisanVar()) return;
     if (e.pointerType === 'mouse') { if (document.pointerLockElement !== canvas && canvas.requestPointerLock) { try { const q = canvas.requestPointerLock(); if (q && q.catch) q.catch(() => {}); } catch (h) { /* kilit yoksa sürükleme çalışır */ } } }
@@ -16881,7 +16890,7 @@ function cokKur(o) {
       c.dus = 0; c.dusKoruma = 0; c.pitch = 0; c.roll = 0;
       if (kayakta && !c.isPlayer) { c.lane = lat * 0.85; c.vHedef = 24.3 + k * 1.1; }      // tam çömelmeyle inen oyuncu 30 m/sn'yi geçer; rakip kapıları kaçırmadan iner
       if (kayakta && c.isPlayer) { c.lane = 0; c.vHedef = 23; }      // yalnız otomatik sürüşte (sınama) kullanılır
-      c.ri = 0; c.lap = 0; c.prog = 0; c.finished = false; c.finishTime = 0; advance(c, R);
+      c.ri = 0; c.lap = 0; c.prog = 0; c.finished = false; c.finishTime = 0; c.bitisSira = 0; advance(c, R);
       c.mesh.visible = true;
       if (!c.isPlayer && !kayakta) { const gm = sn === 'car' ? galeriModel() : null, B = gm ? { power: SINIF.car.power * (1 + (gm.guc - 1) * 0.7), vmax: SINIF.car.vmax * (1 + (gm.hiz - 1) * 0.7), taban: SINIF.car.taban, vKat: 1 } : SINIF[sn]; const kk = ev.sehir ? (k * 3) / Math.max(1, field.length - 1) : k;      // şehir yarışında beş rakip aynı güç aralığına yayılır
         c.skill = 0.9 + kk * 0.03 + (gm ? (gm.hiz - 1) * 0.5 : 0); c.power = B.power * (B.taban + kk * 0.02); c.vmax = B.vmax * (B.taban + kk * 0.018); c.vKat = B.vKat; c.lane = k % 2 ? -1.6 : 1.6;
@@ -16934,7 +16943,7 @@ function cokKur(o) {
   function finishRace(yarim) {      // yarim: turnuvada rakip zirveye önce çıktı; oyuncu bitirmeden tur biter
     const r = G.race, ev = r.ev;
     r.done = true; r.doneT = 0;
-    if (!yarim) { player.finished = true; player.finishTime = r.t; }
+    if (!yarim) { player.finished = true; player.finishTime = r.t; player.bitisSira = r.biten = (r.biten || 0) + 1; }
     const place = 1 + cars.filter((c) => !c.isPlayer && c.finished).length;
     r.place = place;
     const prev = enIyi(ev, r.sinif);
@@ -16966,8 +16975,8 @@ function cokKur(o) {
     if (r.story && !okStory) $('sonuc-not').textContent = r.story === 1 ? T('sonuc.hikayeBirinci') : T('sonuc.hikayeIlk', r.story);
     $('btn-tekrar').textContent = T(r.story && !okStory ? 'sonuc.tekrarDene' : 'sonuc.tekrar');
     $('sonuc-baslik').textContent = title; $('sonuc-ad').textContent = ev.ad + (r.sinif && r.sinif !== 'car' ? ' · ' + T(ARAC_AD[r.sinif]) : '');
-    const rows = cars.map((c) => ({ ad: c.name, t: c.finished ? c.finishTime : null, prog: c.prog, me: c.isPlayer }))
-      .sort((a, b) => (a.t !== null && b.t !== null ? a.t - b.t : a.t !== null ? -1 : b.t !== null ? 1 : b.prog - a.prog));
+    const rows = cars.map((c) => ({ ad: c.name, t: c.finished ? c.finishTime : null, sira: c.bitisSira || 0, prog: c.prog, me: c.isPlayer }))      // bitenler çizgiyi geçiş sırasıyla (başlıkla aynı kayıt)
+      .sort((a, b) => (a.t !== null && b.t !== null ? (a.sira && b.sira ? a.sira - b.sira : 0) || a.t - b.t : a.t !== null ? -1 : b.t !== null ? 1 : b.prog - a.prog));
     const tb = $('sonuc-tablo'); tb.innerHTML = '';
     rows.forEach((row, i) => {
       const tr = document.createElement('tr'); if (row.me) tr.className = 'ben';
@@ -17016,7 +17025,7 @@ function cokKur(o) {
   for (const el of document.querySelectorAll('[data-arac]')) el.addEventListener('click', () => {
     const k = el.getAttribute('data-arac');
     if (owns(k)) G.aracSecim = k;
-    else if (!buyVehicle(k)) { $('kasa').textContent = T('al.yetmez', para(FIYAT[k]), para(G.para || 0)); beep(180, 0.2, 0.25, 'square'); return; }
+    else if (!buyVehicle(k)) { kasaUyar(T('al.yetmez', para(FIYAT[k]), para(G.para || 0))); return; }
     updateArac();
     if (G.state === 'menu') buildMenu();      // etkinlik satırlarındaki sınıf ve en iyi süre seçilen araca göre
     // Araç seçimi de hemen uygulanır: yarıda bir serbest sürüş varsa "Devam et" yeni araçla sürer (görev ve yarış sırasında araç değişmez).
@@ -18104,13 +18113,14 @@ function cokKur(o) {
     if (player.ski || KAR) kizAdim();      // kayak ve teker izleri (fizik adımında: görüntüsüz ilerletmede de iz kalır)
     if (r) {
       if (!r.done) r.t += dt;
+      r.saat = r.done ? (r.saat || r.t) + dt : r.t;      // 25 Kas (Codex incelemesi): oyuncu bitince r.t durur; sonra bitiren rakip aynı süreyi alıp tabloda öne geçiyordu
       for (const c of cars) {
         if (c.isPlayer) continue;
         if (c.ski) {      // rakip kayakçı: bitince kar sabanıyla durur
           if (c.finished) { kayakAdim(c, KAYAK_FREN, dt); continue; }
           kayakAdim(c, kayakAI(c, r.R, clamp(1 + (player.prog - c.prog) / 500, 0.93, 1.07), dt), dt);
           if (c.stuck > 2.5) resetToRoute(c, r.R, 0);
-          if (c.ri >= r.R.n - 2) { c.finished = true; c.finishTime = r.t; }
+          if (c.ri >= r.R.n - 2) { c.finished = true; c.finishTime = r.saat; c.bitisSira = r.biten = (r.biten || 0) + 1; }
           continue;
         }
         if (c.finished || c.kazaT > 0) { stepCar(c, idle, dt); continue; }
@@ -18119,7 +18129,7 @@ function cokKur(o) {
         c.devrikYeni = false;
         if (c.stuck > 2.5 && !(c.devrik > 0)) resetToRoute(c, r.R, 0);
         if (c.water > 0.8) resetToRoute(c, r.R, 10);
-        if (r.R.loop ? c.prog >= r.total : c.ri >= r.R.n - 2) { c.finished = true; c.finishTime = r.t; }
+        if (r.R.loop ? c.prog >= r.total : c.ri >= r.R.n - 2) { c.finished = true; c.finishTime = r.saat; c.bitisSira = r.biten = (r.biten || 0) + 1; }
       }
       if (cars.length > 1 && !player.binek) { if (player.ski) kayakTemas(cars); else collideCars(cars); }
       if (!r.done && r.ev.turnuva && cars[0].finished) { r.gecT = (r.gecT || 0) + dt; if (r.gecT > 2.5) finishRace(true); }      // rakip zirvede: 2,5 sn sonra tur biter
@@ -18833,7 +18843,7 @@ function cokKur(o) {
   function virajAdim(c, r) {
     let yon = '', kat = 0;
     if (r && !r.done && G.state === 'race' && !c.ski && !GIRIS) {      // geri sayımda gizli
-      const R = r.R, kv = rotaEgrilik(R), ileri = Math.min(clamp(Math.abs(c.vf) * 2.6, 45, 150), (YT.kararM || Infinity) + 12);      // yön oku bir ayrımı gösteriyorsa ayrımdan sonrasına bakma
+      const R = r.R, kv = rotaEgrilik(R), ileri = Math.min(clamp(Math.abs(c.vf) * 2.6, 45, 150), (YT.kararM >= 0 ? YT.kararM : Infinity) + 12);      // yön oku bir ayrımı gösteriyorsa ayrımdan sonrasına bakma
       let enK = 0;
       for (let k = 2; k * 4 <= ileri; k++) { const i = R.loop ? (c.ri + k) % R.n : Math.min(R.n - 1, c.ri + k); if (Math.abs(kv[i]) > Math.abs(enK)) enK = kv[i]; }
       const yr = 1 / Math.max(Math.abs(enK), 1e-4);
@@ -19530,7 +19540,7 @@ function cokKur(o) {
     G, EVENTS, STORY, S, startStory, nextLine, loadRegion, get bolge() { return REGION.id; }, get tur() { return TUR; }, get detay() { return G.detay; }, get cim() { return CIM ? { yaprak: CIM.yaprak, ortu: CIM.ortu } : null; }, get zemin() { return terrTex; }, get player() { return player; }, get cars() { return cars; }, startEvent, startFree, tick,
     sim(sec) { const n = Math.round(sec / STEP); for (let i = 0; i < n; i++) { if (G.state === 'free' || G.state === 'race' || G.state === 'count') tick(STEP); } },
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
-    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, HH, KIV, kivilcim, IZL, LIZ, get kamFov() { return camera.fov; }, YH, YD, ydYukle, ydBariyerYer, PRK, PARKUR, parkurYer, YOLR, yolRampaYer, YT, ytKarar, ytYolBul, okAdim, galeri: { liste: GALERI, get durum() { return GAL; }, sec: galeriSec, tak: galeriTak, ciz: galeriCiz }, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
+    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, HH, KIV, kivilcim, IZL, LIZ, finishRace, showResult, get kamFov() { return camera.fov; }, YH, YD, ydYukle, ydBariyerYer, PRK, PARKUR, parkurYer, YOLR, yolRampaYer, YT, ytKarar, ytYolBul, okAdim, galeri: { liste: GALERI, get durum() { return GAL; }, sec: galeriSec, tak: galeriTak, ciz: galeriCiz }, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     cok: COK,      // birlikte sürüş: .durum, .kur(), .katil(kod), .ayril(), .sunucuAyarla(adres)
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
     kediler: () => cats.map((c) => ({ canli: !!c.kedi, gorunur: c.mesh.visible, got: c.got })),
