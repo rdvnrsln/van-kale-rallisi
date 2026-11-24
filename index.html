@@ -52,7 +52,11 @@ button:focus-visible { outline: 2px solid var(--gol); outline-offset: 2px; }
 #yaris-sure { font-family: var(--f-baslik); font-weight: 700; font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
 #yaris-tur { grid-column: 1 / -1; font-size: 12.5px; color: var(--soluk); font-variant-numeric: tabular-nums; }
 #ok { display: flex; align-items: center; gap: 8px; background: var(--panel); padding: 4px 12px 4px 6px; border-radius: 999px; }
-#ok-i { width: 30px; height: 30px; display: block; }
+#ok-i { width: 30px; height: 30px; display: block; opacity: 0.4; transition: transform 0.25s ease-out, opacity 0.2s; }
+/* yol ayrımı yaklaşınca ok yanar ve dönülecek kolu gösterir (src/oyun.js YT) */
+#ok { transition: background-color 0.2s, box-shadow 0.2s; }
+#ok.karar { background: rgba(242, 169, 59, 0.22); box-shadow: inset 0 0 0 2px var(--kehribar); }
+#ok.karar #ok-i { opacity: 1; }
 #ok-m { font-family: var(--f-baslik); font-weight: 600; font-size: 17px; font-variant-numeric: tabular-nums; min-width: 52px; }
 .sag-ust { grid-area: 1 / 3; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
 .kedi { background: var(--panel); padding: 6px 12px; display: flex; gap: 10px; align-items: baseline; }
@@ -18478,6 +18482,217 @@ function cokKur(o) {
     }
     return VIRAJ;
   }
+  // ------------------------------------------------------------ yön oku
+  // Yön oku (25 Kas 2026; kurucu: "zigzaglı yollarda bile yön değiştiriyor bu saçma. sadece yol ayrımlarında yolu göstermeli"). Ok kuş uçuşu dönmez:
+  // düz ve virajlı yolda dik ve sönük durur. Rota bir yol ayrımında sapıyorsa ya da çatallanan yolda kol seçmek gerekiyorsa ayrımdan 160 m önce
+  // (hızlıyken 7 sn önce) yanar ve dönülecek kolu gösterir. Açı kavşağa giriş yönüne göredir (aracın burnuna göre değil): ayrıma kadar sabit kalır.
+  // Düz geçilen dört yol ağzında konuşmaz. Ters yönde gidince geri dönüşü, rotadan 45 m'den fazla uzaklaşınca rotaya dönüşü gösterir.
+  // Yarışta yol rotadır (G.race.R); rotasız işte (taksi, teslimat, servis, erzak) yol ağından en kısa yol bulunur (ytYolBul), yoldan çıkınca
+  // ya da 4 sn'de bir yenilenir. Ağ: yaya yolları dışındaki bütün yollar (D.roads sınıf ≤ 7); ayrım = en az üç kolun buluştuğu ham OSM düğümü.
+  const YT = { D: null, dug: [], ken: [], izg: null, kizg: null, yol: null, yolT: 0, gx: 0, gz: 0, yi: 0, son: null };
+  function ytAg() {
+    if (YT.D === D) return;
+    YT.D = D;
+    const say = new Map(), uc = new Set(), dug = [], ken = [], id = new Map();
+    const yollar = D.roads.filter((r) => r[0] <= 7 && r.length >= 8);
+    for (const r of yollar) {
+      const n = (r.length - 4) >> 1;
+      for (let k = 0; k < n; k++) { const ky = r[4 + 2 * k] + ',' + r[5 + 2 * k]; say.set(ky, (say.get(ky) || 0) + (k > 0) + (k < n - 1)); if (k === 0 || k === n - 1) uc.add(ky); }
+    }
+    const dugum = (x, z, ky) => { let i = id.get(ky); if (i === undefined) { i = dug.length; id.set(ky, i); dug.push({ x, z, kol: say.get(ky), e: [] }); } return i; };
+    for (const r of yollar) {
+      const n = (r.length - 4) >> 1;
+      let xs = [r[4]], zs = [r[5]], a = dugum(r[4], r[5], r[4] + ',' + r[5]);
+      for (let k = 1; k < n; k++) {
+        const x = r[4 + 2 * k], z = r[5 + 2 * k], ky = x + ',' + z; xs.push(x); zs.push(z);
+        if (k < n - 1 && say.get(ky) < 3 && !uc.has(ky)) continue;
+        const b = dugum(x, z, ky); let L = 0;
+        for (let q = 1; q < xs.length; q++) L += Math.hypot(xs[q] - xs[q - 1], zs[q] - zs[q - 1]);
+        if (L > 0.5) {
+          const ei = ken.length, cs = [0];
+          for (let q = 1; q < xs.length; q++) cs.push(cs[q - 1] + Math.hypot(xs[q] - xs[q - 1], zs[q] - zs[q - 1]));
+          ken.push({ a, b, x: xs, z: zs, cs, L, one: !!r[3], cls: r[0] }); dug[a].e.push(ei); dug[b].e.push(ei);
+        }
+        a = b; xs = [x]; zs = [z];
+      }
+    }
+    YT.izg = makeGrid(32); YT.kizg = makeGrid(48);
+    dug.forEach((d, i) => { if (d.kol >= 3) gridAdd(YT.izg, i, d.x, d.z, d.x, d.z, 8); });
+    ken.forEach((e, i) => { for (let q = 1; q < e.x.length; q++) gridAdd(YT.kizg, i, e.x[q - 1], e.z[q - 1], e.x[q], e.z[q], 45); });
+    const bil = new Int32Array(dug.length).fill(-1); let enB = 0, enN = 0;      // bağlı parçalar: yol bulma ana ağda başlar ve biter (kopuk köprü, bölge sınırında kesilen yol)
+    for (let i = 0; i < dug.length; i++) {
+      if (bil[i] >= 0) continue;
+      const yigin = [i]; bil[i] = i; let n = 0;
+      while (yigin.length) { const d = yigin.pop(); n++; for (const ei of dug[d].e) { const e = ken[ei]; for (const o of [e.a, e.b]) if (bil[o] < 0) { bil[o] = i; yigin.push(o); } } }
+      if (n > enN) { enN = n; enB = i; }
+    }
+    for (const e of ken) e.ana = bil[e.a] === enB;
+    YT.dug = dug; YT.ken = ken; YT.yol = null;
+  }
+  function ytKol(ei, ni) {      // kenarın ni düğümünden çıkan kolunun yönü (15 m ileriye bakar)
+    const e = YT.ken[ei], ters = e.a !== ni, n = e.x.length, x0 = ters ? e.x[n - 1] : e.x[0], z0 = ters ? e.z[n - 1] : e.z[0];
+    let px = x0, pz = z0;
+    for (let q = 1; q < n; q++) { const k = ters ? n - 1 - q : q; px = e.x[k]; pz = e.z[k]; if (Math.hypot(px - x0, pz - z0) >= 15) break; }
+    const L = Math.hypot(px - x0, pz - z0) || 1;
+    return { x: (px - x0) / L, z: (pz - z0) / L, cikis: !(e.one && ters), onemli: e.cls <= 5 || e.cls === 7 || e.L >= 50 };
+  }
+  // Rotanın konuşacağı ayrımlar: [{ s0, s1, aci }] (s: rota boyunca metre; aci artı sola, radyan). R üstünde saklanır.
+  function ytKarar(R) {
+    ytAg();
+    if (R.yt && R.ytD === D) return R.yt;
+    const gec = [];
+    for (let i = 0; i < R.n; i++) {
+      const cell = gridCell(YT.izg, R.x[i], R.z[i]);
+      if (cell) for (const ni of cell) { const d = YT.dug[ni], q = (d.x - R.x[i]) ** 2 + (d.z - R.z[i]) ** 2; if (q < 7 * 7) gec.push({ ni, s: R.s[i], q }); }
+    }
+    const tek = [];      // aynı düğümün art arda örnekleri tek geçiş (en yakın örnek)
+    for (const g of gec) { const o = tek.find((t) => t.ni === g.ni && Math.abs(t.s - g.s) < 40); if (!o) tek.push(g); else if (g.q < o.q) { o.s = g.s; o.q = g.q; } }
+    tek.sort((p, q) => p.s - q.s);
+    const kume = [];
+    for (const t of tek) { const k = kume[kume.length - 1]; if (k && t.s - k.s1 < 30) { k.s1 = t.s; k.dug.add(t.ni); } else kume.push({ s0: t.s, s1: t.s, dug: new Set([t.ni]) }); }
+    const yon = (s0, s1) => { const a = routePoint(R, s0), ax = a.x, az = a.z, b = routePoint(R, s1), L = Math.hypot(b.x - ax, b.z - az) || 1; return { x: (b.x - ax) / L, z: (b.z - az) / L }; };
+    const out = [];
+    for (const k of kume) {
+      if (!R.loop && (k.s0 < 12 || k.s1 > R.L - 12)) continue;
+      const gir = yon(k.s0 - 30, k.s0 - 6), cik = yon(k.s1 + 6, k.s1 + 30);
+      const aci = wrapAngle(Math.atan2(cik.x, cik.z) - Math.atan2(gir.x, gir.z));
+      const alt = [];
+      for (const ni of k.dug) for (const ei of YT.dug[ni].e) {
+        const e = YT.ken[ei], obur = e.a === ni ? e.b : e.a;
+        if (k.dug.has(obur) && e.L < 45) continue;      // kavşağın içindeki kısa bağlantı
+        const kl = ytKol(ei, ni);
+        if (!kl.cikis || !kl.onemli) continue;
+        if (kl.x * -gir.x + kl.z * -gir.z > 0.85 || kl.x * cik.x + kl.z * cik.z > 0.85) continue;      // gelinen ve gidilen kol
+        alt.push(kl);
+      }
+      if (!alt.length) continue;      // yalnız yol kıvrılıyor
+      let goster = aci;
+      if (Math.abs(aci) < 0.49) {      // 28°'den az sapma: başka kol da ileri gidiyorsa çatal, yoksa düz geçiş (konuşmaz)
+        let en = null, ec = Math.cos(0.8);
+        for (const kl of alt) { const c = kl.x * gir.x + kl.z * gir.z; if (c > ec) { ec = c; en = kl; } }
+        if (!en) continue;
+        const fark = wrapAngle(Math.atan2(cik.x, cik.z) - Math.atan2(en.x, en.z));
+        goster = Math.sign(fark || 1) * Math.max(Math.abs(aci), 0.4);
+      }
+      out.push({ s0: k.s0, s1: k.s1, aci: clamp(goster, -2.6, 2.6) });
+    }
+    R.ytD = D; R.yt = out;
+    return out;
+  }
+  function ytYakin(x, z, enCok, hepsi) {      // ana ağda en yakın nokta: kenar, a ucundan uzaklık, teğet. hepsi: ızgara yerine bütün kenarlar (uzak hedef)
+    const cell = hepsi ? YT.ken.map((e, i) => i) : gridCell(YT.kizg, x, z);
+    if (!cell) return null;
+    let bd = enCok * enCok, b = null;
+    for (const ei of cell) {
+      const e = YT.ken[ei];
+      if (!e.ana) continue;
+      for (let q = 1, s = 0; q < e.x.length; q++) {
+        const ax = e.x[q - 1], az = e.z[q - 1], ex = e.x[q] - ax, ez = e.z[q] - az, L2 = ex * ex + ez * ez, L = Math.sqrt(L2);
+        const t = L2 > 0 ? clamp(((x - ax) * ex + (z - az) * ez) / L2, 0, 1) : 0, px = ax + ex * t, pz = az + ez * t, d = (px - x) ** 2 + (pz - z) ** 2;
+        if (d < bd) { bd = d; b = { ei, t: s + L * t, x: px, z: pz, tx: ex / (L || 1), tz: ez / (L || 1) }; }
+        s += L;
+      }
+    }
+    return b;
+  }
+  // Yol ağında en kısa yol (Dijkstra). Bedel: uzunluk × sınıf katsayısı; tek yönün tersi ×5 (yasak değil, kaçınılır); başlangıçta geri dönüş +80 m.
+  // Dönen rota yarış rotası biçimindedir (x, z, s, n, L; 4 m'de bir nokta): ytKarar aynen kullanılır.
+  function ytYolBul(x, z, h, gx, gz) {
+    ytAg();
+    const A = ytYakin(x, z, 45) || ytYakin(x, z, 250, true), B = ytYakin(gx, gz, 45) || ytYakin(gx, gz, 250, true);      // yoldan uzak hedef (iskele, gar): en yakın yol noktasına kadar
+    if (!A || !B) return null;
+    const K = YT.ken, N = YT.dug, fx = Math.sin(h), fz = Math.cos(h), kat = (e) => (e.cls <= 3 ? 1 : e.cls <= 5 ? 1.2 : e.cls === 6 ? 1.6 : 1.5);
+    const bed = (e, ileri, m) => m * kat(e) * (e.one && !ileri ? 5 : 1);
+    const dist = new Float64Array(N.length).fill(Infinity), onc = new Int32Array(N.length).fill(-1), acik = [];
+    const it = (ni, d, ei) => { if (d < dist[ni]) { dist[ni] = d; onc[ni] = ei; acik.push([d, ni]); } };
+    const ea = K[A.ei], ileriB = A.tx * fx + A.tz * fz >= 0;
+    it(ea.b, bed(ea, true, ea.L - A.t) + (ileriB ? 0 : 80), -2); it(ea.a, bed(ea, false, A.t) + (ileriB ? 80 : 0), -2);
+    while (acik.length) {
+      let m = 0; for (let i = 1; i < acik.length; i++) if (acik[i][0] < acik[m][0]) m = i;      // küçük ağ: doğrusal arama yeter
+      const [d, ni] = acik[m]; acik[m] = acik[acik.length - 1]; acik.pop();
+      if (d > dist[ni]) continue;
+      for (const ei of N[ni].e) { const e = K[ei], ileri = e.a === ni; it(ileri ? e.b : e.a, d + bed(e, ileri, e.L), ei); }
+    }
+    const eb = K[B.ei], ga = dist[eb.a] + bed(eb, true, B.t), gb = dist[eb.b] + bed(eb, false, eb.L - B.t);
+    const ayni = A.ei === B.ei ? bed(ea, B.t >= A.t, Math.abs(B.t - A.t)) + ((B.t >= A.t) === ileriB ? 0 : 80) : Infinity;
+    if (!isFinite(Math.min(ga, gb, ayni))) return null;
+    const kenarPar = (e, t0, t1) => {      // kenar üzerinde t0'dan t1'e (a ucundan metre) noktalar, gidiş sırasıyla
+      const n = e.x.length, cs = e.cs, yer = (t) => { let q = 1; while (q < n - 1 && cs[q] < t) q++; const L = cs[q] - cs[q - 1], f = L ? clamp((t - cs[q - 1]) / L, 0, 1) : 0; return { x: e.x[q - 1] + (e.x[q] - e.x[q - 1]) * f, z: e.z[q - 1] + (e.z[q] - e.z[q - 1]) * f }; };
+      const ic = []; for (let q = 1; q < n - 1; q++) if (cs[q] > Math.min(t0, t1) && cs[q] < Math.max(t0, t1)) ic.push({ x: e.x[q], z: e.z[q] });
+      if (t1 < t0) ic.reverse();
+      return [yer(t0)].concat(ic, [yer(t1)]);
+    };
+    let pts;
+    if (ayni <= Math.min(ga, gb)) pts = kenarPar(ea, A.t, B.t);
+    else {
+      let ni = ga <= gb ? eb.a : eb.b;
+      const son = ga <= gb ? kenarPar(eb, 0, B.t) : kenarPar(eb, eb.L, B.t), parca = [son];
+      for (let g = 0; g < N.length && onc[ni] >= 0; g++) {
+        const e = K[onc[ni]], ileri = e.b === ni;      // ni'ye e üzerinden gelindi
+        parca.push(kenarPar(e, ileri ? 0 : e.L, ileri ? e.L : 0)); ni = ileri ? e.a : e.b;
+      }
+      parca.push(ni === ea.b ? kenarPar(ea, A.t, ea.L) : kenarPar(ea, A.t, 0));
+      pts = [].concat(...parca.reverse());
+    }
+    pts.unshift({ x, z }); pts.push({ x: gx, z: gz });
+    const rs = resample(pts, 4), n = rs.length, R = { x: new Float32Array(n), z: new Float32Array(n), s: new Float32Array(n), n, L: 0, loop: false };
+    for (let i = 0; i < n; i++) { R.x[i] = rs[i].x; R.z[i] = rs[i].z; if (i) R.L += Math.hypot(rs[i].x - rs[i - 1].x, rs[i].z - rs[i - 1].z); R.s[i] = R.L; }
+    let gi = 0; while (gi < n - 1 && R.s[gi] < 10) gi++;
+    R.geri = R.L > 25 && (R.x[gi] - x) * fx + (R.z[gi] - z) * fz < -2;      // yol aracın arkasından başlıyor: önce geri dön
+    return R;
+  }
+  // Ok durumu: { aci (artı sola), karar (yanıyor mu), m (gösterilecek metre) }
+  const _ok = { aci: 0, karar: false, m: 0 };
+  function ytRota(c, R, sp, kalan) {      // sp: oyuncunun rota üstündeki yeri (metre)
+    const k = ytKarar(R), v = Math.abs(c.vf), ileri = Math.max(160, v * 7);
+    _ok.aci = 0; _ok.karar = false; _ok.m = kalan;
+    for (const d of k) {
+      let u = d.s0 - sp;
+      if (R.loop && u < -(d.s1 - d.s0) - 8) u += R.L;
+      if (u < -(d.s1 - d.s0) - 8 || u > ileri) continue;
+      _ok.aci = d.aci; _ok.karar = true; _ok.m = Math.max(0, u);
+      break;
+    }
+    return _ok;
+  }
+  function ytYon(c, R, i) {      // rotanın i noktasındaki gidiş yönüne göre aracın durumu: ters gidiyor mu, rotaya uzaklık
+    const j = R.loop ? (i + 1) % R.n : Math.min(R.n - 1, i + 1), k = j === i ? Math.max(0, i - 1) : i, dx = R.x[j] - R.x[k], dz = R.z[j] - R.z[k], L = Math.hypot(dx, dz) || 1;
+    const vx = c.vx, vz = c.vz, v = Math.hypot(vx, vz);
+    return { ters: v > 4 && (vx * dx + vz * dz) / (v * L) < -0.5, uzak: Math.hypot(c.x - R.x[i], c.z - R.z[i]) };
+  }
+  function okAdim(c, dt) {
+    const r = G.race, gl = G.goal;
+    let o = null;
+    if (r) {
+      const R = r.R, sp = R.s[clamp(c.ri, 0, R.n - 1)], cp = r.cps[r.cpi];
+      o = ytRota(c, R, sp, cp ? Math.hypot(cp.x - c.x, cp.z - c.z) : 0);
+      const y = ytYon(c, R, clamp(c.ri, 0, R.n - 1));
+      if (y.uzak > 45) { const p = routePoint(R, sp + 30); o.aci = wrapAngle(Math.atan2(p.x - c.x, p.z - c.z) - c.h); o.karar = true; }
+      else if (y.ters) { o.aci = Math.PI; o.karar = true; }
+    } else if (gl) {
+      YT.yolT -= dt;
+      const yeni = YT.gx !== gl.x || YT.gz !== gl.z;
+      let R = yeni ? null : YT.yol, yenile = yeni || (!R && YT.yolT <= 0);
+      if (R) {      // yol üstündeki ilerleme: ileri doğru sınırlı pencere; yoldan 25 m çıkınca ya da geri dönülmesi beklenirken 1,5 sn'de bir yeniden bulunur
+        let bi = YT.yi, bd = 1e18;
+        for (let i = Math.max(0, YT.yi - 2); i <= Math.min(R.n - 1, YT.yi + 20); i++) { const d = (R.x[i] - c.x) ** 2 + (R.z[i] - c.z) ** 2; if (d < bd) { bd = d; bi = i; } }
+        YT.yi = bi;
+        if (bd > 25 * 25 || (R.geri && YT.yolT <= 0)) yenile = true;
+      }
+      if (yenile) { R = ytYolBul(c.x, c.z, c.h, gl.x, gl.z); YT.yol = R; YT.yi = 0; YT.yolT = !R ? 1 : R.geri ? 1.5 : 4; YT.gx = gl.x; YT.gz = gl.z; }
+      if (R) {
+        const sp = R.s[YT.yi];
+        o = ytRota(c, R, sp, R.L - sp);
+        if (R.geri && YT.yi < 4) { o.aci = Math.PI; o.karar = true; o.m = 0; }
+      } else { _ok.aci = 0; _ok.karar = false; _ok.m = Math.hypot(gl.x - c.x, gl.z - c.z); o = _ok; }      // yol ağı dışında: ok dik durur, uzaklık kuş uçuşu
+    }
+    if (!o) return;
+    const s = YT.son || (YT.son = { aci: NaN, karar: null });
+    const a = Math.round((o.aci * 57.2958) / 5) * 5;
+    if (a !== s.aci) { s.aci = a; $('ok-i').style.transform = 'rotate(' + -a + 'deg)'; }
+    if (o.karar !== s.karar) { s.karar = o.karar; $('ok').classList.toggle('karar', o.karar); }
+    if (hudT <= 0) $('ok-m').textContent = Math.round(o.m) + ' m';
+  }
   function updateHud(dt) {
     const c = player, kmh = Math.round(Math.abs(c.vf) * 3.6);
     turboHud(c); virajAdim(c, G.race); ydIsik();
@@ -18488,19 +18703,12 @@ function cokKur(o) {
     const r = G.race;
     if (r) {
       $('yaris-sure').textContent = fmt(r.t);
-      const cp = r.cps[r.cpi];
-      if (cp) {
-        const ang = wrapAngle(Math.atan2(cp.x - c.x, cp.z - c.z) - c.h);
-        $('ok-i').style.transform = 'rotate(' + (-ang * 57.2958).toFixed(1) + 'deg)';
-        if (hudT <= 0) $('ok-m').textContent = Math.round(Math.hypot(cp.x - c.x, cp.z - c.z)) + ' m';
-      }
     }
+    okAdim(c, dt);      // yön oku: yalnız yol ayrımında döner (YT)
     const gl = G.goal;
     if (gl && !r) {
-      const ang = wrapAngle(Math.atan2(gl.x - c.x, gl.z - c.z) - c.h);
-      $('ok-i').style.transform = 'rotate(' + (-ang * 57.2958).toFixed(1) + 'deg)';
       $('yaris-sure').textContent = fmt(gl.sure ? Math.max(0, gl.sure - gl.t) : gl.t);
-      if (hudT <= 0) { $('ok-m').textContent = Math.round(Math.hypot(gl.x - c.x, gl.z - c.z)) + ' m'; $('yaris-tur').textContent = T('hud.hedef', gl.ad) + (gl.konfor !== undefined ? ' · ' + T(gl.on + '.konfor', gl.konfor) : '') + (gl.sicak !== undefined && gl.si > 0 ? ' · ' + T('tes.sicak', Math.round(gl.sicak)) : '') + (gl.taksimetre !== undefined && gl.si > 0 ? ' · ' + T('tks.taksimetre', para(gl.taksimetre)) : ''); }
+      if (hudT <= 0) { $('yaris-tur').textContent = T('hud.hedef', gl.ad) + (gl.konfor !== undefined ? ' · ' + T(gl.on + '.konfor', gl.konfor) : '') + (gl.sicak !== undefined && gl.si > 0 ? ' · ' + T('tes.sicak', Math.round(gl.sicak)) : '') + (gl.taksimetre !== undefined && gl.si > 0 ? ' · ' + T('tks.taksimetre', para(gl.taksimetre)) : ''); }
     }
     if (hudT > 0) return;
     hudT = 0.2;
@@ -18941,7 +19149,7 @@ function cokKur(o) {
     G, EVENTS, STORY, S, startStory, nextLine, loadRegion, get bolge() { return REGION.id; }, get tur() { return TUR; }, get detay() { return G.detay; }, get cim() { return CIM ? { yaprak: CIM.yaprak, ortu: CIM.ortu } : null; }, get zemin() { return terrTex; }, get player() { return player; }, get cars() { return cars; }, startEvent, startFree, tick,
     sim(sec) { const n = Math.round(sec / STEP); for (let i = 0; i < n; i++) { if (G.state === 'free' || G.state === 'race' || G.state === 'count') tick(STEP); } },
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
-    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, YH, YD, ydYukle, ydBariyerYer, galeri: { liste: GALERI, get durum() { return GAL; }, sec: galeriSec, tak: galeriTak, ciz: galeriCiz }, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
+    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, YH, YD, ydYukle, ydBariyerYer, YT, ytKarar, ytYolBul, okAdim, galeri: { liste: GALERI, get durum() { return GAL; }, sec: galeriSec, tak: galeriTak, ciz: galeriCiz }, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     cok: COK,      // birlikte sürüş: .durum, .kur(), .katil(kod), .ayril(), .sunucuAyarla(adres)
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
     kediler: () => cats.map((c) => ({ canli: !!c.kedi, gorunur: c.mesh.visible, got: c.got })),
