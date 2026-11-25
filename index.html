@@ -6521,6 +6521,7 @@ const DIL = {
     'menu.konum': 'İpekyolu · Tuşba — 38,50° K 43,34° D', 'menu.baslik': 'Street <em>81</em>',
     'menu.tanitim': 'Gerçek Van sokaklarında, kalenin gölgesinde yarış. Göl kıyısından Eski Van’a kadar şehir açık.',
     'menu.devam': 'Devam et', 'menu.hikaye': 'Hikâye', 'menu.hikaye.bolum': 'Hikâye · Bölüm {0}: {1}', 'menu.hikaye.bastan': 'Hikâye · baştan',
+    'perf.takilma': '200 ms üstü takılma: {0}',
     'hud.canKayip': '−%{0}', 'menu.isler': 'İşler', 'menu.salon': 'Kahvaltı salonu', 'menu.etkinlikler': 'Etkinlikler', 'hedef.kalan': 'Hedef: {0} · {1} ₺ kaldı', 'hedef.yeter': 'Hedef: {0} · paran yetiyor',
     'menu.serbest': 'Serbest sürüş', 'menu.ayarlar': 'Ayarlar', 'menu.cikis': 'Çıkış', 'menu.bolgeSec': 'Serbest sürüş bölgesi', 'menu.yarislar': 'Yarışlar', 'menu.sur': 'Sür',
     'cok.baslik': 'Birlikte sür', 'cok.aciklama': 'Oda kur, kodu arkadaşlarına ver. Bir odada en çok dört kişi olur.', 'cok.kur': 'Oda kur', 'cok.katil': 'Katıl',
@@ -6724,6 +6725,7 @@ const DIL = {
     'menu.konum': 'İpekyolu · Tuşba — 38.50° N 43.34° E', 'menu.baslik': 'Street <em>81</em>',
     'menu.tanitim': 'Race on the real streets of Van, in the shadow of the castle. The city is open from the lake shore to Old Van.',
     'menu.devam': 'Continue', 'menu.hikaye': 'Story', 'menu.hikaye.bolum': 'Story · Chapter {0}: {1}', 'menu.hikaye.bastan': 'Story · restart',
+    'perf.takilma': 'stutters over 200 ms: {0}',
     'hud.canKayip': '−{0}%', 'menu.isler': 'Jobs', 'menu.salon': 'Breakfast house', 'menu.etkinlikler': 'Events', 'hedef.kalan': 'Goal: {0} · ₺{1} to go', 'hedef.yeter': 'Goal: {0} · you can afford it',
     'menu.serbest': 'Free roam', 'menu.ayarlar': 'Settings', 'menu.cikis': 'Quit', 'menu.bolgeSec': 'Free roam region', 'menu.yarislar': 'Races', 'menu.sur': 'Drive',
     'cok.baslik': 'Drive together', 'cok.aciklama': 'Create a room and share the code. A room holds up to four players.', 'cok.kur': 'Create room', 'cok.katil': 'Join',
@@ -6927,6 +6929,7 @@ const DIL = {
     'menu.konum': 'ایپک‌یولو · توشبا — 38.50° شمالی، 43.34° شرقی', 'menu.baslik': 'Street <em>81</em>',
     'menu.tanitim': 'در خیابان‌های واقعی وان، زیر سایه قلعه مسابقه بده. شهر از ساحل دریاچه تا وان قدیم باز است.',
     'menu.devam': 'ادامه', 'menu.hikaye': 'داستان', 'menu.hikaye.bolum': 'داستان · فصل {0}: {1}', 'menu.hikaye.bastan': 'داستان · از نو',
+    'perf.takilma': 'گیر بیش از ۲۰۰ میلی‌ثانیه: {0}',
     'hud.canKayip': '−{0}٪', 'menu.isler': 'کارها', 'menu.salon': 'صبحانه‌خانه', 'menu.etkinlikler': 'رویدادها', 'hedef.kalan': 'هدف: {0} · {1} ₺ مانده', 'hedef.yeter': 'هدف: {0} · پولت کافی است',
     'menu.serbest': 'رانندگی آزاد', 'menu.ayarlar': 'تنظیمات', 'menu.cikis': 'خروج', 'menu.bolgeSec': 'منطقه رانندگی آزاد', 'menu.yarislar': 'مسابقه‌ها', 'menu.sur': 'برو',
     'cok.baslik': 'رانندگی با هم', 'cok.aciklama': 'اتاق بساز و کد را به دوستانت بده. هر اتاق حداکثر چهار نفر دارد.', 'cok.kur': 'ساخت اتاق', 'cok.katil': 'پیوستن',
@@ -19506,7 +19509,17 @@ function cokKur(o) {
     w: { t: 0, n: 0, top: 0, cpu: 0, gpuT: 0, gpuN: 0, a: [] }, cpuDar: false, gpuSon: -1, gpuGuven: true, gpuSapma: 0, cagri: 0, ucgen: 0,
     akici: 0, kaliteCikT: -1e9, kaliteBekle: 0, gl: null, ext: null, sorgu: [], gpuAd: '',
     goster: TANI === 'perf' || !!AYAR.perf, kutuT: 0, agir: +((location.search.match(/[?&]agir=(\d+)/) || [])[1] || 0), tur: null, sonuc: null,
+    takilma: { n: 0, enUzun: 0, son: [] }, gorunurT: 0,
   };
+  // Takılma sayacı (25 Kas 2026; Codex öneri 10: "200 ms üstü ön plan karelerini sayın"). 200 ms ve üstü kareler ölçek ve kalite kararlarından yine çıkar
+  // (perfKayit, fps), ama sekme görünürken, görünür olmasının ilk 0,5 sn'si ve yükleme ekranı dışında oyuncunun hissettiği takılma sayılır:
+  // PERF.takilma { n, enUzun ms, son: son 20 takılma [ms, durum, bölge, sn] }. Ölçüm turu raporu ve --kesit ölçümü bunu okur.
+  document.addEventListener('visibilitychange', () => { PERF.gorunurT = performance.now(); });
+  function takilmaSay(ms, now) {
+    if (ms < 200 || document.hidden || now - PERF.gorunurT < 500 || G.state === 'load') return;
+    const t = PERF.takilma; t.n++; t.enUzun = Math.max(t.enUzun, Math.round(ms));
+    t.son.push([Math.round(ms), G.state, REGION ? REGION.id : '', +(now / 1000).toFixed(1)]); if (t.son.length > 20) t.son.shift();
+  }
   function gpuKur() {
     const gl = (PERF.gl = renderer.getContext());
     try { PERF.ext = typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext ? gl.getExtension('EXT_disjoint_timer_query_webgl2') : null; } catch (e) { PERF.ext = null; }
@@ -19688,7 +19701,7 @@ function cokKur(o) {
   const bekle = (ms) => new Promise((r) => setTimeout(r, ms));
   async function perfTuru() {
     if (PERF.tur || G.loading) return;
-    const tr = (PERF.tur = { k: [], topla: false, ad: '', kalan: 0, bolum: [], iptal: false, kalite0: AYAR.kalite, boyut0: PERF.boyut || 0 });
+    const tr = (PERF.tur = { k: [], topla: false, ad: '', kalan: 0, bolum: [], iptal: false, kalite0: AYAR.kalite, boyut0: PERF.boyut || 0, tak0: PERF.takilma.n });
     const surdu = () => !tr.iptal && (G.state === 'free' || G.state === 'race');
     const topla = async (ad, sn) => {
       tr.ad = ad; tr.k = [];
@@ -19743,7 +19756,8 @@ function cokKur(o) {
       surum: 1, tarih: new Date().toISOString(), tamam: !tr.iptal && b.length >= 3,
       cihaz: { gpu: gpuAdi(), ekran: innerWidth + '×' + innerHeight + ' ×' + (window.devicePixelRatio || 1), cizim: _cb.x + '×' + _cb.y, mobil: MOBIL, tarayici: (navigator.userAgent.match(/Electron\/[\d.]+/) || navigator.userAgent.match(/(CriOS|Edg|Firefox|Chrome|Version)\/[\d.]+/) || ['?'])[0], gpuSaat: !!PERF.ext && PERF.gpuGuven },
       kalite: { secilen: AYAR.kaliteSecim, bas: tr.kalite0, son: AYAR.kalite, oto: !!AYAR.oto, olcek: +PERF.olcek.toFixed(2), cozDegisim: (PERF.boyut || 0) - tr.boyut0 },
-      bolum: b, katman: tr.katman || null, karar: enKotu >= 55 && p95 <= 28 ? 'perf.k60' : enKotu >= 30 ? 'perf.k30' : 'perf.kZayif',
+      bolum: b, katman: tr.katman || null, takilma: PERF.takilma.n - tr.tak0,
+      karar: enKotu >= 55 && p95 <= 28 && PERF.takilma.n === tr.tak0 ? 'perf.k60' : enKotu >= 30 ? 'perf.k30' : 'perf.kZayif',
     });
     const tb = $('perf-tablo'); tb.innerHTML = '';
     for (const x of b) {
@@ -19763,7 +19777,7 @@ function cokKur(o) {
       }
     }
     $('perf-cihaz').textContent = R.cihaz.gpu + ' · ' + R.cihaz.ekran + ' · ' + R.cihaz.tarayici;
-    $('perf-kalite').textContent = T('perf.kaliteSatir', T('ayar.' + R.kalite.bas), T('ayar.' + R.kalite.son), yuzde(R.kalite.olcek));
+    $('perf-kalite').textContent = T('perf.kaliteSatir', T('ayar.' + R.kalite.bas), T('ayar.' + R.kalite.son), yuzde(R.kalite.olcek)) + ' · ' + T('perf.takilma', R.takilma);
     $('perf-karar').textContent = R.tamam ? T(R.karar, sayi(enKotu, 0)) : T('perf.yarim');
     $('perf-kopyala').textContent = T('perf.kopyala');
     $('perf-sonuc').hidden = false;
@@ -19870,7 +19884,7 @@ function cokKur(o) {
     } else if (MUTFAK.uc()) MUTFAK.ciz(renderer);
     // ölçüm, dinamik çözünürlük, kalite basamağı (yukarıdaki "performans" bölümü)
     const rawDt = (now - prevNow) / 1000; prevNow = now;
-    perfKayit(rawDt * 1000, performance.now() - t0, gpuOku());
+    perfKayit(rawDt * 1000, performance.now() - t0, gpuOku()); takilmaSay(rawDt * 1000, now);
     if (driving && !perfSurdu) perfIsinma = Math.max(perfIsinma, now + 1500);      // sürüşe geçişte (bölge yükleme, giriş) 1,5 sn bekle
     perfSurdu = driving;
     perfAyarla(driving, now);
@@ -19894,7 +19908,7 @@ function cokKur(o) {
     sim(sec) { const n = Math.round(sec / STEP); for (let i = 0; i < n; i++) { if (G.state === 'free' || G.state === 'race' || G.state === 'count') tick(STEP); } },
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
     groundH,
-    ETK, etkGrupSec, hedef, hedefYazi, ALEV, CANV, canVur, izlAdim, updateHud, poseCar, VIRAJ,
+    ETK, etkGrupSec, hedef, hedefYazi, ALEV, CANV, canVur, izlAdim, updateHud, poseCar, VIRAJ, trafikSec(v) { AYAR.trafik = !!v; applySettings(false); },
     wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, HH, KIV, kivilcim, IZL, LIZ, VTR, finishRace, showResult, startTanitim, TAN, startStory, get kamFov() { return camera.fov; }, YH, YD, ydYukle, ydBariyerYer, PRK, PARKUR, parkurYer, KTUR, YOLR, RTUR, yolRampaYer, RKIM, RKE, rkDal, rkEtiketAdim, rakipHirs, rotaEgrilik, YT, ytKarar, ytYolBul, okAdim, galeri: { liste: GALERI, get durum() { return GAL; }, sec: galeriSec, tak: galeriTak, ciz: galeriCiz }, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     cok: COK,      // birlikte sürüş: .durum, .kur(), .katil(kod), .ayril(), .sunucuAyarla(adres)
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
