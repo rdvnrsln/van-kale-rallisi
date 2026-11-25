@@ -11110,6 +11110,9 @@ function ortuGovde(tur) {
       : 'vec3 objectNormal = vec3(normal.x * oCo - normal.z * oSi, normal.y, normal.x * oSi + normal.z * oCo);',
   ].join('\n');
 }
+// Isınma kancası (25 Kas 2026; açılış profili: örtü modelleri menüden sonra inip ilk karede dokularını yükleyip gölgelendiricisini derliyordu, ~0,3 sn donma).
+// src/oyun.js atar: modeller görünmez eklenir, kanca dokuları karede bir yükleyip gölgelendiricileri derledikten sonra kaliteye göre görünür olur.
+let ORTU_ISIT = null;
 function ortuKur(scene, ortak, ortu) {
   ortuYukle().then(({ G, T }) => {
     if (!scene.parent) return;      // bölge bu arada değişti
@@ -11145,7 +11148,7 @@ function ortuKur(scene, ortak, ortu) {
       mat.customProgramCacheKey = () => anahtar;
       const m = new THREE.Mesh(g, mat);
       m.frustumCulled = false; m.receiveShadow = true; m.castShadow = false; m.userData.kalite = tur.kalite;
-      scene.add(m); ortu.m.push(m); ortu.sayi += n;
+      m.visible = false; scene.add(m); ortu.m.push(m); ortu.sayi += n;
     }));
     // OSM uçurumları: kaya yüzü ve yamaç taramaları çizgi boyunca, yüzü alçak yana (OSM: yolun sağı) bakar
     const yuz = { kayuz: [], yamac: [] }, R = rng(977);
@@ -11170,10 +11173,11 @@ function ortuKur(scene, ortak, ortu) {
       L.forEach((p, i) => { e.set(0, p.a, 0); q.setFromEuler(e); M4.compose(new THREE.Vector3(p.x, p.y, p.z), q, new THREE.Vector3(p.k, p.k, p.k)); im.setMatrixAt(i, M4); });
       im.instanceMatrix.needsUpdate = true; im.frustumCulled = false;      // three 0.149: örnekli ağın sınır küresi yok; örnekler 1 km'ye yayılır
       im.castShadow = true; im.receiveShadow = true; im.userData.kalite = 'orta';
-      scene.add(im); ortu.m.push(im); ortu.sayi += L.length;
+      im.visible = false; scene.add(im); ortu.m.push(im); ortu.sayi += L.length;
     }
     ortu.durum = 'hazir';
-    ortuKalite(ortu);
+    const goster = () => ortuKalite(ortu);
+    if (ORTU_ISIT) ORTU_ISIT(ortu.m).then(goster, goster); else goster();
   }).catch((e) => { ortu.durum = 'hata: ' + (e && e.message ? e.message : e); });
 }
 function ortuKalite(ortu) {
@@ -15644,10 +15648,10 @@ function cokKur(o) {
   const galeriModel = () => (MOBIL ? GALERI[0] : GALERI.find((m) => m.id === (GAL.odunc || GAL.sec)) || GALERI[0]);      // GAL.odunc: tanıtım yarışının ödünç arabası (kaydedilmez)
   function galeriTak(id) {      // seçili modeli oyuncunun arabası yapar (model iner, eskisinin yerine geçer)
     if (MOBIL) return Promise.resolve(false);
-    return yarisArabaYukle(id).then((src) => {
+    return arabaHazir(id).then((src) => {
       if ((GAL.odunc || GAL.sec) !== id || (player.car && player.car.yaris === id)) return false;      // bu arada başka model seçildi ya da zaten takılı
       const v = makeCarYaris(src, '#e2572b', { oyuncu: true }), e = player.car.group;
-      v.group.visible = e.visible; v.group.position.copy(e.position); v.group.rotation.copy(e.rotation); scene.remove(e); scene.add(v.group); player.car = v;
+      v.group.visible = e.visible; v.group.position.copy(e.position); v.group.rotation.copy(e.rotation); scene.remove(e); scene.add(v.group); player.car = v; isitNesne(v.group);
       if (player.mesh === e) { player.mesh = v.group; player.wheels = v.wheels; player.tail = v.tail; }
       ucTekerYukle().then((us) => arabaSurucu(v, us)).catch(() => {});
       return true;
@@ -15908,10 +15912,10 @@ function cokKur(o) {
       // biri inmezse o araç Blender modeliyle kalır. Telefonda yüklenmez. Trafik, servis ve birlikte sürüşteki uzak oyuncular Blender arabasında kalır.
       if (MOBIL) return;
       galeriTak(GAL.sec);      // oyuncunun arabası: galeride seçili model
-      yarisArabaYukle('four-door-super-saloon').then((src) => {      // taksi: dört kapılı model, Van taksisi sarısı, tavanında tabela (taksiKur)
+      arabaHazir('four-door-super-saloon').then((src) => {      // taksi: dört kapılı model, Van taksisi sarısı, tavanında tabela (taksiKur)
         const tv = makeCarYaris(src, '#e8c33a', { oyuncu: true }), te = player.taksi.group;
         tv.ikiEgzoz = true; taksiKur(tv);
-        tv.group.visible = te.visible; tv.group.position.copy(te.position); tv.group.rotation.copy(te.rotation); scene.remove(te); scene.add(tv.group);
+        tv.group.visible = te.visible; tv.group.position.copy(te.position); tv.group.rotation.copy(te.rotation); scene.remove(te); scene.add(tv.group); isitNesne(tv.group);
         if (TKS.y && TKS.y.kok.parent === te) tv.group.add(TKS.y.kok);      // yolcu eski modelde oturuyorsa yenisine geçer
         player.taksi = tv;
         if (player.mesh === te) { player.mesh = tv.group; player.wheels = tv.wheels; player.tail = tv.tail; }
@@ -15939,7 +15943,8 @@ function cokKur(o) {
     await loadRegion('van');
     buildMenu();
     applySettings(false);
-    $('load').hidden = true;
+    await isit();
+    $('load').hidden = true; PERF.yukBitis = performance.now();
     showMenu();
     { const b = (location.search.match(/[?&]bolge=([a-z]+)/) || [])[1];      // sınama: ?bolge=abali doğrudan o bölgede serbest sürüş açar
       if (b && REGIONS[b]) { await loadRegion(b); startFree(); } }
@@ -15947,6 +15952,59 @@ function cokKur(o) {
     requestAnimationFrame(frame);
   }
   // Bölge yükle: eski dünyayı sök, yenisini aynı kurucularla kur. Aynı bölgedeyse hiçbir şey yapmaz.
+  // Isınma (25 Kas 2026; açılış profili `masaustu --profil`: menü görününce ilk karede dokular ekran kartına yükleniyordu (~0,9 sn, texSubImage2D) ve
+  // gölgelendiriciler derleniyordu (~0,5 sn); menü 1,5 sn donuyordu, ilk yarışın başında da rakip arabalar için ~0,3 sn). isit: yükleme ekranı açıkken
+  // sahnedeki bütün dokular yüklenir (renderer.initTexture; 40 ms'de bir kare verilir, yükleme yazısı donmaz) ve gölgelendiriciler derlenir (renderer.compile).
+  // isitNesne: sonradan inen modeller (yarış arabaları) sahneye eklenince toplanır, 250 ms sonra birlikte ısıtılır; gizli olanlar derleme anında görünür sayılır.
+  const ISIT = { bekleyen: new Set(), z: 0, son: null };
+  function dokular(kok, set) {
+    kok.traverse((o) => {
+      for (const m of o.material ? [].concat(o.material) : []) {
+        for (const k in m) { const v = m[k]; if (v && v.isTexture) set.add(v); }
+        if (m.uniforms) for (const k in m.uniforms) { const v = m.uniforms[k] && m.uniforms[k].value; if (v && v.isTexture) set.add(v); }
+      }
+    });
+    return set;
+  }
+  // Gölgelendiriciye derleme anında eklenen dokular (arazi TEX, dağ DAG.tex ve DAG.U) malzemede görünmez: havuzlardan toplanır.
+  function havuzDokular(set) {
+    const ekle = (v) => { if (v && v.isTexture) set.add(v); else if (v && v.value && v.value.isTexture) set.add(v.value); };
+    for (const k in TEX) ekle(TEX[k]);
+    for (const k in DAG.tex) ekle(DAG.tex[k]);
+    if (DAG.U) for (const k in DAG.U) ekle(DAG.U[k]);
+    return set;
+  }
+  function dokuYukle(t) { if (!t.image || t.isRenderTargetTexture) return 0; try { renderer.initTexture(t); return 1; } catch (e) { return 0; } }
+  async function isit() {
+    const t0 = performance.now(), d = havuzDokular(dokular(scene, new Set())); dokular(UZAK.sahne, d);
+    let n = 0, tk = performance.now();
+    for (const t of d) { n += dokuYukle(t); if (performance.now() - tk > 40) { await nextFrame(); tk = performance.now(); } }
+    const t1 = performance.now();
+    try { renderer.compile(scene, camera); renderer.compile(UZAK.sahne, UZAK.kam); } catch (e) { console.warn('ısınma', e); }
+    ISIT.son = { doku: n, dokuMs: Math.round(t1 - t0), derleMs: Math.round(performance.now() - t1) };
+  }
+  // Yarış arabası dokuları: model inince ana çiziciye her karede bir doku yüklenir, araba sonra sahneye girer (2048–4096 px doku 60–90 ms sürer; hepsi
+  // ilk çizimde yüklenince menü ~1 sn donuyordu). Klonlar dokuyu paylaşır (makeCarYaris malzemeyi kopyalar, dokuyu değil). Vitrin ayrı çizicidedir, kullanmaz.
+  const ARABA_HAZIR = {};
+  function arabaHazir(ad) {
+    return ARABA_HAZIR[ad] || (ARABA_HAZIR[ad] = yarisArabaYukle(ad).then(async (src) => {
+      for (const t of dokular(src.kok, new Set())) { if (t.image && renderer.properties.get(t).__version !== t.version && dokuYukle(t)) await nextFrame(); }
+      return src;
+    }));
+  }
+  ORTU_ISIT = async (ms) => {      // zemin örtüsü (src/cim.js): dokular karede bir, sonra görünmez modeller bir an görünür sayılıp derlenir
+    const d = new Set(); for (const m of ms) dokular(m, d);
+    for (const t of d) { if (t.image && renderer.properties.get(t).__version !== t.version && dokuYukle(t)) await nextFrame(); }
+    const gor = ms.map((m) => m.visible); ms.forEach((m) => { m.visible = true; });
+    try { renderer.compile(scene, camera); } catch (e) { console.warn('ısınma', e); } finally { ms.forEach((m, i) => { m.visible = gor[i]; }); }
+  };
+  function isitNesne(g) { ISIT.bekleyen.add(g); clearTimeout(ISIT.z); ISIT.z = setTimeout(isitBekleyen, 250); }
+  function isitBekleyen() {
+    const gs = [...ISIT.bekleyen].filter((g) => g.parent); ISIT.bekleyen.clear(); if (!gs.length) return;
+    const d = new Set(); for (const g of gs) dokular(g, d); for (const t of d) dokuYukle(t);
+    const gor = gs.map((g) => g.visible); gs.forEach((g) => { g.visible = true; });
+    try { renderer.compile(scene, camera); } catch (e) { console.warn('ısınma', e); } finally { gs.forEach((g, i) => { g.visible = gor[i]; }); }
+  }
   async function loadRegion(id) {
     if ((REGION && REGION.id === id) || G.loading) return;
     G.loading = true;
@@ -16016,7 +16074,7 @@ function cokKur(o) {
       if (TANI === 'kirik') setTimeout(() => { for (const o of KIRIK.oge) if (o.durum === 0 && o.tip !== 2 && Math.hypot((o.tip ? o.ax : o.x) - player.x, (o.tip ? o.az : o.z) - player.z) < 40) kirikDevir(o, 12, -Math.cos(player.h), Math.sin(player.h)); }, 2500);      // tanı: oyuncunun çevresindekileri devir (Safari çizim denetimi)
       G.bolge = id;
       for (const el of document.querySelectorAll('[data-bolge]')) el.setAttribute('aria-pressed', el.getAttribute('data-bolge') === id ? 'true' : 'false');
-      if (!first) $('load').hidden = true;
+      if (!first) { await isit(); $('load').hidden = true; PERF.yukBitis = performance.now(); }      // ilk açılışta build() ayarlardan sonra ısıtır
     } finally { G.loading = false; }
   }
 
@@ -17063,10 +17121,11 @@ function cokKur(o) {
     else flash(T('flash.serbest'), yan ? T('cok.yaninda', yan.no) : T('flash.serbest.alt'));
   }
   function rakipModelTak(i, ad, renk) {      // rakibin arabasını yarış modeliyle değiştirir; inmezse Blender arabası kalır
-    return yarisArabaYukle(ad).then((src) => {
+    return arabaHazir(ad).then((src) => {
       const v = makeCarYaris(src, renk, {}), c = rivals[i], e = c.car.group;
       v.group.visible = e.visible; v.group.position.copy(e.position); v.group.rotation.copy(e.rotation); scene.remove(e); scene.add(v.group); c.car = v;
       if (c.mesh === e) { c.mesh = v.group; c.wheels = v.wheels; c.tail = v.tail; }
+      isitNesne(v.group);
     }).catch((h) => console.warn('yarış arabası yüklenemedi: ' + ad, h));
   }
   // Rakibin aracı sınıfa göre değişir. Üç teker modelleri ilk üç teker yarışında kurulur: Van'ın hamal üç tekerleri mavi ve siyahtır (oyuncununki kırmızı),
@@ -19509,14 +19568,14 @@ function cokKur(o) {
     w: { t: 0, n: 0, top: 0, cpu: 0, gpuT: 0, gpuN: 0, a: [] }, cpuDar: false, gpuSon: -1, gpuGuven: true, gpuSapma: 0, cagri: 0, ucgen: 0,
     akici: 0, kaliteCikT: -1e9, kaliteBekle: 0, gl: null, ext: null, sorgu: [], gpuAd: '',
     goster: TANI === 'perf' || !!AYAR.perf, kutuT: 0, agir: +((location.search.match(/[?&]agir=(\d+)/) || [])[1] || 0), tur: null, sonuc: null,
-    takilma: { n: 0, enUzun: 0, son: [] }, gorunurT: 0,
+    takilma: { n: 0, enUzun: 0, son: [] }, gorunurT: 0, yukBitis: 0,
   };
   // Takılma sayacı (25 Kas 2026; Codex öneri 10: "200 ms üstü ön plan karelerini sayın"). 200 ms ve üstü kareler ölçek ve kalite kararlarından yine çıkar
   // (perfKayit, fps), ama sekme görünürken, görünür olmasının ilk 0,5 sn'si ve yükleme ekranı dışında oyuncunun hissettiği takılma sayılır:
   // PERF.takilma { n, enUzun ms, son: son 20 takılma [ms, durum, bölge, sn] }. Ölçüm turu raporu ve --kesit ölçümü bunu okur.
   document.addEventListener('visibilitychange', () => { PERF.gorunurT = performance.now(); });
   function takilmaSay(ms, now) {
-    if (ms < 200 || document.hidden || now - PERF.gorunurT < 500 || G.state === 'load') return;
+    if (ms < 200 || document.hidden || now - PERF.gorunurT < 500 || G.state === 'load' || now - ms < PERF.yukBitis) return;      // yükleme ekranı kapanırken başlayan kare yüklemedir
     const t = PERF.takilma; t.n++; t.enUzun = Math.max(t.enUzun, Math.round(ms));
     t.son.push([Math.round(ms), G.state, REGION ? REGION.id : '', +(now / 1000).toFixed(1)]); if (t.son.length > 20) t.son.shift();
   }
@@ -19908,7 +19967,7 @@ function cokKur(o) {
     sim(sec) { const n = Math.round(sec / STEP); for (let i = 0; i < n; i++) { if (G.state === 'free' || G.state === 'race' || G.state === 'count') tick(STEP); } },
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
     groundH,
-    ETK, etkGrupSec, hedef, hedefYazi, ALEV, CANV, canVur, izlAdim, updateHud, poseCar, VIRAJ, trafikSec(v) { AYAR.trafik = !!v; applySettings(false); },
+    ETK, etkGrupSec, hedef, hedefYazi, ALEV, CANV, canVur, izlAdim, updateHud, poseCar, VIRAJ, ISIT, isitEksik() { const d = havuzDokular(dokular(scene, new Set())); dokular(UZAK.sahne, d); const e = []; for (const t of d) { if (!t.image || t.isRenderTargetTexture) continue; if (renderer.properties.get(t).__version !== t.version) e.push([t.name || String(t.image.src || t.image.currentSrc || '').split('/').pop() || t.uuid.slice(0, 6), t.image.width, t.image.height]); } return e; }, trafikSec(v) { AYAR.trafik = !!v; applySettings(false); },
     wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, HH, KIV, kivilcim, IZL, LIZ, VTR, finishRace, showResult, startTanitim, TAN, startStory, get kamFov() { return camera.fov; }, YH, YD, ydYukle, ydBariyerYer, PRK, PARKUR, parkurYer, KTUR, YOLR, RTUR, yolRampaYer, RKIM, RKE, rkDal, rkEtiketAdim, rakipHirs, rotaEgrilik, YT, ytKarar, ytYolBul, okAdim, galeri: { liste: GALERI, get durum() { return GAL; }, sec: galeriSec, tak: galeriTak, ciz: galeriCiz }, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     cok: COK,      // birlikte sürüş: .durum, .kur(), .katil(kod), .ayril(), .sunucuAyarla(adres)
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
