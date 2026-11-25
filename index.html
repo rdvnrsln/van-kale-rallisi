@@ -246,6 +246,8 @@ h1 em { font-style: inherit; color: var(--kehribar); }
 .kasa { font-family: var(--f-baslik); font-weight: 700; font-size: 22px; color: var(--kehribar); font-variant-numeric: tabular-nums; }
 .kasa-yan { font-size: 17px; margin: -4px 0 10px; }      /* 25 Kas (Codex incelemesi): kasa ve "para yetmez" uyarısı galeri ve yarış listesinde de görünsün */
 .kasa.uyari { color: #ff7a63; }
+.etk-grup { margin-bottom: 4px; }
+.etk-grup button { flex: 1; }
 .etk-bolge { color: var(--kehribar); padding: 10px 8px 4px; border-top: 1px solid var(--cizgi); }
 .etk { display: grid; gap: 1px; text-align: start; background: transparent; border: 0; border-top: 1px solid var(--cizgi); padding: 10px 8px 11px; }
 .etk:hover, .etk:focus-visible { background: rgba(242, 169, 59, 0.13); }
@@ -285,6 +287,7 @@ h1 em { font-style: inherit; color: var(--kehribar); }
 .sonuc-ic { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 14px; }
 #sonuc-baslik { margin: 0; font-family: var(--f-baslik); font-style: italic; font-weight: 800; font-size: clamp(44px, 9vw, 72px); line-height: 0.9; text-transform: uppercase; color: var(--kehribar); }
 #sonuc-not { margin: 0; color: var(--yazi); }
+#sonuc-hedef { margin: 0; color: var(--kehribar); font-weight: 600; }      /* 25 Kas (Codex öneri 9): sonuçta galeri hedefine kalan tutar */
 table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
 td { padding: 7px 6px; border-top: 1px solid var(--cizgi); font-size: 16px; }
 td:first-child { width: 2.2em; color: var(--soluk); } td:last-child { text-align: end; }
@@ -401,7 +404,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
 .mt-kart-alt { font-size: 14.5px; color: #5b4630; }
 .mt-menu { display: flex; flex-wrap: wrap; gap: 4px 14px; }
 .mt-menu-u { display: flex; align-items: center; gap: 6px; font-size: 14px; } .mt-menu-u.yeni span { font-weight: 700; color: #12606d; }
-.mt-not { margin: 0; font-size: 14px; color: #5b4630; } .mt-uyari { color: #b8402e; font-weight: 700; }
+.mt-not { margin: 0; font-size: 14px; color: #5b4630; } .mt-uyari { color: #b8402e; font-weight: 700; } .mt-hedef { color: #a2620a; font-weight: 700; }
 .mt-dugme { font: inherit; font-family: var(--f-baslik); font-weight: 700; font-size: 19px; border-radius: 14px; border: 0; padding: 10px 18px; cursor: pointer; min-height: 44px; }
 .mt-birincil { background: #c8553d; color: #fff; box-shadow: 0 4px 0 #7a2418; } .mt-ikincil { background: #23303f; color: #f6ead2; box-shadow: 0 4px 0 #0b1622; }
 .mt-dugme:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #0b1622; }
@@ -513,6 +516,10 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
           <button id="btn-serbest" class="ikincil" type="button" data-i18n="menu.serbest">Serbest sürüş</button>
           <button id="btn-yarislar" class="ikincil" type="button" data-i18n="menu.yarislar">Yarışlar</button>
         </div>
+        <div class="m-ikili">
+          <button id="btn-isler" class="ikincil" type="button" data-i18n="menu.isler">İşler</button>
+          <button id="btn-kahvalti" class="ikincil" type="button" data-i18n="menu.salon">Kahvaltı salonu</button>
+        </div>
         <button id="btn-cikis" class="m-metin" type="button" hidden data-i18n="menu.cikis">Çıkış</button>
       </div>
       <p class="m-kunye">© OpenStreetMap · SRTM · Poly Haven · vinish.dev</p>
@@ -571,8 +578,12 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
       <button id="btn-sur" class="birincil" type="button" data-i18n="menu.sur">Sür</button>
     </section>
     <section class="m-panel m-sayfa" data-panel="yaris" hidden>
-      <div class="m-baslik"><button type="button" class="m-yuvarlak" data-panel-git="ana" data-i18n-aria="ayar.geri" aria-label="Geri"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2 data-i18n="menu.yarislar">Yarışlar</h2></div>
+      <div class="m-baslik"><button type="button" class="m-yuvarlak" data-panel-git="ana" data-i18n-aria="ayar.geri" aria-label="Geri"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2 data-i18n="menu.etkinlikler">Etkinlikler</h2></div>
       <div class="kasa kasa-yan" aria-live="polite"></div>
+      <div class="seg etk-grup" role="group" data-i18n-aria="menu.etkinlikler" aria-label="Etkinlikler">
+        <button type="button" data-etk-grup="yaris" data-i18n="menu.yarislar">Yarışlar</button>
+        <button type="button" data-etk-grup="is" data-i18n="menu.isler">İşler</button>
+      </div>
       <div id="etkinlikler"></div>
       <p class="kucuk tus-yardim" data-i18n-html="menu.tuslar"><b>W A S D</b> ya da <b>ok tuşları</b> sürüş · <b>Shift</b> turbo · <b>Boşluk</b> el freni · <b>R</b> yola dön · <b>C</b> kamera · <b>H</b> korna · <b>N</b> ses · <b>M</b> menü. Oyun kolu: sol çubuk, RT gaz, LT fren, X ya da RB turbo, A el freni, B yola dön, Y kamera.</p>
       <p class="kucuk" data-i18n="menu.kunye">Sokaklar, binalar ve surlar: © OpenStreetMap katkıcıları (ODbL). Yükseklik: SRTM, Mapzen arazi karoları. Dokular: Poly Haven (CC0). Kale kayasının biçimi OSM sınırından yeniden kurulmuştur.</p>
@@ -609,6 +620,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
     <div id="sonuc-ad" class="etiket"></div>
     <h2 id="sonuc-baslik"></h2>
     <p id="sonuc-not"></p>
+    <p id="sonuc-hedef" hidden></p>
     <table><tbody id="sonuc-tablo"></tbody></table>
     <div class="ana-dugmeler">
       <button id="btn-hikaye-devam" class="birincil" type="button" hidden data-i18n="sonuc.hikayeDevam">Hikâyeye devam</button>
@@ -6499,6 +6511,7 @@ const DIL = {
     'menu.konum': 'İpekyolu · Tuşba — 38,50° K 43,34° D', 'menu.baslik': 'Street <em>81</em>',
     'menu.tanitim': 'Gerçek Van sokaklarında, kalenin gölgesinde yarış. Göl kıyısından Eski Van’a kadar şehir açık.',
     'menu.devam': 'Devam et', 'menu.hikaye': 'Hikâye', 'menu.hikaye.bolum': 'Hikâye · Bölüm {0}: {1}', 'menu.hikaye.bastan': 'Hikâye · baştan',
+    'menu.isler': 'İşler', 'menu.salon': 'Kahvaltı salonu', 'menu.etkinlikler': 'Etkinlikler', 'hedef.kalan': 'Hedef: {0} · {1} ₺ kaldı', 'hedef.yeter': 'Hedef: {0} · paran yetiyor',
     'menu.serbest': 'Serbest sürüş', 'menu.ayarlar': 'Ayarlar', 'menu.cikis': 'Çıkış', 'menu.bolgeSec': 'Serbest sürüş bölgesi', 'menu.yarislar': 'Yarışlar', 'menu.sur': 'Sür',
     'cok.baslik': 'Birlikte sür', 'cok.aciklama': 'Oda kur, kodu arkadaşlarına ver. Bir odada en çok dört kişi olur.', 'cok.kur': 'Oda kur', 'cok.katil': 'Katıl',
     'cok.kodEtiket': 'Oda kodu', 'cok.ayril': 'Odadan çık', 'cok.sen': 'Sen {0}. oyuncusun', 'cok.cip': 'Oda {0}, {1} oyuncu',
@@ -6701,6 +6714,7 @@ const DIL = {
     'menu.konum': 'İpekyolu · Tuşba — 38.50° N 43.34° E', 'menu.baslik': 'Street <em>81</em>',
     'menu.tanitim': 'Race on the real streets of Van, in the shadow of the castle. The city is open from the lake shore to Old Van.',
     'menu.devam': 'Continue', 'menu.hikaye': 'Story', 'menu.hikaye.bolum': 'Story · Chapter {0}: {1}', 'menu.hikaye.bastan': 'Story · restart',
+    'menu.isler': 'Jobs', 'menu.salon': 'Breakfast house', 'menu.etkinlikler': 'Events', 'hedef.kalan': 'Goal: {0} · ₺{1} to go', 'hedef.yeter': 'Goal: {0} · you can afford it',
     'menu.serbest': 'Free roam', 'menu.ayarlar': 'Settings', 'menu.cikis': 'Quit', 'menu.bolgeSec': 'Free roam region', 'menu.yarislar': 'Races', 'menu.sur': 'Drive',
     'cok.baslik': 'Drive together', 'cok.aciklama': 'Create a room and share the code. A room holds up to four players.', 'cok.kur': 'Create room', 'cok.katil': 'Join',
     'cok.kodEtiket': 'Room code', 'cok.ayril': 'Leave room', 'cok.sen': 'You are player {0}', 'cok.cip': 'Room {0}, {1} players',
@@ -6903,6 +6917,7 @@ const DIL = {
     'menu.konum': 'ایپک‌یولو · توشبا — 38.50° شمالی، 43.34° شرقی', 'menu.baslik': 'Street <em>81</em>',
     'menu.tanitim': 'در خیابان‌های واقعی وان، زیر سایه قلعه مسابقه بده. شهر از ساحل دریاچه تا وان قدیم باز است.',
     'menu.devam': 'ادامه', 'menu.hikaye': 'داستان', 'menu.hikaye.bolum': 'داستان · فصل {0}: {1}', 'menu.hikaye.bastan': 'داستان · از نو',
+    'menu.isler': 'کارها', 'menu.salon': 'صبحانه‌خانه', 'menu.etkinlikler': 'رویدادها', 'hedef.kalan': 'هدف: {0} · {1} ₺ مانده', 'hedef.yeter': 'هدف: {0} · پولت کافی است',
     'menu.serbest': 'رانندگی آزاد', 'menu.ayarlar': 'تنظیمات', 'menu.cikis': 'خروج', 'menu.bolgeSec': 'منطقه رانندگی آزاد', 'menu.yarislar': 'مسابقه‌ها', 'menu.sur': 'برو',
     'cok.baslik': 'رانندگی با هم', 'cok.aciklama': 'اتاق بساز و کد را به دوستانت بده. هر اتاق حداکثر چهار نفر دارد.', 'cok.kur': 'ساخت اتاق', 'cok.katil': 'پیوستن',
     'cok.kodEtiket': 'کد اتاق', 'cok.ayril': 'خروج از اتاق', 'cok.sen': 'تو بازیکن {0} هستی', 'cok.cip': 'اتاق {0}، {1} بازیکن',
@@ -14571,6 +14586,7 @@ function mutfakKur(api) {
     satir(T('mt.s.yevmiye'), '+' + api.paraYaz(yevmiye) + ' ₺', 'mt-vurgu');
     if (prim) satir(T('mt.s.prim'), '+' + prim + ' ₺', 'mt-vurgu');
     if (y < 3) el('p', 'mt-not', T('mt.s.sonraki', api.paraYaz(lv.hedef[y])), p);
+    const hd = api.hedef ? api.hedef() : ''; if (hd) el('p', 'mt-not mt-hedef', hd, p);      // kazanç hedefi (src/oyun.js hedefYazi)
     const d = el('div', 'mt-sira', '', p), hikaye = y > 0 && api.hikaye();
     if (hikaye) dugme('mt-birincil', T('sonuc.hikayeDevam'), d, () => { kapat(); api.hikayeDevam(); }, 'mt-hikaye');
     if (y > 0 && lv.i < 19 && kayit.erzak > 0) dugme(hikaye ? 'mt-ikincil' : 'mt-birincil', T('mt.sonraki'), d, () => { secili = lv.i + 1; baslat(secili); }, 'mt-sonraki');
@@ -15610,6 +15626,7 @@ function cokKur(o) {
     { id: 'electric-hypercar', fiyat: 40000, guc: 1.4, hiz: 1.18 },
   ];
   var GAL = Object.assign({ sahip: [GALERI[0].id], sec: GALERI[0].id }, store.get('galeri', {}));      // GAL.bak: vitrinde bakılan (kaydedilmez)
+  GAL.hedef = store.get('galeri.hedef', null);      // vitrinde en son bakılan alınmamış model: sonuç ekranındaki kazanç hedefi (hedef())
   if (!GALERI.some((m) => m.id === GAL.sec)) GAL.sec = GALERI[0].id;
   const galeriModel = () => (MOBIL ? GALERI[0] : GALERI.find((m) => m.id === (GAL.odunc || GAL.sec)) || GALERI[0]);      // GAL.odunc: tanıtım yarışının ödünç arabası (kaydedilmez)
   function galeriTak(id) {      // seçili modeli oyuncunun arabası yapar (model iner, eskisinin yerine geçer)
@@ -15648,7 +15665,7 @@ function cokKur(o) {
       b.children[1].textContent = m.fiyat ? T('gal.veri', Math.round((m.hiz - 1) * 100), Math.round((m.guc - 1) * 100)) : T('gal.temel');
       if (eksik > 0) { const e = document.createElement('span'); e.className = 'eksik'; e.textContent = ' · ' + T('gal.eksik', para(eksik)); b.children[1].appendChild(e); }      // ne kadar eksik, satırda
       b.children[2].textContent = secili ? T('gal.secili') : var_ ? T('gal.garajda') : para(m.fiyat) + ' ₺';
-      b.addEventListener('click', () => { initAudio(); GAL.bak = m.id; galeriCiz(); });      // satır vitrine getirir; satın alma vitrindeki düğmeyle
+      b.addEventListener('click', () => { initAudio(); GAL.bak = m.id; if (!var_) { GAL.hedef = m.id; store.set('galeri.hedef', m.id); } galeriCiz(); });      // satır vitrine getirir; satın alma vitrindeki düğmeyle
       kutu.appendChild(b);
     }
     vitrinGoster(GAL.bak);
@@ -15744,6 +15761,18 @@ function cokKur(o) {
     kasaUyar(T('kilit.araba', para(FIYAT.car)));
     return false;
   }
+  // Kazanç hedefi (25 Kas 2026; Codex incelemesi öneri 9: "İş sonucunda seçilen galeri hedefine kalan tutarı gösterin"). Araba yoksa sıradaki araç (motorlu üç teker,
+  // sonra araba); araba varsa galeride en son bakılan alınmamış model (GAL.hedef, 'galeri.hedef' kaydı), yoksa alınmamış en ucuz model. Telefonda galeri yok: araba
+  // alınınca hedef biter. Sonuç ekranında (yarış, iş, kahvaltı vardiyası) "Hedef: … · … ₺ kaldı" ya da "alabilirsin".
+  function hedef() {
+    if (!owns('car')) { const k = owns('motor') ? 'car' : 'motor'; return { ad: T(ARAC_AD[k]), fiyat: FIYAT[k] }; }
+    if (MOBIL) return null;
+    const yok = GALERI.filter((m) => GAL.sahip.indexOf(m.id) < 0); if (!yok.length) return null;
+    const m = yok.find((q) => q.id === GAL.hedef) || yok.slice().sort((a, b) => a.fiyat - b.fiyat)[0];
+    return { ad: T('gal.' + m.id), fiyat: m.fiyat };
+  }
+  function hedefYazi() { const h = hedef(); if (!h) return ''; const k = h.fiyat - (G.para || 0); return k > 0 ? T('hedef.kalan', h.ad, para(k)) : T('hedef.yeter', h.ad); }
+  function hedefGoster(goster) { const e = $('sonuc-hedef'), y = goster ? hedefYazi() : ''; e.textContent = y; e.hidden = !y; }
   function addMoney(n) { G.para = Math.max(0, Math.round((G.para || 0) + n)); store.set('para', G.para); updateKasa(); }
   function kasaYaz(t, uyari) {      // ana paneldeki kasa ve galeri / yarış listesindeki kopyası (uyarı oyuncunun baktığı panelde görünsün)
     for (const el of [$('kasa'), ...document.querySelectorAll('.kasa-yan')]) { el.textContent = t; el.classList.toggle('uyari', !!uyari); }
@@ -16353,12 +16382,26 @@ function cokKur(o) {
 
   // ---------------------------------------------------------------- menü ve akış
   const fmt = (t) => { const m = Math.floor(t / 60), s = t - m * 60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(2); };
+  // Etkinlik listesi (25 Kas 2026; Codex incelemesi öneri 9: "Etkinlik listesini 'Yarışlar', 'İşler' ve 'Kahvaltı salonu' girişleriyle düzenleyin"; kurucu: "Etkinlik
+  // listesini böl"). Ana menüde dört giriş: Serbest sürüş, Yarışlar, İşler, Kahvaltı salonu. Yarışlar ve İşler aynı sayfayı açar, sayfanın üstündeki düğmeyle
+  // değişir (seçim kaydedilir); Kahvaltı salonu doğrudan salona gider (listede İşler altında da durur). İş: para kazandıran servis, yük, teslimat, taksi, kahvaltı.
+  const ETK = { grup: store.get('etk.grup', 'yaris') === 'is' ? 'is' : 'yaris' };
+  const etkGrup = (ev) => (ev.ozel === 'servis' || ev.ozel === 'taksi' || ev.ozel === 'pisir' ? 'is' : 'yaris');
+  function etkGrupSec(g) {
+    ETK.grup = g === 'is' ? 'is' : 'yaris'; store.set('etk.grup', ETK.grup);
+    for (const b of document.querySelectorAll('[data-etk-grup]')) b.setAttribute('aria-pressed', b.getAttribute('data-etk-grup') === ETK.grup ? 'true' : 'false');
+    buildMenu();
+  }
+  function etkBaslat(ev) {
+    return async () => { initAudio(); if (!canStart(ev)) return; G.lastStory = 0; await loadRegion(ev.bolge); if (REGION.id === ev.bolge) startEvent(ev); };
+  }
   function buildMenu() {
     const list = $('etkinlikler');
     list.innerHTML = '';
+    for (const b of document.querySelectorAll('[data-etk-grup]')) b.setAttribute('aria-pressed', b.getAttribute('data-etk-grup') === ETK.grup ? 'true' : 'false');
     let lastRegion = '';
     for (const ev of EVENTS) {
-      if (ev.gizli) continue;
+      if (ev.gizli || etkGrup(ev) !== ETK.grup) continue;
       if (ev.bolge !== lastRegion) {
         lastRegion = ev.bolge;
         const h = document.createElement('div'); h.className = 'etiket etk-bolge'; h.textContent = REGIONS[ev.bolge].ad; list.appendChild(h);
@@ -16370,7 +16413,7 @@ function cokKur(o) {
       b.children[0].textContent = ev.ad; b.children[1].textContent = ev.alt;
       b.children[2].textContent = ev.ozel === 'pisir' ? T('mt.menuVeri', MUTFAK.ozet().vardiya, MUTFAK.ozet().yildiz) : ev.teslimat ? T('tes.menuVeri', (window.VAN_DUKKAN || []).length, store.get('tes.sayi', 0)) : ev.taksi ? T('tks.menuVeri', taksiYerler().length, store.get('tks.sayi', 0)) : ev.turnuva ? T('trn.menuVeri', T('trn.ad.' + (G.tur && !G.tur.bitti && G.tur.sinif === sinifSec(ev) ? G.tur.tur : 0)), para(TURNUVA.odul[3])) + (sinifSec(ev) !== 'car' ? ' · ' + T(ARAC_AD[sinifSec(ev)]) : '') : km + ' ' + T('etk.km') + ' · ' + ev.zemin + (ev.laps > 1 ? ' · ' + T('etk.tur', ev.laps) : '') + ' · ' + (ev.solo ? T('etk.zamanaKarsi') : T('etk.rakip', ev.ai)) + (sinifSec(ev) !== 'car' ? ' · ' + T(ARAC_AD[sinifSec(ev)]) : '') + (ev.odul ? ' · ' + T('sehir.odulVeri', para(ev.odul[0])) : '') + (enIyi(ev) ? ' · ' + T('etk.enIyi', fmt(enIyi(ev))) : '');
       if (!ev.arac && !owns('car') && !aracsiz(ev)) { b.classList.add('kilitli'); b.children[2].textContent += ' · ' + T('kilit.kisa'); }
-      b.addEventListener('click', async () => { initAudio(); if (!canStart(ev)) return; G.lastStory = 0; await loadRegion(ev.bolge); if (REGION.id === ev.bolge) startEvent(ev); });
+      b.addEventListener('click', etkBaslat(ev));
       list.appendChild(b);
     }
   }
@@ -16394,7 +16437,10 @@ function cokKur(o) {
   }
   for (const el of document.querySelectorAll('[data-panel-git]')) el.addEventListener('click', () => menuPanel(el.getAttribute('data-panel-git')));
   $('btn-serbest').addEventListener('click', () => { initAudio(); menuPanel('serbest'); });
-  $('btn-yarislar').addEventListener('click', () => { initAudio(); menuPanel('yaris'); });
+  $('btn-yarislar').addEventListener('click', () => { initAudio(); etkGrupSec('yaris'); menuPanel('yaris'); });
+  $('btn-isler').addEventListener('click', () => { initAudio(); etkGrupSec('is'); menuPanel('yaris'); });
+  $('btn-kahvalti').addEventListener('click', () => etkBaslat(EVENTS.find((e) => e.ozel === 'pisir'))());
+  for (const el of document.querySelectorAll('[data-etk-grup]')) el.addEventListener('click', () => { etkGrupSec(el.getAttribute('data-etk-grup')); el.focus(); });
   $('btn-sur').addEventListener('click', async () => { initAudio(); await loadRegion(G.bolge || REGION.id); startFree(); });
   // Bölge seçimi hemen uygulanır: o bölge yüklenir, menü Serbest sürüş sayfasına döner ve arka planda yeni bölgenin drone çekimi görünür; "Sür" başlatır.
   // (Eskiden seçim yalnız not ediliyordu; "Devam et" önceki bölgedeki oyunu sürdürdüğü için seçim uygulanmamış görünüyordu. Aynı bölgeye dokunmak duraklatılan oyunu bozmaz.)
@@ -17232,6 +17278,7 @@ function cokKur(o) {
     (okStory ? $('btn-hikaye-devam') : $('btn-tekrar')).focus();
     if (ev.turnuva) turnuvaSonuc(r);
     if (r.puan > 0 && !r.prim) { r.prim = Math.min(YH.primTavan, Math.round(r.puan / 20)); if (r.prim > 0) { addMoney(r.prim); $('sonuc-not').textContent += ($('sonuc-not').textContent ? ' · ' : '') + T('yh.prim', para(r.prim)); } }
+    hedefGoster(!ev.tanitim);      // tanıtımın notu zaten galeriyi anlatır
   }
 
   // ---------------------------------------------------------------- ayarlar
@@ -17608,7 +17655,7 @@ function cokKur(o) {
     addMoney(kazanc);
     if (!ev.best || t < ev.best) { ev.best = t; store.set('best.' + ev.id, t); }
     G.state = 'result';
-    $('hud').hidden = true; $('sonuc').hidden = false;
+    $('hud').hidden = true; $('sonuc').hidden = false; hedefGoster(true);
     $('sonuc-ad').textContent = ev.ad;
     $('sonuc-baslik').textContent = gl.konfor < 50 ? T(on + '.sarsildi') : T(t <= gold ? 'sonuc.altin' : t <= silver ? 'sonuc.gumus' : t <= bronze ? 'sonuc.bronz' : on + '.vardi');
     $('sonuc-not').textContent = T('sonuc.kazanc', kazanc.toLocaleString(LOCALE[LANG]), G.para.toLocaleString(LOCALE[LANG])) + ' · ' + T(on + '.konfor', gl.konfor) + ' · ' + T('sonuc.madalyaNot', fmt(gold), fmt(silver), fmt(bronze));
@@ -17824,7 +17871,7 @@ function cokKur(o) {
     KARS.sonuc = gl.konfor >= 50 && !(sicak !== null && sicak < 40) ? 'alkis' : 'hayir'; KARS.sonucT = 6;      // alıcı alkışlar ya da başını sallar
     if (KARS.sonuc === 'alkis' && KARS.a) alkisSes(1);
     G.state = 'result';
-    $('hud').hidden = true; $('sonuc').hidden = false;
+    $('hud').hidden = true; $('sonuc').hidden = false; hedefGoster(true);
     $('sonuc-ad').textContent = T('tes.is.' + tur);
     $('sonuc-baslik').textContent = gl.konfor < 50 ? T('tes.hasar.' + tur) : sicak !== null && sicak < 40 ? T('tes.soguk') : T(t <= gold ? 'sonuc.altin' : t <= silver ? 'sonuc.gumus' : t <= bronze ? 'sonuc.bronz' : 'tes.vardi');
     $('sonuc-not').textContent = T('sonuc.kazanc', kazanc.toLocaleString(LOCALE[LANG]), G.para.toLocaleString(LOCALE[LANG])) + ' · ' + T('tes.konfor', gl.konfor) +
@@ -18039,7 +18086,7 @@ function cokKur(o) {
     const sayi = store.get('tks.sayi', 0) + 1; store.set('tks.sayi', sayi);
     TKS.sonuc = gl.konfor < 50 ? 'hayir' : iyi ? 'salla' : 'dur';      // inen yolcu: memnunsa el sallar, şikâyetçiyse başını sallar
     G.state = 'result';
-    $('hud').hidden = true; $('sonuc').hidden = false;
+    $('hud').hidden = true; $('sonuc').hidden = false; hedefGoster(true);
     $('sonuc-ad').textContent = T('ev.taksi') + ' · ' + gl.ad;
     $('sonuc-baslik').textContent = T('tks.sonuc.' + (gl.konfor < 50 ? 'sarsildi' : gec ? 'gec' : pay >= 1 ? 'cok' : pay > 0 ? 'iyi' : 'vardi'));
     $('sonuc-not').textContent = T('sonuc.kazanc', kazanc.toLocaleString(LOCALE[LANG]), G.para.toLocaleString(LOCALE[LANG])) + ' · ' + T('tks.dokum', para(ucret), para(bahsis)) +
@@ -18087,7 +18134,7 @@ function cokKur(o) {
     erzakGit() { MUTFAK.kapat(); startErzak(); },
     hikaye: () => kahvaltiBolumu() || paraReady(),
     hikayeDevam() { if (kahvaltiBolumu()) storyAdvance(); else startStory(); },
-    aracAd: () => T(ARAC_AD[erzakAraci()]), aracKap: () => ERZAK_KAP[erzakAraci()],
+    aracAd: () => T(ARAC_AD[erzakAraci()]), aracKap: () => ERZAK_KAP[erzakAraci()], hedef: () => hedefYazi(),
   });
   // Birlikte sürüş (src/cok.js): oda kodu, uzak oyuncuların araçları, gösterge çipi
   const COK = cokKur({
@@ -18129,7 +18176,7 @@ function cokKur(o) {
     yukGoster(false); sacikTemizle();
     const kap = ERZAK_KAP[gl.arac], n = Math.max(1, Math.round((kap * gl.konfor) / 100)), toplam = MUTFAK.erzakEkle(n);
     G.state = 'result';
-    $('hud').hidden = true; $('sonuc').hidden = false;
+    $('hud').hidden = true; $('sonuc').hidden = false; hedefGoster(false);
     $('sonuc-ad').textContent = gl.ozel.ad;
     $('sonuc-baslik').textContent = T(gl.konfor < 50 ? 'erzak.kirildi' : 'erzak.tamam');
     $('sonuc-not').textContent = T('erzak.sonuc', n, kap, toplam) + ' · ' + T('erzak.konfor', gl.konfor);
@@ -19812,6 +19859,7 @@ function cokKur(o) {
     sim(sec) { const n = Math.round(sec / STEP); for (let i = 0; i < n; i++) { if (G.state === 'free' || G.state === 'race' || G.state === 'count') tick(STEP); } },
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
     groundH,
+    ETK, etkGrupSec, hedef, hedefYazi,
     wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, HH, KIV, kivilcim, IZL, LIZ, VTR, finishRace, showResult, startTanitim, TAN, startStory, get kamFov() { return camera.fov; }, YH, YD, ydYukle, ydBariyerYer, PRK, PARKUR, parkurYer, KTUR, YOLR, RTUR, yolRampaYer, RKIM, RKE, rkDal, rkEtiketAdim, rakipHirs, rotaEgrilik, YT, ytKarar, ytYolBul, okAdim, galeri: { liste: GALERI, get durum() { return GAL; }, sec: galeriSec, tak: galeriTak, ciz: galeriCiz }, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     cok: COK,      // birlikte sürüş: .durum, .kur(), .katil(kod), .ayril(), .sunucuAyarla(adres)
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
