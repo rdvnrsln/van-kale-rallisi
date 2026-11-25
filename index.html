@@ -18838,6 +18838,18 @@ function cokKur(o) {
   const CAMS = [{ d: 7.8, h: 3.0, la: 1.3 }, { d: 12.5, h: 5.2, la: 1.6 }, { d: -0.55, h: 1.28, la: 1.15 }];
   // minibüs: gövde 5 m boyunda ve 2 m yüksek, sürücü koltuğu öne ve yukarı (minibus_yer_koltuk); kamera ona göre geri ve yukarı
   const CAMS_SERVIS = [{ d: 9.6, h: 3.9, la: 1.8 }, { d: 14, h: 5.9, la: 2.0 }, { d: -1.1, h: 1.78, la: 1.6 }];
+  // Yakın kamera (25 Kas 2026; kurucu, Asphalt 8 karesiyle: "bu açı daha immersive hissettiriyor ve hakimiyeti daha zevkli. bizimki de böyle olmalı").
+  // O karede araba ekranın alt yarısını doldurur (yüksekliğin %54–92'si, genişliğin %23'ü), ufuk ortaya yakın durur (%43): kamera tavanın az üstünde, arabanın
+  // hemen arkasında, ufka ~5° eğik. Eski yakın kamera 3 m yukarıdan, 7–8 m geriden 8° eğik bakıyordu: araba ortada, küçük ve tepeden. Ölçüler görüntüyle
+  // ayarlandı (masaustu --bakis; 171 km/sa'te araba %52–93, genişlik %27, ufuk %44). Birinci kamera (G.cam 0) artık buradan okunur;
+  // uzak (1) ve kokpit (2) eski hâlinde. lu: bakış noktası aracın kaç m önünde; alt: kameranın yerden en az yüksekliği. Yokuşta kamera ve bakış yol eğimine
+  // uyar (camEg): alçak kamera düz bakarsa inişte araba yolu kapatır, çıkışta yol ekranın üstünden taşar.
+  const CAM_YAKIN = {
+    car: { d: 5.6, h: 2.3, la: 0.85, lu: 12, alt: 0.9 }, taksi: { d: 5.6, h: 2.35, la: 0.9, lu: 12, alt: 0.9 },
+    motor: { d: 5.2, h: 2.6, la: 0.9, lu: 11, alt: 1.0 }, trike: { d: 4.6, h: 2.4, la: 0.9, lu: 10, alt: 1.0 },
+    servis: { d: 7.0, h: 3.1, la: 1.1, lu: 13, alt: 1.1 },
+  };
+  let camEg = 0;
   // Yüz kamerası (21 Kas, kurucu: "sürerken modelin yüzünün göründüğü açı"): araç 2 sn durunca kendiliğinden, F ya da oyun kolunda LB basılıyken,
   // "Yüz" düğmesiyle açık kalır. Kamera sürücünün başına önden ¾ açıdan bakar; gaz verince (durma kaynaklıysa) arkaya döner.
   // _gp/_gl'yi yazar (konum, bakış); 0..1 geçiş oranını döndürür.
@@ -19054,27 +19066,33 @@ function cokKur(o) {
       camSnap = true;
       return lookAt;
     }
-    const c = player, m = c.binek && EK.binek ? EK.binek.kam(c) : c.ski ? SKICAM : (c.arac === 'servis' ? CAMS_SERVIS : CAMS)[G.cam], sp = Math.hypot(c.vx, c.vz);
+    const c = player, m = c.binek && EK.binek ? EK.binek.kam(c) : c.ski ? SKICAM : G.cam === 0 ? CAM_YAKIN[c.arac] || CAM_YAKIN.car : (c.arac === 'servis' ? CAMS_SERVIS : CAMS)[G.cam], sp = Math.hypot(c.vx, c.vz);
     const hh = hhAcik(c) && m.d > 0 && !HH.kapali;      // hız hissi (HH): arka kamerada
     HH.tb = lerp(HH.tb, hh && c.tbAktif ? 1 : 0, Math.min(1, dt * (c.tbAktif ? 9 : 2.2)));
     // ejderha uçarken kamera nişana (c.ah, c.ap) bağlıdır: fare kamerayı çevirir, ejderha ardından döner
     const ucan = !!c.binek && c.binek !== 'yer' && c.ah != null, nap = ucan ? c.ap || 0 : 0;
     camH += wrapAngle((ucan ? c.ah : c.h) - camH) * (camSnap ? 1 : Math.min(1, dt * (ucan ? 16 : 4.6)));
-    let dist = hh ? m.d * (0.86 - 0.08 * smooth(10, 55, sp)) + HH.tb * 1.1 : m.d + (m.d > 0 ? Math.min(sp, 70) * 0.04 : 0);      // hızda kamera araca yaklaşır (geniş açıda araba küçülmesin), nitroda araç öne fırlar
+    const yakin = m.lu > 0;      // yakın kamera (CAM_YAKIN)
+    let dist = yakin ? m.d * (1 - (hh ? 0.23 : 0.06) * smooth(10, 55, sp)) + HH.tb * 1.0 : hh ? m.d * (0.86 - 0.08 * smooth(10, 55, sp)) + HH.tb * 1.1 : m.d + (m.d > 0 ? Math.min(sp, 70) * 0.04 : 0);      // hızda kamera araca yaklaşır (geniş açıda araba küçülmesin), nitroda araç öne fırlar
+    {      // yol eğimi: aracın 6 m önü ile 2 m arkası arasındaki yükseklik farkı; havada son değer yavaşça söner
+      const sn = Math.sin(c.h), cs = Math.cos(c.h), eg = yakin && !c.air ? clamp((groundH(c.x + sn * 6, c.z + cs * 6) - groundH(c.x - sn * 2, c.z - cs * 2)) / 8, -0.4, 0.4) : 0;
+      camEg = camSnap ? eg : lerp(camEg, eg, Math.min(1, dt * (yakin && c.air ? 0.8 : 2.6)));
+    }
     let bx = c.x - Math.sin(camH) * dist * Math.cos(nap * 0.8), bz = c.z - Math.cos(camH) * dist * Math.cos(nap * 0.8);
     if (m.d > 0 && !c.binek) {
       const t = wallRay(c.x, c.z, bx, bz);
       if (t < 1) { dist *= Math.max(0.28, t * 0.88); bx = c.x - Math.sin(camH) * dist; bz = c.z - Math.cos(camH) * dist; }
     }
-    let by = c.y + m.h - Math.sin(nap) * dist * 0.85 - (hh ? 0.45 * smooth(15, 55, sp) : 0);      // nişan aşağıdayken kamera yukarıda, yukarıdayken aşağıda kalır; hızda alçalır
-    const gh = groundH(bx, bz) + 1.3;
+    let by = c.y + m.h - Math.sin(nap) * dist * 0.85 - (yakin ? (hh ? 0.15 * smooth(15, 55, sp) : 0) + camEg * dist * 0.8 : hh ? 0.45 * smooth(15, 55, sp) : 0);      // nişan aşağıdayken kamera yukarıda, yukarıdayken aşağıda kalır; hızda alçalır
+    const gh = groundH(bx, bz) + (m.alt || 1.3);
     if (by < gh) by = gh;
     camWant.set(bx, by, bz);
     const kh = hh ? 22 : 12;      // hız hissinde kamera araca sıkı bağlı (12/sn'de 50 m/sn'de 4 m geride kalıyor, araba küçülüyordu)
+    if (yakin) { const g = Math.max(0, 1 / kh - dt); camWant.x += c.vx * g; camWant.z += c.vz * g; }      // yumuşatma sabit hızda hız × (1/kh − dt) kadar geride bırakır (60 karede 48 m/sn'de 1,4 m); yakın kamerada uzaklık hızla açılmasın
     if (camSnap) camPos.copy(camWant); else { camPos.x = lerp(camPos.x, camWant.x, Math.min(1, dt * kh)); camPos.z = lerp(camPos.z, camWant.z, Math.min(1, dt * kh)); camPos.y = lerp(camPos.y, camWant.y, Math.min(1, dt * 6)); }
     camSnap = false;
     camera.position.copy(camPos);
-    { const lh = ucan ? camH : c.h, lu = c.binek ? 9 : 5; lookAt.set(c.x + Math.sin(lh) * lu, c.y + m.la + Math.sin(nap) * 9, c.z + Math.cos(lh) * lu); }
+    { const lh = ucan ? camH : c.h, lu = yakin ? m.lu : c.binek ? 9 : 5; lookAt.set(c.x + Math.sin(lh) * lu, c.y + m.la + Math.sin(nap) * 9 + (yakin ? camEg * lu : 0), c.z + Math.cos(lh) * lu); }
     let fov = hh ? 57 + 22 * smooth(6, 62, sp) + HH.tb * 10 : 60 + Math.min(ucan ? 32 : 20, sp * (ucan ? 0.3 : 0.34)) + (c.tbAktif ? 9 : 0);      // turboda görüş açısı genişler
     const yk = yuzKamera(c, sp, dt);
     if (yk > 0.001) {      // sürücünün yüzü: önden ¾ açı; arka kameradan yumuşak geçiş
@@ -20058,7 +20076,7 @@ function cokKur(o) {
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
     groundH,
     ETK, etkGrupSec, hedef, hedefYazi, ALEV, CANV, canVur, izlAdim, updateHud, poseCar, VIRAJ, ISIT, TISIK, RDEV, rakipDevrikAdim, STORY, get hikaye() { return S; }, isitEksik() { const d = havuzDokular(dokular(scene, new Set())); dokular(UZAK.sahne, d); const e = []; for (const t of d) { if (!t.image || t.isRenderTargetTexture) continue; if (renderer.properties.get(t).__version !== t.version) e.push([t.name || String(t.image.src || t.image.currentSrc || '').split('/').pop() || t.uuid.slice(0, 6), t.image.width, t.image.height]); } return e; }, trafikSec(v) { AYAR.trafik = !!v; applySettings(false); },
-    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, HH, KIV, kivilcim, IZL, LIZ, VTR, finishRace, showResult, startTanitim, TAN, startStory, get kamFov() { return camera.fov; }, YH, YD, ydYukle, ydBariyerYer, PRK, PARKUR, parkurYer, KTUR, YOLR, RTUR, yolRampaYer, RKIM, RKE, rkDal, rkEtiketAdim, rakipHirs, rotaEgrilik, YT, ytKarar, ytYolBul, okAdim, galeri: { liste: GALERI, get durum() { return GAL; }, sec: galeriSec, tak: galeriTak, ciz: galeriCiz }, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
+    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, HH, KIV, kivilcim, IZL, LIZ, VTR, finishRace, showResult, startTanitim, TAN, startStory, get kamFov() { return camera.fov; }, get kamYer() { const c = player, dx = camera.position.x - c.x, dz = camera.position.z - c.z; return { geri: -(dx * Math.sin(c.h) + dz * Math.cos(c.h)), yan: dx * Math.cos(c.h) - dz * Math.sin(c.h), yuk: camera.position.y - c.y, yerden: camera.position.y - groundH(camera.position.x, camera.position.z) }; }, YH, YD, ydYukle, ydBariyerYer, PRK, PARKUR, parkurYer, KTUR, YOLR, RTUR, yolRampaYer, RKIM, RKE, rkDal, rkEtiketAdim, rakipHirs, rotaEgrilik, YT, ytKarar, ytYolBul, okAdim, galeri: { liste: GALERI, get durum() { return GAL; }, sec: galeriSec, tak: galeriTak, ciz: galeriCiz }, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     cok: COK,      // birlikte sürüş: .durum, .kur(), .katil(kod), .ayril(), .sunucuAyarla(adres)
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
     kediler: () => cats.map((c) => ({ canli: !!c.kedi, gorunur: c.mesh.visible, got: c.got })),
