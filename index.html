@@ -236,6 +236,7 @@ button:focus-visible { outline: 2px solid var(--gol); outline-offset: 2px; }
   #menu .m-logo h1 { font-size: 54px; }
   .m-logo .konum { font-size: 12px; }
   #menu .menu-ic { max-width: 400px; }
+  .m-sayfa { max-height: calc(100vh - 175px); }      /* 25 Kas (Codex: 720p'de liste kaydırılınca logo üst satırın üstüne biniyordu): logo (~100 px) + alt boşluk (40 px) payı */
 }
 [dir="rtl"] #menu { background: linear-gradient(0deg, rgba(8, 14, 22, 0.92) 0, rgba(8, 14, 22, 0.66) 32%, rgba(8, 14, 22, 0) 62%), linear-gradient(180deg, rgba(8, 14, 22, 0.42) 0, rgba(8, 14, 22, 0) 18%); }
 @media (min-width: 900px) { [dir="rtl"] #menu { background: linear-gradient(270deg, rgba(8, 14, 22, 0.7) 0, rgba(8, 14, 22, 0.35) 380px, rgba(8, 14, 22, 0) 640px), linear-gradient(0deg, rgba(8, 14, 22, 0.5) 0, rgba(8, 14, 22, 0) 34%), linear-gradient(180deg, rgba(8, 14, 22, 0.45) 0, rgba(8, 14, 22, 0) 16%); } }
@@ -6444,7 +6445,7 @@ const DIL = {
     'servis.al': 'Turistleri al', 'servis.birak': 'Kayak merkezi', 'servis.basla': 'Turist servisi', 'servis.basla.alt': 'Yol kenarındaki grubun yanında dur',
     'servis.bindi': 'Turistler bindi', 'servis.bindi.alt': 'Kayak merkezine çık; çarpma, konfor düşer', 'servis.konfor': 'Konfor {0}/100',
     'servis.sarsildi': 'Yolcular sarsıldı', 'servis.vardi': 'Turistler pistte',
-    'ev.yuk-tasima': 'Yük Taşıma', 'ev.yuk-tasima.alt': 'Üç tekerli bisikletle çuvalları al, Eski Van yolundan teslim et; kazanç kasaya girer',
+    'ev.yuk-tasima': 'Yük Taşıma', 'ev.yuk-tasima.alt': 'Üç tekerle çuvalları al, Eski Van yolundan teslim et; kazanç kasaya girer',
     'yuk.al': 'Yükü al', 'yuk.birak': 'Teslimat', 'yuk.basla': 'Yük taşıma', 'yuk.basla.alt': 'Mavi sütunda dur, çuvalları yükle',
     'yuk.bindi': 'Yük kasada', 'yuk.bindi.alt': 'Teslimat noktasına sür; çarpma ve sert viraj yüke zarar verir', 'yuk.konfor': 'Yük {0}/100',
     'yuk.sarsildi': 'Yük hasar gördü', 'yuk.vardi': 'Yük teslim edildi',
@@ -6465,8 +6466,8 @@ const DIL = {
     'tes.sayi': 'toplam {0} teslimat',
     // taksi işi (src/oyun.js TKS_TIP; yer türleri data/van-taksi.json)
     'ev.merkez-halkasi': 'Merkez Halkası', 'ev.merkez-halkasi.alt': 'Sıhke Caddesi, Kazım Karabekir Bulvarı, İpek Yolu ve İskele Caddesi; şehir trafiğinin içinde iki tur',
-    'ev.tanitim': 'İpek Yolu Akşamı', 'ev.tanitim.alt': 'Ödünç yarış arabasıyla kısa bir yarış', 'tan.ipucu.1': 'Araba ödünç, tadını çıkar', 'tan.ipucu.2': 'Shift ile nitro, öndekileri geç',
-    'tan.not': 'Bu araba ödünçtü. Kendi arabanı kazanman lazım: önce üç tekerle iş, sonra galeri. Yarıştığın V8 orada, {0} ₺.', 'tan.devam': 'Hikâyeye başla',
+    'ev.tanitim': 'İpek Yolu Akşamı', 'ev.tanitim.alt': 'Ödünç yarış arabasıyla kısa bir yarış', 'tan.ipucu.1': 'Araba ödünç, tadını çıkar', 'tan.ipucu.2': 'Shift ile nitro, öndekileri geç', 'tan.ipucu.2.mobil': 'Alev düğmesiyle nitro, öndekileri geç',
+    'tan.not': 'Bu araba ödünçtü. Kendi arabanı kazanman lazım: önce üç tekerle iş, sonra galeri. Yarıştığın V8 orada, {0} ₺.', 'tan.devam': 'Hikâyeye başla', 'tan.not.mobil': 'Bu araba ödünçtü. Kendi arabanı kazanman lazım: önce üç tekerle iş, sonra araba ({0} ₺).',
     'ev.ipekyolu': 'İpek Yolu Sprinti', 'ev.ipekyolu.alt': 'İpek Yolu’nda güneyden İskele Caddesi kavşağına; trafiğin arasından dümdüz 2,6 km',
     'ev.cumhuriyet-turu': 'Cumhuriyet Turu', 'ev.cumhuriyet-turu.alt': 'Fevzi Çakmak Caddesi’nden Cumhuriyet ve Hafiziye mahallelerinin çevresinde tek tur',
     'sehir.odulVeri': 'birinciye {0} ₺', 'sehir.odul': 'Ödül {0} ₺', 'sehir.odulYok': 'Bu sıraya ödül yok', 'yh.kil': 'Kıl payı',
@@ -6486,7 +6487,7 @@ const DIL = {
     'tks.yer.kedi': 'Kedi Evi', 'tks.yer.adliye': 'Adliye', 'tks.yer.belediye': 'Belediye', 'tks.yer.stadyum': 'Stadyum', 'tks.yer.eczane': 'Eczane', 'tks.yer.cami': 'Cami',
     'tks.yer.park': 'Park', 'tks.yer.okul': 'Okul', 'tks.yer.banka': 'Banka',
     'menu.kasa': 'Kasa: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · kasa {1} ₺', 'menu.arac': 'Araç', 'menu.yukKasasi': 'Yük kasası', 'kasaRenk.ahsap': 'Ahşap', 'kasaRenk.mavi': 'Mavi', 'perf.tur': 'Ölçüm turu', 'perf.suruyor': 'Ölçüm turu: {0} · {1} sn', 'perf.cagri': 'çağrı', 'perf.ucgen': 'üçgen', 'perf.kapat': 'Kapat', 'perf.b.sabit': 'Van, sabit bakış', 'perf.b.van': 'Van, sürüş', 'perf.b.abali': 'Abalı, sürüş', 'perf.k60': '60 fps tutuyor (en yavaş bölüm {0} fps)', 'perf.k30': '30 ile 60 fps arası (en yavaş bölüm {0} fps)', 'perf.kZayif': '30 fps altında (en yavaş bölüm {0} fps)', 'perf.yarim': 'Ölçüm turu yarıda kaldı', 'perf.kaliteSatir': 'Kalite: {0} → {1} · çözünürlük {2}', 'perf.kopyala': 'Kopyala', 'perf.kopyalandi': 'Kopyalandı', 'perf.sonuc': 'Ölçüm sonucu', 'perf.bolum': 'Bölüm', 'perf.coz': 'çöz.', 'perf.not': 'Bu ekranın görüntüsünü gönder ya da Kopyala\'ya basıp metni yapıştır.', 'ayar.perf': 'Performans göstergesi: kare hızı, çizim sayısı, ölçüm turu', 'perf.katman': 'Katman', 'perf.isinma': 'Isınma', 'perf.katmanBaslik': 'Katman testi: sabit bakış {0}, çözünürlük {1}', 'perf.gizlenen': 'Gizlenen', 'perf.pay': 'payı ms', 'perf.katmanNot': 'Her satırda yalnız o katman gizlenir; "payı" o katmanın kare süresinden ne kadar aldığıdır. Kare 60 fps\'te kilitliyse fark görünmez.', 'perf.k.tum': 'Hiçbiri', 'perf.k.golge': 'Gölge', 'perf.k.arazi': 'Arazi', 'perf.k.agac': 'Ağaçlar', 'perf.k.bina': 'Binalar', 'perf.k.arac': 'Araçlar', 'perf.k.kedi': 'Kediler', 'perf.k.cadde': 'Cadde ve ayrıntı', 'perf.k.cim': 'Çim ve taş', 'arac.araba': 'Araba', 'arac.trike': 'Üç teker',
-    'arac.motor': 'Motorlu üç teker', 'kilit.araba': 'Bu etkinlik araba ister. Araba {0} ₺.', 'kilit.kisa': 'araba gerekli',
+    'arac.motor': 'Motorlu üç teker', 'kilit.araba': 'Önce kendi arabanı almalısın. Araba {0} ₺.', 'kilit.kisa': 'araba gerekli',
     'al.yetmez': '{0} ₺ gerekli, kasada {1} ₺ var', 'hikaye.biriktir': '{0} ₺ biriktir', 'hikaye.biriktir.alt': 'Kasada {0} ₺ var. Mavi sütundan yük işi al.', 'ayar.testAc': 'Test: tüm araçları aç',
     'ev.kahvalti': 'Van Kahvaltısı', 'ev.kahvalti.alt': 'Kahvaltı salonunda vardiya: misafirlerin siparişini hazırla, pişir, sabırları bitmeden servis et',
     'pisir.veri': '90 saniyelik vardiya · hedef 300 ₺ · mutfak', 'mutfak.siparis': 'Tabak {0}/{1}', 'mutfak.lezzet': 'Lezzet {0}/100', 'mutfak.yandi': 'Vardiya zayıf geçti',
@@ -6556,7 +6557,7 @@ const DIL = {
     'ayar.kaliteNot': 'Düşük: gölge yok, tam piksel. Orta: yumuşak gölge. Yüksek: keskin gölge, yüksek çözünürlük. Ultra: daha keskin ve geniş gölge, daha çok ayrıntılı ağaç, daha uzak görüş; güçlü ekran kartı ister.',
     'ayar.oto': 'Kare hızı düşerse çözünürlüğü ve kaliteyi kendiliğinden ayarla', 'ayar.sehir': 'Şehir', 'ayar.vakit': 'Gün vakti', 'ayar.dongu': 'Döngü', 'ayar.gunduz': 'Gündüz', 'ayar.gunbatimi': 'Gün batımı', 'ayar.gece': 'Gece', 'ayar.vakitNot': 'Döngüde gündüz, gün batımı ve gece sırayla gelir. Sürerken T tuşu vakti değiştirir.', 'ayar.trafik': 'Şehir trafiği: yollarda araçlar dolaşsın', 'ayar.ses': 'Ses düzeyi', 'ayar.kamera': 'Kamera', 'ayar.yakin': 'Yakın', 'ayar.uzak': 'Uzak', 'ayar.surucu': 'Sürücü',
     'ayar.ekran': 'Ekran', 'ayar.tamEkran': 'Tam ekranı aç ya da kapat', 'ayar.tamEkranNot': 'F11 ya da Alt+Enter', 'ayar.kayit': 'Kayıt', 'ayar.sifirla': 'İlerlemeyi sıfırla',
-    'ayar.sifirlaNot': 'Hikâye ilerlemesi, en iyi süreler ve bulunan kediler silinir. Geri alınamaz.', 'ayar.evetSil': 'Evet, sil', 'ayar.vazgec': 'Vazgeç', 'ayar.silindi': 'İlerleme silindi.', 'ayar.geri': 'Geri',
+    'ayar.sifirlaNot': 'Hikâye ilerlemesi, en iyi süreler, bulunan kediler, kasadaki para, alınan araçlar, galeri, turnuva ve kahvaltı salonu ilerlemesi silinir. Geri alınamaz.', 'ayar.evetSil': 'Evet, sil', 'ayar.vazgec': 'Vazgeç', 'ayar.silindi': 'İlerleme silindi.', 'ayar.geri': 'Geri',
     'sen': 'Sen', 'kisi.zelal': 'Zelal',
     'rakip': ['Tuşba', 'Erek', 'Edremit', 'Gevaş', 'Muradiye'],
     'cats': ['İç Kale', 'Kedi Evi', 'Van Müzesi', 'İskele', 'Hüsrevpaşa Camii', 'Ulu Cami', 'Sahil Yolu Kavşağı', 'Höyük', 'Melen Caddesi', 'İskele Caddesi'],
@@ -6569,16 +6570,16 @@ const DIL = {
         ['Halil Usta', 'Avluda eski bir motorlu üç teker var. Dokuz yüz lirayı denkleştir, senin olsun.']] },
       { ad: 'Araba', konus: [
         ['Halil Usta', 'Motor sana yakıştı. Ama Tuşpa Kupası’na üç tekerle girilmez.'],
-        ['Zelal', 'Ustanın eski arabası üç bin lira. Yükleri motorla taşı, parayı biriktir. Kupanın ödülü dükkânın bir yıllık kirası.']] },
+        ['Zelal', 'Ustanın eski arabası üç bin lira. Yükleri motorla taşı, parayı biriktir.']] },
       { ad: 'Dönüş', hedef: 'Kedi Evi', konus: [
         ['Halil Usta', 'Arabayı alın terinle aldın, helal olsun. Motorunu ben toparladım, anahtar üstünde.'],
         ['Halil Usta', 'Önce arabayı tanı, şehri hatırla. Dükkâna kadar sür; Kedi Evi’nin karşısındayım.']] },
       { ad: 'Sofra', konus: [
-        ['Zelal', 'İskeledeki kafile Van kahvaltısı istiyor. Sofrayı önce sen kuracaksın: murtuğa, kavut, otlu peynir, bal kaymak, çay.'],
-        ['Halil Usta', 'Tarifte sıra önemli evlat. Murtuğada önce tereyağı erir, sonra un, en son yumurta. Acele et ama karıştırma.']] },
+        ['Zelal', 'İskeledeki kafile Van kahvaltısı istiyor. Sofrayı önce sen kuracaksın: önce çay ve sahanda yumurta; murtuğayı, kavutu usta oldukça öğrenirsin.'],
+        ['Halil Usta', 'Misafiri bekletme evlat. Siparişler birer birer gelir; sabrı tükenmeden önüne koy.']] },
       { ad: 'Kahvaltı', hedef: 'İskele', konus: [
         ['Zelal', 'Araban oldu, işler büyüdü. Dükkânın hesabı yine de pek iyi değil.'],
-        ['Zelal', 'İskelede Tebriz’den gelen bir tur kafilesi kahvaltı bekliyor: otlu peynir, murtuğa, kavut. Soğumadan yetiştirirsen bu ayın kirası çıkar.']],
+        ['Zelal', 'İskelede Tebriz’den gelen bir tur kafilesi kahvaltı bekliyor: otlu peynir, murtuğa, kavut. Soğumadan yetiştirirsen kafile dükkânı herkese anlatır.']],
         kayip: ['Zelal', 'Kahvaltı soğudu, kafile başka yere gitti. Bir daha dene; kalenin kuzeyinden geç, yol daha açık.'] },
       { ad: 'Eleme', konus: [
         ['Serhat', 'Halil Usta’nın yeğeni, ha? Tuşpa Kupası’na adını yazdırmışlar. Cesaretine diyecek yok.'],
@@ -6590,14 +6591,14 @@ const DIL = {
         ['Serhat', 'Kediyi kaleden indirmişsin. Bakalım düz yolda da o kadar iyi misin.'],
         ['Serhat', 'Melen Caddesi’nden iskeleye. İlk ikiye giremezsen kupada yerin yok.']] },
       { ad: 'Tuşpa Kupası', konus: [
-        ['Zelal', 'Kupanın ödülü dükkânın bir yıllık kirası. Baskı yapmak gibi olmasın.'],
+        ['Zelal', 'Kupayı alırsan dükkânın adı bütün Van’da duyulur. Baskı yapmak gibi olmasın.'],
         ['Halil Usta', 'Kale Turu tek tur, beş buçuk kilometre. Sahil yolunda rüzgâr soldan vurur, direksiyonu sıkı tut. Birinci gel.']] },
       { ad: 'Abalı yolu', konus: [
         ['Halil Usta', 'Tuşpa Kupası dükkânın rafında, Pamuk da kupanın içinde uyuyor. Dükkân bir yıl daha açık.'],
         ['Zelal', 'Kutlamayı sonra yaparız. Tebriz’den bir konuğumuz var: Ferhad. Kayak için Abalı’ya çıkacak, yolu bilmiyor.'],
         ['Ferhad', 'Selam! Tebriz’de ralliciyim. Madem aynı yola çıkıyoruz, yarışalım: kayak merkezine geç kalan çayları ısmarlar.']] },
       { ad: 'Turist servisi', konus: [
-        ['Zelal', 'Ferhad’ın kafilesi kavşakta bekliyor: beş kişi, kayak takımlarıyla. Onları kayak merkezine çıkar.'],
+        ['Zelal', 'Ferhad’ın kafilesi kavşakta bekliyor: üç kişi, kayak takımlarıyla. Onları kayak merkezine çıkar.'],
         ['Ferhad', 'Annemin arabada midesi bulanır, haberin olsun. Virajlara yumuşak gir; duvara sürtersen bahşiş yok.']] },
       { ad: 'İlk iniş', konus: [
         ['Ferhad', 'Sağ salim geldik, eline sağlık. Şimdi sıra sende: kayak bilmeyen rallici olmaz. Kapıların arasından geç.'],
@@ -6649,7 +6650,7 @@ const DIL = {
     'servis.al': 'Pick up the tourists', 'servis.birak': 'Ski centre', 'servis.basla': 'Tourist shuttle', 'servis.basla.alt': 'Stop next to the group at the roadside',
     'servis.bindi': 'The tourists are in', 'servis.bindi.alt': 'Drive up to the ski centre; each crash lowers comfort', 'servis.konfor': 'Comfort {0}/100',
     'servis.sarsildi': 'A rough ride', 'servis.vardi': 'The tourists are on the piste',
-    'ev.yuk-tasima': 'Cargo Run', 'ev.yuk-tasima.alt': 'Load the sacks on the cargo tricycle and deliver them along the Old Van road; the pay goes to your savings',
+    'ev.yuk-tasima': 'Cargo Run', 'ev.yuk-tasima.alt': 'Load the sacks on the three-wheeler and deliver them along the Old Van road; the pay goes to your savings',
     'yuk.al': 'Pick up the load', 'yuk.birak': 'Delivery', 'yuk.basla': 'Cargo run', 'yuk.basla.alt': 'Stop at the blue column and load the sacks',
     'yuk.bindi': 'The load is on', 'yuk.bindi.alt': 'Ride to the delivery point; crashes and sharp corners damage the load', 'yuk.konfor': 'Load {0}/100',
     'yuk.sarsildi': 'The load was damaged', 'yuk.vardi': 'Load delivered',
@@ -6669,8 +6670,8 @@ const DIL = {
     'tes.konfor': 'intact {0}%', 'tes.sicak': 'hot {0}%', 'tes.soguk': 'The bread went cold', 'tes.vardi': 'Delivered', 'tes.sonraki': 'Next delivery',
     'tes.sayi': 'deliveries so far: {0}',
     'ev.merkez-halkasi': 'Centre Loop', 'ev.merkez-halkasi.alt': 'Sıhke Street, Kazım Karabekir Boulevard, İpek Yolu and İskele Street; two laps through city traffic',
-    'ev.tanitim': 'İpek Yolu Evening', 'ev.tanitim.alt': 'A short race in a borrowed race car', 'tan.ipucu.1': 'The car is borrowed, enjoy it', 'tan.ipucu.2': 'Shift for nitro, pass the cars ahead',
-    'tan.not': 'That car was borrowed. You have to earn your own: first work with the three-wheeler, then the showroom. The V8 you raced is there for {0} ₺.', 'tan.devam': 'Start the story',
+    'ev.tanitim': 'İpek Yolu Evening', 'ev.tanitim.alt': 'A short race in a borrowed race car', 'tan.ipucu.1': 'The car is borrowed, enjoy it', 'tan.ipucu.2': 'Shift for nitro, pass the cars ahead', 'tan.ipucu.2.mobil': 'Flame button for nitro, pass the cars ahead',
+    'tan.not': 'That car was borrowed. You have to earn your own: first work with the three-wheeler, then the showroom. The V8 you raced is there for {0} ₺.', 'tan.devam': 'Start the story', 'tan.not.mobil': 'That car was borrowed. You have to earn your own: first work with the three-wheeler, then a car (₺{0}).',
     'ev.ipekyolu': 'İpek Yolu Sprint', 'ev.ipekyolu.alt': 'North along İpek Yolu to the İskele Street junction; 2.6 km flat out through traffic',
     'ev.cumhuriyet-turu': 'Cumhuriyet Circuit', 'ev.cumhuriyet-turu.alt': 'From Fevzi Çakmak Street around the Cumhuriyet and Hafiziye neighbourhoods; one lap',
     'sehir.odulVeri': '₺{0} for first', 'sehir.odul': 'Prize ₺{0}', 'sehir.odulYok': 'No prize for this place', 'yh.kil': 'Near miss',
@@ -6690,7 +6691,7 @@ const DIL = {
     'tks.yer.kedi': 'Cat House', 'tks.yer.adliye': 'Courthouse', 'tks.yer.belediye': 'Town hall', 'tks.yer.stadyum': 'Stadium', 'tks.yer.eczane': 'Pharmacy', 'tks.yer.cami': 'Mosque',
     'tks.yer.park': 'Park', 'tks.yer.okul': 'School', 'tks.yer.banka': 'Bank',
     'menu.kasa': 'Savings: ₺{0}', 'sonuc.kazanc': '+₺{0} · savings ₺{1}', 'menu.arac': 'Vehicle', 'menu.yukKasasi': 'Cargo box', 'kasaRenk.ahsap': 'Wood', 'kasaRenk.mavi': 'Blue', 'perf.tur': 'Benchmark', 'perf.suruyor': 'Benchmark: {0} · {1} s', 'perf.cagri': 'calls', 'perf.ucgen': 'tris', 'perf.kapat': 'Close', 'perf.b.sabit': 'Van, fixed views', 'perf.b.van': 'Van, driving', 'perf.b.abali': 'Abalı, driving', 'perf.k60': 'Holds 60 fps (slowest section {0} fps)', 'perf.k30': 'Between 30 and 60 fps (slowest section {0} fps)', 'perf.kZayif': 'Below 30 fps (slowest section {0} fps)', 'perf.yarim': 'The benchmark was interrupted', 'perf.kaliteSatir': 'Quality: {0} → {1} · resolution {2}', 'perf.kopyala': 'Copy', 'perf.kopyalandi': 'Copied', 'perf.sonuc': 'Benchmark result', 'perf.bolum': 'Section', 'perf.coz': 'res.', 'perf.not': 'Send a screenshot of this screen, or press Copy and paste the text.', 'ayar.perf': 'Performance overlay: frame rate, draw calls, benchmark', 'perf.katman': 'Layer', 'perf.isinma': 'Warm-up', 'perf.katmanBaslik': 'Layer test: fixed view {0}, resolution {1}', 'perf.gizlenen': 'Hidden', 'perf.pay': 'share ms', 'perf.katmanNot': 'Each row hides only that layer; "share" is how much of the frame time it takes. When the frame is locked at 60 fps the difference does not show.', 'perf.k.tum': 'None', 'perf.k.golge': 'Shadows', 'perf.k.arazi': 'Terrain', 'perf.k.agac': 'Trees', 'perf.k.bina': 'Buildings', 'perf.k.arac': 'Vehicles', 'perf.k.kedi': 'Cats', 'perf.k.cadde': 'Streets and details', 'perf.k.cim': 'Grass and stones', 'arac.araba': 'Car', 'arac.trike': 'Cargo trike',
-    'arac.motor': 'Motor trike', 'kilit.araba': 'This event needs a car. The car costs ₺{0}.', 'kilit.kisa': 'car needed',
+    'arac.motor': 'Motor trike', 'kilit.araba': 'You need your own car first. The car costs ₺{0}.', 'kilit.kisa': 'car needed',
     'al.yetmez': 'You need ₺{0}; you have ₺{1}', 'hikaye.biriktir': 'Save ₺{0}', 'hikaye.biriktir.alt': 'You have ₺{0}. Take a cargo job at the blue column.', 'ayar.testAc': 'Test: unlock all vehicles',
     'ev.kahvalti': 'Van Breakfast', 'ev.kahvalti.alt': 'A shift at the breakfast house: prepare the orders, cook them, and serve before the guests lose patience',
     'pisir.veri': '90-second shift · target ₺300 · kitchen', 'mutfak.siparis': 'Plate {0}/{1}', 'mutfak.lezzet': 'Taste {0}/100', 'mutfak.yandi': 'A weak shift',
@@ -6760,7 +6761,7 @@ const DIL = {
     'ayar.kaliteNot': 'Low: no shadows, native pixels. Medium: soft shadows. High: sharp shadows, high resolution. Ultra: sharper and wider shadows, more detailed trees, longer view distance; needs a strong graphics card.',
     'ayar.oto': 'Adjust resolution and quality automatically when the frame rate drops', 'ayar.sehir': 'City', 'ayar.vakit': 'Time of day', 'ayar.dongu': 'Cycle', 'ayar.gunduz': 'Day', 'ayar.gunbatimi': 'Sunset', 'ayar.gece': 'Night', 'ayar.vakitNot': 'The cycle runs through day, sunset and night. While driving, the T key changes the time of day.', 'ayar.trafik': 'City traffic: cars drive on the roads', 'ayar.ses': 'Volume', 'ayar.kamera': 'Camera', 'ayar.yakin': 'Near', 'ayar.uzak': 'Far', 'ayar.surucu': 'Driver',
     'ayar.ekran': 'Display', 'ayar.tamEkran': 'Toggle full screen', 'ayar.tamEkranNot': 'F11 or Alt+Enter', 'ayar.kayit': 'Save data', 'ayar.sifirla': 'Reset progress',
-    'ayar.sifirlaNot': 'This deletes story progress, best times and found cats. It cannot be undone.', 'ayar.evetSil': 'Yes, delete', 'ayar.vazgec': 'Cancel', 'ayar.silindi': 'Progress deleted.', 'ayar.geri': 'Back',
+    'ayar.sifirlaNot': 'This deletes story progress, best times, found cats, your savings, bought vehicles, the showroom, the tournament and breakfast house progress. It cannot be undone.', 'ayar.evetSil': 'Yes, delete', 'ayar.vazgec': 'Cancel', 'ayar.silindi': 'Progress deleted.', 'ayar.geri': 'Back',
     'sen': 'You', 'kisi.zelal': 'Zelal',
     'rakip': ['Tuşba', 'Erek', 'Edremit', 'Gevaş', 'Muradiye'],
     'cats': ['Inner Castle', 'Cat House', 'Van Museum', 'The Pier', 'Hüsrev Pasha Mosque', 'Great Mosque', 'Shore Road Junction', 'The Mound', 'Melen Street', 'İskele Street'],
@@ -6773,16 +6774,16 @@ const DIL = {
         ['Halil Usta', 'There is an old motor trike in the yard. Bring nine hundred lira and it is yours.']] },
       { ad: 'The Car', konus: [
         ['Halil Usta', 'The motor suits you. But nobody enters the Tushpa Cup on three wheels.'],
-        ['Zelal', 'The old car costs three thousand lira. Carry loads with the motor and save. The cup prize is one year of rent for the shop.']] },
+        ['Zelal', 'The old car costs three thousand lira. Carry loads with the motor and save.']] },
       { ad: 'The Return', hedef: 'the Cat House', konus: [
         ['Halil Usta', 'You paid for the car with your own sweat. Well done. I tuned the engine and the key is in it.'],
         ['Halil Usta', 'First learn the car and remember the city. Drive to the shop; I am across from the Cat House.']] },
       { ad: 'The Table', konus: [
-        ['Zelal', 'The group at the pier wants a Van breakfast. First you set the table: murtuğa, kavut, herb cheese, honey and clotted cream, tea.'],
-        ['Halil Usta', 'The order matters, son. For murtuğa the butter melts first, then the flour, and the egg goes last. Be quick, but do not mix them up.']] },
+        ['Zelal', 'The group at the pier wants a Van breakfast. You set the table first: tea and fried eggs to start; murtuğa and kavut come as you get better.'],
+        ['Halil Usta', 'Do not keep the guests waiting, son. Orders come one at a time; serve them before their patience runs out.']] },
       { ad: 'Breakfast', hedef: 'the Pier', konus: [
         ['Zelal', 'You have a car now, and the work is bigger. The books for the shop still do not look good.'],
-        ['Zelal', 'A tour group from Tabriz is waiting for breakfast at the pier: herb cheese, murtuğa, kavut. Deliver it warm and this month’s rent is paid.']],
+        ['Zelal', 'A tour group from Tabriz is waiting for breakfast at the pier: herb cheese, murtuğa, kavut. Deliver it warm and they will tell everyone about the shop.']],
         kayip: ['Zelal', 'The breakfast went cold and the group left. Try again; go north of the castle, the road is clearer.'] },
       { ad: 'Qualifying', konus: [
         ['Serhat', 'Halil Usta’s nephew, eh? They put your name down for the Tushpa Cup. You have nerve.'],
@@ -6794,14 +6795,14 @@ const DIL = {
         ['Serhat', 'You brought the cat down from the castle. Let us see if you are that good on a straight road.'],
         ['Serhat', 'From Melen Street to the pier. Finish outside the top two and you have no place in the cup.']] },
       { ad: 'The Tushpa Cup', konus: [
-        ['Zelal', 'The prize is one year of rent for the shop. No pressure.'],
+        ['Zelal', 'Win the cup and all of Van will know the shop. No pressure.'],
         ['Halil Usta', 'The Castle Circuit is one lap, five and a half kilometres. On the shore road the wind hits from the left, so hold the wheel. Finish first.']] },
       { ad: 'The Road to Abalı', konus: [
         ['Halil Usta', 'The Tushpa Cup is on the shelf, and Pamuk is asleep inside it. The shop stays open for another year.'],
         ['Zelal', 'We celebrate later. We have a guest from Tabriz: Farhad. He is going to Abalı to ski and he does not know the road.'],
         ['Farhad', 'Salam! I drive rallies in Tabriz. We are going the same way, so let us race: the last one to the ski centre buys the tea.']] },
       { ad: 'Tourist Shuttle', konus: [
-        ['Zelal', 'Farhad’s group is waiting at the junction: five people with their ski gear. Drive them up to the ski centre.'],
+        ['Zelal', 'Farhad’s group is waiting at the junction: three people with their ski gear. Drive them up to the ski centre.'],
         ['Farhad', 'My mother gets carsick, so you know. Take the bends gently; scrape a wall and there is no tip.']] },
       { ad: 'First Run', konus: [
         ['Farhad', 'We arrived in one piece. Thank you. Now it is your turn: a rally driver must know how to ski. Go through the gates.'],
@@ -6873,8 +6874,8 @@ const DIL = {
     'tes.konfor': 'سالم {0}٪', 'tes.sicak': 'داغ {0}٪', 'tes.soguk': 'نان‌ها سرد شد', 'tes.vardi': 'تحویل شد', 'tes.sonraki': 'تحویل بعدی',
     'tes.sayi': 'روی هم {0} تحویل',
     'ev.merkez-halkasi': 'حلقه مرکز شهر', 'ev.merkez-halkasi.alt': 'خیابان سیحکه، بلوار کاظم قره‌بکر، ایپک‌یولو و خیابان اسکله؛ دو دور در میان ترافیک شهر',
-    'ev.tanitim': 'عصر ایپک‌یولو', 'ev.tanitim.alt': 'مسابقه‌ای کوتاه با یک ماشین مسابقه‌ی قرضی', 'tan.ipucu.1': 'ماشین قرضی است، لذت ببر', 'tan.ipucu.2': 'با Shift نیترو بزن و از جلویی‌ها سبقت بگیر',
-    'tan.not': 'این ماشین قرضی بود. باید ماشین خودت را به دست بیاوری: اول کار با سه‌چرخه، بعد نمایشگاه. آن ماشین هشت‌سیلندر هم آنجاست، {0} ₺.', 'tan.devam': 'شروع داستان',
+    'ev.tanitim': 'عصر ایپک‌یولو', 'ev.tanitim.alt': 'مسابقه‌ای کوتاه با یک ماشین مسابقه‌ی قرضی', 'tan.ipucu.1': 'ماشین قرضی است، لذت ببر', 'tan.ipucu.2': 'با Shift نیترو بزن و از جلویی‌ها سبقت بگیر', 'tan.ipucu.2.mobil': 'با دکمه شعله نیترو بزن و از جلویی‌ها سبقت بگیر',
+    'tan.not': 'این ماشین قرضی بود. باید ماشین خودت را به دست بیاوری: اول کار با سه‌چرخه، بعد نمایشگاه. آن ماشین هشت‌سیلندر هم آنجاست، {0} ₺.', 'tan.devam': 'شروع داستان', 'tan.not.mobil': 'این ماشین قرضی بود. باید ماشین خودت را به دست بیاوری: اول کار با سه‌چرخه، بعد خودرو ({0} ₺).',
     'ev.ipekyolu': 'سرعت ایپک‌یولو', 'ev.ipekyolu.alt': 'در ایپک‌یولو از جنوب تا تقاطع خیابان اسکله؛ ۲٫۶ کیلومتر مستقیم از میان ترافیک',
     'ev.cumhuriyet-turu': 'دور جمهوریت', 'ev.cumhuriyet-turu.alt': 'از خیابان فوزی چاکماک، دور محله‌های جمهوریت و حافظیه؛ یک دور',
     'sehir.odulVeri': '{0} ₺ برای نفر اول', 'sehir.odul': 'جایزه {0} ₺', 'sehir.odulYok': 'این رتبه جایزه ندارد', 'yh.kil': 'از بیخ گوش',
@@ -6894,7 +6895,7 @@ const DIL = {
     'tks.yer.kedi': 'خانهٔ گربه', 'tks.yer.adliye': 'دادگستری', 'tks.yer.belediye': 'شهرداری', 'tks.yer.stadyum': 'ورزشگاه', 'tks.yer.eczane': 'داروخانه', 'tks.yer.cami': 'مسجد',
     'tks.yer.park': 'پارک', 'tks.yer.okul': 'مدرسه', 'tks.yer.banka': 'بانک',
     'menu.kasa': 'پس‌انداز: {0} ₺', 'sonuc.kazanc': '+{0} ₺ · پس‌انداز {1} ₺', 'menu.arac': 'وسیله', 'menu.yukKasasi': 'جعبهٔ بار', 'kasaRenk.ahsap': 'چوبی', 'kasaRenk.mavi': 'آبی', 'perf.tur': 'گشت سنجش', 'perf.suruyor': 'گشت سنجش: {0} · {1} ثانیه', 'perf.cagri': 'فراخوان', 'perf.ucgen': 'مثلث', 'perf.kapat': 'بستن', 'perf.b.sabit': 'وان، نمای ثابت', 'perf.b.van': 'وان، رانندگی', 'perf.b.abali': 'آبالی، رانندگی', 'perf.k60': '60 فریم در ثانیه پایدار است (کندترین بخش {0})', 'perf.k30': 'بین 30 تا 60 فریم در ثانیه (کندترین بخش {0})', 'perf.kZayif': 'زیر 30 فریم در ثانیه (کندترین بخش {0})', 'perf.yarim': 'گشت سنجش نیمه‌کاره ماند', 'perf.kaliteSatir': 'کیفیت: آغاز {0}، پایان {1} · وضوح {2}', 'perf.kopyala': 'کپی', 'perf.kopyalandi': 'کپی شد', 'perf.sonuc': 'نتیجهٔ سنجش', 'perf.bolum': 'بخش', 'perf.coz': 'وضوح', 'perf.not': 'از این صفحه عکس بگیر و بفرست، یا «کپی» را بزن و متن را بچسبان.', 'ayar.perf': 'نشانگر کارایی: سرعت فریم، شمار فراخوان‌ها، گشت سنجش', 'perf.katman': 'لایه', 'perf.isinma': 'گرم شدن', 'perf.katmanBaslik': 'آزمون لایه‌ها: نمای ثابت {0}، وضوح {1}', 'perf.gizlenen': 'پنهان‌شده', 'perf.pay': 'سهم (میلی‌ثانیه)', 'perf.katmanNot': 'در هر ردیف فقط همان لایه پنهان می‌شود؛ «سهم» یعنی آن لایه چقدر از زمان هر فریم را می‌گیرد. اگر فریم روی 60 قفل باشد تفاوت دیده نمی‌شود.', 'perf.k.tum': 'هیچ', 'perf.k.golge': 'سایه', 'perf.k.arazi': 'زمین', 'perf.k.agac': 'درختان', 'perf.k.bina': 'ساختمان‌ها', 'perf.k.arac': 'خودروها', 'perf.k.kedi': 'گربه‌ها', 'perf.k.cadde': 'خیابان و جزئیات', 'perf.k.cim': 'چمن و سنگ', 'arac.araba': 'خودرو', 'arac.trike': 'سه‌چرخه',
-    'arac.motor': 'سه‌چرخه موتوری', 'kilit.araba': 'این مسابقه خودرو می‌خواهد. قیمت خودرو {0} ₺ است.', 'kilit.kisa': 'خودرو لازم است',
+    'arac.motor': 'سه‌چرخه موتوری', 'kilit.araba': 'اول باید خودروی خودت را بخری. قیمت خودرو {0} ₺ است.', 'kilit.kisa': 'خودرو لازم است',
     'al.yetmez': '{0} ₺ لازم است؛ در پس‌انداز {1} ₺ داری', 'hikaye.biriktir': '{0} ₺ پس‌انداز کن', 'hikaye.biriktir.alt': 'در پس‌انداز {0} ₺ داری. از ستون آبی کار باربری بگیر.', 'ayar.testAc': 'آزمایش: همه وسیله‌ها را باز کن',
     'ev.kahvalti': 'صبحانه وان', 'ev.kahvalti.alt': 'یک نوبت کار در صبحانه‌خانه: سفارش مهمان‌ها را آماده کن، بپز و پیش از تمام شدن صبرشان سرو کن',
     'pisir.veri': 'نوبت 90 ثانیه‌ای · هدف 300 ₺ · آشپزخانه', 'mutfak.siparis': 'بشقاب {0}/{1}', 'mutfak.lezzet': 'مزه {0}/100', 'mutfak.yandi': 'نوبت ضعیفی بود',
@@ -6964,7 +6965,7 @@ const DIL = {
     'ayar.kaliteNot': 'کم: بدون سایه. متوسط: سایه نرم. زیاد: سایه دقیق و وضوح بالا. اولترا: سایه دقیق‌تر و گسترده‌تر، درختان پرجزئیات بیشتر، دید دورتر؛ کارت گرافیک قوی می‌خواهد.',
     'ayar.oto': 'اگر سرعت فریم افت کرد، وضوح و کیفیت خودکار تنظیم شود', 'ayar.sehir': 'شهر', 'ayar.vakit': 'زمان روز', 'ayar.dongu': 'چرخه', 'ayar.gunduz': 'روز', 'ayar.gunbatimi': 'غروب', 'ayar.gece': 'شب', 'ayar.vakitNot': 'در چرخه، روز و غروب و شب پشت سر هم می‌آیند. هنگام رانندگی کلید T زمان روز را عوض می‌کند.', 'ayar.trafik': 'ترافیک شهر: خودروها در خیابان‌ها حرکت کنند', 'ayar.ses': 'بلندی صدا', 'ayar.kamera': 'دوربین', 'ayar.yakin': 'نزدیک', 'ayar.uzak': 'دور', 'ayar.surucu': 'راننده',
     'ayar.ekran': 'صفحه', 'ayar.tamEkran': 'تمام‌صفحه را باز یا بسته کن', 'ayar.tamEkranNot': 'F11 یا Alt+Enter', 'ayar.kayit': 'داده‌های ذخیره‌شده', 'ayar.sifirla': 'پاک کردن پیشرفت',
-    'ayar.sifirlaNot': 'پیشرفت داستان، بهترین زمان‌ها و گربه‌های پیداشده پاک می‌شود. این کار برگشت‌پذیر نیست.', 'ayar.evetSil': 'بله، پاک کن', 'ayar.vazgec': 'انصراف', 'ayar.silindi': 'پیشرفت پاک شد.', 'ayar.geri': 'بازگشت',
+    'ayar.sifirlaNot': 'پیشرفت داستان، بهترین زمان‌ها، گربه‌های پیداشده، پس‌انداز، وسیله‌های خریده‌شده، نمایشگاه، تورنمنت و پیشرفت صبحانه‌خانه پاک می‌شود. این کار برگشت‌پذیر نیست.', 'ayar.evetSil': 'بله، پاک کن', 'ayar.vazgec': 'انصراف', 'ayar.silindi': 'پیشرفت پاک شد.', 'ayar.geri': 'بازگشت',
     'sen': 'تو', 'kisi.zelal': 'زلال',
     'rakip': ['توشبا', 'ارک', 'ادرمیت', 'گواش', 'مرادیه'],
     'sira.adlar': ['اول', 'دوم', 'سوم', 'چهارم', 'پنجم'],
@@ -6978,16 +6979,16 @@ const DIL = {
         ['خلیل اوستا', 'در حیاط یک سه‌چرخه موتوری کهنه هست. نهصد لیره جور کن، مال تو.']] },
       { ad: 'خودرو', konus: [
         ['خلیل اوستا', 'موتور به تو می‌آید. اما با سه‌چرخه کسی وارد جام توشپا نمی‌شود.'],
-        ['زلال', 'خودروی کهنه اوستا سه هزار لیره است. با موتور بار ببر و پس‌انداز کن. جایزه جام، کرایه یک سال مغازه است.']] },
+        ['زلال', 'خودروی کهنه اوستا سه هزار لیره است. با موتور بار ببر و پس‌انداز کن.']] },
       { ad: 'بازگشت', hedef: 'خانه گربه', konus: [
         ['خلیل اوستا', 'خودرو را با عرق پیشانی خودت خریدی، آفرین. موتورش را سرحال کردم و سوئیچ رویش است.'],
         ['خلیل اوستا', 'اول خودرو را بشناس و شهر را به یاد بیاور. تا مغازه بران؛ روبه‌روی خانه گربه هستم.']] },
       { ad: 'سفره', konus: [
-        ['زلال', 'گروهِ اسکله صبحانه وان می‌خواهد. اول سفره را تو می‌چینی: مورتوغا، کاووت، پنیر سبزی، عسل و سرشیر، چای.'],
-        ['خلیل اوستا', 'ترتیب مهم است پسرم. در مورتوغا اول کره آب می‌شود، بعد آرد، آخر سر تخم‌مرغ. عجله کن اما قاطی نکن.']] },
+        ['زلال', 'گروهِ اسکله صبحانه وان می‌خواهد. سفره را اول تو می‌چینی: اول چای و نیمرو؛ مورتوغا و کاووت را کم‌کم یاد می‌گیری.'],
+        ['خلیل اوستا', 'مهمان را منتظر نگذار پسرم. سفارش‌ها یکی‌یکی می‌آیند؛ پیش از تمام شدن صبرشان جلویشان بگذار.']] },
       { ad: 'صبحانه', hedef: 'اسکله', konus: [
         ['زلال', 'حالا خودرو داری و کار بزرگ‌تر شده. حساب مغازه هنوز هم چندان خوب نیست.'],
-        ['زلال', 'در اسکله یک گروه گردشگر از تبریز منتظر صبحانه‌اند: پنیر سبزی، مورتوغا و کاووت. اگر پیش از سرد شدن برسانی، کرایه این ماه درمی‌آید.']],
+        ['زلال', 'در اسکله یک گروه گردشگر از تبریز منتظر صبحانه‌اند: پنیر سبزی، مورتوغا و کاووت. اگر پیش از سرد شدن برسانی، از مغازه همه‌جا تعریف می‌کنند.']],
         kayip: ['زلال', 'صبحانه سرد شد و گروه جای دیگری رفت. دوباره تلاش کن؛ از شمال قلعه برو، راه بازتر است.'] },
       { ad: 'مقدماتی', konus: [
         ['سرهات', 'برادرزاده خلیل اوستا، ها؟ اسمت را برای جام توشپا نوشته‌اند. جرئتت حرف ندارد.'],
@@ -6999,14 +7000,14 @@ const DIL = {
         ['سرهات', 'گربه را از قلعه پایین آوردی. ببینیم در جاده صاف هم همین‌قدر خوبی.'],
         ['سرهات', 'از خیابان ملن تا اسکله. اگر جزو دو نفر اول نباشی، در جام جایی نداری.']] },
       { ad: 'جام توشپا', konus: [
-        ['زلال', 'جایزه جام، کرایه یک سال مغازه است. نمی‌خواهم فشار بیاورم.'],
+        ['زلال', 'اگر جام را ببری، اسم مغازه در همه وان می‌پیچد. نمی‌خواهم فشار بیاورم.'],
         ['خلیل اوستا', 'دور قلعه یک دور است، پنج و نیم کیلومتر. در جاده ساحلی باد از چپ می‌زند، فرمان را محکم بگیر. اول شو.']] },
       { ad: 'جاده آبالی', konus: [
         ['خلیل اوستا', 'جام توشپا روی قفسه مغازه است و پاموک توی جام خوابیده. مغازه یک سال دیگر باز می‌ماند.'],
         ['زلال', 'جشن بماند برای بعد. از تبریز مهمان داریم: فرهاد. برای اسکی به آبالی می‌رود و راه را بلد نیست.'],
         ['فرهاد', 'سلام! من در تبریز راننده رالی‌ام. حالا که هم‌مسیر هستیم، مسابقه بدهیم: هر که دیرتر به پیست برسد، چای مهمان اوست.']] },
       { ad: 'سرویس گردشگران', konus: [
-        ['زلال', 'گروه فرهاد سر سه‌راهی منتظر است: پنج نفر با وسایل اسکی. آن‌ها را تا پیست اسکی ببر.'],
+        ['زلال', 'گروه فرهاد سر سه‌راهی منتظر است: سه نفر با وسایل اسکی. آن‌ها را تا پیست اسکی ببر.'],
         ['فرهاد', 'مادرم در ماشین حالش بد می‌شود، گفته باشم. پیچ‌ها را نرم بگیر؛ اگر به دیوار بسابی، انعامی در کار نیست.']] },
       { ad: 'نخستین سرازیری', konus: [
         ['فرهاد', 'سالم رسیدیم، دستت درد نکند. حالا نوبت توست: راننده رالی باید اسکی هم بلد باشد. از میان دروازه‌ها رد شو.'],
@@ -15305,8 +15306,8 @@ function cokKur(o) {
       return { x: p.x + (tz / L) * amp, z: p.z - (tx / L) * amp };
     });
   }
-  function makeCps(ev) {
-    const R = ev.R, laps = ev.laps, cps = [], per = Math.max(2, Math.round(R.L / (ev.solo || ev.ozel === 'kayak' ? 115 : 230)));      // kayakta her kapı bir kontrol noktası
+  function makeCps(ev, R = ev.R, laps = ev.laps) {
+    const cps = [], per = Math.max(2, Math.round(R.L / (ev.solo || ev.ozel === 'kayak' ? 115 : 230)));      // kayakta her kapı bir kontrol noktası
     for (let lap = 0; lap < laps; lap++) for (let k = 1; k <= per; k++) {
       const p = routePoint(R, k === per && !R.loop ? R.L - 0.05 : (k * R.L) / per);
       cps.push({ x: p.x, z: p.z, dx: p.dx, dz: p.dz, final: lap === laps - 1 && k === per });
@@ -15801,8 +15802,26 @@ function cokKur(o) {
   // Servis ve şehir yarışı araba ister, kayak araç istemez; yük işi bisiklet ya da motorla yapılır. En iyi süre sınıfa göre tutulur (araba kaydı eski anahtarda).
   const yarisMi = (ev) => !ev.ozel && !ev.arac && !ev.sehir, aracsiz = (ev) => yarisMi(ev) || ev.ozel === 'kayak';      // aracsiz: araba sahibi olmadan da başlar
   const sinifSec = (ev) => (!yarisMi(ev) ? 'car' : owns(G.aracSecim) ? G.aracSecim : owns('car') ? 'car' : bestCargo());
-  const bestAd = (ev, sn) => 'best.' + ev.id + (sn === 'car' ? '' : '.' + sn);
+  const bestAd = (ev, sn) => 'best.' + ev.id + (sn === 'car' ? '' : '.' + sn) + (sn !== 'car' && sinifRota(ev, sn) ? '.k' : '');      // .k: kısa rota (KISA)
   const enIyi = (ev, sn) => { sn = sn || sinifSec(ev); return sn === 'car' ? ev.best : store.get(bestAd(ev, sn), null); };
+  // Yavaş sınıfta kısa yarış (25 Kas 2026; kurucu: "tutarsızlıkları, sıkıcılığa neden olan hataları gider"). Rotalar araba için kurulmuş; otomatik sürüşle
+  // ölçüldü: Kale Turu araba 2:43, motorlu üç teker 5:40, pedallı üç teker 10:45; İskele 2:11 / 4:20 / 7:55; Eski Van (2 tur) araba 3:37, üç tekerle 15 dk'yı
+  // geçiyordu. Motorlu ve pedallı üç tekerde yarış rotanın başından KISA.sure sn'lik yola (sınıfın ortalama hızıyla) kısalır, tek tur olur, bitiş kapısı oraya
+  // konur. Tırmanış, turnuva (zirve sabit), Pist Atlayışı, iş ve kayak olduğu gibi kalır. En iyi süre kısa rotada ayrı anahtardadır (eski uzun rota kayıtları karışmasın).
+  const KISA = { sure: 150, hiz: { motor: 15.5, trike: 8.5 }, enAz: 700 };
+  function sinifRota(ev, sn) {
+    const v = KISA.hiz[sn], R = ev.R;
+    if (!v || !R || !yarisMi(ev) || ev.solo || ev.turnuva || ev.parkur || ev.tanitim) return null;
+    const hedef = Math.max(KISA.enAz, KISA.sure * v);
+    if (R.L * ev.laps <= hedef * 1.15 || hedef >= R.L) return null;
+    ev.kisa = ev.kisa || {};
+    const k = ev.kisa[sn]; if (k && k.kaynak === R) return k.R;
+    const pts = []; for (let q = 0; q <= hedef; q += 6) { const p = routePoint(R, q); pts.push({ x: p.x, z: p.z }); }
+    const K = prepRoute(pts, false);
+    ev.kisa[sn] = { kaynak: R, R: K };
+    return K;
+  }
+  const yarisUzunluk = (ev, sn) => { const K = sinifRota(ev, sn); return K ? K.L : (ev.R ? ev.R.L : ev.len) * ev.laps; };
   function canStart(ev) {
     if (ev.arac || owns('car') || aracsiz(ev)) return true;
     kasaUyar(T('kilit.araba', para(FIYAT.car)));
@@ -16136,7 +16155,7 @@ function cokKur(o) {
     for (const ev of EVENTS) {
       if (ev.bolge !== REGION.id || ev.gizli) continue;
       const p = ev.nokta ? nearRoad(ev.nokta[0], ev.nokta[1]) : routePoint(ev.R, ev.markerS || 2);
-      const m = beam(3, 70, LIN(ev.ozel ? '#22c3d6' : '#f2a93b'), 0.42, world);
+      const m = beam(3, 70, LIN(etkGrup(ev) === 'is' ? '#22c3d6' : '#f2a93b'), 0.42, world);      // turuncu: Yarışlar listesindekiler (kayak dahil), mavi: işler
       const x = p.x, z = p.z;
       m.position.set(x, groundH(x, z) - 0.5, z);
       evMarkers.push({ ev, x, z, mesh: m });
@@ -16416,7 +16435,7 @@ function cokKur(o) {
     if (st) showMenu(true);
     else if (b) respawn();
     else if (y) cycleCam();
-    else if (a && G.near && G.state === 'free' && !G.goal && canStart(G.near)) startEvent(G.near);
+    else if (a && G.near && G.state === 'free' && !G.goal && canStart(G.near)) { G.lastStory = 0; startEvent(G.near); }      // 25 Kas: Enter ve dokunmayla aynı (hikâye bağı temizlenir; yoksa sonuçta "Hikâyeye devam" bölüm atlatıyordu)
   }
   window.addEventListener('keydown', (e) => {
     if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'text') return;      // oda kodu yazılırken (src/cok.js)
@@ -16509,10 +16528,10 @@ function cokKur(o) {
       }
       const b = document.createElement('button');
       b.className = 'etk'; b.type = 'button'; b.id = 'etk-' + ev.id;
-      const km = (((ev.R ? ev.R.L : ev.len) * ev.laps) / 1000).toFixed(1).replace('.', LANG === 'tr' ? ',' : '.');
+      const km = (yarisUzunluk(ev, sinifSec(ev)) / 1000).toFixed(1).replace('.', LANG === 'tr' ? ',' : '.');
       b.innerHTML = '<span class="etk-ad"></span><span class="etk-alt"></span><span class="etk-veri"></span>';
       b.children[0].textContent = ev.ad; b.children[1].textContent = ev.alt;
-      b.children[2].textContent = ev.ozel === 'pisir' ? T('mt.menuVeri', MUTFAK.ozet().vardiya, MUTFAK.ozet().yildiz) : ev.teslimat ? T('tes.menuVeri', (window.VAN_DUKKAN || []).length, store.get('tes.sayi', 0)) : ev.taksi ? T('tks.menuVeri', taksiYerler().length, store.get('tks.sayi', 0)) : ev.turnuva ? T('trn.menuVeri', T('trn.ad.' + (G.tur && !G.tur.bitti && G.tur.sinif === sinifSec(ev) ? G.tur.tur : 0)), para(TURNUVA.odul[3])) + (sinifSec(ev) !== 'car' ? ' · ' + T(ARAC_AD[sinifSec(ev)]) : '') : km + ' ' + T('etk.km') + ' · ' + ev.zemin + (ev.laps > 1 ? ' · ' + T('etk.tur', ev.laps) : '') + ' · ' + (ev.solo ? T('etk.zamanaKarsi') : T('etk.rakip', ev.ai)) + (sinifSec(ev) !== 'car' ? ' · ' + T(ARAC_AD[sinifSec(ev)]) : '') + (ev.odul ? ' · ' + T('sehir.odulVeri', para(ev.odul[0])) : '') + (enIyi(ev) ? ' · ' + T('etk.enIyi', fmt(enIyi(ev))) : '');
+      b.children[2].textContent = ev.ozel === 'pisir' ? T('mt.menuVeri', MUTFAK.ozet().vardiya, MUTFAK.ozet().yildiz) : ev.teslimat ? T('tes.menuVeri', (window.VAN_DUKKAN || []).length, store.get('tes.sayi', 0)) : ev.taksi ? T('tks.menuVeri', taksiYerler().length, store.get('tks.sayi', 0)) : ev.turnuva ? T('trn.menuVeri', T('trn.ad.' + (G.tur && !G.tur.bitti && G.tur.sinif === sinifSec(ev) ? G.tur.tur : 0)), para(TURNUVA.odul[3])) + (sinifSec(ev) !== 'car' ? ' · ' + T(ARAC_AD[sinifSec(ev)]) : '') : km + ' ' + T('etk.km') + ' · ' + ev.zemin + (ev.laps > 1 && !sinifRota(ev, sinifSec(ev)) ? ' · ' + T('etk.tur', ev.laps) : '') + ' · ' + (ev.solo ? T('etk.zamanaKarsi') : T('etk.rakip', ev.ai)) + (sinifSec(ev) !== 'car' ? ' · ' + T(ARAC_AD[sinifSec(ev)]) : '') + (ev.odul ? ' · ' + T('sehir.odulVeri', para(ev.odul[0])) : '') + (enIyi(ev) ? ' · ' + T('etk.enIyi', fmt(enIyi(ev))) : '');
       if (!ev.arac && !owns('car') && !aracsiz(ev)) { b.classList.add('kilitli'); b.children[2].textContent += ' · ' + T('kilit.kisa'); }
       b.addEventListener('click', etkBaslat(ev));
       list.appendChild(b);
@@ -16981,7 +17000,7 @@ function cokKur(o) {
       for (const b of YD.bayrak) { const x = bt.x + bt.dz * 10.5 * b.userData.yan, z = bt.z - bt.dx * 10.5 * b.userData.yan; b.position.set(x, groundH(x, z), z); b.rotation.y = Math.atan2(bt.dx, bt.dz); b.visible = true; }
       if (ev.parkur) parkurBasla(r); else if (ev.rampa) yolRampaBasla(r);
       if (!YD.bariyer) return;
-      const ad = REGION.id + '.' + ev.id; let c = YD.cache[ad];
+      const ad = REGION.id + '.' + ev.id + '.' + Math.round(R.L); let c = YD.cache[ad];      // kısa rota (KISA) kendi bariyerlerini alır
       if (!c) {
         const yer = ev.zemin === 'Kaya' ? [] : ev.parkur ? parkurYer(R).duvar : ydBariyerYer(R, ev.sehir), kok = new THREE.Group(), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), yuk = new THREE.Vector3(0, 1, 0), olc = new THREE.Vector3(YD.olcek, YD.olcek, YD.olcek), v = new THREE.Vector3();
         const H = 0.8 * YD.olcek, W = 1.8 * YD.olcek, n = yer.length * YD.kat;
@@ -17292,8 +17311,8 @@ function cokKur(o) {
     if (ev.turnuva && (!G.tur || G.tur.bitti || G.tur.sinif !== sn)) turnuvaKur(sn);      // süren turnuva kaldığı turdan devam eder; araç sınıfı değişirse yeniden başlar
     const tur = ev.turnuva ? G.tur : null;
     G.lastEvent = ev; G.lastSinif = sn;
-    const R = ev.R, laps = ev.laps, cps = makeCps(ev);
-    G.race = { ev, R, cps, cpi: 0, t: 0, count: 3.9, lastBeep: 4, done: false, doneT: 0, total: R.loop ? R.L * laps : R.L, place: 1, sinif: sn };
+    const K = sinifRota(ev, sn), R = K || ev.R, laps = K ? 1 : ev.laps, cps = makeCps(ev, R, laps);
+    G.race = { ev, R, cps, cpi: 0, t: 0, count: 3.9, lastBeep: 4, done: false, doneT: 0, total: R.loop ? R.L * laps : R.L, place: 1, sinif: sn, laps, kisa: !!K };
     kizTemizle();
     const kayakta = ev.ozel === 'kayak', field = kayakta ? kayakcilar().slice(0, ev.ai) : tur ? [rivals[tur.rakip[tur.tur] % 4]] : rivals.slice(0, ev.sehir ? ev.ai : Math.min(ev.ai, 4));
     if (ev.sehir) { G.race.rakip = field; sehirRakipYukle(); trafikHedef(); }      // trafik yarışta da akar (yoğunluk SEHIR.yogunluk)
@@ -17392,7 +17411,7 @@ function cokKur(o) {
     }
     const okStory = (r.story && r.place <= r.story) || !!ev.tanitim;
     $('btn-hikaye-devam').hidden = !okStory; $('btn-hikaye-devam').textContent = T(ev.tanitim ? 'tan.devam' : 'sonuc.hikayeDevam'); $('btn-tekrar').hidden = !!ev.tanitim;
-    if (ev.tanitim) { store.set('tanitim', 1); $('sonuc-not').textContent = T('tan.not', para(GALERI[1].fiyat)); }
+    if (ev.tanitim) { store.set('tanitim', 1); $('sonuc-not').textContent = MOBIL ? T('tan.not.mobil', para(FIYAT.car)) : T('tan.not', para(GALERI[1].fiyat)); }      // telefonda galeri yok
     if (r.story && !okStory) $('sonuc-not').textContent = r.story === 1 ? T('sonuc.hikayeBirinci') : T('sonuc.hikayeIlk', r.story);
     $('btn-tekrar').textContent = T(r.story && !okStory ? 'sonuc.tekrarDene' : 'sonuc.tekrar');
     $('sonuc-baslik').textContent = title; $('sonuc-ad').textContent = ev.ad + (r.sinif && r.sinif !== 'car' ? ' · ' + T(ARAC_AD[r.sinif]) : '');
@@ -17665,7 +17684,7 @@ function cokKur(o) {
     await galeriTak(TAN.model);
     startEvent(EVENTS.find((e) => e.tanitim), 'car');
     vakitZorlaAyarla(TAN.vakit);      // clearRace geri alır
-    flashLater = [T('tan.ipucu.1'), T('tan.ipucu.2')];
+    flashLater = [T('tan.ipucu.1'), T(MOBIL ? 'tan.ipucu.2.mobil' : 'tan.ipucu.2')];
   }
   function oduncBitir() { if (!GAL.odunc) return; GAL.odunc = null; galeriTak(GAL.sec); }
   async function startStory() {
@@ -17687,7 +17706,7 @@ function cokKur(o) {
   function beginMission(ch) {
     const gv = ch.gorev;
     if (gv.tip === 'para') {     // biriktirme bölümü: para yetiyorsa araç alınır, yetmiyorsa iş yapmaya dönülür
-      if (buyVehicle(gv.al)) { storyAdvance(); return; }
+      if ((gv.al === 'motor' && owns('car')) || buyVehicle(gv.al)) { storyAdvance(); return; }      // arabası olan motor bölümünü atlar (parası sorulmadan motor alınmaz)
       G.lastStory = 0;
       startFree(true);
       flash(T('hikaye.biriktir', para(gv.hedef)), T('hikaye.biriktir.alt', para(G.para || 0)), 6);
@@ -19587,8 +19606,8 @@ function cokKur(o) {
     if (r) {
       if (!r.done) r.place = 1 + cars.filter((o) => !o.isPlayer && (o.finished || o.prog > player.prog)).length;
       $('yaris-sira').textContent = r.ev.solo ? '' : r.place + '/' + cars.length;
-      const per = r.cps.length / r.ev.laps;
-      $('yaris-tur').textContent = r.ev.laps > 1 ? T('hud.tur', Math.min(r.ev.laps, Math.floor(r.cpi / per) + 1), r.ev.laps) : T(r.ev.ozel === 'kayak' ? 'hud.kapi' : 'hud.nokta', Math.min(r.cps.length, r.cpi + 1), r.cps.length);
+      const lp = r.laps || r.ev.laps, per = r.cps.length / lp;
+      $('yaris-tur').textContent = lp > 1 ? T('hud.tur', Math.min(lp, Math.floor(r.cpi / per) + 1), lp) : T(r.ev.ozel === 'kayak' ? 'hud.kapi' : 'hud.nokta', Math.min(r.cps.length, r.cpi + 1), r.cps.length);
     } else if (G.state === 'free' && !G.goal) {
       let near = null;
       for (const m of evMarkers) if ((m.x - c.x) ** 2 + (m.z - c.z) ** 2 < 15 * 15) near = m.ev;
