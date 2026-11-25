@@ -7718,6 +7718,11 @@ function buildRoads(scene) {
 const PARCA = { agac: [], bina: [] };
 // Gece ışıkları: cephe malzemeleri (pencere ışığı), lamba ampulleri ve ışık havuzları, lamba konumları. src/oyun.js gün vaktine göre açar.
 const GECE = { cephe: [], mesh: [], lamba: [], ampul: null, havuz: null };
+// Trafik ışığı lambaları (25 Kas 2026; HANDOFF bilinen kusur "trafik ışıkları yanmıyor"). Her fenerde kırmızı, sarı, yeşil mercek; hangisinin yandığını gölgelendirici
+// zamandan seçer (oyun.js her karede TISIK.U.uZaman = G.t). Türkiye düzeni, ISIK.dongu sn'lik döngü: yeşil 0–14, sarı 14–17, kırmızı 17–36, kırmızıyla sarı birlikte
+// 35–36 (yeşilden önce). Kavşakta dik yolların ışığı yarım döngü kaydırılır (biri yeşilken öbürü kırmızı); kavşaklar 40 m'lik ızgara hücresine göre birbirinden kayar.
+// Devrilen ışık söner (src/kirik.js "son" parçası). Trafik ışıklara göre durmaz (ayrı iş).
+const TISIK = { dongu: 36, U: { uZaman: { value: 0 } } };
 // ------------------------------------------------------------ binalar
 const POIS = [];
 function buildBuildings(scene, maxAniso, webgl2) {
@@ -8459,7 +8464,11 @@ function buildDetay(scene) {
   // ---- otobüs durakları (OSM highway=bus_stop): levha direği; yalnız shelter=yes olanlarda bekleme yeri
   const durakMavi = R('#1c6fb8'), durakSari = R('#f2b824'), camR = R('#9fc3d6');
   for (let i = 0; i < (T.durak || []).length; i += 3) {
-    const y = yakinYol(T.durak[i], T.durak[i + 1]), x = y.x, z = y.z, g = groundH(x, z);
+    let y = yakinYol(T.durak[i], T.durak[i + 1]);
+    // 25 Kas 2026 (HANDOFF kusuru "19 durağın 1'i iki yanı yol olan yerde, yalnız levha"): OSM noktasının iki yanı da yolsa (bölünmüş yolun ortası) durak yol boyunca
+    // 4–12 m kaydırılıp yanı boş kenar aranır; bulunursa levha ve sığınak oraya konur, bulunmazsa eskisi gibi yalnız levha.
+    if (y.yolda) for (const d of [4, -4, 8, -8, 12, -12]) { const y2 = yakinYol(T.durak[i] + y.tx * d, T.durak[i + 1] + y.tz * d); if (!y2.yolda) { y = y2; break; } }
+    const x = y.x, z = y.z, g = groundH(x, z);
     yikil.levha.push({ x, z, g, yon: y.yon + Math.PI / 2 });      // levha direği: örnekli, çarpınca devrilir
     if (y.yolda) durakYolda++;
     if (T.durak[i + 2] && !y.yolda) {       // sığınak levhanın gerisinde (yoldan uzakta), açık yüzü yola bakar; iki yanı da yolsa sığınak konmaz
@@ -8521,7 +8530,27 @@ function buildDetay(scene) {
   const ah = R('#6b5a45');
   for (const d of yikil.direk) d.yon = Math.atan2(-d.nz, d.nx);      // yerel x (kol) hatta dik
   const direkler = tekKur(yikil.direk, 'direk', yerel([[0, 5.25, 0, 0.28, 11.5, 0.28, ah], [0, 10.6, 0, 2.16, 0.14, 0.14, ah]]), 11, 0.2);
-  tekKur(yikil.isik, 'isik', yerel([[0, 2.2, 0, 0.12, 4.8, 0.12, gri], [0, 4.1, 0, 0.34, 1.0, 0.3, R('#1b1d20')], [0, 4.42, -0.16, 0.2, 0.2, 0.04, R('#5a1512')], [0, 4.1, -0.16, 0.2, 0.2, 0.04, R('#5a4a12')], [0, 3.78, -0.16, 0.2, 0.2, 0.04, R('#124a22')]]), 4.6, 0.16);
+  const isiklar = tekKur(yikil.isik, 'isik', yerel([[0, 2.2, 0, 0.12, 4.8, 0.12, gri], [0, 4.1, 0, 0.34, 1.0, 0.3, R('#1b1d20')], [0, 4.42, -0.16, 0.2, 0.2, 0.04, R('#5a1512')], [0, 4.1, -0.16, 0.2, 0.2, 0.04, R('#5a4a12')], [0, 3.78, -0.16, 0.2, 0.2, 0.04, R('#124a22')]]), 4.6, 0.16);
+  if (isiklar.length) {      // yanan mercekler: merceğin 5 mm önünde 0,17 m kare, -z'ye bakar
+    const pos = [], goz = [];
+    [4.42, 4.1, 3.78].forEach((h, k) => { for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, -1], [1, 1], [-1, 1]]) { pos.push(-a * 0.085, h + b * 0.085, -0.185); goz.push(k); } });
+    const geo = new THREE.InstancedBufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('aGoz', new THREE.Float32BufferAttribute(goz, 1));
+    const faz = new Float32Array(isiklar.length);
+    yikil.isik.forEach((o, i) => { const hx = Math.floor(o.x / 40), hz = Math.floor(o.z / 40), kay = (((hx * 73856093) ^ (hz * 19349663)) >>> 0) % 997 / 997; faz[i] = (kay + (Math.abs(Math.sin(o.yon)) > Math.abs(Math.cos(o.yon)) ? 0.5 : 0)) * TISIK.dongu; });
+    geo.setAttribute('aFaz', new THREE.InstancedBufferAttribute(faz, 1));
+    const lm = new THREE.ShaderMaterial({
+      uniforms: TISIK.U, side: THREE.DoubleSide,
+      vertexShader: 'attribute float aGoz; attribute float aFaz; uniform float uZaman; varying vec3 vRenk;\n' +
+        'void main() { float p = mod(uZaman + aFaz, ' + TISIK.dongu.toFixed(1) + '); float yan = aGoz < 0.5 ? step(17.0, p) : aGoz < 1.5 ? max(step(14.0, p) * (1.0 - step(17.0, p)), step(35.0, p)) : 1.0 - step(14.0, p);\n' +
+        '  vRenk = (aGoz < 0.5 ? vec3(1.0, 0.1, 0.05) : aGoz < 1.5 ? vec3(1.0, 0.58, 0.06) : vec3(0.1, 1.0, 0.42)) * 2.6;\n' +
+        '  gl_Position = yan < 0.5 ? vec4(2.0, 2.0, 2.0, 1.0) : projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0); }',      // sönük mercek kırpılır
+      fragmentShader: 'varying vec3 vRenk; void main() { gl_FragColor = vec4(vRenk, 1.0); }',
+    });
+    lm.name = 'trafik-isigi';
+    const im = new THREE.InstancedMesh(geo, lm, isiklar.length); im.frustumCulled = false; im.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    isiklar.forEach((o, i) => { const w0 = o.parca[0].w0; im.setMatrixAt(i, w0); o.son.push({ im, i, w0 }); });
+    scene.add(im); parca.mesh.push(im);
+  }
   tekKur(yikil.levha, 'levha', yerel([[0, 1.35, 0, 0.07, 3.1, 0.07, gri], [0, 2.6, 0, 0.56, 0.5, 0.05, durakMavi], [0, 2.6, 0, 0.34, 0.28, 0.07, durakSari]]), 2.9, 0.1);
   if (yikil.telK.length) {       // ahşap direk telleri: uçları direkle döner
     const anahtar = new Map(); yikil.direk.forEach((d, i) => anahtar.set(d.key, direkler[i]));
@@ -13405,12 +13434,13 @@ function yayaKayak(y, c, dt) {
     _ya.v.set(sx * (0.27 - com * 0.1), 0.86 - com * 0.34, 0.26 + com * 0.06).sub(f.govde.position).applyQuaternion(gq);
     ikCoz(f.kol[yan], _ya.v, _ya.b.set(sx * 0.8, -0.6, -0.4).applyQuaternion(gq));
   }
-  // batonlar: uçları geride, yere doğru
+  // batonlar: uçları geride, yere doğru ve dışa açık (25 Kas 2026; HANDOFF kusuru "batonlar dik": yalnız geriye uzanınca takip kamerasından dik çizgi görünüyordu;
+  // dışa 0,34 açılır, çömelince daha yatar)
   y.kok.updateMatrixWorld(true);
   y.kok.getWorldQuaternion(_ya.q2);
   for (const yan of ['L', 'R']) {
     const bt = f.baton[yan]; if (!bt) continue;
-    _ya.q3.setFromUnitVectors(_ya.asagi, _ya.d.set((yan === 'L' ? 1 : -1) * 0.12, -0.55 - com * 0.25, -0.85).normalize());
+    _ya.q3.setFromUnitVectors(_ya.asagi, _ya.d.set((yan === 'L' ? 1 : -1) * 0.34, -0.5 - com * 0.12, -0.85).normalize());
     bt.parent.getWorldQuaternion(_ya.q).invert();
     bt.quaternion.copy(_ya.q).multiply(_ya.q2).multiply(_ya.q3);
   }
@@ -19870,7 +19900,7 @@ function cokKur(o) {
     let dt = Math.min(0.1, (now - last) / 1000);
     if (G.yavas > 0) { G.yavas -= dt; dt *= 0.35; }      // devrilince kısa ağır çekim
     if (G.dondur) dt = 0;      // sınama: sahneyi dondurur (görüntü almak için)
-    last = now; G.t += dt;
+    last = now; G.t += dt; TISIK.U.uZaman.value = G.t;
     pollPad();
     const driving = G.state === 'free' || G.state === 'race' || G.state === 'count';
     if (driving) {
@@ -19967,7 +19997,7 @@ function cokKur(o) {
     sim(sec) { const n = Math.round(sec / STEP); for (let i = 0; i < n; i++) { if (G.state === 'free' || G.state === 'race' || G.state === 'count') tick(STEP); } },
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
     groundH,
-    ETK, etkGrupSec, hedef, hedefYazi, ALEV, CANV, canVur, izlAdim, updateHud, poseCar, VIRAJ, ISIT, isitEksik() { const d = havuzDokular(dokular(scene, new Set())); dokular(UZAK.sahne, d); const e = []; for (const t of d) { if (!t.image || t.isRenderTargetTexture) continue; if (renderer.properties.get(t).__version !== t.version) e.push([t.name || String(t.image.src || t.image.currentSrc || '').split('/').pop() || t.uuid.slice(0, 6), t.image.width, t.image.height]); } return e; }, trafikSec(v) { AYAR.trafik = !!v; applySettings(false); },
+    ETK, etkGrupSec, hedef, hedefYazi, ALEV, CANV, canVur, izlAdim, updateHud, poseCar, VIRAJ, ISIT, TISIK, isitEksik() { const d = havuzDokular(dokular(scene, new Set())); dokular(UZAK.sahne, d); const e = []; for (const t of d) { if (!t.image || t.isRenderTargetTexture) continue; if (renderer.properties.get(t).__version !== t.version) e.push([t.name || String(t.image.src || t.image.currentSrc || '').split('/').pop() || t.uuid.slice(0, 6), t.image.width, t.image.height]); } return e; }, trafikSec(v) { AYAR.trafik = !!v; applySettings(false); },
     wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, HH, KIV, kivilcim, IZL, LIZ, VTR, finishRace, showResult, startTanitim, TAN, startStory, get kamFov() { return camera.fov; }, YH, YD, ydYukle, ydBariyerYer, PRK, PARKUR, parkurYer, KTUR, YOLR, RTUR, yolRampaYer, RKIM, RKE, rkDal, rkEtiketAdim, rakipHirs, rotaEgrilik, YT, ytKarar, ytYolBul, okAdim, galeri: { liste: GALERI, get durum() { return GAL; }, sec: galeriSec, tak: galeriTak, ciz: galeriCiz }, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     cok: COK,      // birlikte sürüş: .durum, .kur(), .katil(kod), .ayril(), .sunucuAyarla(adres)
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
