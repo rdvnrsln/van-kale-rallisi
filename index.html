@@ -79,6 +79,14 @@ button:focus-visible { outline: 2px solid var(--gol); outline-offset: 2px; }
 #odul { grid-area: 2 / 1 / 3 / 4; align-self: end; justify-self: center; margin-bottom: 14vh; font-family: var(--f-baslik); font-style: italic; font-weight: 700; font-size: clamp(18px, 2.6vw, 26px);
   letter-spacing: 0.04em; text-transform: uppercase; color: #6fd8ff; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8); opacity: 0; transform: translateY(8px); transition: opacity 0.25s ease, transform 0.25s ease; pointer-events: none; }
 #odul.gor { opacity: 1; transform: none; }
+/* Rakip ad etiketi (25 Kas 2026, tanınır rakipler): arabanın üstünde küçük, saydam hap; renk noktası arabanın rengi. Hamlede ("geç fren", "nitro") ikinci satır. */
+#rk-etk { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 1; }
+#rk-etk .rk { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 5px; padding: 2px 8px 2px 6px; border-radius: 999px; background: rgba(12, 16, 20, 0.62); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  font-family: var(--f-baslik); font-weight: 700; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: #fff; white-space: nowrap; will-change: transform; }
+#rk-etk .rk i { width: 7px; height: 7px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6); }
+#rk-etk .rk span { display: none; color: var(--kehribar); }
+#rk-etk .rk.hamle span { display: inline; }
+#rk-etk .rk.nitro span { color: #6fd8ff; }
 /* Araç sağlığı: turbonun yanında ince çubuk; yalnız hasar varken görünür. */
 #can { width: 6px; height: 64px; align-self: flex-end; margin-bottom: 4px; position: relative; overflow: hidden; border: 1.5px solid rgba(255, 255, 255, 0.55); border-radius: 4px; background: rgba(16, 20, 26, 0.25); }
 #can-d { position: absolute; left: 0; right: 0; bottom: 0; height: 100%; background: #7fe0a4; }
@@ -463,6 +471,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
   </div>
   <div id="mesaj" aria-live="polite"></div>
   <div id="odul" aria-hidden="true"></div>
+  <div id="rk-etk" aria-hidden="true" hidden></div>
   <div id="giris-gec" data-i18n="hud.gec">Geçmek için dokun ya da bir tuşa bas</div>
   <div id="yan-cevir" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 14a9 9 0 0 0 9 7.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9.5 19.5l2.6 2-1.4 2.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="hud.yanCevir">Daha geniş görüş için telefonu yan çevir</span></div>
   <!-- Dokunmatik kumanda: saydam, ince çerçeveli daireler ve sade simgeler; adlar ekran okuyucuya açık (aria-label). -->
@@ -6439,6 +6448,8 @@ const DIL = {
     'ev.ipekyolu': 'İpek Yolu Sprinti', 'ev.ipekyolu.alt': 'İpek Yolu’nda güneyden İskele Caddesi kavşağına; trafiğin arasından dümdüz 2,6 km',
     'ev.cumhuriyet-turu': 'Cumhuriyet Turu', 'ev.cumhuriyet-turu.alt': 'Fevzi Çakmak Caddesi’nden Cumhuriyet ve Hafiziye mahallelerinin çevresinde tek tur',
     'sehir.odulVeri': 'birinciye {0} ₺', 'sehir.odul': 'Ödül {0} ₺', 'sehir.odulYok': 'Bu sıraya ödül yok', 'yh.kil': 'Kıl payı',
+    'rk.gecFren': 'geç fren', 'rk.nitro': 'nitro', 'rk.ip.gecFren.1': '{0} virajlara geç frenler', 'rk.ip.gecFren.2': 'içeriden dalar, virajdan önce çizgini kapat',
+    'rk.ip.nitro.1': '{0} nitrosunu saklar', 'rk.ip.nitro.2': 'viraj çıkışında basar, çıkışta gazı önce sen aç',
     'sehir.ipucu.1': 'Yolda trafik var', 'sehir.ipucu.2': 'arabaların dibinden geçersen nitro dolar',
     'ev.taksi': 'Taksi', 'ev.taksi.alt': 'Duraktan çık, kaldırımda bekleyen yolcuyu al, gideceği yere bırak; ücret ve bahşiş kasaya girer',
     'tks.menuVeri': '{0} gerçek yer · {1} yolcu', 'tks.yolcu.turist': 'Bir turist taksi bekliyor', 'tks.yolcu.acele': 'Acelesi olan bir yolcu var',
@@ -6639,6 +6650,8 @@ const DIL = {
     'ev.ipekyolu': 'İpek Yolu Sprint', 'ev.ipekyolu.alt': 'North along İpek Yolu to the İskele Street junction; 2.6 km flat out through traffic',
     'ev.cumhuriyet-turu': 'Cumhuriyet Circuit', 'ev.cumhuriyet-turu.alt': 'From Fevzi Çakmak Street around the Cumhuriyet and Hafiziye neighbourhoods; one lap',
     'sehir.odulVeri': '₺{0} for first', 'sehir.odul': 'Prize ₺{0}', 'sehir.odulYok': 'No prize for this place', 'yh.kil': 'Near miss',
+    'rk.gecFren': 'late braking', 'rk.nitro': 'nitro', 'rk.ip.gecFren.1': '{0} brakes late into corners', 'rk.ip.gecFren.2': 'dives up the inside, close your line before the corner',
+    'rk.ip.nitro.1': '{0} saves the nitro', 'rk.ip.nitro.2': 'fires it out of the corner, get on the throttle first',
     'sehir.ipucu.1': 'Traffic is on the road', 'sehir.ipucu.2': 'pass close to the cars to fill your nitro',
     'ev.taksi': 'Taxi', 'ev.taksi.alt': 'Leave the rank, pick up the passenger waiting at the kerb and drop them where they are going; fare and tip go to your cash',
     'tks.menuVeri': '{0} real places · passengers carried: {1}', 'tks.yolcu.turist': 'A tourist needs a taxi', 'tks.yolcu.acele': 'A passenger in a hurry',
@@ -6839,6 +6852,8 @@ const DIL = {
     'ev.ipekyolu': 'سرعت ایپک‌یولو', 'ev.ipekyolu.alt': 'در ایپک‌یولو از جنوب تا تقاطع خیابان اسکله؛ ۲٫۶ کیلومتر مستقیم از میان ترافیک',
     'ev.cumhuriyet-turu': 'دور جمهوریت', 'ev.cumhuriyet-turu.alt': 'از خیابان فوزی چاکماک، دور محله‌های جمهوریت و حافظیه؛ یک دور',
     'sehir.odulVeri': '{0} ₺ برای نفر اول', 'sehir.odul': 'جایزه {0} ₺', 'sehir.odulYok': 'این رتبه جایزه ندارد', 'yh.kil': 'از بیخ گوش',
+    'rk.gecFren': 'ترمز دیرهنگام', 'rk.nitro': 'نیترو', 'rk.ip.gecFren.1': '{0} دیر سر پیچ ترمز می‌گیرد', 'rk.ip.gecFren.2': 'از داخل پیچ می‌پیچد، پیش از پیچ مسیرت را ببند',
+    'rk.ip.nitro.1': '{0} نیترو را نگه می‌دارد', 'rk.ip.nitro.2': 'در خروج از پیچ می‌زند، در خروج زودتر گاز بده',
     'sehir.ipucu.1': 'خیابان ترافیک دارد', 'sehir.ipucu.2': 'اگر از کنار خودروها با سرعت رد شوی نیترو پر می‌شود',
     'ev.taksi': 'تاکسی', 'ev.taksi.alt': 'از ایستگاه راه بیفت، مسافری را که کنار خیابان منتظر است سوار کن و به مقصدش برسان؛ کرایه و انعام به صندوقت می‌رود',
     'tks.menuVeri': '{0} مکان واقعی · {1} مسافر', 'tks.yolcu.turist': 'یک گردشگر تاکسی می‌خواهد', 'tks.yolcu.acele': 'مسافری که عجله دارد',
@@ -12501,12 +12516,26 @@ function prepRoute(pts0, loop) {
     if (!asph) v = Math.min(v, 21);
     R.v[i] = v;
   }
+  R.v0 = Float32Array.from(R.v);      // virajın kendi hızı (frenleme payı eklenmeden; rotaGecFren)
   for (let pass = 0; pass < 2; pass++) for (let i = n - 1; i >= 0; i--) {
     if (!loop && i === n - 1) continue;
     const nx = at(i + 1);
     R.v[i] = Math.min(R.v[i], Math.sqrt(R.v[nx] * R.v[nx] + 2 * 8.5 * 4));
   }
   return R;
+}
+// Geç frenleyen rakip (25 Kas 2026; Codex incelemesi öneri 7, kurucu: "Tanınır rakipler"; src/oyun.js RKIM): virajın kendi hızının %5 üstüyle girer ve
+// frenlemeyi 8,5 yerine 15 m/sn² ile, yani virajın çok daha yakınında yapar. Aynı rota için bir kez hesaplanır.
+const GECF = { kat: 1.05, fren: 15 };
+function rotaGecFren(R) {
+  if (R.vGec) return R.vGec;
+  const n = R.n, v = Float32Array.from(R.v0 || R.v, (x) => Math.min(60, x * GECF.kat)), at = (i) => (R.loop ? ((i % n) + n) % n : Math.min(n - 1, i));
+  for (let pass = 0; pass < 2; pass++) for (let i = n - 1; i >= 0; i--) {
+    if (!R.loop && i === n - 1) continue;
+    const nx = at(i + 1), ara = Math.max(0.5, Math.hypot(R.x[nx] - R.x[i], R.z[nx] - R.z[i]));
+    v[i] = Math.min(v[i], Math.sqrt(v[nx] * v[nx] + 2 * GECF.fren * ara));
+  }
+  return (R.vGec = v);
 }
 const _rp = { x: 0, z: 0, dx: 0, dz: 1 };
 function routePoint(R, dist) {
@@ -12550,7 +12579,8 @@ function aiInput(c, R, band, dt) {
   const diff = wrapAngle(Math.atan2(tx - c.x, tz - c.z) - c.h);
   _inp.steer = clamp(-diff * 2.4, -1, 1);
   const vk = c.vKat || 1;      // üç teker: viraj hızı devrilme eşiğinin altında (oyun.js SINIF)
-  let vt = R.v[at(c.ri + 1 + Math.round((sp * 0.22) / 4))] * c.skill * band * vk;
+  const V = c.gecFren ? rotaGecFren(R) : R.v;      // geç frenleyen rakip: kendi hız eğrisi
+  let vt = V[at(c.ri + 1 + Math.round((sp * (c.gecFren ? 0.1 : 0.22)) / 4))] * c.skill * band * vk;
   if (Math.abs(diff) > 0.55) vt = Math.min(vt, 11 * vk);
   if (off > 14) vt = Math.min(vt, 16);
   if (c.vSinir > 0) vt = Math.min(vt, c.vSinir);      // şehir yarışı: önü trafikle kapalıysa (oyun.js trafikKacin)
@@ -15805,7 +15835,7 @@ function cokKur(o) {
     scene.add(player.mesh);
     const rc = [['#1d6fb8', 'Tuşba', 'sedan'], ['#e8c33a', 'Erek', 'hatch'], ['#2f9a5a', 'Edremit', 'sedan'], ['#7a3fa8', 'Gevaş', 'hatch'], [SEHIR.rakipRenk, 'Muradiye', 'sedan']];      // beşincisi yalnız şehir yarışında
     // adOzel: turnuvadaki rakibin adı (TURNUVA); yoksa sıradaki rakip adı
-    rivals = rc.map(([c, n, st], i) => { const r = makeCar(c, false, n, st); Object.defineProperty(r, 'name', { get: () => r.adOzel || TA('rakip')[i] }); r.mesh.visible = false; scene.add(r.mesh); r.car = { group: r.mesh, wheels: r.wheels, tail: r.tail }; r.uc = {}; return r; });
+    rivals = rc.map(([c, n, st], i) => { const r = makeCar(c, false, n, st); r.renk = c; Object.defineProperty(r, 'name', { get: () => r.adOzel || TA('rakip')[i] }); r.mesh.visible = false; scene.add(r.mesh); r.car = { group: r.mesh, wheels: r.wheels, tail: r.tail }; r.uc = {}; return r; });
     trafficInit(scene, 14);
     // Blender arabaları: oyuncunun spor arabası, rakipler ve trafik. İnmezse kod çizimi kalır.
     arabaYukle().then((src) => {
@@ -16395,16 +16425,18 @@ function cokKur(o) {
   const TURNUVA = { odul: [0, 200, 600, 2000], hiz: [0.84, 0.93, 1.0], ad: (i) => TA('trn.adlar')[i] };
   function turnuvaKur(sn) {
     let t = (Date.now() % 2147483647) || 1; const rs = () => (t = (t * 48271) % 2147483647) / 2147483647;
-    const s = [0, 1, 2, 3, 4, 5, 6]; for (let i = 6; i > 0; i--) { const j = Math.floor(rs() * (i + 1)); [s[i], s[j]] = [s[j], s[i]]; }
-    const kazan = (a, b) => (rs() < 0.5 ? a : b), w1 = kazan(s[1], s[2]), w2 = kazan(s[3], s[4]), w3 = kazan(s[5], s[6]), w4 = kazan(w2, w3);
-    G.tur = { sinif: sn, tur: 0, rakip: [s[0], w1, w4], obur: [[[s[1], s[2], w1], [s[3], s[4], w2], [s[5], s[6], w3]], [[w2, w3, w4]], []], bitti: false };
+    // Tanınır rakipler (RKIM): çeyrek final Edremit ya da Gevaş (kendi arabaları), yarı final Erek (1), final Tuşba (0). Öbür eşleşmeler kurada.
+    const kar = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rs() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+    const ceyrek = rs() < 0.5 ? 2 : 3, o = kar([0, 1, 2, 3, 4, 5, 6].filter((x) => x > 1 && x !== ceyrek)), ikili = (a, b) => (rs() < 0.5 ? [a, b] : [b, a]);
+    const w1 = 1, w2 = 0, w3 = rs() < 0.5 ? o[2] : o[3], w4 = 0;
+    G.tur = { sinif: sn, tur: 0, rakip: [ceyrek, w1, w4], obur: [[[...ikili(1, o[0]), w1], [...ikili(0, o[1]), w2], [o[2], o[3], w3]], [[...ikili(w2, w3), w4]], []], bitti: false };
     store.set('turnuva', G.tur);
   }
   function turnuvaSonuc(r) {      // sonuç ekranı: tur atlanır ya da turnuva biter; ödül kasaya girer
     const U = G.tur, k = U.tur, rakipAd = TURNUVA.ad(U.rakip[k]), kazandi = r.place === 1;
     let odul = 0, baslik, not;
     if (kazandi && k === 2) { odul = TURNUVA.odul[3]; baslik = T('trn.sampiyon'); U.bitti = true; }
-    else if (kazandi) { baslik = T('trn.cikti.' + (k + 1)); not = T('trn.siradaki', TURNUVA.ad(U.rakip[k + 1])); U.tur = k + 1; }
+    else if (kazandi) { const sr = U.rakip[k + 1], km = RKIM.ad[sr]; baslik = T('trn.cikti.' + (k + 1)); not = T('trn.siradaki', TURNUVA.ad(sr)) + (km ? '. ' + T('rk.ip.' + km + '.1', TURNUVA.ad(sr)) + ', ' + T('rk.ip.' + km + '.2') : ''); U.tur = k + 1; }
     else { odul = TURNUVA.odul[k]; baslik = T('trn.elendin'); not = T('trn.elendinNot', rakipAd); U.bitti = true; }
     if (odul) addMoney(odul);
     store.set('turnuva', U);
@@ -16436,6 +16468,8 @@ function cokKur(o) {
     cars.forEach((c, k) => {
       c.can = 1; c.kazaT = 0; c.kazaSay = 0; c.koruma = 0; c.sonTemas = -9; c.lane0 = c.lane || 0; c.cirVur = 0; c.cirBekle = 2 + k; c.nitroT = 0; c.nitroBekle = 5 + k * 1.5; c.tbAktif = false; c.bitkinT = 0; c.gucKat = c.hizKat = 1; c.sonHasar = 9;
       c.hirs = tur ? 0.5 + 0.25 * tur.tur : [0.55, 0.75, 0.9, 1][k % 4];
+      if (c.kimlik) c.hirs = Math.max(c.hirs, c.kimlik === 'gecFren' ? 1 : 0.9);      // tanınır rakipler en hırslı iki rakip
+      c.hamle = 0; c.hamleTip = null; c.hamleSay = 0; c.virajT = 0;
     });
     yhNitroDiz(r.R);
   }
@@ -16471,7 +16505,10 @@ function cokKur(o) {
       c.cirVur = 0.8 + 0.7 * h; c.cirBekle = c.cirVur + 2.5 + 3.5 * (1 - h) + Math.random() * 1.5;
       const v = clamp(1 - Math.hypot(P.x - c.x, P.z - c.z) / 60, 0, 1) * 0.13; beep(415, 0.28, v, 'square'); beep(523, 0.28, v * 0.85, 'square');
     }
+    if (c.hamle > 0) c.hamle -= dt;
+    const dal = c.kimlik === 'gecFren' && !mesgul && c.cirVur <= 0 ? rkDal(c, R, ds, hiz) : null;
     if (c.cirVur > 0) { c.cirVur -= dt; hedef = pl + Math.sign(pl - c.lane || 1) * 0.9; oran = 6.5; }
+    else if (dal !== null) { hedef = dal; oran = 4.5; }      // Tuşba: viraja içten dalar
     else if (!mesgul && ds < -3 && ds > -30) { hedef = pl; oran = 3.6 + 1.6 * h; }      // oyuncu arkada ve yakın: önünü keser
     hedef = clamp(hedef, -YH.serit, YH.serit);
     if (r.ev.sehir) {      // şehir yarışı: caddenin genişliği ve trafik önce gelir
@@ -16481,9 +16518,70 @@ function cokKur(o) {
     c.lane += clamp(hedef - c.lane, -oran * dt, oran * dt);
     let band = ds > 0 ? 1 + Math.min(0.12, ds / 260) * (0.6 + 0.4 * h) : Math.max(0.93, 1 + ds / 1500);      // geride: yetişir; önde: pek beklemez
     c.nitroBekle -= dt;
-    if (c.nitroT <= 0 && c.nitroBekle <= 0 && ds > 10 && hiz > 7 && !mesgul) { c.nitroT = 1.4 + 0.6 * h; c.nitroBekle = 9 - 3 * h + Math.random() * 3; }
-    if (c.nitroT > 0) { c.nitroT -= dt; band *= 1.1; c.tbAktif = true; } else c.tbAktif = false;
+    if (c.kimlik === 'nitro') {      // Erek: nitroyu saklar, virajdan çıkarken oyuncu öndeyse uzun basar
+      const kv = rotaEgrilik(R), at = (q) => (R.loop ? q % R.n : Math.min(R.n - 1, q));
+      if (Math.abs(kv[at(c.ri)]) > RKIM.viraj) c.virajT = RKIM.cikis; else c.virajT -= dt;
+      if (c.nitroT <= 0 && c.nitroBekle <= 0 && c.virajT > 0 && c.virajT < RKIM.cikis - 0.25 && Math.abs(kv[at(c.ri + 4)]) < RKIM.viraj * 0.5 && ds > 2 && ds < 70 && hiz > 7 && !mesgul) {
+        c.nitroT = RKIM.nitroSure; c.nitroBekle = RKIM.nitroBekle; c.hamle = RKIM.nitroSure; c.hamleTip = 'nitro'; c.hamleSay++; c.virajT = 0;
+      }
+    } else if (c.nitroT <= 0 && c.nitroBekle <= 0 && ds > 10 && hiz > 7 && !mesgul) { c.nitroT = 1.4 + 0.6 * h; c.nitroBekle = 9 - 3 * h + Math.random() * 3; }
+    if (c.nitroT > 0) { c.nitroT -= dt; band *= c.kimlik === 'nitro' ? RKIM.nitroKat : 1.1; c.tbAktif = true; } else c.tbAktif = false;
     return band;
+  }
+  // ---- Tanınır rakipler (25 Kas 2026; CODEX-INCELEME öneri 7, kurucu: "Tanınır rakipler"). İki rakibin adı, arabası ve huyu her yarışta aynı:
+  //   Tuşba (mavi dört kapılı, rakip adı 0): virajlara geç frenler (src/arac.js rotaGecFren) ve oyuncu yakınken (önde 40 m, arkada 35 m) virajdan önce iç tarafa
+//   dalar: arkadaysa içten geçmeye, öndeyse kapıyı kapatmaya.
+  //   Erek (sarı V8, rakip adı 1): nitroyu öbür rakipler gibi geride kalınca değil, viraj çıkışında ve oyuncu öndeyse basar; daha uzun ve güçlü.
+  // İkisi yarışın en güçlü iki rakibidir (startEvent'te güç sırası ters). Kale turnuvasında yarı final rakibi Erek, final rakibi Tuşba (turnuvaKur).
+  // Yarışta rakiplerin üstünde ad etiketi (rkEtiketAdim): hamle sırasında etikette "geç fren" ya da "nitro" yazar.
+  const RKIM = { ad: { 0: 'gecFren', 1: 'nitro' }, viraj: 1 / 70, bakA: 4, bakB: 13, dalOn: 40, dalArka: -35, dalYan: 2.2, cikis: 1.2, nitroSure: 2.6, nitroBekle: 8, nitroKat: 1.15, etkMesafe: 40, etkTanin: 90, etkG: 96, etkY: 22 };
+  function rkDal(c, R, ds, hiz) {      // önde viraj varsa ve oyuncu yakınsa iç şeridin yan kayması; yoksa null
+    if (hiz < 10 || ds < RKIM.dalArka || ds > RKIM.dalOn) return null;
+    const kv = rotaEgrilik(R), at = (q) => (R.loop ? ((q % R.n) + R.n) % R.n : clamp(q, 0, R.n - 1));
+    for (let q = c.ri + RKIM.bakA; q <= c.ri + RKIM.bakB; q++) {
+      if (Math.abs(kv[at(q)]) < RKIM.viraj) continue;
+      const i = at(q), a = at(q - 3), b = at(q + 3), ex = R.x[b] - R.x[a], ez = R.z[b] - R.z[a], L = Math.hypot(ex, ez) || 1;
+      const mx = (R.x[a] + R.x[b]) / 2 - R.x[i], mz = (R.z[a] + R.z[b]) / 2 - R.z[i];      // virajın merkezine doğru (kirişin ortası)
+      const ic = Math.sign(mx * ez / L - mz * ex / L) || 1;      // şerit ekseni: aiInput ile aynı (sağ +)
+      if (c.hamleTip !== 'gecFren' || c.hamle <= 0) { c.hamleSay++; c.hamleTip = 'gecFren'; }
+      c.hamle = 1.2;
+      const sinir = c.yolSinir || YH.serit;
+      return clamp(ic * RKIM.dalYan, -sinir, sinir);
+    }
+    return null;
+  }
+  const RKE = { kok: null, el: [], v: null, liste: [] };
+  function rkEtiketAdim() {      // rakip ad etiketleri: yalnız yarışta, kayak dışında, kameranın önünde; öbür rakipler RKIM.etkMesafe, tanınır iki rakip RKIM.etkTanin
+    if (!RKE.kok) { RKE.kok = $('rk-etk'); RKE.v = new THREE.Vector3(); }      // içinde. Hamledeki ve tanınır rakip önce, sonra yakından uzağa dizilir; öncekinin üstüne binen etiket gösterilmez.
+    const r = G.race, acik = !!r && (G.state === 'race' || G.state === 'count') && !r.ev.ozel;
+    RKE.kok.hidden = !acik; if (!acik) return;
+    const W = canvas.clientWidth, H = canvas.clientHeight, v = RKE.v, L = RKE.liste; L.length = 0;
+    for (const c of cars) {
+      if (c.isPlayer || !c.mesh || !c.mesh.visible) continue;
+      const d = Math.hypot(c.x - camera.position.x, c.z - camera.position.z), en = c.kimlik ? RKIM.etkTanin : RKIM.etkMesafe;
+      if (d > en) continue;
+      v.set(c.x, c.y + (c.ucTeker ? 2.4 : 2.1), c.z).project(camera);
+      if (v.z > 1 || Math.abs(v.x) > 1.1 || Math.abs(v.y) > 1.1) continue;
+      L.push({ c, d, en, x: Math.round((v.x * 0.5 + 0.5) * W), y: Math.round((0.5 - v.y * 0.5) * H), o: d - (c.hamle > 0 ? 100 : 0) - (c.kimlik ? 25 : 0) });
+    }
+    L.sort((a, b) => a.o - b.o);      // önce hamledeki, sonra tanınır rakip, sonra yakın olan
+    let n = 0;
+    for (let k = 0; k < L.length; k++) {
+      const { c, d, en, x, y } = L[k];
+      let ust = false; for (let j = 0; j < k; j++) if (L[j].gor && Math.abs(L[j].x - x) < RKIM.etkG && Math.abs(L[j].y - y) < RKIM.etkY) { ust = true; break; }
+      if (ust) continue;
+      L[k].gor = true;
+      let el = RKE.el[n];
+      if (!el) { el = RKE.el[n] = document.createElement('div'); el.className = 'rk'; el.innerHTML = '<i></i><b></b><span></span>'; RKE.kok.appendChild(el); }
+      el.hidden = false; n++;
+      el.style.transform = 'translate(' + x + 'px,' + y + 'px) translate(-50%,-100%)';
+      el.style.opacity = String(clamp(1.4 - d / en, 0.3, 1));
+      el.firstChild.style.background = c.renk || '#888';
+      el.children[1].textContent = c.name;
+      const h = c.hamle > 0 && c.hamleTip ? T('rk.' + c.hamleTip) : '';
+      el.children[2].textContent = h; el.classList.toggle('hamle', !!h); el.classList.toggle('nitro', h && c.hamleTip === 'nitro');
+    }
+    for (let k = n; k < RKE.el.length; k++) RKE.el[k].hidden = true;
   }
   function yhBitkin(c, r) {      // oyuncunun canı bitti: araç durmaz; nitro boşalır, bir süre zayıf çeker
     c.can = 0; c.bitkinT = YH.bitkin; c.tbAktif = false; c.sonHasar = 0;
@@ -17015,6 +17113,7 @@ function cokKur(o) {
     const kayakta = ev.ozel === 'kayak', field = kayakta ? kayakcilar().slice(0, ev.ai) : tur ? [rivals[tur.rakip[tur.tur] % 4]] : rivals.slice(0, ev.sehir ? ev.ai : Math.min(ev.ai, 4));
     if (ev.sehir) { G.race.rakip = field; sehirRakipYukle(); trafikHedef(); }      // trafik yarışta da akar (yoğunluk SEHIR.yogunluk)
     if (tur) field[0].adOzel = TURNUVA.ad(tur.rakip[tur.tur]);
+    field.forEach((c) => { const ix = kayakta ? -1 : tur ? tur.rakip[tur.tur] : rivals.indexOf(c); c.kimlik = RKIM.ad[ix] || null; c.gecFren = c.kimlik === 'gecFren'; });      // tanınır rakipler (RKIM)
     if (!kayakta) field.forEach((c, i) => rakipArac(c, i, sn));
     cars = field.concat([player]);
     cars.forEach((c, k) => {
@@ -17026,7 +17125,7 @@ function cokKur(o) {
       if (kayakta && c.isPlayer) { c.lane = 0; c.vHedef = 23; }      // yalnız otomatik sürüşte (sınama) kullanılır
       c.ri = 0; c.lap = 0; c.prog = 0; c.finished = false; c.finishTime = 0; c.bitisSira = 0; advance(c, R);
       c.mesh.visible = true;
-      if (!c.isPlayer && !kayakta) { const gm = sn === 'car' ? galeriModel() : null, B = gm ? { power: SINIF.car.power * (1 + (gm.guc - 1) * 0.7), vmax: SINIF.car.vmax * (1 + (gm.hiz - 1) * 0.7), taban: SINIF.car.taban, vKat: 1 } : SINIF[sn]; const kk = ev.sehir ? (k * 3) / Math.max(1, field.length - 1) : k;      // şehir yarışında beş rakip aynı güç aralığına yayılır
+      if (!c.isPlayer && !kayakta) { const gm = sn === 'car' ? galeriModel() : null, B = gm ? { power: SINIF.car.power * (1 + (gm.guc - 1) * 0.7), vmax: SINIF.car.vmax * (1 + (gm.hiz - 1) * 0.7), taban: SINIF.car.taban, vKat: 1 } : SINIF[sn]; const kr = field.length - 1 - k, kk = ev.sehir ? (kr * 3) / Math.max(1, field.length - 1) : kr;      // şehir yarışında beş rakip aynı güç aralığına yayılır; en güçlüsü Tuşba, sonra Erek (RKIM)
         c.skill = 0.9 + kk * 0.03 + (gm ? (gm.hiz - 1) * 0.5 : 0); c.power = B.power * (B.taban + kk * 0.02); c.vmax = B.vmax * (B.taban + kk * 0.018); c.vKat = B.vKat; c.lane = k % 2 ? -1.6 : 1.6;
         if (ev.tanitim) { c.power *= TAN.guc; c.vmax *= TAN.hiz; }      // ilk yarış: nitroyu kullanan yeni oyuncu yetişip geçebilsin
         if (tur) { const f = TURNUVA.hiz[tur.tur]; c.skill = f + (gm ? (gm.hiz - 1) * 0.5 : 0); c.power = B.power * B.taban * (1 - (1 - f) * 0.3); c.vmax = B.vmax * B.taban * f; } }
@@ -17037,6 +17136,7 @@ function cokKur(o) {
     setSki(ev.ozel === 'kayak');
     if (ev.ozel === 'kayak') flashLater = [T('kayak.ipucu.1'), T('kayak.ipucu.2')];
     if (ev.sehir && TRF.hedef > 0) flashLater = [T('sehir.ipucu.1'), T('sehir.ipucu.2')];
+    if (tur && field[0].kimlik) flashLater = [T('rk.ip.' + field[0].kimlik + '.1', field[0].name), T('rk.ip.' + field[0].kimlik + '.2')];      // turnuvada tanınır rakibin huyu
     for (const m of evMarkers) m.mesh.visible = false;
     for (const c of cats) { c.mesh.visible = false; c.beam.visible = false; }
     G.state = 'count'; G.near = null;
@@ -19667,6 +19767,7 @@ function cokKur(o) {
     if (G.state === 'cook') MUTFAK.tick(dt);
     updateDust(dt, driving); kivAdim(dt); izlAdim(dt);
     if (driving) { updateHud(dt); drawMini(); }
+    rkEtiketAdim();
     if (driving || G.state === 'result') updateAudio(driving);
     // mutfak açıkken dünya çizilmez: 3B mutfak kendi sahnesini çizer, salon ekranı ve 2B mutfak tuvali zaten örter
     if (G.state !== 'cook') {
@@ -19700,7 +19801,7 @@ function cokKur(o) {
     G, EVENTS, STORY, S, startStory, nextLine, loadRegion, get bolge() { return REGION.id; }, get tur() { return TUR; }, get detay() { return G.detay; }, get cim() { return CIM ? { yaprak: CIM.yaprak, ortu: CIM.ortu } : null; }, get zemin() { return terrTex; }, get player() { return player; }, get cars() { return cars; }, startEvent, startFree, tick,
     sim(sec) { const n = Math.round(sec / STEP); for (let i = 0; i < n; i++) { if (G.state === 'free' || G.state === 'race' || G.state === 'count') tick(STEP); } },
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
-    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, HH, KIV, kivilcim, IZL, LIZ, VTR, finishRace, showResult, startTanitim, TAN, startStory, get kamFov() { return camera.fov; }, YH, YD, ydYukle, ydBariyerYer, PRK, PARKUR, parkurYer, YOLR, RTUR, yolRampaYer, YT, ytKarar, ytYolBul, okAdim, galeri: { liste: GALERI, get durum() { return GAL; }, sec: galeriSec, tak: galeriTak, ciz: galeriCiz }, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
+    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, HH, KIV, kivilcim, IZL, LIZ, VTR, finishRace, showResult, startTanitim, TAN, startStory, get kamFov() { return camera.fov; }, YH, YD, ydYukle, ydBariyerYer, PRK, PARKUR, parkurYer, YOLR, RTUR, yolRampaYer, RKIM, RKE, rkDal, rkEtiketAdim, rakipHirs, rotaEgrilik, YT, ytKarar, ytYolBul, okAdim, galeri: { liste: GALERI, get durum() { return GAL; }, sec: galeriSec, tak: galeriTak, ciz: galeriCiz }, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     cok: COK,      // birlikte sürüş: .durum, .kur(), .katil(kod), .ayril(), .sunucuAyarla(adres)
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
     kediler: () => cats.map((c) => ({ canli: !!c.kedi, gorunur: c.mesh.visible, got: c.got })),
