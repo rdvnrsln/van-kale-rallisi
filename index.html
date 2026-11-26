@@ -19683,7 +19683,23 @@ function cokKur(o) {
   // Takılma sayacı (25 Kas 2026; Codex öneri 10: "200 ms üstü ön plan karelerini sayın"). 200 ms ve üstü kareler ölçek ve kalite kararlarından yine çıkar
   // (perfKayit, fps), ama sekme görünürken, görünür olmasının ilk 0,5 sn'si ve yükleme ekranı dışında oyuncunun hissettiği takılma sayılır:
   // PERF.takilma { n, enUzun ms, son: son 20 takılma [ms, durum, bölge, sn] }. Ölçüm turu raporu ve --kesit ölçümü bunu okur.
-  document.addEventListener('visibilitychange', () => { PERF.gorunurT = performance.now(); });
+  // Sekme gizlenince ya da sayfa kapanırken ses durur, dönünce kaldığı yerden sürer (26 Kas 2026; kurucu: "OYUNU DA AÇIK BIRAKMA", "hiçbir yerde
+  // göremiyorum motor sesi geliyo"). Gizli sekmede kareler durur ama ses bağlamı çalmaya devam ediyordu: motor son devrinde ötüyordu; Safari kapatılan
+  // sekmenin sürecini hemen öldürmediği için ses sekme kapandıktan sonra da sürdü. Ses bağlamı askıya alınır; çalan konuşma satırı ve sayfadaki video/ses
+  // öğeleri duraklatılır, yalnız bizim duraklattıklarımız yeniden başlatılır.
+  const SESG = { dur: [] };
+  function sesGorunur(gizli) {
+    try {
+      if (A.ctx && A.ctx.state !== 'closed') { if (gizli) A.ctx.suspend(); else if (A.ctx.state !== 'running') A.ctx.resume(); }
+      if (gizli) {
+        const ms = Array.from(document.querySelectorAll('video, audio')); if (lineAudio) ms.push(lineAudio);
+        for (const m of ms) if (!m.paused && !m.ended && SESG.dur.indexOf(m) < 0) { m.pause(); SESG.dur.push(m); }
+      } else for (const m of SESG.dur.splice(0)) { if (m !== lineAudio && !m.isConnected) continue; const pr = m.play(); if (pr && pr.catch) pr.catch(() => {}); }
+    } catch (e) { /* ses yoksa yok say */ }
+  }
+  document.addEventListener('visibilitychange', () => { PERF.gorunurT = performance.now(); sesGorunur(document.hidden); });
+  addEventListener('pagehide', () => sesGorunur(true));
+  addEventListener('pageshow', () => { if (!document.hidden) sesGorunur(false); });
   function takilmaSay(ms, now) {
     if (ms < 200 || document.hidden || now - PERF.gorunurT < 500 || G.state === 'load' || now - ms < PERF.yukBitis) return;      // yükleme ekranı kapanırken başlayan kare yüklemedir
     const t = PERF.takilma; t.n++; t.enUzun = Math.max(t.enUzun, Math.round(ms));
@@ -20078,7 +20094,7 @@ function cokKur(o) {
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
     groundH,
     ETK, etkGrupSec, hedef, hedefYazi, ALEV, CANV, canVur, izlAdim, updateHud, poseCar, VIRAJ, ISIT, TISIK, RDEV, rakipDevrikAdim, STORY, get hikaye() { return S; }, isitEksik() { const d = havuzDokular(dokular(scene, new Set())); dokular(UZAK.sahne, d); const e = []; for (const t of d) { if (!t.image || t.isRenderTargetTexture) continue; if (renderer.properties.get(t).__version !== t.version) e.push([t.name || String(t.image.src || t.image.currentSrc || '').split('/').pop() || t.uuid.slice(0, 6), t.image.width, t.image.height]); } return e; }, trafikSec(v) { AYAR.trafik = !!v; applySettings(false); },
-    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, HH, KIV, kivilcim, IZL, LIZ, VTR, finishRace, showResult, startTanitim, TAN, startStory, get kamFov() { return camera.fov; }, get kamYer() { const c = player, dx = camera.position.x - c.x, dz = camera.position.z - c.z; return { geri: -(dx * Math.sin(c.h) + dz * Math.cos(c.h)), yan: dx * Math.cos(c.h) - dz * Math.sin(c.h), yuk: camera.position.y - c.y, yerden: camera.position.y - groundH(camera.position.x, camera.position.z) }; }, YH, YD, ydYukle, ydBariyerYer, PRK, PARKUR, parkurYer, KTUR, YOLR, RTUR, yolRampaYer, RKIM, RKE, rkDal, rkEtiketAdim, rakipHirs, rotaEgrilik, YT, ytKarar, ytYolBul, okAdim, galeri: { liste: GALERI, get durum() { return GAL; }, sec: galeriSec, tak: galeriTak, ciz: galeriCiz }, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
+    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, HH, KIV, kivilcim, IZL, LIZ, VTR, finishRace, showResult, startTanitim, TAN, startStory, get kamFov() { return camera.fov; }, initAudio, sesGorunur, get sesDurum() { return A.ctx ? A.ctx.state : 'yok'; }, get kamYer() { const c = player, dx = camera.position.x - c.x, dz = camera.position.z - c.z; return { geri: -(dx * Math.sin(c.h) + dz * Math.cos(c.h)), yan: dx * Math.cos(c.h) - dz * Math.sin(c.h), yuk: camera.position.y - c.y, yerden: camera.position.y - groundH(camera.position.x, camera.position.z) }; }, YH, YD, ydYukle, ydBariyerYer, PRK, PARKUR, parkurYer, KTUR, YOLR, RTUR, yolRampaYer, RKIM, RKE, rkDal, rkEtiketAdim, rakipHirs, rotaEgrilik, YT, ytKarar, ytYolBul, okAdim, galeri: { liste: GALERI, get durum() { return GAL; }, sec: galeriSec, tak: galeriTak, ciz: galeriCiz }, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     cok: COK,      // birlikte sürüş: .durum, .kur(), .katil(kod), .ayril(), .sunucuAyarla(adres)
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
     kediler: () => cats.map((c) => ({ canli: !!c.kedi, gorunur: c.mesh.visible, got: c.got })),
