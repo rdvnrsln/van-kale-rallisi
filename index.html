@@ -15309,8 +15309,8 @@ function cokKur(o) {
   function makeCps(ev, R = ev.R, laps = ev.laps) {
     const cps = [], per = Math.max(2, Math.round(R.L / (ev.solo || ev.ozel === 'kayak' ? 115 : 230)));      // kayakta her kapı bir kontrol noktası
     for (let lap = 0; lap < laps; lap++) for (let k = 1; k <= per; k++) {
-      const p = routePoint(R, k === per && !R.loop ? R.L - 0.05 : (k * R.L) / per);
-      cps.push({ x: p.x, z: p.z, dx: p.dx, dz: p.dz, final: lap === laps - 1 && k === per });
+      const d = k === per && !R.loop ? R.L - 0.05 : (k * R.L) / per, p = routePoint(R, d);
+      cps.push({ x: p.x, z: p.z, dx: p.dx, dz: p.dz, final: lap === laps - 1 && k === per, s: lap * R.L + d });      // s: yarışın başından rota boyunca uzaklık
     }
     return cps;
   }
@@ -17352,6 +17352,22 @@ function cokKur(o) {
     updateBeacons();
     if (ev.ozel !== 'kayak') girisBasla(R, Math.min(30, R.L * 0.3));      // kayakta asfalt yok: çekim yok
   }
+  // Oyuncunun rota ilerlemesi. advance() yalnız ilerideki 14 noktaya (56 m) bakar; oyuncu virajı kesip ya da arazi kestirmesinden rotaya daha ileride dönerse
+  // izleme geride takılı kalır. İzlenen noktadan 35 m uzaklaşınca ilerideki 400 m içinde, oyuncunun 30 m yakınındaki en yakın rota noktasına bağlanır
+  // (daha büyük kestirme sayılmaz; geri gidince ilerleme atlamaz: yalnız ileri bakar).
+  function oyuncuIlerle(R) {
+    if (advance(player, R) < 35) return;
+    let en = -1, ed = 30 * 30;
+    for (let k = 15; k <= 100; k++) {
+      let i = player.ri + k;
+      if (R.loop) i %= R.n; else if (i >= R.n) break;
+      const d = (R.x[i] - player.x) ** 2 + (R.z[i] - player.z) ** 2;
+      if (d < ed) { ed = d; en = i; }
+    }
+    if (en < 0) return;
+    if (R.loop && en < player.ri) player.lap++;
+    player.ri = en; player.prog = player.lap * R.L + R.s[en];
+  }
   function updateBeacons() {
     const r = G.race, a = r.cps[r.cpi], b = r.cps[r.cpi + 1];
     beacon1.visible = !!a; beacon2.visible = !!b;
@@ -17367,8 +17383,8 @@ function cokKur(o) {
       player.ri = clamp(player.ri, 0, R.n - 1);
       // rota üzerinde, son geçilen kontrol noktasına en yakın yerde
       const cp = r.cps[r.cpi - 1];
-      if (cp) { let bi = 0, bd = 1e18; for (let i = 0; i < R.n; i++) { const d = (R.x[i] - cp.x) ** 2 + (R.z[i] - cp.z) ** 2; if (d < bd) { bd = d; bi = i; } } player.ri = bi; }
-      else player.ri = 1;
+      if (cp) { let bi = 0, bd = 1e18; for (let i = 0; i < R.n; i++) { const d = (R.x[i] - cp.x) ** 2 + (R.z[i] - cp.z) ** 2; if (d < bd) { bd = d; bi = i; } } player.ri = bi; if (R.loop) player.lap = Math.max(0, Math.round((cp.s - R.s[bi]) / R.L)); }      // tur sayısı noktayla tutarlı kalır (ilerleme = tur × uzunluk + yer)
+      else { player.ri = 1; player.lap = 0; }
       resetToRoute(player, R, 0);
     } else placeCar(player, player.safe.x, player.safe.z, player.safe.h);
     camSnap = true;
@@ -18580,7 +18596,7 @@ function cokKur(o) {
     player.yuklu = !!(player.ucTeker && (aktifYuk() || SACIK.parca.length));
     const step = player.binek && EK.binek ? EK.binek.adim : player.ski ? kayakAdim : stepCar;
     if (r && r.done) { step(player, idle, dt); }
-    else { step(player, yolcuMesgul() || player.kazaT > 0 ? idle : pin, dt); if (r && !G.auto) advance(player, r.R); }      // yolcular binerken araç bekler
+    else { step(player, yolcuMesgul() || player.kazaT > 0 ? idle : pin, dt); if (r && !G.auto) oyuncuIlerle(r.R); }      // yolcular binerken araç bekler
     if (player.devrikYeni) { player.devrikYeni = false; devrildi(); }
     if (!player.binek) ucTepki(STEP);
     lizAdim();      // asfaltta lastik izi
@@ -18618,9 +18634,17 @@ function cokKur(o) {
             if (cp.final) finishRace();
             else { if (ic) { beep(1040, 0.12, 0.22, 'triangle'); beep(1560, 0.2, 0.2, 'triangle', 0.08); } updateBeacons(); }
           }
-        } else if (cp && ((player.x - cp.x) ** 2 + (player.z - cp.z) ** 2 < 17 * 17 || (r.ev.parkur && (player.x - cp.x) * cp.dx + (player.z - cp.z) * cp.dz >= 0 && Math.abs((player.x - cp.x) * cp.dz - (player.z - cp.z) * cp.dx) < 30))) {      // parkurda uçarken noktanın üstünden aşılır: çizgiyi geçmek yeter
+        } else for (let g = 0; g < 4 && !r.done; g++) {
+          // Kontrol noktası oyuncunun rota ilerlemesiyle sayılır (26 Kas 2026; kurucu: "yarış bitiyor arabalar bitiş çizgisinde ama hala oyun bitmiyor?").
+          // Eskiden yalnız noktaya 17 m yaklaşınca sayılıyordu: geniş caddede öbür şeritten geçen oyuncu bir noktayı kaçırınca sayaç orada kalıyor, turu
+          // tamamlayıp çizgiye gelse de yarış bitmiyordu (görüntüde Nokta 5/24, sıradaki nokta 1038 m geride). Rakipler zaten ilerlemeyle bitiriyordu
+          // (c.prog >= r.total); oyuncu da aynı ölçüyle. Yakınlık kuralı da geçerli kalır. Bir adımda en çok 4 nokta (kestirmeden dönünce art arda sayılır).
+          const q = r.cps[r.cpi];
+          if (!q) break;
+          const yakin = (player.x - q.x) ** 2 + (player.z - q.z) ** 2 < 17 * 17 || (r.ev.parkur && (player.x - q.x) * q.dx + (player.z - q.z) * q.dz >= 0 && Math.abs((player.x - q.x) * q.dz - (player.z - q.z) * q.dx) < 30);      // parkurda uçarken noktanın üstünden aşılır: çizgiyi geçmek yeter
+          if (!yakin && !(player.prog >= q.s - (q.final && !r.R.loop ? 8 : 0))) break;      // açık rotada rakipler de sondan bir önceki noktada bitirir (c.ri >= n - 2)
           r.cpi++;
-          if (cp.final) finishRace();
+          if (q.final) finishRace();
           else { beep(1040, 0.12, 0.22, 'triangle'); beep(1560, 0.2, 0.2, 'triangle', 0.08); updateBeacons(); }
         }
         if (G.auto && player.stuck > 2.5) resetToRoute(player, r.R, 0);
@@ -18852,7 +18876,7 @@ function cokKur(o) {
     motor: { d: 5.2, h: 2.6, la: 0.9, lu: 11, alt: 1.0 }, trike: { d: 4.6, h: 2.4, la: 0.9, lu: 10, alt: 1.0 },
     servis: { d: 7.0, h: 3.1, la: 1.1, lu: 13, alt: 1.1 },
   };
-  let camEg = 0;
+  let camEg = 0, camD = 0, camYakin = false;      // camD: yakın kameranın yumuşatılmış uzaklığı
   // Yüz kamerası (21 Kas, kurucu: "sürerken modelin yüzünün göründüğü açı"): araç 2 sn durunca kendiliğinden, F ya da oyun kolunda LB basılıyken,
   // "Yüz" düğmesiyle açık kalır. Kamera sürücünün başına önden ¾ açıdan bakar; gaz verince (durma kaynaklıysa) arkaya döner.
   // _gp/_gl'yi yazar (konum, bakış); 0..1 geçiş oranını döndürür.
@@ -18883,7 +18907,7 @@ function cokKur(o) {
   function hhAdim(dt, surus) {
     const c = player, sp = Math.hypot(c.vx, c.vz), acik = surus && hhAcik(c) && !HH.kapali && !GIRIS;
     if (acik) {
-      const k = 0.025 * clamp((sp - 35) / 25, 0, 1) + HH.tb * 0.035;      // ince titreşim
+      const k = (0.025 * clamp((sp - 35) / 25, 0, 1) + HH.tb * 0.035) * (camYakin ? 0.4 : 1);      // ince titreşim; yakın kamerada aynı kayma ekranda 2 kat büyük görünür
       if (k > 0.001) { camera.position.x += (Math.random() - 0.5) * k; camera.position.y += (Math.random() - 0.5) * k; }
       if (c.air) HH.havaT += dt;
       else if (HH.havada) {      // iniş
@@ -19085,13 +19109,20 @@ function cokKur(o) {
       const t = wallRay(c.x, c.z, bx, bz);
       if (t < 1) { dist *= Math.max(0.28, t * 0.88); bx = c.x - Math.sin(camH) * dist; bz = c.z - Math.cos(camH) * dist; }
     }
+    camYakin = yakin;
+    if (yakin) {      // uzaklık yumuşar (duvar kısaltınca hemen, açılırken yavaş); konum bu uzaklıkla araca sabit bağlanır
+      camD = camSnap || dist < camD ? dist : lerp(camD, dist, Math.min(1, dt * 8)); dist = camD;
+      bx = c.x - Math.sin(camH) * dist; bz = c.z - Math.cos(camH) * dist;
+    }
     let by = c.y + m.h - Math.sin(nap) * dist * 0.85 - (yakin ? (hh ? 0.15 * smooth(15, 55, sp) : 0) + camEg * dist * 0.8 : hh ? 0.45 * smooth(15, 55, sp) : 0);      // nişan aşağıdayken kamera yukarıda, yukarıdayken aşağıda kalır; hızda alçalır
     const gh = groundH(bx, bz) + (m.alt || 1.3);
     if (by < gh) by = gh;
     camWant.set(bx, by, bz);
     const kh = hh ? 22 : 12;      // hız hissinde kamera araca sıkı bağlı (12/sn'de 50 m/sn'de 4 m geride kalıyor, araba küçülüyordu)
-    if (yakin) { const g = Math.max(0, 1 / kh - dt); camWant.x += c.vx * g; camWant.z += c.vz * g; }      // yumuşatma sabit hızda hız × (1/kh − dt) kadar geride bırakır (60 karede 48 m/sn'de 1,4 m); yakın kamerada uzaklık hızla açılmasın
-    if (camSnap) camPos.copy(camWant); else { camPos.x = lerp(camPos.x, camWant.x, Math.min(1, dt * kh)); camPos.z = lerp(camPos.z, camWant.z, Math.min(1, dt * kh)); camPos.y = lerp(camPos.y, camWant.y, Math.min(1, dt * 6)); }
+    // Yakın kamerada yatay konum yumuşatılmaz (26 Kas 2026; kurucu: "araba çok titriyor"). Fizik 1/120 sn'lik sabit adımla, yumuşatma kare süresiyle
+    // ilerliyordu: karede 0, 1 ya da 2 adım atılınca araba ile kamera arası kareden kareye oynuyordu (163 km/sa'te ortalama 5 cm, en çok 37 cm; 4,4 m'den
+    // bakınca araba ekranda titriyordu). Dönüş (camH), uzaklık (camD) ve yükseklik yumuşak kalır.
+    if (camSnap) camPos.copy(camWant); else if (yakin) { camPos.x = camWant.x; camPos.z = camWant.z; camPos.y = lerp(camPos.y, camWant.y, Math.min(1, dt * 6)); } else { camPos.x = lerp(camPos.x, camWant.x, Math.min(1, dt * kh)); camPos.z = lerp(camPos.z, camWant.z, Math.min(1, dt * kh)); camPos.y = lerp(camPos.y, camWant.y, Math.min(1, dt * 6)); }
     camSnap = false;
     camera.position.copy(camPos);
     { const lh = ucan ? camH : c.h, lu = yakin ? m.lu : c.binek ? 9 : 5; lookAt.set(c.x + Math.sin(lh) * lu, c.y + m.la + Math.sin(nap) * 9 + (yakin ? camEg * lu : 0), c.z + Math.cos(lh) * lu); }
@@ -20023,7 +20054,7 @@ function cokKur(o) {
     parkTick(dt);      // park halindeki hamal üç tekerleri: uzaktakiler gizlenir
     const f = updateCamera(dt);
     hhAdim(dt, driving);      // hız hissi: titreşim, iniş, nitro kenarı, hız çizgileri
-    if (G.sars > 0) { G.sars -= dt; const k = G.sars * 0.35; camera.position.x += (Math.random() - 0.5) * k; camera.position.y += (Math.random() - 0.5) * k; camera.position.z += (Math.random() - 0.5) * k; }
+    if (G.sars > 0) { G.sars -= dt; const k = G.sars * 0.35 * (camYakin ? 0.6 : 1); camera.position.x += (Math.random() - 0.5) * k; camera.position.y += (Math.random() - 0.5) * k; camera.position.z += (Math.random() - 0.5) * k; }
     vakitAdim(dt);
     parcaGorunur(dt, false);
     camera.getWorldDirection(_cd); TCAM.x = camera.position.x; TCAM.z = camera.position.z; TCAM.fx = _cd.x; TCAM.fz = _cd.z;
