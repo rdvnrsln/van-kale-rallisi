@@ -17353,16 +17353,24 @@ function cokKur(o) {
     if (ev.ozel !== 'kayak') girisBasla(R, Math.min(30, R.L * 0.3));      // kayakta asfalt yok: çekim yok
   }
   // Oyuncunun rota ilerlemesi. advance() yalnız ilerideki 14 noktaya (56 m) bakar; oyuncu virajı kesip ya da arazi kestirmesinden rotaya daha ileride dönerse
-  // izleme geride takılı kalır. İzlenen noktadan 35 m uzaklaşınca ilerideki 400 m içinde, oyuncunun 30 m yakınındaki en yakın rota noktasına bağlanır
-  // (daha büyük kestirme sayılmaz; geri gidince ilerleme atlamaz: yalnız ileri bakar).
+  // izleme geride takılı kalır. İzlenen noktadan 35 m uzaklaşınca oyuncu ilerideki rotaya bağlanır: rota yönünde gidiyorsa (3 m/sn üstü; yan yana geçen
+  // gidiş-dönüş kollarında karşı kola bağlanmasın; Kale Turu'nda 612. ve 1100. metreler 30 m arayla ters yönde geçer), 400 m içinde 30 m, 400–1200 m
+  // içinde (şehirde yanlış sokağa sapıp rotaya ileride dönmek) 25 m yakınındaki rota noktasına. Daha büyük kestirme sayılmaz; geri gidince ilerleme
+  // atlamaz (yalnız ileri bakar).
   function oyuncuIlerle(R) {
     if (advance(player, R) < 35) return;
+    const v = Math.hypot(player.vx, player.vz);
+    if (v < 3) return;
     let en = -1, ed = 30 * 30;
-    for (let k = 15; k <= 100; k++) {
+    for (let k = 15, K = Math.min(300, Math.floor(R.n * 0.45)); k <= K; k++) {
       let i = player.ri + k;
       if (R.loop) i %= R.n; else if (i >= R.n) break;
+      if (k > 100 && en >= 0) break;      // yakın pencerede aday varsa uzağa atlamaz
       const d = (R.x[i] - player.x) ** 2 + (R.z[i] - player.z) ** 2;
-      if (d < ed) { ed = d; en = i; }
+      if (d >= ed || (k > 100 && d > 25 * 25)) continue;
+      const j = R.loop ? (i + 1) % R.n : i + 1 < R.n ? i + 1 : i, q = j === i ? i - 1 : i, ex = R.x[j === i ? i : j] - R.x[q], ez = R.z[j === i ? i : j] - R.z[q];
+      if ((player.vx * ex + player.vz * ez) / (v * (Math.hypot(ex, ez) || 1)) < 0.5) continue;      // rota yönünde gitmiyor
+      ed = d; en = i;
     }
     if (en < 0) return;
     if (R.loop && en < player.ri) player.lap++;
