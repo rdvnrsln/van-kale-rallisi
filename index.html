@@ -11222,7 +11222,8 @@ function ortuKalite(ortu) {
 
 'use strict';
 // =====================================================================
-// AĞAÇ — Blender modelleri (tools/blender/agaclar.py → model/agac/agaclar.glb) ve kodla çizilen doku atlası (tools/agac-atlas.py → doku/agac.png).
+// AĞAÇ — Blender modelleri (tools/blender/agaclar.py → model/agac/agaclar.glb) ve doku atlası (doku/agac.png). 27 Kas 2026'dan beri atlas gerçek fotoğraflardan
+// (tools/agac-atlas-foto.py; Poly Haven tree_small_02 ve jacaranda yaprakları, dal kabuğu; CC0); kurucu: "ağaçlar çok yapay görünüyor". Eski çizim atlası tools/agac-atlas.py.
 // Ağaçların yeri, sayısı, boyu ve dönüşü buildTrees'te (src/dunya.js) eskisi gibi üretilir; burada yalnız görünüş kurulur.
 // Tip: kavak (cadde ve bahçe), geniş yapraklı (bahçe, meyvelik), çam (karlı bölgede ikisinin yerine).
 // İki ayrıntı düzeyi: uzak (…_1) hücre başına örnekli ağdır ve bütün ağaçları taşır; kameraya AGAC_U.uYakin metreden yakın ağacı gölgelendirici
@@ -11231,11 +11232,12 @@ function ortuKalite(ortu) {
 // Yapraklar rüzgârla salınır (tepeye doğru artan). Karlı bölgede çam dallarının üstü kar tutar. GLB gelmezse eski kart ağaçları çizilir.
 // =====================================================================
 let AGAC = null, _agSoz = null, AGAC_HAVUZ = null;
+const AGAC_ISIK = { alt: 0.5, ic: 0.68, cesit: 0.36, doygun: 0.88, ton: ['0.88', '0.92', '0.82'] };      // taç içi gölgesi ve renk (agacMalzeme)
 const AGAC_U = { uKam: { value: new THREE.Vector3() }, uZaman: { value: 0 }, uYakin: { value: 120 }, uVur: { value: new THREE.Vector4(0, 0, -100, 0) } };      // uVur: son çarpılan ağaç (x, z, zaman, güç)
 function agacYukle() {
   if (!_agSoz) _agSoz = new Promise((ok, red) => {
     if (!THREE.GLTFLoader) { red(new Error('GLB yükleyici yok')); return; }
-    const atlas = new Promise((o, r) => new THREE.TextureLoader().load('doku/agac.png', o, undefined, r));
+    const atlas = new Promise((o, r) => new THREE.TextureLoader().load('doku/agac.png?s=2026-11-27', o, undefined, r));
     new THREE.GLTFLoader().load('model/agac/agaclar.glb', (g) => {
       atlas.then((t) => {
         t.flipY = false; t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; t.needsUpdate = true;      // glTF uv düzeni: v = 0 görüntünün üstü
@@ -11269,6 +11271,20 @@ function agacMalzeme(uzak) {
   m.name = uzak ? 'agac' : 'agac-yakin';
   m.onBeforeCompile = (sh) => {
     agacYama(sh, uzak);
+    // Taç içi gölgesi ve kart başına renk (27 Kas 2026; kurucu: "ağaçlar çok yapay görünüyor"): taç her yerde aynı parlaklıktaydı ve tek tip yeşildi.
+    // Alt kartlar ve gövdeye yakın kartlar koyu (AGAC_ISIK.alt, .ic), her kart parlaklık ve tonda biraz farklı (.cesit), genel yeşil biraz soluk ve koyu (.ton).
+    sh.vertexShader = 'varying float vAgAO; varying vec3 vAgVar;\n' + sh.vertexShader.replace('#include <begin_vertex>', [
+      '#include <begin_vertex>',
+      'float agR = length(position.xz);',
+      'vAgAO = mix(' + AGAC_ISIK.alt.toFixed(2) + ', 1.0, smoothstep(-0.5, 9.0, position.y)) * mix(' + AGAC_ISIK.ic.toFixed(2) + ', 1.0, smoothstep(0.25, 2.4, agR));',
+      'vec3 agH = fract(sin(floor(position * 1.3) * vec3(12.9898, 78.233, 37.719)) * 43758.5453);',
+      'vAgVar = vec3(1.0 + (agH.x - 0.5) * ' + AGAC_ISIK.cesit.toFixed(2) + ') * vec3(1.0 + (agH.y - 0.5) * 0.12, 1.0, 1.0 + (agH.z - 0.5) * 0.14);',
+    ].join('\n'));
+    sh.fragmentShader = 'varying float vAgAO; varying vec3 vAgVar;\n' + sh.fragmentShader.replace('#include <map_fragment>', [
+      '#include <map_fragment>',
+      'float agL = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11));',
+      'diffuseColor.rgb = mix(vec3(agL), diffuseColor.rgb, ' + AGAC_ISIK.doygun.toFixed(2) + ') * vec3(' + AGAC_ISIK.ton.join(', ') + ') * vAgAO * vAgVar;',
+    ].join('\n'));
     // kartın arka yüzünde normal ters dönmez: taç tek bir hacim gibi ışık alır
     let f = sh.fragmentShader.replace('#include <normal_fragment_begin>', 'float faceDirection = 1.0;\nvec3 normal = normalize( vNormal );\nvec3 geometryNormal = normal;');
     if (KAR) f = f.replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n\tdiffuseColor.rgb = mix( diffuseColor.rgb, vec3( 0.86, 0.89, 0.93 ), smoothstep( 0.45, 0.85, inverseTransformDirection( normal, viewMatrix ).y ) * 0.6 );');      // dal üstünde kar
@@ -11302,6 +11318,11 @@ function agacHavuzKur(scene, liste) {
   }
   AGAC_HAVUZ = {
     ag,
+    enYakin(x, z) {      // sınama ve görüntü için: (x, z)'ye en yakın ağaç
+      let en = null, ed = 1e18; const i0 = Math.floor(x / HC), j0 = Math.floor(z / HC);
+      for (let i = i0 - 2; i <= i0 + 2; i++) for (let j = j0 - 2; j <= j0 + 2; j++) { const h = izgara.get(i + '_' + j); if (h) for (const a of h) { const d = (a.x - x) ** 2 + (a.z - z) ** 2; if (d < ed) { ed = d; en = a; } } }
+      return en ? { x: en.x, z: en.z, tip: en.tip, d: Math.sqrt(ed) } : null;
+    },
     guncelle(cx, cz) {
       const R = AGAC_U.uYakin.value + 22, n = {};
       for (const tip in ag) n[tip] = 0;
@@ -20384,7 +20405,7 @@ function cokKur(o) {
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
     groundH,
     ETK, etkGrupSec, hedef, hedefYazi, ALEV, CANV, canVur, izlAdim, updateHud, poseCar, VIRAJ, ISIT, TISIK, RDEV, rakipDevrikAdim, STORY, get hikaye() { return S; }, isitEksik() { const d = havuzDokular(dokular(scene, new Set())); dokular(UZAK.sahne, d); const e = []; for (const t of d) { if (!t.image || t.isRenderTargetTexture) continue; if (renderer.properties.get(t).__version !== t.version) e.push([t.name || String(t.image.src || t.image.currentSrc || '').split('/').pop() || t.uuid.slice(0, 6), t.image.width, t.image.height]); } return e; }, trafikSec(v) { AYAR.trafik = !!v; applySettings(false); },
-    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, HH, KIV, kivilcim, IZL, LIZ, VTR, finishRace, showResult, startTanitim, TAN, startStory, get kamFov() { return camera.fov; }, get kapiYari() { return YD.kapiBit && YD.kapiBit.g.visible ? YD.kapiBit.yari : gate1.userData.yari; }, kapiTara(id, d0, d1) { const R = EVENTS.find((e) => e.id === id).R, o = []; for (let d = d0; d <= d1; d += 2) { const q = routePoint(R, d), p = { x: q.x, z: q.z, dx: q.dx, dz: q.dz }, rd = roadAt(p.x, p.z), nx = p.dz, nz = -p.dx; o.push([d, rd && rd.on ? +rd.hw.toFixed(1) : null, +kapiYari(p).toFixed(1), +wallDist(p.x + nx * 4, p.z + nz * 4).toFixed(1), +wallDist(p.x - nx * 4, p.z - nz * 4).toFixed(1), +(binaUst(p.x + nx * 4, p.z + nz * 4) - groundH(p.x + nx * 4, p.z + nz * 4)).toFixed(1), +(binaUst(p.x - nx * 4, p.z - nz * 4) - groundH(p.x - nx * 4, p.z - nz * 4)).toFixed(1)]); } return o; }, VAKIT, vakitUygula, get vakitGu() { return vakitG; }, get renderer() { return renderer; }, get kapi() { return YD.kapiBas ? { bas: YD.kapiBas.g.visible, bit: YD.kapiBit.g.visible, basYari: YD.kapiBas.yari, bitYari: YD.kapiBit.yari, ekran: YD.kapiBas.anahtar, eskiIsik: !!(YD.isik && YD.isik.visible), eskiKapi: gate1.visible || gate2.visible } : null; }, wallDist, wallRay, binaUst, kaleKisa, kirikKati: () => KIRIK.oge.filter((o) => o.tip !== 1 && !o.kapali && o.durum === 0).map((o) => [o.x, o.z, o.r || 0]), initAudio, sesGorunur, get sesDurum() { return A.ctx ? A.ctx.state : 'yok'; }, get kamYer() { const c = player, dx = camera.position.x - c.x, dz = camera.position.z - c.z; return { geri: -(dx * Math.sin(c.h) + dz * Math.cos(c.h)), yan: dx * Math.cos(c.h) - dz * Math.sin(c.h), yuk: camera.position.y - c.y, yerden: camera.position.y - groundH(camera.position.x, camera.position.z) }; }, YH, YD, ydYukle, ydBariyerYer, PRK, PARKUR, parkurYer, KTUR, YOLR, RTUR, yolRampaYer, RKIM, RKE, rkDal, rkEtiketAdim, rakipHirs, rotaEgrilik, YT, ytKarar, ytYolBul, okAdim, galeri: { liste: GALERI, get durum() { return GAL; }, sec: galeriSec, tak: galeriTak, ciz: galeriCiz }, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
+    wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, HH, KIV, kivilcim, IZL, LIZ, VTR, finishRace, showResult, startTanitim, TAN, startStory, get kamFov() { return camera.fov; }, agacYakin: (x, z) => (AGAC_HAVUZ ? AGAC_HAVUZ.enYakin(x, z) : null), get kapiYari() { return YD.kapiBit && YD.kapiBit.g.visible ? YD.kapiBit.yari : gate1.userData.yari; }, kapiTara(id, d0, d1) { const R = EVENTS.find((e) => e.id === id).R, o = []; for (let d = d0; d <= d1; d += 2) { const q = routePoint(R, d), p = { x: q.x, z: q.z, dx: q.dx, dz: q.dz }, rd = roadAt(p.x, p.z), nx = p.dz, nz = -p.dx; o.push([d, rd && rd.on ? +rd.hw.toFixed(1) : null, +kapiYari(p).toFixed(1), +wallDist(p.x + nx * 4, p.z + nz * 4).toFixed(1), +wallDist(p.x - nx * 4, p.z - nz * 4).toFixed(1), +(binaUst(p.x + nx * 4, p.z + nz * 4) - groundH(p.x + nx * 4, p.z + nz * 4)).toFixed(1), +(binaUst(p.x - nx * 4, p.z - nz * 4) - groundH(p.x - nx * 4, p.z - nz * 4)).toFixed(1)]); } return o; }, VAKIT, vakitUygula, get vakitGu() { return vakitG; }, get renderer() { return renderer; }, get kapi() { return YD.kapiBas ? { bas: YD.kapiBas.g.visible, bit: YD.kapiBit.g.visible, basYari: YD.kapiBas.yari, bitYari: YD.kapiBit.yari, ekran: YD.kapiBas.anahtar, eskiIsik: !!(YD.isik && YD.isik.visible), eskiKapi: gate1.visible || gate2.visible } : null; }, wallDist, wallRay, binaUst, kaleKisa, kirikKati: () => KIRIK.oge.filter((o) => o.tip !== 1 && !o.kapali && o.durum === 0).map((o) => [o.x, o.z, o.r || 0]), initAudio, sesGorunur, get sesDurum() { return A.ctx ? A.ctx.state : 'yok'; }, get kamYer() { const c = player, dx = camera.position.x - c.x, dz = camera.position.z - c.z; return { geri: -(dx * Math.sin(c.h) + dz * Math.cos(c.h)), yan: dx * Math.cos(c.h) - dz * Math.sin(c.h), yuk: camera.position.y - c.y, yerden: camera.position.y - groundH(camera.position.x, camera.position.z) }; }, YH, YD, ydYukle, ydBariyerYer, PRK, PARKUR, parkurYer, KTUR, YOLR, RTUR, yolRampaYer, RKIM, RKE, rkDal, rkEtiketAdim, rakipHirs, rotaEgrilik, YT, ytKarar, ytYolBul, okAdim, galeri: { liste: GALERI, get durum() { return GAL; }, sec: galeriSec, tak: galeriTak, ciz: galeriCiz }, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     cok: COK,      // birlikte sürüş: .durum, .kur(), .katil(kod), .ayril(), .sunucuAyarla(adres)
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
     kediler: () => cats.map((c) => ({ canli: !!c.kedi, gorunur: c.mesh.visible, got: c.got })),
