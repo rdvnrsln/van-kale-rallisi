@@ -16690,9 +16690,13 @@ function cokKur(o) {
   // ---- Kale Tırmanış Turnuvası. Sekiz yarışmacı (oyuncu + TA('trn.adlar') içindeki yedi rakip), üç tur. Eşleşmeler turnuva başlarken kurulur; oyuncunun
   // karşılaşmadığı eşleşmelerin kazananı o anda belirlenir (tohumlu rastgele). Oyuncu turu kazanırsa sıradaki tura geçer, kaybederse elenir.
   // odul: çeyrek finalde elenen 0, yarı finalde elenen 200, finalde kaybeden 600, şampiyon 2.000 ₺ (yalnız elenince ya da şampiyon olunca ödenir).
-  // hiz: rakibin tura göre hız katsayısı (beceri ve en yüksek hız; güç bunun üçte biri kadar düşer: üç teker 0,84 güçle dik kayada kalıyordu, ölçüldü). Durum G.tur, kaydı 'turnuva' anahtarında:
+  // hiz: rakibin tura göre hız katsayısı (beceri ve en yüksek hız; güç bunun üçte biri kadar düşer: üç teker 0,84 güçle dik kayada kalıyordu, ölçüldü).
+  // 26 Kas 2026 (kurucu: "turnuva hızlarını da yeni rotaya göre ayarla"): kale döngüsünde (araba 4,1 km, üç teker 1,9 km) tek liste sınıflara uymuyordu
+  // (otomatik sürüş, nitrosuz; çeyrek finalde araba +12 sn, pedallı +114 sn önde). Artık sınıf başına; hedef: çeyrekte rakip ~%6 yavaş, yarı finalde ~%2,
+  // finalde ~%2,5 hızlı (nitroyu iyi kullanan geçer). Ölçüm (artı: oyuncu önde): araba +6..+14 / +2..+6 / −5 sn (tur 169 sn); motorlu +1..+8 (0,88) /
+  // +1..+6 / −7 (1,04) sn (210 sn); pedallı +31 / +13 / −10 sn (493 sn). Lastik bant (rakipHirs band ≥ 0,93) finalde farkı sınırlar. Durum G.tur, kaydı 'turnuva' anahtarında:
   // { sinif, tur (0-2), rakip: [üç turdaki rakibin sırası], obur: [tur başına öbür eşleşmeler: [a, b, kazanan]], bitti }.
-  const TURNUVA = { odul: [0, 200, 600, 2000], hiz: [0.84, 0.93, 1.0], ad: (i) => TA('trn.adlar')[i] };
+  const TURNUVA = { odul: [0, 200, 600, 2000], hiz: { car: [0.84, 0.93, 0.95], motor: [0.86, 0.97, 1.03], trike: [0.955, 0.985, 1.04] }, ad: (i) => TA('trn.adlar')[i] };
   function turnuvaKur(sn) {
     let t = (Date.now() % 2147483647) || 1; const rs = () => (t = (t * 48271) % 2147483647) / 2147483647;
     // Tanınır rakipler (RKIM): çeyrek final Edremit ya da Gevaş (kendi arabaları), yarı final Erek (1), final Tuşba (0). Öbür eşleşmeler kurada.
@@ -17460,7 +17464,7 @@ function cokKur(o) {
       if (!c.isPlayer && !kayakta) { const gm = sn === 'car' ? galeriModel() : null, B = gm ? { power: SINIF.car.power * (1 + (gm.guc - 1) * 0.7), vmax: SINIF.car.vmax * (1 + (gm.hiz - 1) * 0.7), taban: SINIF.car.taban, vKat: 1 } : SINIF[sn]; const kr = field.length - 1 - k, kk = ev.sehir ? (kr * 3) / Math.max(1, field.length - 1) : kr;      // şehir yarışında beş rakip aynı güç aralığına yayılır; en güçlüsü Tuşba, sonra Erek (RKIM)
         c.skill = 0.9 + kk * 0.03 + (gm ? (gm.hiz - 1) * 0.5 : 0); c.power = B.power * (B.taban + kk * 0.02); c.vmax = B.vmax * (B.taban + kk * 0.018); c.vKat = B.vKat; c.lane = k % 2 ? -1.6 : 1.6;
         if (ev.tanitim) { c.power *= TAN.guc; c.vmax *= TAN.hiz; }      // ilk yarış: nitroyu kullanan yeni oyuncu yetişip geçebilsin
-        if (tur) { const f = TURNUVA.hiz[tur.tur]; c.skill = f + (gm ? (gm.hiz - 1) * 0.5 : 0); c.power = B.power * B.taban * (1 - (1 - f) * 0.3); c.vmax = B.vmax * B.taban * f; } }
+        if (tur) { const f = (TURNUVA.hiz[sn] || TURNUVA.hiz.car)[tur.tur]; c.skill = f + (gm ? (gm.hiz - 1) * 0.5 : 0); c.power = B.power * B.taban * (1 - (1 - f) * 0.3); c.vmax = B.vmax * B.taban * f; } }
     });
     if (!ev.ozel) { yhBasla(G.race, tur); ydBasla(G.race); }
     putGate(gate1, R, 0);
