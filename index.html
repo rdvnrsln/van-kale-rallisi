@@ -17450,6 +17450,9 @@ function cokKur(o) {
   }
   if (MOBIL) $('kalite-ultra').hidden = true;      // telefonda 4096 gölge haritası belleği zorlar
   AYAR.ses = clamp(+AYAR.ses || 0, 0, 100); AYAR.kamera = clamp(AYAR.kamera | 0, 0, 2); AYAR.kontras = clamp(AYAR.kontras | 0, 0, 2);
+  // Yakın kamera (CAM_YAKIN) gelince kayıtlı seçim bir kez birinci kameraya döner (26 Kas 2026; kurucu canlıda eski kadrajı gördü: tarayıcıda uzak kamera
+  // kayıtlıydı, yeni kadraj yalnız birinci kamerada). Sonra "Kamera" ile yapılan seçim yine saklanır.
+  if (AYAR.kamS !== 1) { AYAR.kamera = 0; AYAR.kamS = 1; store.set('ayar', AYAR); }
   G.cam = AYAR.kamera;
   // Dil: sayfadaki sabit metinler data-i18n ile, dinamik metinler T() ile gelir. Farsça sağdan sola yazılır.
   function applyLang(l, save) {
@@ -18957,12 +18960,13 @@ function cokKur(o) {
     if (var_ || KIV.kirli) { KIV.pts.geometry.attributes.position.needsUpdate = true; KIV.pts.geometry.attributes.aLife.needsUpdate = true; }
     KIV.kirli = var_;
   }
-  // ---- Araç efektleri (25 Kas 2026; kurucu: "Arabalar ve efektler"). Işık izi: hızda (≥ IZL.hiz) ve nitroda arka lambalardan kırmızı ışık şeridi uzanır
-  // (son IZL.sure sn'nin yolu, kameraya dönük, ucu incelip söner; lamba yeri makeCarYaris isikArka). Lastik izi: asfaltta kayarken (slip ≥ LIZ.kayma) arka tekerler
+  // ---- Araç efektleri (25 Kas 2026; kurucu: "Arabalar ve efektler"). Işık izi: arka lambalardan kırmızı ışık şeridi uzanır (kameraya dönük, ucu incelip
+  // söner; lamba yeri makeCarYaris isikArka). Yalnız nitroda ve kayarken çıkar (26 Kas 2026; kurucu: "neden iz bırakıyor saçma sapan normal giderken bile?"):
+  // eskiden 86 km/sa üstünde her zaman ve her virajda çıkıyordu. Boyu sınırlı (IZL.uz m, kayarken IZL.vUz): yakın kamerada iz kameranın altına uzanmaz. Lastik izi: asfaltta kayarken (slip ≥ LIZ.kayma) arka tekerler
   // yola koyu iz bırakır; halka biçiminde LIZ.n parça, en eskisi yenisine yer açar. İkisi de yalnız Blender/hazır modelli arabalarda (kod çizimi araçta lamba yeri yok).
-  // Viraj izi (25 Kas 2026; Codex öneri 8: "kısa ışık izini viraj çıkışında okunur kılın"): IZL.vHiz üstünde araç dönerken (hız yönünün dönüşü ≥ IZL.donus rad/sn)
-  // iz uzar (en çok IZL.vSure sn), kalınlaşır ve parlar; kavis ekranda yay olarak kalır, çıkışta IZL.vSon sn'de söner. Düz yolda eski kısa iz.
-  const IZL = { n: 30, sure: 0.2, hiz: 24, gen: 0.075, vHiz: 15, donus: 0.15, vSure: 0.55, vGen: 0.7, vSon: 1.6, ar: new Map(), mat: null };
+  // Kayma izi (25 Kas 2026 viraj izi, Codex öneri 8; 26 Kas'tan beri dönüşle değil kaymayla): IZL.vHiz üstünde araç kayarken (slip ≥ IZL.kayma, lastik iziyle
+  // aynı eşik) iz uzar, kalınlaşır ve parlar; kayma bitince IZL.vSon sn'de söner.
+  const IZL = { n: 30, sure: 0.2, gen: 0.075, vHiz: 15, kayma: 5.5, vSure: 0.55, vGen: 0.7, vSon: 0.5, uz: 2.6, vUz: 4.5, ar: new Map(), mat: null };
   function izlMat() {
     if (IZL.mat) return IZL.mat;
     return (IZL.mat = new THREE.ShaderMaterial({
@@ -18976,7 +18980,7 @@ function cokKur(o) {
     for (let l = 0; l < 2; l++) for (let k = 0; k < n - 1; k++) { const a = (l * n + k) * 2; ix.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
     geo.setIndex(ix); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('aA', new THREE.BufferAttribute(aA, 1));
     const mesh = new THREE.Mesh(geo, izlMat()); mesh.frustumCulled = false; mesh.renderOrder = 3; scene.add(mesh);
-    return { mesh, pos, aA, iz: [[], []], g: 0, v: 0, yon: null, s: 0 };      // s: izin kendi saati (kare dt'siyle ilerler)
+    return { mesh, pos, aA, iz: [[], []], g: 0, v: 0, s: 0 };      // s: izin kendi saati (kare dt'siyle ilerler)
   }
   const _iv = new THREE.Vector3(), _it = new THREE.Vector3(), _is = new THREE.Vector3(), _ic = new THREE.Vector3();
   function izlAdim(dt) {
@@ -18986,15 +18990,13 @@ function cokKur(o) {
       const lam = c.mesh && c.mesh.visible && c.mesh.userData.isikArka;
       if (!lam) continue;
       let t = IZL.ar.get(c.mesh); if (!t) { t = izlYeni(); IZL.ar.set(c.mesh, t); }
-      const sp = Math.hypot(c.vx, c.vz), yon = Math.atan2(c.vx, c.vz);
-      let dn = t.yon === null || dt <= 0 ? 0 : yon - t.yon; dn = Math.abs(Math.atan2(Math.sin(dn), Math.cos(dn))) / Math.max(dt, 1e-3); t.yon = yon;
-      if (dn > 4) dn = 0;      // yola dönme, ışınlama: yön sıçraması viraj sayılmaz
+      const sp = Math.hypot(c.vx, c.vz);
       t.s += dt; const sim = t.s;
-      const vh = sp > IZL.vHiz && !c.air ? clamp((dn - IZL.donus) / 0.35, 0, 1) : 0;      // virajda dönüş hızı (tam güç 0,5 rad/sn)
+      const vh = sp > IZL.vHiz && !c.air && c.slip >= IZL.kayma ? clamp(0.4 + (c.slip - IZL.kayma) / 3, 0, 1) : 0;      // kayma gücü (tam güç eşiğin 1,8 m/sn üstünde)
       t.v = vh > t.v ? lerp(t.v, vh, Math.min(1, dt * 8)) : Math.max(vh, t.v - dt / IZL.vSon);
-      const hedef = Math.max(clamp((sp - IZL.hiz) / 14, 0, 1) * 0.85 + (c.tbAktif ? 0.35 : 0), t.v * 0.95);
-      t.g = lerp(t.g, Math.min(1, hedef), Math.min(1, dt * 5));
-      const sure = IZL.sure + (IZL.vSure - IZL.sure) * t.v, gen = IZL.gen * (1 + IZL.vGen * t.v);
+      const hedef = Math.max(c.tbAktif ? 1 : 0, t.v * 0.95);      // düz ve kaymasız sürüşte iz yok
+      t.g = lerp(t.g, hedef, Math.min(1, dt * 5));
+      const sure = Math.min(IZL.sure + (IZL.vSure - IZL.sure) * t.v, (IZL.uz + (IZL.vUz - IZL.uz) * t.v) / Math.max(sp, 1)), gen = IZL.gen * (1 + IZL.vGen * t.v);      // boy sınırı: süre hıza bölünür
       for (let l = 0; l < 2; l++) {
         const iz = t.iz[l]; c.mesh.localToWorld(_iv.set(lam[l][0], lam[l][1], lam[l][2]));
         if (iz.length && (iz[0].x - _iv.x) ** 2 + (iz[0].z - _iv.z) ** 2 > 225) { iz.length = 0; t.g = 0; t.v = 0; }      // yola dönme, ışınlama: eski iz yeni yere bağlanmaz
@@ -19006,7 +19008,7 @@ function cokKur(o) {
       for (let l = 0; l < 2; l++) {
         const iz = t.iz[l], m = iz.length;
         for (let k = 0; k < IZL.n; k++) {
-          const p = iz[Math.min(k, m - 1)], a = iz[Math.max(0, Math.min(k, m - 1) - 1)], b = iz[Math.min(m - 1, k + 1)], f = k / (IZL.n - 1), o = ((l * IZL.n + k) * 2) * 3;
+          const p = iz[Math.min(k, m - 1)], a = iz[Math.max(0, Math.min(k, m - 1) - 1)], b = iz[Math.min(m - 1, k + 1)], f = m > 1 ? Math.min(1, k / (m - 1)) : 1, o = ((l * IZL.n + k) * 2) * 3;      // f: izdeki yeri (kısa izde nokta az; uç yine incelip söner)
           _it.set(a.x - b.x, a.y - b.y, a.z - b.z); _ic.set(camera.position.x - p.x, camera.position.y - p.y, camera.position.z - p.z);
           _is.crossVectors(_it, _ic); const L = _is.length() || 1, w = gen * (1 - f * 0.75) / L;
           t.pos[o] = p.x + _is.x * w; t.pos[o + 1] = p.y + _is.y * w; t.pos[o + 2] = p.z + _is.z * w;
