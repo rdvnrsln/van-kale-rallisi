@@ -12556,6 +12556,18 @@ function makeCarYaris(src, renkHex, sec) {
 }
 
 // ------------------------------------------------------------ rota
+// Döngü rotada başlangıç çizgisi için en düz yer (26 Kas 2026; kurucu: "başlar başlamaz u dönüşü yapmak gerekiyor. böyle saçma güzergah mı olur?").
+// Eski Van Rallisi çizgiden 15 m sonra 60° kırılıyordu; ızgaradaki arabalar kırığın iki yanında çapraz duruyordu. Başlangıcın 32 m gerisi ile 160 m ilerisi
+// arasında yön 20°'den az sapıyorsa başlangıç yerinde kalır (0 döner); değilse sapmanın en küçük olduğu rota noktasının sırası döner.
+function duzBaslangic(R) {
+  const n = R.n, yon = (i) => { const a = ((i % n) + n) % n, b = (a + 1) % n; return Math.atan2(R.x[b] - R.x[a], R.z[b] - R.z[a]); };
+  const sapma = (i) => { let en = 0; const h = yon(i + 2); for (let q = -8; q <= 40; q++) en = Math.max(en, Math.abs(wrapAngle(yon(i + q) - h))); return en; };
+  let bi = 0, bs = sapma(0);
+  if (bs < 0.35) return 0;
+  for (let i = 2; i < n; i += 2) { const sp = sapma(i); if (sp < bs - 1e-3) { bs = sp; bi = i; } }
+  return bi;
+}
+function rotaKaydir(R, k) { const pts = []; for (let q = 0; q <= R.n; q++) { const i = (k + q) % R.n; pts.push({ x: R.x[i], z: R.z[i] }); } return pts; }      // k. noktadan başlayan kapalı çizgi (prepRoute girdisi)
 function prepRoute(pts0, loop) {
   const pts = resample(pts0, 4);
   if (loop) pts.pop();
@@ -12646,6 +12658,7 @@ function aiInput(c, R, band, dt) {
   if (Math.abs(diff) > 0.55) vt = Math.min(vt, 11 * vk);
   if (off > 14) vt = Math.min(vt, 16);
   if (c.vSinir > 0) vt = Math.min(vt, c.vSinir);      // şehir yarışı: önü trafikle kapalıysa (oyun.js trafikKacin)
+  if (c.onSinir > 0) vt = Math.min(vt, c.onSinir);      // önünde araç var, henüz yana açılamadı (oyun.js rakipHirs)
   if (sp < vt - 0.5) { _inp.thr = 1; _inp.brk = 0; }
   else if (sp > vt + 1.5) { _inp.thr = 0; _inp.brk = clamp((sp - vt) / 5, 0.2, 1); }
   else { _inp.thr = 0.35; _inp.brk = 0; }
@@ -12658,14 +12671,28 @@ function resetToRoute(c, R, back) {
   placeCar(c, p.x, p.z, Math.atan2(p.dx, p.dz));
 }
 
+// Araç–araç çarpışması (26 Kas 2026; kurucu: "bazen de arabalar içime giriyor, fizik 0"). Eskiden her araç tek daireydi (merkezler arası en az 2,6 m);
+// arabalar 5,2 m uzun olduğu için arka arkaya gelince burun kuyruğa 2,6 m giriyordu. Artık her araç boyuna dizili üç daire (kapsül): araba 5,2 × 2,1 m,
+// motorlu üç teker 3,2 × 1,6 m, pedallı 2,8 × 1,5 m. En derin giren daire çifti ayrılır; itme ve hasar eskisi gibi.
+const CARP = { car: { r: 1.05, o: 1.55 }, motor: { r: 0.8, o: 0.78 }, trike: { r: 0.76, o: 0.66 }, servis: { r: 1.15, o: 1.6 } };
+const carpOlcu = (c) => CARP[c.arac] || (c.ucTeker ? CARP.motor : CARP.car);
 function collideCars(cars) {
   for (let a = 0; a < cars.length; a++) for (let b = a + 1; b < cars.length; b++) {
-    const A = cars[a], B = cars[b];
-    const dx = B.x - A.x, dz = B.z - A.z, d2 = dx * dx + dz * dz;
-    const cap = A.ucTeker && B.ucTeker ? 1.7 : A.ucTeker || B.ucTeker ? 2.15 : 2.6;      // üç teker arabadan kısa ve dar
-    if (d2 > cap * cap + 0.04 || d2 < 1e-6 || Math.abs(A.y - B.y) > 2.5) continue;
-    const d = Math.sqrt(d2), nx = dx / d, nz = dz / d, pen = Math.max(0, cap - d) / 2;
-    A.x -= nx * pen; A.z -= nz * pen; B.x += nx * pen; B.z += nz * pen;
+    const A = cars[a], B = cars[b], ca = carpOlcu(A), cb = carpOlcu(B), R = ca.r + cb.r, lim = R + ca.o + cb.o;
+    const cx = B.x - A.x, cz = B.z - A.z;
+    if (cx * cx + cz * cz > lim * lim || Math.abs(A.y - B.y) > 2.5) continue;
+    const afx = Math.sin(A.h), afz = Math.cos(A.h), bfx = Math.sin(B.h), bfz = Math.cos(B.h);
+    let pen = 0, nx = 0, nz = 0;
+    for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) {
+      const dx = cx + bfx * cb.o * j - afx * ca.o * i, dz = cz + bfz * cb.o * j - afz * ca.o * i, d2 = dx * dx + dz * dz;
+      if (d2 >= R * R) continue;
+      const d = Math.sqrt(d2);
+      if (R - d <= pen) continue;
+      pen = R - d;
+      if (d > 1e-4) { nx = dx / d; nz = dz / d; } else { const cd = Math.hypot(cx, cz); if (cd > 1e-4) { nx = cx / cd; nz = cz / cd; } else { nx = afz; nz = -afx; } }      // üst üste: merkezden merkeze, o da yoksa yana
+    }
+    if (pen <= 0) continue;
+    A.x -= nx * pen * 0.5; A.z -= nz * pen * 0.5; B.x += nx * pen * 0.5; B.z += nz * pen * 0.5;
     const rv = (B.vx - A.vx) * nx + (B.vz - A.vz) * nz;
     if (rv < 0) {
       const j = -rv * 0.65;
@@ -16095,6 +16122,7 @@ function cokKur(o) {
         if (ev.bolge !== id) continue;
         const src = D.routes.find((r) => r.id === (ev.rota || ev.id));
         ev.R = prepRoute(ev.ozel === 'kayak' ? skiCourse() : ev.parkur ? skiCourse(PARKUR.genlik, PARKUR.aralik) : src ? pairs(src.p) : ridgePath(), ev.loop); ev.len = ev.R.L;
+        if (ev.R.loop && !ev.ozel) { const k = duzBaslangic(ev.R); if (k > 0) { ev.R = prepRoute(rotaKaydir(ev.R, k), true); ev.len = ev.R.L; } }      // döngü yarış düz yerden başlar (Eski Van)
         if (ev.parkur) for (let i = 0; i < ev.R.n; i++) ev.R.v[i] = Math.min(PARKUR.hiz, ev.R.v[i] * 1.6);      // ezilmiş pist: rakip derin kardaki kadar yavaşlamaz
       }
       castle = Rg.castle ? buildCastle(world, routeNear) : null;
@@ -16632,7 +16660,7 @@ function cokKur(o) {
   function yhBasla(r, tur) {      // yarış başında: can dolu, rakiplerin huyu, nitro noktaları
     r.puan = 0; r.say = { kayma: 0, hava: 0, golge: 0, devir: 0, nitro: 0, kaza: 0, kil: 0 }; SEHIR.kilT = 0;
     cars.forEach((c, k) => {
-      c.can = 1; c.kazaT = 0; c.kazaSay = 0; c.koruma = 0; c.devrikSay = 0; c.devrikBekle = 0; c.atakT = 0; c.devrikKat = 1; c.sonTemas = -9; c.lane0 = c.lane || 0; c.cirVur = 0; c.cirBekle = 2 + k; c.nitroT = 0; c.nitroBekle = 5 + k * 1.5; c.tbAktif = false; c.bitkinT = 0; c.gucKat = c.hizKat = 1; c.sonHasar = 9;
+      c.can = 1; c.kazaT = 0; c.kazaSay = 0; c.koruma = 0; c.devrikSay = 0; c.devrikBekle = 0; c.atakT = 0; c.devrikKat = 1; c.sonTemas = -9; c.lane0 = c.isPlayer ? c.lane || 0 : Math.sign(c.lane || 1) * (Math.abs(c.lane || 1.6) + [0, 0.3, -0.3][Math.floor(k / 2) % 3]); c.gecKim = null; c.gecYan = 0; c.onSinir = 0; c.cirVur = 0;      /* rakiplerin şeridi sıraya göre biraz farklı: aynı çizgiye dizilmezler */ c.cirBekle = 2 + k; c.nitroT = 0; c.nitroBekle = 5 + k * 1.5; c.tbAktif = false; c.bitkinT = 0; c.gucKat = c.hizKat = 1; c.sonHasar = 9;
       c.hirs = tur ? 0.5 + 0.25 * tur.tur : [0.55, 0.75, 0.9, 1][k % 4];
       if (c.kimlik) c.hirs = Math.max(c.hirs, c.kimlik === 'gecFren' ? 1 : 0.9);      // tanınır rakipler en hırslı iki rakip
       c.hamle = 0; c.hamleTip = null; c.hamleSay = 0; c.virajT = 0;
@@ -16702,7 +16730,30 @@ function cokKur(o) {
     const dal = c.kimlik === 'gecFren' && !mesgul && c.cirVur <= 0 ? rkDal(c, R, ds, hiz) : null;
     if (c.cirVur > 0) { c.cirVur -= dt; hedef = pl + Math.sign(pl - c.lane || 1) * 0.9; oran = 6.5; }
     else if (dal !== null) { hedef = dal; oran = 4.5; }      // Tuşba: viraja içten dalar
-    else if (!mesgul && ds < -3 && ds > -30) { hedef = pl; oran = 3.6 + 1.6 * h; }      // oyuncu arkada ve yakın: önünü keser
+    else if (!mesgul && ds < -3 && ds > -30 && !cars.some((o) => o !== c && !o.isPlayer && o.prog > P.prog && o.prog < c.prog)) { hedef = pl; oran = 3.6 + 1.6 * h; }      // oyuncu arkada ve yakın: önünü keser; yalnız oyuncunun hemen önündeki rakip (hepsi birden kesince tek sıra diziliyorlardı)
+    // Öndeki araç (26 Kas 2026; kurucu: "arabalar bazen ip gibi arka arkaya diziliyor bariz bug var", "arabalar içime giriyor"). Rakip önündeki arabayı
+    // (rakip ya da oyuncu) görmüyordu: aynı çizgide üstüne sürüyor, çarpışma itince ardına diziliyordu. Artık aynı hizada 16 m içinde araç varsa
+    // yanından geçecek kadar yana açılır (yer olan yana); açılana kadar hızını öndekine uydurur.
+    c.onSinir = 0;
+    if (c.cirVur <= 0) {
+      const lc = ((c.x - R.x[i]) * ez - (c.z - R.z[i]) * ex) / L;
+      let on = null, oi = 16, oy = 0;
+      for (const o of cars) {
+        if (o === c) continue;
+        const dx = o.x - c.x, dz = o.z - c.z, il = (dx * ex + dz * ez) / L;
+        if (il < 1.5 || il >= oi) continue;
+        const lo = ((o.x - R.x[i]) * ez - (o.z - R.z[i]) * ex) / L;
+        if (Math.abs(lo - lc) > 2.4) continue;
+        on = o; oi = il; oy = lo;
+      }
+      if (on && hiz > Math.hypot(on.vx, on.vz) - 1.5) {
+        const sinir = c.yolSinir || YH.serit;
+        if (c.gecKim !== on) { c.gecKim = on; c.gecYan = lc > oy + 0.3 ? 1 : lc < oy - 0.3 ? -1 : oy > 0 ? -1 : 1; if (Math.abs(oy + c.gecYan * 2.6) > sinir) c.gecYan = -c.gecYan; }      // geçiş yanı bir kez seçilir
+        const gh = oy + c.gecYan * 2.6;
+        if (Math.abs(gh) <= sinir + 0.2) { hedef = gh; oran = Math.max(oran, 4.5); }
+        if (Math.abs(lc - oy) < 2 && oi < 9) c.onSinir = Math.max(3, Math.hypot(on.vx, on.vz) - (9 - oi) * 0.6);      // henüz yana açılmadı: tampona girmez
+      } else if (!on) c.gecKim = null;
+    }
     hedef = clamp(hedef, -YH.serit, YH.serit);
     if (r.ev.sehir) {      // şehir yarışı: caddenin genişliği ve trafik önce gelir
       c.trfT = (c.trfT || 0) - dt; if (c.trfT <= 0) { c.trfT = 0.05; trafikKacin(c, R, hedef); }
