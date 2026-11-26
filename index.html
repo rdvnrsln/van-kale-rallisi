@@ -527,7 +527,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
           <button id="btn-serbest" class="ikincil" type="button" data-i18n="menu.serbest">Serbest sürüş</button>
           <button id="btn-yarislar" class="ikincil" type="button" data-i18n="menu.yarislar">Yarışlar</button>
         </div>
-        <div class="m-ikili">
+        <div class="m-ikili" hidden><!-- 27 Kas 2026: İşler ve Kahvaltı salonu menüde gizli; oyunun içinde (haritadaki işaretler, hikâye) açılır -->
           <button id="btn-isler" class="ikincil" type="button" data-i18n="menu.isler">İşler</button>
           <button id="btn-kahvalti" class="ikincil" type="button" data-i18n="menu.salon">Kahvaltı salonu</button>
         </div>
@@ -543,7 +543,7 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
         <div class="seg" role="group" aria-labelledby="lbl-bolge">
           <button type="button" id="bolge-van" data-bolge="van" aria-pressed="true" data-i18n="bolge.van">Van Kalesi</button>
           <button type="button" id="bolge-abali" data-bolge="abali" aria-pressed="false" data-i18n="bolge.abali">Abalı</button>
-          <button type="button" id="bolge-kampus" data-bolge="kampus" aria-pressed="false" data-i18n="bolge.kampus">Kampüs</button>
+          <button type="button" id="bolge-kampus" data-bolge="kampus" aria-pressed="false" data-i18n="bolge.kampus" hidden>Kampüs</button>
         </div>
       </div>
       <div class="bolge-sec">
@@ -589,9 +589,9 @@ tr.ben td { color: var(--kehribar); font-weight: 600; }
       <button id="btn-sur" class="birincil" type="button" data-i18n="menu.sur">Sür</button>
     </section>
     <section class="m-panel m-sayfa" data-panel="yaris" hidden>
-      <div class="m-baslik"><button type="button" class="m-yuvarlak" data-panel-git="ana" data-i18n-aria="ayar.geri" aria-label="Geri"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2 data-i18n="menu.etkinlikler">Etkinlikler</h2></div>
+      <div class="m-baslik"><button type="button" class="m-yuvarlak" data-panel-git="ana" data-i18n-aria="ayar.geri" aria-label="Geri"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2 data-i18n="menu.yarislar">Yarışlar</h2></div>
       <div class="kasa kasa-yan" aria-live="polite"></div>
-      <div class="seg etk-grup" role="group" data-i18n-aria="menu.etkinlikler" aria-label="Etkinlikler">
+      <div class="seg etk-grup" role="group" data-i18n-aria="menu.etkinlikler" aria-label="Etkinlikler" hidden>
         <button type="button" data-etk-grup="yaris" data-i18n="menu.yarislar">Yarışlar</button>
         <button type="button" data-etk-grup="is" data-i18n="menu.isler">İşler</button>
       </div>
@@ -6498,7 +6498,7 @@ const DIL = {
     'mutfak.malzeme': ['Tereyağı', 'Un', 'Yumurta', 'Bal', 'Kaymak', 'Ceviz', 'Otlu peynir', 'Domates', 'Salatalık', 'Kavut unu', 'Çay', 'Şeker', 'Zeytin', 'Ekmek'],
     'mutfak.yemek': ['Murtuğa', 'Kavut', 'Otlu peynir tabağı', 'Bal kaymak', 'Çay'],
     // kahvaltı salonu (src/mutfak.js)
-    'mt.baslik': 'Halil Usta’nın Kahvaltı Salonu', 'mt.kasa': 'Kasa {0} ₺', 'mt.cik': 'Salondan çık', 'mt.yeni': 'Yeni', 'mt.vardiya': 'Vardiya {0}', 'mt.misafir': '{0} misafir', 'mt.misafirSay': 'Misafir {0}/{1}',
+    'mt.baslik': 'Selim Usta’nın Kahvaltı Salonu', 'mt.kasa': 'Kasa {0} ₺', 'mt.cik': 'Salondan çık', 'mt.yeni': 'Yeni', 'mt.vardiya': 'Vardiya {0}', 'mt.misafir': '{0} misafir', 'mt.misafirSay': 'Misafir {0}/{1}',
     'mt.basla': 'Vardiyaya başla', 'mt.yukleniyor': 'Salon hazırlanıyor…', 'mt.erzakGerek': 'Kiler boş. Önce erzak getir.', 'mt.kiler': 'Kiler', 'mt.kilerDurum': '{0} vardiyalık erzak var. Her vardiya bir erzak harcar.',
     'mt.erzakGit': 'Çarşıdan erzak getir', 'mt.erzakGitAlt': 'Sürüş görevi: {0} ile en çok {1} vardiyalık erzak taşırsın. Sarsarsan yumurtalar kırılır, kilere daha az girer.', 'mt.kurye': 'Kuryeyle getirt: 2 erzak · {0} ₺',
     'mt.gelistir': 'Salonu geliştir', 'mt.tam': 'Tamam', 'mt.tabela': 'KAHVALTI SALONU', 'mt.kilitli': 'Vardiya {0} ile açılır', 'mt.kombo': 'Kombo ×{0}',
@@ -6532,7 +6532,7 @@ const DIL = {
     'cok.ulasilamadi': 'Sunucuya ulaşılamadı. İnternetini kontrol edip yeniden dene.', 'cok.dolu': 'Oda dolu. Bir odada en çok dört kişi olur.', 'cok.yok': 'Bu kodla açık oda yok.', 'cok.kodHatali': 'Kod dört harf olmalı.',
     'cok.ayrildin': 'Odadan çıktın.', 'cok.bolgede': 'Oyuncu {0} {1} bölgesinde, seni de oraya aldık.', 'cok.oyuncu': 'Oyuncu {0}', 'cok.yaninda': 'Oyuncu {0} hemen önünde',
     'hud.turbo': 'Turbo', 'hud.nefes': 'Nefes', 'hud.ayakta': 'Ayakta pedal', 'uc.nefes': 'Nefesin tükendi', 'uc.rakipDevrildi': '{0} devrildi', 'rk.devrik': 'devrildi', 'uc.devrildi': 'Devrildin', 'uc.devrildi.alt': 'Virajda yavaşla; yükle daha çabuk devrilirsin', 'hud.gec': 'Geçmek için dokun ya da bir tuşa bas', 'hud.viraj': 'Viraj', 'hud.ters': 'Ters yön',
-    'hud.zil': 'Zil', 'uc.kilPayi': 'Kıl payı!', 'uc.kilPayi.alt': 'Yoldakiler alkışlıyor',
+    'hud.zil': 'Zil', 'uc.kilPayi': 'Kıl payı!', 'uc.kilPayi.alt': 'Yoldakiler alkışlıyor', 'uc.ikiTeker': 'İki tekerde!', 'uc.ikiTeker.alt': 'Nefesin yerine geldi, rüzgâr arkanda',
     'menu.tuslar': '<b>W A S D</b> ya da <b>ok tuşları</b> sürüş · <b>Shift</b> turbo (bisiklette ayakta pedal) · <b>Boşluk</b> el freni · <b>R</b> yola dön · <b>C</b> kamera · <b>F</b> (basılı tut) sürücünün yüzü · <b>H</b> korna ya da zil · <b>N</b> ses · <b>M</b> menü. Oyun kolu: sol çubuk, RT gaz, LT fren, X ya da RB turbo, A el freni, B yola dön, Y kamera, LB sürücünün yüzü.',
     'menu.kunye': 'Sokaklar, binalar ve surlar: © OpenStreetMap katkıcıları (ODbL). Yükseklik: SRTM, Mapzen arazi karoları. Dokular: Poly Haven (CC0). Kale kayasının biçimi OSM sınırından yeniden kurulmuştur. Yarış arabaları ve donanımı: vinish.dev (CC BY 4.0).',
     'etk.km': 'km', 'etk.tur': '{0} tur', 'etk.zamanaKarsi': 'zamana karşı', 'etk.rakip': '{0} rakip', 'etk.enIyi': 'en iyi {0}',
@@ -6563,38 +6563,38 @@ const DIL = {
     'cats': ['İç Kale', 'Kedi Evi', 'Van Müzesi', 'İskele', 'Hüsrevpaşa Camii', 'Ulu Cami', 'Sahil Yolu Kavşağı', 'Höyük', 'Melen Caddesi', 'İskele Caddesi'],
     'story': [
       { ad: 'Üç teker', konus: [
-        ['Halil Usta', 'Hoş geldin evlat. Yedi yıl oldu. İş yok, para yok; ama babandan kalan üç teker hâlâ avluda duruyor.'],
-        ['Halil Usta', 'Kasasını eski tahtalarla onardım. Çarşıdan çuval taşı, biriktir. Bu şehirde herkes böyle başlar.']] },
+        ['Selim Usta', 'Hoş geldin evlat. Yedi yıl oldu. İş yok, para yok; ama babandan kalan üç teker hâlâ avluda duruyor.'],
+        ['Selim Usta', 'Kasasını eski tahtalarla onardım. Çarşıdan çuval taşı, biriktir. Bu şehirde herkes böyle başlar.']] },
       { ad: 'Motor', konus: [
         ['Zelal', 'Ben Zelal; ustanın hesabını ben tutarım. Pedalla günde üç sefer yaparsın, motorlu üç tekerle on.'],
-        ['Halil Usta', 'Avluda eski bir motorlu üç teker var. Dokuz yüz lirayı denkleştir, senin olsun.']] },
+        ['Selim Usta', 'Avluda eski bir motorlu üç teker var. Dokuz yüz lirayı denkleştir, senin olsun.']] },
       { ad: 'Araba', konus: [
-        ['Halil Usta', 'Motor sana yakıştı. Ama Tuşpa Kupası’na üç tekerle girilmez.'],
+        ['Selim Usta', 'Motor sana yakıştı. Ama Tuşpa Kupası’na üç tekerle girilmez.'],
         ['Zelal', 'Ustanın eski arabası üç bin lira. Yükleri motorla taşı, parayı biriktir.']] },
       { ad: 'Dönüş', hedef: 'Kedi Evi', konus: [
-        ['Halil Usta', 'Arabayı alın terinle aldın, helal olsun. Motorunu ben toparladım, anahtar üstünde.'],
-        ['Halil Usta', 'Önce arabayı tanı, şehri hatırla. Dükkâna kadar sür; Kedi Evi’nin karşısındayım.']] },
+        ['Selim Usta', 'Arabayı alın terinle aldın, helal olsun. Motorunu ben toparladım, anahtar üstünde.'],
+        ['Selim Usta', 'Önce arabayı tanı, şehri hatırla. Dükkâna kadar sür; Kedi Evi’nin karşısındayım.']] },
       { ad: 'Sofra', konus: [
         ['Zelal', 'İskeledeki kafile Van kahvaltısı istiyor. Sofrayı önce sen kuracaksın: önce çay ve sahanda yumurta; murtuğayı, kavutu usta oldukça öğrenirsin.'],
-        ['Halil Usta', 'Misafiri bekletme evlat. Siparişler birer birer gelir; sabrı tükenmeden önüne koy.']] },
+        ['Selim Usta', 'Misafiri bekletme evlat. Siparişler birer birer gelir; sabrı tükenmeden önüne koy.']] },
       { ad: 'Kahvaltı', hedef: 'İskele', konus: [
         ['Zelal', 'Araban oldu, işler büyüdü. Dükkânın hesabı yine de pek iyi değil.'],
         ['Zelal', 'İskelede Tebriz’den gelen bir tur kafilesi kahvaltı bekliyor: otlu peynir, murtuğa, kavut. Soğumadan yetiştirirsen kafile dükkânı herkese anlatır.']],
         kayip: ['Zelal', 'Kahvaltı soğudu, kafile başka yere gitti. Bir daha dene; kalenin kuzeyinden geç, yol daha açık.'] },
       { ad: 'Eleme', konus: [
-        ['Serhat', 'Halil Usta’nın yeğeni, ha? Tuşpa Kupası’na adını yazdırmışlar. Cesaretine diyecek yok.'],
+        ['Serhat', 'Selim Usta’nın yeğeni, ha? Tuşpa Kupası’na adını yazdırmışlar. Cesaretine diyecek yok.'],
         ['Serhat', 'Kupaya girmek için Eski Van elemesinde ilk üçe gireceksin. Toprakta asfalttaki gibi gaza basarsan duvarı öpersin.']] },
       { ad: 'Pamuk', hedef: 'İç Kale', konus: [
-        ['Halil Usta', 'Elemeyi geçmişsin, aferin. Ama bir derdimiz var: dükkânın kedisi Pamuk yine kaçtı.'],
+        ['Selim Usta', 'Elemeyi geçmişsin, aferin. Ama bir derdimiz var: dükkânın kedisi Pamuk yine kaçtı.'],
         ['Zelal', 'Bir gözü mavi, bir gözü kehribar. Çobanlar onu kalenin tepesinde, bayrağın dibinde görmüş. Sırta batı ucundan çıkılıyor.']] },
       { ad: 'İskele düellosu', konus: [
         ['Serhat', 'Kediyi kaleden indirmişsin. Bakalım düz yolda da o kadar iyi misin.'],
         ['Serhat', 'Melen Caddesi’nden iskeleye. İlk ikiye giremezsen kupada yerin yok.']] },
       { ad: 'Tuşpa Kupası', konus: [
         ['Zelal', 'Kupanın ödülü iki bin beş yüz lira; dükkânın adı da bütün Van’da duyulur. Baskı yapmak gibi olmasın.'],
-        ['Halil Usta', 'Kale Turu tek tur, beş buçuk kilometre. Sahil yolunda rüzgâr soldan vurur, direksiyonu sıkı tut. Birinci gel.']] },
+        ['Selim Usta', 'Kale Turu tek tur, beş buçuk kilometre. Sahil yolunda rüzgâr soldan vurur, direksiyonu sıkı tut. Birinci gel.']] },
       { ad: 'Abalı yolu', konus: [
-        ['Halil Usta', 'Tuşpa Kupası dükkânın rafında, Pamuk da kupanın içinde uyuyor. Dükkân bir yıl daha açık.'],
+        ['Selim Usta', 'Tuşpa Kupası dükkânın rafında, Pamuk da kupanın içinde uyuyor. Dükkân bir yıl daha açık.'],
         ['Zelal', 'Kutlamayı sonra yaparız. Tebriz’den bir konuğumuz var: Ferhad. Kayak için Abalı’ya çıkacak, yolu bilmiyor.'],
         ['Ferhad', 'Selam! Tebriz’de ralliciyim. Madem aynı yola çıkıyoruz, yarışalım: kayak merkezine geç kalan çayları ısmarlar.']] },
       { ad: 'Turist servisi', konus: [
@@ -6605,7 +6605,7 @@ const DIL = {
         ['Zelal', 'Yukarı okla çömelirsin, hızlanırsın. Aşağı okla kar sabanı yaparsın, yavaşlarsın. Dizlerine güven.']] },
       { ad: 'Kış Kupası', konus: [
         ['Ferhad', 'Fena değilsin. Asıl iş yukarıda: zirve istasyonundan aşağı, kar üstünde. Frene sert basarsan kayarsın; bizde buna yumuşak ayak derler.'],
-        ['Halil Usta', 'Kış Kupası’nı alırsan dükkânın tabelasına bir de kar tanesi çizeriz. Birinci gel.']] },
+        ['Selim Usta', 'Kış Kupası’nı alırsan dükkânın tabelasına bir de kar tanesi çizeriz. Birinci gel.']] },
     ],
     'storyEnd': [
       ['Ferhad', 'Kupa senin, çaylar benden. Seneye Tebriz’e gel; bu kez piste ben götüreyim.'],
@@ -6702,7 +6702,7 @@ const DIL = {
     'mutfak.malzeme': ['Butter', 'Flour', 'Egg', 'Honey', 'Clotted cream', 'Walnut', 'Herb cheese', 'Tomato', 'Cucumber', 'Kavut flour', 'Tea', 'Sugar', 'Olives', 'Bread'],
     'mutfak.yemek': ['Murtuğa', 'Kavut', 'Herb cheese plate', 'Honey and clotted cream', 'Tea'],
     // breakfast house (src/mutfak.js)
-    'mt.baslik': 'Halil Usta’s Breakfast House', 'mt.kasa': 'Savings ₺{0}', 'mt.cik': 'Leave', 'mt.yeni': 'New', 'mt.vardiya': 'Shift {0}', 'mt.misafir': '{0} guests', 'mt.misafirSay': 'Guests {0}/{1}',
+    'mt.baslik': 'Selim Usta’s Breakfast House', 'mt.kasa': 'Savings ₺{0}', 'mt.cik': 'Leave', 'mt.yeni': 'New', 'mt.vardiya': 'Shift {0}', 'mt.misafir': '{0} guests', 'mt.misafirSay': 'Guests {0}/{1}',
     'mt.basla': 'Start the shift', 'mt.yukleniyor': 'Preparing the house…', 'mt.erzakGerek': 'The pantry is empty. Bring supplies first.', 'mt.kiler': 'Pantry', 'mt.kilerDurum': 'Supplies for {0} shifts. Each shift uses one.',
     'mt.erzakGit': 'Fetch supplies from the market', 'mt.erzakGitAlt': 'Driving job: the {0} carries supplies for up to {1} shifts. Rough driving breaks eggs, so less reaches the pantry.', 'mt.kurye': 'Order by courier: 2 supplies · ₺{0}',
     'mt.gelistir': 'Upgrade the house', 'mt.tam': 'Done', 'mt.tabela': 'BREAKFAST HOUSE', 'mt.kilitli': 'Opens at shift {0}', 'mt.kombo': 'Combo ×{0}',
@@ -6736,7 +6736,7 @@ const DIL = {
     'cok.ulasilamadi': 'Could not reach the server. Check your internet and try again.', 'cok.dolu': 'The room is full. A room holds up to four players.', 'cok.yok': 'There is no open room with this code.', 'cok.kodHatali': 'The code must be four letters.',
     'cok.ayrildin': 'You left the room.', 'cok.bolgede': 'Player {0} is in {1}, so we took you there too.', 'cok.oyuncu': 'Player {0}', 'cok.yaninda': 'Player {0} is right ahead',
     'hud.turbo': 'Turbo', 'hud.nefes': 'Breath', 'hud.ayakta': 'Stand and pedal', 'uc.nefes': 'Out of breath', 'uc.rakipDevrildi': '{0} tipped over', 'rk.devrik': 'tipped over', 'uc.devrildi': 'You tipped over', 'uc.devrildi.alt': 'Slow down in corners; with a load you tip sooner', 'hud.gec': 'Tap or press any key to skip', 'hud.viraj': 'Bend', 'hud.ters': 'Wrong way',
-    'hud.zil': 'Bell', 'uc.kilPayi': 'Close call!', 'uc.kilPayi.alt': 'People on the street are clapping',
+    'hud.zil': 'Bell', 'uc.kilPayi': 'Close call!', 'uc.kilPayi.alt': 'People on the street are clapping', 'uc.ikiTeker': 'On two wheels!', 'uc.ikiTeker.alt': 'Your breath is back and the wind is behind you',
     'menu.tuslar': '<b>W A S D</b> or <b>arrow keys</b> drive · <b>Shift</b> turbo (on the bicycle: stand and pedal) · <b>Space</b> handbrake · <b>R</b> back to road · <b>C</b> camera · <b>F</b> (hold) driver’s face · <b>H</b> horn or bell · <b>N</b> sound · <b>M</b> menu. Gamepad: left stick, RT throttle, LT brake, X or RB turbo, A handbrake, B back to road, Y camera, LB driver’s face.',
     'menu.kunye': 'Streets, buildings and walls: © OpenStreetMap contributors (ODbL). Elevation: SRTM, Mapzen terrain tiles. Textures: Poly Haven (CC0). The shape of the castle rock is rebuilt from the OSM outline. Race cars and props: vinish.dev (CC BY 4.0).',
     'etk.km': 'km', 'etk.tur': '{0} laps', 'etk.zamanaKarsi': 'time trial', 'etk.rakip': '{0} rivals', 'etk.enIyi': 'best {0}',
@@ -6767,38 +6767,38 @@ const DIL = {
     'cats': ['Inner Castle', 'Cat House', 'Van Museum', 'The Pier', 'Hüsrev Pasha Mosque', 'Great Mosque', 'Shore Road Junction', 'The Mound', 'Melen Street', 'İskele Street'],
     'story': [
       { ad: 'Three Wheels', konus: [
-        ['Halil Usta', 'Welcome back, son. Seven years. No work and no money; but your father’s cargo tricycle is still in the yard.'],
-        ['Halil Usta', 'I fixed the bed with old planks. Carry sacks from the market and save. Everyone in this city starts like this.']] },
+        ['Selim Usta', 'Welcome back, son. Seven years. No work and no money; but your father’s cargo tricycle is still in the yard.'],
+        ['Selim Usta', 'I fixed the bed with old planks. Carry sacks from the market and save. Everyone in this city starts like this.']] },
       { ad: 'The Motor', konus: [
         ['Zelal', 'I am Zelal; I keep the books for the shop. With pedals you do three runs a day. With a motor trike you do ten.'],
-        ['Halil Usta', 'There is an old motor trike in the yard. Bring nine hundred lira and it is yours.']] },
+        ['Selim Usta', 'There is an old motor trike in the yard. Bring nine hundred lira and it is yours.']] },
       { ad: 'The Car', konus: [
-        ['Halil Usta', 'The motor suits you. But nobody enters the Tushpa Cup on three wheels.'],
+        ['Selim Usta', 'The motor suits you. But nobody enters the Tushpa Cup on three wheels.'],
         ['Zelal', 'The old car costs three thousand lira. Carry loads with the motor and save.']] },
       { ad: 'The Return', hedef: 'the Cat House', konus: [
-        ['Halil Usta', 'You paid for the car with your own sweat. Well done. I tuned the engine and the key is in it.'],
-        ['Halil Usta', 'First learn the car and remember the city. Drive to the shop; I am across from the Cat House.']] },
+        ['Selim Usta', 'You paid for the car with your own sweat. Well done. I tuned the engine and the key is in it.'],
+        ['Selim Usta', 'First learn the car and remember the city. Drive to the shop; I am across from the Cat House.']] },
       { ad: 'The Table', konus: [
         ['Zelal', 'The group at the pier wants a Van breakfast. You set the table first: tea and fried eggs to start; murtuğa and kavut come as you get better.'],
-        ['Halil Usta', 'Do not keep the guests waiting, son. Orders come one at a time; serve them before their patience runs out.']] },
+        ['Selim Usta', 'Do not keep the guests waiting, son. Orders come one at a time; serve them before their patience runs out.']] },
       { ad: 'Breakfast', hedef: 'the Pier', konus: [
         ['Zelal', 'You have a car now, and the work is bigger. The books for the shop still do not look good.'],
         ['Zelal', 'A tour group from Tabriz is waiting for breakfast at the pier: herb cheese, murtuğa, kavut. Deliver it warm and they will tell everyone about the shop.']],
         kayip: ['Zelal', 'The breakfast went cold and the group left. Try again; go north of the castle, the road is clearer.'] },
       { ad: 'Qualifying', konus: [
-        ['Serhat', 'Halil Usta’s nephew, eh? They put your name down for the Tushpa Cup. You have nerve.'],
+        ['Serhat', 'Selim Usta’s nephew, eh? They put your name down for the Tushpa Cup. You have nerve.'],
         ['Serhat', 'To enter the cup, finish in the top three at the Old Van qualifier. Drive on dirt the way you drive on asphalt and you will kiss a wall.']] },
       { ad: 'Pamuk', hedef: 'the Inner Castle', konus: [
-        ['Halil Usta', 'You qualified. Well done. But we have a problem: Pamuk, the shop cat, ran away again.'],
+        ['Selim Usta', 'You qualified. Well done. But we have a problem: Pamuk, the shop cat, ran away again.'],
         ['Zelal', 'One eye is blue and one is amber. Shepherds saw her on top of the castle, at the foot of the flag. You can reach the ridge from the west end.']] },
       { ad: 'Pier Duel', konus: [
         ['Serhat', 'You brought the cat down from the castle. Let us see if you are that good on a straight road.'],
         ['Serhat', 'From Melen Street to the pier. Finish outside the top two and you have no place in the cup.']] },
       { ad: 'The Tushpa Cup', konus: [
         ['Zelal', 'The cup pays two thousand five hundred lira, and all of Van will know the shop. No pressure.'],
-        ['Halil Usta', 'The Castle Circuit is one lap, five and a half kilometres. On the shore road the wind hits from the left, so hold the wheel. Finish first.']] },
+        ['Selim Usta', 'The Castle Circuit is one lap, five and a half kilometres. On the shore road the wind hits from the left, so hold the wheel. Finish first.']] },
       { ad: 'The Road to Abalı', konus: [
-        ['Halil Usta', 'The Tushpa Cup is on the shelf, and Pamuk is asleep inside it. The shop stays open for another year.'],
+        ['Selim Usta', 'The Tushpa Cup is on the shelf, and Pamuk is asleep inside it. The shop stays open for another year.'],
         ['Zelal', 'We celebrate later. We have a guest from Tabriz: Farhad. He is going to Abalı to ski and he does not know the road.'],
         ['Farhad', 'Salam! I drive rallies in Tabriz. We are going the same way, so let us race: the last one to the ski centre buys the tea.']] },
       { ad: 'Tourist Shuttle', konus: [
@@ -6809,7 +6809,7 @@ const DIL = {
         ['Zelal', 'Press up to tuck and go faster. Press down to snowplough and slow down. Trust your knees.']] },
       { ad: 'The Winter Cup', konus: [
         ['Farhad', 'Not bad. The real work is up there: down from the summit station, on snow. Brake hard and you slide. At home we call it a soft foot.'],
-        ['Halil Usta', 'Win the Winter Cup and we paint a snowflake on the shop sign. Finish first.']] },
+        ['Selim Usta', 'Win the Winter Cup and we paint a snowflake on the shop sign. Finish first.']] },
     ],
     'storyEnd': [
       ['Farhad', 'The cup is yours and the tea is on me. Come to Tabriz next year; this time I take you to the piste.'],
@@ -6906,7 +6906,7 @@ const DIL = {
     'mutfak.malzeme': ['کره', 'آرد', 'تخم‌مرغ', 'عسل', 'سرشیر', 'گردو', 'پنیر سبزی', 'گوجه', 'خیار', 'آرد کاووت', 'چای', 'شکر', 'زیتون', 'نان'],
     'mutfak.yemek': ['مورتوغا', 'کاووت', 'بشقاب پنیر سبزی', 'عسل و سرشیر', 'چای'],
     // صبحانه‌خانه (src/mutfak.js)
-    'mt.baslik': 'صبحانه‌خانهٔ اوستا خلیل', 'mt.kasa': 'پس‌انداز {0} ₺', 'mt.cik': 'خروج', 'mt.yeni': 'تازه', 'mt.vardiya': 'نوبت {0}', 'mt.misafir': '{0} مهمان', 'mt.misafirSay': 'مهمان {0}/{1}',
+    'mt.baslik': 'صبحانه‌خانهٔ اوستا سلیم', 'mt.kasa': 'پس‌انداز {0} ₺', 'mt.cik': 'خروج', 'mt.yeni': 'تازه', 'mt.vardiya': 'نوبت {0}', 'mt.misafir': '{0} مهمان', 'mt.misafirSay': 'مهمان {0}/{1}',
     'mt.basla': 'شروع نوبت', 'mt.yukleniyor': 'صبحانه‌خانه آماده می‌شود…', 'mt.erzakGerek': 'انبار خالی است. اول آذوقه بیاور.', 'mt.kiler': 'انبار', 'mt.kilerDurum': 'آذوقه برای {0} نوبت هست. هر نوبت یک آذوقه مصرف می‌کند.',
     'mt.erzakGit': 'از بازار آذوقه بیاور', 'mt.erzakGitAlt': 'کار رانندگی: {0} تا {1} نوبت آذوقه می‌برد. اگر تکان بدهی تخم‌مرغ‌ها می‌شکنند و کمتر به انبار می‌رسد.', 'mt.kurye': 'با پیک بیاور: ۲ آذوقه · {0} ₺',
     'mt.gelistir': 'بهتر کردن صبحانه‌خانه', 'mt.tam': 'کامل', 'mt.tabela': 'صبحانه‌خانه', 'mt.kilitli': 'در نوبت {0} باز می‌شود', 'mt.kombo': 'پشت‌سرهم ×{0}',
@@ -6940,7 +6940,7 @@ const DIL = {
     'cok.ulasilamadi': 'به سرور دسترسی نیست. اینترنت را بررسی کن و دوباره امتحان کن.', 'cok.dolu': 'اتاق پر است. هر اتاق حداکثر چهار نفر دارد.', 'cok.yok': 'اتاقی با این کد باز نیست.', 'cok.kodHatali': 'کد باید چهار حرف باشد.',
     'cok.ayrildin': 'از اتاق خارج شدی.', 'cok.bolgede': 'بازیکن {0} در {1} است؛ تو را هم به آنجا بردیم.', 'cok.oyuncu': 'بازیکن {0}', 'cok.yaninda': 'بازیکن {0} درست جلوی توست',
     'hud.turbo': 'توربو', 'hud.nefes': 'نفس', 'hud.ayakta': 'رکاب ایستاده', 'uc.nefes': 'نفست بند آمد', 'uc.rakipDevrildi': '{0} واژگون شد', 'rk.devrik': 'واژگون شد', 'uc.devrildi': 'واژگون شدی', 'uc.devrildi.alt': 'سر پیچ آهسته‌تر برو؛ با بار زودتر واژگون می‌شوی', 'hud.gec': 'برای رد کردن لمس کنید یا کلیدی بزنید', 'hud.viraj': 'پیچ', 'hud.ters': 'مسیر برعکس',
-    'hud.zil': 'زنگ', 'uc.kilPayi': 'به مو رسید!', 'uc.kilPayi.alt': 'رهگذرها برایت دست می‌زنند',
+    'hud.zil': 'زنگ', 'uc.kilPayi': 'به مو رسید!', 'uc.kilPayi.alt': 'رهگذرها برایت دست می‌زنند', 'uc.ikiTeker': 'روی دو چرخ!', 'uc.ikiTeker.alt': 'نفست برگشت و باد پشتت است',
     'menu.tuslar': '<b>W A S D</b> یا <b>کلیدهای جهت</b> رانندگی · <b>Shift</b> توربو (روی دوچرخه: رکاب ایستاده) · <b>Space</b> ترمز دستی · <b>R</b> بازگشت به جاده · <b>C</b> دوربین · <b>F</b> (نگه دارید) چهرهٔ راننده · <b>H</b> بوق یا زنگ · <b>N</b> صدا · <b>M</b> منو. دسته بازی: اهرم چپ، RT گاز، LT ترمز، X یا RB توربو، A ترمز دستی، B بازگشت به جاده، Y دوربین، LB چهرهٔ راننده.',
     'menu.kunye': 'خیابان‌ها، ساختمان‌ها و باروها: © مشارکت‌کنندگان OpenStreetMap (ODbL). ارتفاع: SRTM، کاشی‌های Mapzen. بافت‌ها: Poly Haven (CC0). شکل صخره قلعه از روی محدوده OSM بازسازی شده است. خودروها و تجهیزات مسابقه: vinish.dev (CC BY 4.0).',
     'etk.km': 'کیلومتر', 'etk.tur': '{0} دور', 'etk.zamanaKarsi': 'با زمان', 'etk.rakip': '{0} رقیب', 'etk.enIyi': 'بهترین {0}',
@@ -6972,38 +6972,38 @@ const DIL = {
     'cats': ['ارگ درونی', 'خانه گربه', 'موزه وان', 'اسکله', 'مسجد خسروپاشا', 'مسجد جامع', 'میدان جاده ساحلی', 'تپه باستانی', 'خیابان ملن', 'خیابان اسکله'],
     'story': [
       { ad: 'سه‌چرخه', konus: [
-        ['خلیل اوستا', 'خوش آمدی پسرم. هفت سال گذشت. نه کاری هست و نه پولی؛ اما سه‌چرخه پدرت هنوز در حیاط است.'],
-        ['خلیل اوستا', 'کفی‌اش را با تخته‌های کهنه درست کردم. از بازار گونی ببر و پس‌انداز کن. در این شهر همه همین‌طور شروع می‌کنند.']] },
+        ['سلیم اوستا', 'خوش آمدی پسرم. هفت سال گذشت. نه کاری هست و نه پولی؛ اما سه‌چرخه پدرت هنوز در حیاط است.'],
+        ['سلیم اوستا', 'کفی‌اش را با تخته‌های کهنه درست کردم. از بازار گونی ببر و پس‌انداز کن. در این شهر همه همین‌طور شروع می‌کنند.']] },
       { ad: 'موتور', konus: [
         ['زلال', 'من زلالم؛ حساب مغازه با من است. با رکاب روزی سه بار می‌روی، با سه‌چرخه موتوری ده بار.'],
-        ['خلیل اوستا', 'در حیاط یک سه‌چرخه موتوری کهنه هست. نهصد لیره جور کن، مال تو.']] },
+        ['سلیم اوستا', 'در حیاط یک سه‌چرخه موتوری کهنه هست. نهصد لیره جور کن، مال تو.']] },
       { ad: 'خودرو', konus: [
-        ['خلیل اوستا', 'موتور به تو می‌آید. اما با سه‌چرخه کسی وارد جام توشپا نمی‌شود.'],
+        ['سلیم اوستا', 'موتور به تو می‌آید. اما با سه‌چرخه کسی وارد جام توشپا نمی‌شود.'],
         ['زلال', 'خودروی کهنه اوستا سه هزار لیره است. با موتور بار ببر و پس‌انداز کن.']] },
       { ad: 'بازگشت', hedef: 'خانه گربه', konus: [
-        ['خلیل اوستا', 'خودرو را با عرق پیشانی خودت خریدی، آفرین. موتورش را سرحال کردم و سوئیچ رویش است.'],
-        ['خلیل اوستا', 'اول خودرو را بشناس و شهر را به یاد بیاور. تا مغازه بران؛ روبه‌روی خانه گربه هستم.']] },
+        ['سلیم اوستا', 'خودرو را با عرق پیشانی خودت خریدی، آفرین. موتورش را سرحال کردم و سوئیچ رویش است.'],
+        ['سلیم اوستا', 'اول خودرو را بشناس و شهر را به یاد بیاور. تا مغازه بران؛ روبه‌روی خانه گربه هستم.']] },
       { ad: 'سفره', konus: [
         ['زلال', 'گروهِ اسکله صبحانه وان می‌خواهد. سفره را اول تو می‌چینی: اول چای و نیمرو؛ مورتوغا و کاووت را کم‌کم یاد می‌گیری.'],
-        ['خلیل اوستا', 'مهمان را منتظر نگذار پسرم. سفارش‌ها یکی‌یکی می‌آیند؛ پیش از تمام شدن صبرشان جلویشان بگذار.']] },
+        ['سلیم اوستا', 'مهمان را منتظر نگذار پسرم. سفارش‌ها یکی‌یکی می‌آیند؛ پیش از تمام شدن صبرشان جلویشان بگذار.']] },
       { ad: 'صبحانه', hedef: 'اسکله', konus: [
         ['زلال', 'حالا خودرو داری و کار بزرگ‌تر شده. حساب مغازه هنوز هم چندان خوب نیست.'],
         ['زلال', 'در اسکله یک گروه گردشگر از تبریز منتظر صبحانه‌اند: پنیر سبزی، مورتوغا و کاووت. اگر پیش از سرد شدن برسانی، از مغازه همه‌جا تعریف می‌کنند.']],
         kayip: ['زلال', 'صبحانه سرد شد و گروه جای دیگری رفت. دوباره تلاش کن؛ از شمال قلعه برو، راه بازتر است.'] },
       { ad: 'مقدماتی', konus: [
-        ['سرهات', 'برادرزاده خلیل اوستا، ها؟ اسمت را برای جام توشپا نوشته‌اند. جرئتت حرف ندارد.'],
+        ['سرهات', 'برادرزاده سلیم اوستا، ها؟ اسمت را برای جام توشپا نوشته‌اند. جرئتت حرف ندارد.'],
         ['سرهات', 'برای ورود به جام باید در مقدماتی وان قدیم جزو سه نفر اول باشی. اگر روی خاک مثل آسفالت گاز بدهی، دیوار را می‌بوسی.']] },
       { ad: 'پاموک', hedef: 'ارگ درونی', konus: [
-        ['خلیل اوستا', 'مقدماتی را رد کردی، آفرین. اما یک گرفتاری داریم: پاموک، گربه مغازه، باز فرار کرده.'],
+        ['سلیم اوستا', 'مقدماتی را رد کردی، آفرین. اما یک گرفتاری داریم: پاموک، گربه مغازه، باز فرار کرده.'],
         ['زلال', 'یک چشمش آبی است و یک چشمش کهربایی. چوپان‌ها او را بالای قلعه، پای پرچم دیده‌اند. از سر غربی می‌شود به یال رفت.']] },
       { ad: 'دوئل اسکله', konus: [
         ['سرهات', 'گربه را از قلعه پایین آوردی. ببینیم در جاده صاف هم همین‌قدر خوبی.'],
         ['سرهات', 'از خیابان ملن تا اسکله. اگر جزو دو نفر اول نباشی، در جام جایی نداری.']] },
       { ad: 'جام توشپا', konus: [
         ['زلال', 'جایزه جام دو هزار و پانصد لیره است و اسم مغازه در همه وان می‌پیچد. نمی‌خواهم فشار بیاورم.'],
-        ['خلیل اوستا', 'دور قلعه یک دور است، پنج و نیم کیلومتر. در جاده ساحلی باد از چپ می‌زند، فرمان را محکم بگیر. اول شو.']] },
+        ['سلیم اوستا', 'دور قلعه یک دور است، پنج و نیم کیلومتر. در جاده ساحلی باد از چپ می‌زند، فرمان را محکم بگیر. اول شو.']] },
       { ad: 'جاده آبالی', konus: [
-        ['خلیل اوستا', 'جام توشپا روی قفسه مغازه است و پاموک توی جام خوابیده. مغازه یک سال دیگر باز می‌ماند.'],
+        ['سلیم اوستا', 'جام توشپا روی قفسه مغازه است و پاموک توی جام خوابیده. مغازه یک سال دیگر باز می‌ماند.'],
         ['زلال', 'جشن بماند برای بعد. از تبریز مهمان داریم: فرهاد. برای اسکی به آبالی می‌رود و راه را بلد نیست.'],
         ['فرهاد', 'سلام! من در تبریز راننده رالی‌ام. حالا که هم‌مسیر هستیم، مسابقه بدهیم: هر که دیرتر به پیست برسد، چای مهمان اوست.']] },
       { ad: 'سرویس گردشگران', konus: [
@@ -7014,7 +7014,7 @@ const DIL = {
         ['زلال', 'با کلید بالا جمع می‌شوی و تندتر می‌روی. با کلید پایین ترمز هفت می‌گیری و آهسته می‌شوی. به زانوهایت اعتماد کن.']] },
       { ad: 'جام زمستان', konus: [
         ['فرهاد', 'بد نیستی. کار اصلی آن بالاست: از ایستگاه قله به پایین، روی برف. اگر محکم ترمز کنی سر می‌خوری؛ ما به این می‌گوییم پای نرم.'],
-        ['خلیل اوستا', 'اگر جام زمستان را بگیری، روی تابلوی مغازه یک دانه برف هم می‌کشیم. اول شو.']] },
+        ['سلیم اوستا', 'اگر جام زمستان را بگیری، روی تابلوی مغازه یک دانه برف هم می‌کشیم. اول شو.']] },
     ],
     'storyEnd': [
       ['فرهاد', 'جام مال تو، چای با من. سال دیگر بیا تبریز؛ این بار من تو را به پیست می‌برم.'],
@@ -11937,12 +11937,12 @@ function stepCar(c, inp, dt) {
   c.brake = inp.brk > 0.1 && vf > 0.8;
   if (c.pedal) { c.pedalCev = inp.thr > 0 && !c.air; c.krank = krankAdim(c.krank || 0, c.pedalCev, vf, dt); }
   if (!c.air) {
-    const vmax = c.vmax * surf.vk * (c.tbAktif ? 1.25 : 1) * (c.ayakta ? 1.2 : 1) * (c.hizKat || 1);      // turbo: azami hız %25, itiş 1,9 kat; ayakta pedal: %20; hizKat: hasar (oyun.js YH)
+    const vmax = c.vmax * surf.vk * (c.tbAktif ? 1.25 : 1) * (c.ayakta ? 1.2 : 1) * (c.ucHiz > 0 ? 1.25 : 1) * (c.hizKat || 1);      // ucHiz: iki teker ödülü (oyun.js UCT)      // turbo: azami hız %25, itiş 1,9 kat; ayakta pedal: %20; hizKat: hasar (oyun.js YH)
     let acc = 0;
     let guc = c.power * (c.tbAktif ? 1.9 : 1);
     if (c.pedal) {      // pedal: itiş krank açısıyla nabız atar (turda iki basış, en güçlüsü krank yatayken); ayakta 1,55 kat; yük ağırlaştırır
       const nb = Math.sin(c.krank);
-      guc = c.power * (0.6 + 0.8 * nb * nb) * (c.ayakta ? 1.55 : 1) * (c.yuklu ? c.yukGuc || 0.8 : 1);      // yukGuc: teslimat yükünün ağırlığı (peynir ağır)
+      guc = c.power * (0.6 + 0.8 * nb * nb) * (c.ayakta ? 1.55 : 1) * (c.ucHiz > 0 ? 1.4 : 1) * (c.yuklu ? c.yukGuc || 0.8 : 1);      // yukGuc: teslimat yükünün ağırlığı (peynir ağır)
     }
     if (c.gucKat) guc *= c.gucKat;      // hasarlı araç zayıf çeker (oyun.js YH)
     if (inp.thr > 0) acc += inp.thr * guc * (vf < 0 ? 1.7 : Math.max(0, 1 - vf / vmax));
@@ -14080,7 +14080,7 @@ MT3.ciz = function (renderer) {
 
 'use strict';
 // =====================================================================
-// MUTFAK — Halil Usta'nın kahvaltı salonu.
+// MUTFAK — Selim Usta'nın kahvaltı salonu.
 // Türün bilinen düzeni: misafir tezgâha gelir, siparişi balonda görünür, sabrı azalır. Çay kendiliğinden demlenir,
 // yumurta sahanda pişer (bekletilirse yanar), tabak ve kâse tezgâhta kurulur; hazır yemeğe dokununca isteyen misafire gider.
 // Para tezgâhta birikir, toplanınca koltuk boşalır. 20 vardiya, vardiya başına üç yıldız, kasadan alınan geliştirmeler.
@@ -15290,7 +15290,7 @@ function cokKur(o) {
     { id: 'taksi', bolge: 'van', ozel: 'taksi', taksi: true, rota: 'eski-van', nokta: [3029.6, -542], laps: 1, ai: 0, solo: true, zemin: 'Asfalt' },
     // erzak: kahvaltı salonunun kilerini doldurur; yalnız salon ekranından başlar (menüde ve haritada görünmez)
     { id: 'erzak', bolge: 'van', ozel: 'servis', yuk: true, erzak: true, gizli: true, arac: 'trike', rota: 'iskele', laps: 1, ai: 0, solo: true, zemin: 'Asfalt' },
-    { id: 'tirmanis', bolge: 'van', dongu: true, madalya: [26, 22, 17], madalyaKisa: { motor: [205, 240, 310], trike: [460, 540, 700] }, ad: 'Kale Tırmanışı', alt: 'Batı ucundan sırta çık, burçtaki bayrağa ulaş', laps: 1, ai: 0, solo: true, zemin: 'Kaya' },
+    { id: 'tirmanis', bolge: 'van', dongu: true, madalya: [26, 22, 17], madalyaKisa: { motor: [205, 240, 310], trike: [305, 360, 465] }, ad: 'Kale Tırmanışı', alt: 'Batı ucundan sırta çık, burçtaki bayrağa ulaş', laps: 1, ai: 0, solo: true, zemin: 'Kaya' },
     // Kale Tırmanış Turnuvası (24 Kas 2026; kurucu: "asıl kurgulamak istediğim van kale tırmanış turnuvası"): sekiz yarışmacı, üç tur eleme (çeyrek final,
     // yarı final, final). Her tur aynı tırmanışta bire bir yarış; kaybeden elenir, rakip her turda hızlanır. Kurallar ve ödüller: TURNUVA.
     { id: 'turnuva', bolge: 'van', dongu: true, turnuva: true, markerS: 26, laps: 1, ai: 1, zemin: 'Kaya' },
@@ -15748,7 +15748,7 @@ function cokKur(o) {
   // vKat = yapay sürücünün viraj hızı katsayısı (rota hızı araba içindir: yanal 11,5 m/sn²; üç teker eşiğinin altında kalmalı).
   // servis: yolcu servisi minibüsü (23 Kas 2026; kurucu: "öğrenci servisi deniyor ama yarış arabası var, olmaz"). Yalnız servis görevlerinde;
   // satılmaz, menüde seçilmez. Spor arabadan ağır ve yavaş, turbosu yok.
-  const SINIF = { car: { power: 10.5, vmax: 62, taban: 0.93, vKat: 1 }, motor: { power: 6.8, vmax: 19, taban: 0.99, vKat: 0.72 }, trike: { power: 4.4, vmax: 9.5, taban: 1, vKat: 0.62 },
+  const SINIF = { car: { power: 10.5, vmax: 62, taban: 0.93, vKat: 1 }, motor: { power: 6.8, vmax: 19, taban: 0.99, vKat: 0.72 }, trike: { power: 5.6, vmax: 12.5, taban: 1, vKat: 0.62 },      /* pedallı (27 Kas 2026; kurucu: "uzun süre oynanması mümkün değil çünkü sıkıcı oluyor. hızlanması... lazım"): eskisi 4,4 / 9,5 (34 km/sa), şimdi 45 km/sa */
     servis: { power: 8, vmax: 40, taban: 0.93, vKat: 0.85 }, taksi: { power: 9.6, vmax: 50, taban: 0.93, vKat: 0.95 } };      // taksi: yalnız taksi işinde; satılmaz
   function setVehicle(kind) {
     const v = player[kind] || player.car;
@@ -15930,7 +15930,7 @@ function cokKur(o) {
   // ölçüldü: Kale Turu araba 2:43, motorlu üç teker 5:40, pedallı üç teker 10:45; İskele 2:11 / 4:20 / 7:55; Eski Van (2 tur) araba 3:37, üç tekerle 15 dk'yı
   // geçiyordu. Motorlu ve pedallı üç tekerde yarış rotanın başından KISA.sure sn'lik yola (sınıfın ortalama hızıyla) kısalır, tek tur olur, bitiş kapısı oraya
   // konur. Tırmanış, turnuva (zirve sabit), Pist Atlayışı, iş ve kayak olduğu gibi kalır. En iyi süre kısa rotada ayrı anahtardadır (eski uzun rota kayıtları karışmasın).
-  const KISA = { sure: 150, hiz: { motor: 15.5, trike: 8.5 }, enAz: 700 };
+  const KISA = { sure: 150, hiz: { motor: 15.5, trike: 11.2 }, enAz: 700 };      // pedallı 27 Kas'ta hızlandı: Kale Turu kısa rotasında ortalama 8,5 → 11,2 m/sn (ölçüm)
   function sinifRota(ev, sn) {
     const v = KISA.hiz[sn], R = ev.R;
     if (!v || !R || !yarisMi(ev) || ev.solo || ev.turnuva || ev.parkur || ev.tanitim) return null;
@@ -15943,7 +15943,13 @@ function cokKur(o) {
     ev.kisa[sn] = { kaynak: R, R: K };
     return K;
   }
-  const yarisUzunluk = (ev, sn) => { const K = sinifRota(ev, sn); return K ? K.L : (ev.R ? ev.R.L : ev.len) * ev.laps; };
+  const yarisUzunluk = (ev, sn) => {
+    if (ev.Rcik && sn !== 'car') { const k = kaleKisa(ev); return (k || ev.Rcik).L; }      // kale döngüsü üç tekerle kısa (27 Kas 2026: menü 4,1 km yazıyordu)
+    const K = sinifRota(ev, sn); if (K) return K.L;
+    const L = (ev.R ? ev.R.L : ev.len) * ev.laps, v = KISA.hiz[sn];
+    if (!ev.R && v && yarisMi(ev) && !ev.solo && !ev.turnuva && !ev.parkur && !ev.tanitim) return Math.min(L, Math.max(KISA.enAz, KISA.sure * v));      // bölgesi yüklenmemiş yarışın kısa rotası (sinifRota'nın uzunluğu)
+    return L;
+  };
   function canStart(ev) {
     if (ev.arac || owns('car') || aracsiz(ev)) return true;
     kasaUyar(T('kilit.araba', para(FIYAT.car)));
@@ -16653,6 +16659,10 @@ function cokKur(o) {
   // listesini böl"). Ana menüde dört giriş: Serbest sürüş, Yarışlar, İşler, Kahvaltı salonu. Yarışlar ve İşler aynı sayfayı açar, sayfanın üstündeki düğmeyle
   // değişir (seçim kaydedilir); Kahvaltı salonu doğrudan salona gider (listede İşler altında da durur). İş: para kazandıran servis, yük, teslimat, taksi, kahvaltı.
   const ETK = { grup: store.get('etk.grup', 'yaris') === 'is' ? 'is' : 'yaris' };
+  // Menüdeki etkinlikler (27 Kas 2026; kurucu: "bir çok gereksiz haritayı gizlemeni istiyorum... şimdilik sadece gerekli olan kale turnuvası, kale tırmanışı,
+  // iskele ve abalı. kayak vs gibi özellikleri oyunun içinde gelişen süreçte oynanabilmeli. gta gibi"): menüde yalnız bu dört yarış; İşler ve Kahvaltı salonu
+  // girişleri ve Kampüs bölgesi gizli (sayfa.html). Öbür etkinlikler silinmedi: serbest sürüşte haritadaki ışık sütunlarından ve hikâyeden açılır.
+  const MENU_ETK = ['tirmanis', 'turnuva', 'iskele', 'abali-yolu'];
   const etkGrup = (ev) => (ev.ozel === 'servis' || ev.ozel === 'taksi' || ev.ozel === 'pisir' ? 'is' : 'yaris');
   function etkGrupSec(g) {
     ETK.grup = g === 'is' ? 'is' : 'yaris'; store.set('etk.grup', ETK.grup);
@@ -16668,7 +16678,7 @@ function cokKur(o) {
     for (const b of document.querySelectorAll('[data-etk-grup]')) b.setAttribute('aria-pressed', b.getAttribute('data-etk-grup') === ETK.grup ? 'true' : 'false');
     let lastRegion = '';
     for (const ev of EVENTS) {
-      if (ev.gizli || etkGrup(ev) !== ETK.grup) continue;
+      if (ev.gizli || MENU_ETK.indexOf(ev.id) < 0) continue;      // menüde yalnız dört yarış (MENU_ETK)
       if (ev.bolge !== lastRegion) {
         lastRegion = ev.bolge;
         const h = document.createElement('div'); h.className = 'etiket etk-bolge'; h.textContent = REGIONS[ev.bolge].ad; list.appendChild(h);
@@ -16708,7 +16718,7 @@ function cokKur(o) {
   $('btn-isler').addEventListener('click', () => { initAudio(); etkGrupSec('is'); menuPanel('yaris'); });
   $('btn-kahvalti').addEventListener('click', () => etkBaslat(EVENTS.find((e) => e.ozel === 'pisir'))());
   for (const el of document.querySelectorAll('[data-etk-grup]')) el.addEventListener('click', () => { etkGrupSec(el.getAttribute('data-etk-grup')); el.focus(); });
-  $('btn-sur').addEventListener('click', async () => { initAudio(); await loadRegion(G.bolge || REGION.id); startFree(); });
+  $('btn-sur').addEventListener('click', async () => { initAudio(); if (G.bolge === 'kampus') G.bolge = 'van'; await loadRegion(G.bolge || (REGION.id === 'kampus' ? 'van' : REGION.id)); startFree(); });      // Kampüs menüde gizli
   // Bölge seçimi hemen uygulanır: o bölge yüklenir, menü Serbest sürüş sayfasına döner ve arka planda yeni bölgenin drone çekimi görünür; "Sür" başlatır.
   // (Eskiden seçim yalnız not ediliyordu; "Devam et" önceki bölgedeki oyunu sürdürdüğü için seçim uygulanmamış görünüyordu. Aynı bölgeye dokunmak duraklatılan oyunu bozmaz.)
   for (const el of document.querySelectorAll('[data-bolge]')) el.addEventListener('click', async () => {
@@ -16739,7 +16749,7 @@ function cokKur(o) {
   // finalde ~%2,5 hızlı (nitroyu iyi kullanan geçer). Ölçüm (artı: oyuncu önde): araba +6..+14 / +2..+6 / −5 sn (tur 169 sn); motorlu +1..+8 (0,88) /
   // +1..+6 / −7 (1,04) sn (210 sn); pedallı +31 / +13 / −10 sn (493 sn). Lastik bant (rakipHirs band ≥ 0,93) finalde farkı sınırlar. Durum G.tur, kaydı 'turnuva' anahtarında:
   // { sinif, tur (0-2), rakip: [üç turdaki rakibin sırası], obur: [tur başına öbür eşleşmeler: [a, b, kazanan]], bitti }.
-  const TURNUVA = { odul: [0, 200, 600, 2000], hiz: { car: [0.84, 0.93, 0.95], motor: [0.86, 0.97, 1.03], trike: [0.955, 0.985, 1.04] }, ad: (i) => TA('trn.adlar')[i] };
+  const TURNUVA = { odul: [0, 200, 600, 2000], hiz: { car: [0.84, 0.93, 0.95], motor: [0.86, 0.97, 1.03], trike: [0.925, 0.96, 1.04] }      /* pedallı 27 Kas'ta hızlandı; ölçüm: +28 / −0,5 / −8 sn (0,915 / 0,975 / 1,04) */, ad: (i) => TA('trn.adlar')[i] };
   function turnuvaKur(sn) {
     let t = (Date.now() % 2147483647) || 1; const rs = () => (t = (t * 48271) % 2147483647) / 2147483647;
     // Tanınır rakipler (RKIM): çeyrek final Edremit ya da Gevaş (kendi arabaları), yarı final Erek (1), final Tuşba (0). Öbür eşleşmeler kurada.
@@ -17560,7 +17570,7 @@ function cokKur(o) {
       if (-rv > KY.carpma) { const arka = A.prog < B.prog ? A : B, on = arka === A ? B : A; kayakDus(arka, (on.x - arka.x) * Math.cos(arka.h) - (on.z - arka.z) * Math.sin(arka.h) > 0 ? -1 : 1); }
     }
   }
-  // sn: sınıfı zorlar ('car', 'motor', 'trike'); verilmezse menüde seçili araç. Hikâye yarışları arabayla koşulur (Halil Usta: "Tuşpa Kupası'na üç tekerle girilmez").
+  // sn: sınıfı zorlar ('car', 'motor', 'trike'); verilmezse menüde seçili araç. Hikâye yarışları arabayla koşulur (Selim Usta: "Tuşpa Kupası'na üç tekerle girilmez").
   function startEvent(ev, sn) {
     if (ev.erzak) { startErzak(); return; }
     if (ev.teslimat) { startTeslimat(ev); return; }
@@ -17686,7 +17696,7 @@ function cokKur(o) {
     $('hud').hidden = true; $('sonuc').hidden = false;
     let title;
     if (ev.solo) {
-      const mk = { car: 1, motor: 0.5, trike: 0.28 }[r.sinif] || 1;      // madalya hızı sınıfa göre (üç teker yavaş)
+      const mk = { car: 1, motor: 0.5, trike: 0.37 }[r.sinif] || 1;      /* pedallı 27 Kas'ta %32 hızlandı (0,28 → 0,37) */      // madalya hızı sınıfa göre (üç teker yavaş)
       const md = (r.R === ev.Rcik ? null : ev.madalya) || [21, 16, 12], uz = r.R.L, ms = r.R === ev.Rkisa && ev.madalyaKisa ? ev.madalyaKisa[r.sinif] : null;      // sürülen rotanın uzunluğu; kısa kale döngüsünde süreler sınıfa göre elle (ölçüm: motorlu 221, pedallı 501 sn)
       const gold = ms ? ms[0] : uz / (md[0] * mk), silver = ms ? ms[1] : uz / (md[1] * mk), bronze = ms ? ms[2] : uz / (md[2] * mk);
       title = T(r.t <= gold ? 'sonuc.altin' : r.t <= silver ? 'sonuc.gumus' : r.t <= bronze ? 'sonuc.bronz' : 'sonuc.zirve');
@@ -17883,8 +17893,8 @@ function cokKur(o) {
     { ad: 'Motor', konus: [], gorev: { tip: 'para', hedef: 900, al: 'motor' } },
     { ad: 'Araba', konus: [], gorev: { tip: 'para', hedef: 3000, al: 'car' } },
     { ad: 'Dönüş', konus: [
-      ['Halil Usta', 'Hoş geldin evlat. Yedi yıl oldu. Van aynı Van, yollar biraz daha bozuk, o kadar.'],
-      ['Halil Usta', 'Araba hazır, anahtar üstünde. Ama önce şehri hatırla. Dükkâna gel; Kedi Evi’nin karşısındayım.']],
+      ['Selim Usta', 'Hoş geldin evlat. Yedi yıl oldu. Van aynı Van, yollar biraz daha bozuk, o kadar.'],
+      ['Selim Usta', 'Araba hazır, anahtar üstünde. Ama önce şehri hatırla. Dükkâna gel; Kedi Evi’nin karşısındayım.']],
       gorev: { tip: 'git', bas: [2300, 158], hedef: [961, 91], ad: 'Kedi Evi', sure: 0 } },
     { ad: 'Sofra', konus: [], gorev: { tip: 'ozel', id: 'kahvalti' } },
     { ad: 'Kahvaltı', konus: [
@@ -17893,11 +17903,11 @@ function cokKur(o) {
       gorev: { tip: 'git', hedef: [-1823, -1839], ad: 'İskele', sure: 200, rota: 'iskele',
         kayip: ['Zelal', 'Kahvaltı soğudu, kafile başka yere gitti. Bir daha dene; kalenin kuzeyinden geç, yol daha açık.'] } },
     { ad: 'Eleme', konus: [
-      ['Serhat', 'Halil Usta’nın yeğeni, ha? Tuşpa Kupası’na adını yazdırmışlar. Cesaretine diyecek yok.'],
+      ['Serhat', 'Selim Usta’nın yeğeni, ha? Tuşpa Kupası’na adını yazdırmışlar. Cesaretine diyecek yok.'],
       ['Serhat', 'Kupaya girmek için Eski Van elemesinde ilk üçe gireceksin. Toprakta asfalttaki gibi gaza basarsan duvarı öpersin.']],
       gorev: { tip: 'yaris', id: 'eski-van', sira: 3, odul: 500 } },
     { ad: 'Pamuk', konus: [
-      ['Halil Usta', 'Elemeyi geçmişsin, aferin. Ama bir derdimiz var: dükkânın kedisi Pamuk yine kaçtı.'],
+      ['Selim Usta', 'Elemeyi geçmişsin, aferin. Ama bir derdimiz var: dükkânın kedisi Pamuk yine kaçtı.'],
       ['Zelal', 'Bir gözü mavi, bir gözü kehribar. Çobanlar onu kalenin tepesinde, bayrağın dibinde görmüş. Sırta batı ucundan çıkılıyor.']],
       gorev: { tip: 'git', bas: [-463, -279], hedef: 'zirve', ad: 'İç Kale', sure: 0, rota: 'tirmanis' } },
     { ad: 'İskele düellosu', konus: [
@@ -17906,10 +17916,10 @@ function cokKur(o) {
       gorev: { tip: 'yaris', id: 'iskele', sira: 2, odul: 800 } },
     { ad: 'Tuşpa Kupası', konus: [
       ['Zelal', 'Kupanın ödülü dükkânın bir yıllık kirası. Baskı yapmak gibi olmasın.'],
-      ['Halil Usta', 'Kale Turu tek tur, beş buçuk kilometre. Sahil yolunda rüzgâr soldan vurur, direksiyonu sıkı tut. Birinci gel.']],
+      ['Selim Usta', 'Kale Turu tek tur, beş buçuk kilometre. Sahil yolunda rüzgâr soldan vurur, direksiyonu sıkı tut. Birinci gel.']],
       gorev: { tip: 'yaris', id: 'kale-turu', sira: 1, odul: 2500 } },
     { ad: 'Abalı yolu', konus: [
-      ['Halil Usta', 'Tuşpa Kupası dükkânın rafında, Pamuk da kupanın içinde uyuyor. Dükkân bir yıl daha açık.'],
+      ['Selim Usta', 'Tuşpa Kupası dükkânın rafında, Pamuk da kupanın içinde uyuyor. Dükkân bir yıl daha açık.'],
       ['Zelal', 'Kutlamayı sonra yaparız. Tebriz’den bir konuğumuz var: Ferhad. Kayak için Abalı’ya çıkacak, yolu bilmiyor.'],
       ['Ferhad', 'Selam! Tebriz’de ralliciyim. Madem aynı yola çıkıyoruz, yarışalım: kayak merkezine geç kalan çayları ısmarlar.']],
       gorev: { tip: 'yaris', id: 'abali-yolu', sira: 2, odul: 1000 } },
@@ -17917,7 +17927,7 @@ function cokKur(o) {
     { ad: 'İlk iniş', konus: [], gorev: { tip: 'yaris', id: 'kayak', sira: 1, odul: 600 } },
     { ad: 'Kış Kupası', konus: [
       ['Ferhad', 'Fena değilsin. Asıl iş yukarıda: zirve istasyonundan aşağı, kar üstünde. Frene sert basarsan kayarsın; bizde buna yumuşak ayak derler.'],
-      ['Halil Usta', 'Kış Kupası’nı alırsan dükkânın tabelasına bir de kar tanesi çizeriz. Birinci gel.']],
+      ['Selim Usta', 'Kış Kupası’nı alırsan dükkânın tabelasına bir de kar tanesi çizeriz. Birinci gel.']],
       gorev: { tip: 'yaris', id: 'pist-inisi', sira: 1, odul: 2500 } },
   ];
   // Bölüm adları ve konuşmalar seçili dilden okunur (src/dil.js); yukarıdaki Türkçe metin yalnız yapıyı gösterir.
@@ -18921,7 +18931,9 @@ function cokKur(o) {
           // (c.prog >= r.total); oyuncu da aynı ölçüyle. Yakınlık kuralı da geçerli kalır. Bir adımda en çok 4 nokta (kestirmeden dönünce art arda sayılır).
           const q = r.cps[r.cpi];
           if (!q) break;
-          const yakin = (player.x - q.x) ** 2 + (player.z - q.z) ** 2 < 17 * 17 || (r.ev.parkur && (player.x - q.x) * q.dx + (player.z - q.z) * q.dz >= 0 && Math.abs((player.x - q.x) * q.dz - (player.z - q.z) * q.dx) < 30);      // parkurda uçarken noktanın üstünden aşılır: çizgiyi geçmek yeter
+          // Son nokta (bitiş) yakınlıkla sayılmaz (27 Kas 2026): oyuncu çizgiye 17 m kala bitirmiş sayılıyordu, rakip çizgiyi geçmek zorundaydı; turnuvada
+          // yarış boyu 15 m önde giden rakip 1,7 sn sonra bitirmiş sayılıyordu (ölçüm). Bitiş artık rakiplerle aynı: rota ilerlemesi (açık rotada son 8 m).
+          const yakin = !q.final && ((player.x - q.x) ** 2 + (player.z - q.z) ** 2 < 17 * 17) || (r.ev.parkur && (player.x - q.x) * q.dx + (player.z - q.z) * q.dz >= 0 && Math.abs((player.x - q.x) * q.dz - (player.z - q.z) * q.dx) < 30);      // parkurda uçarken noktanın üstünden aşılır: çizgiyi geçmek yeter
           if (!yakin && !(player.prog >= q.s - (q.final && !r.R.loop ? 8 : 0))) break;      // açık rotada rakipler de sondan bir önceki noktada bitirir (c.ri >= n - 2)
           r.cpi++;
           if (q.final) finishRace();
@@ -19601,13 +19613,25 @@ function cokKur(o) {
   // Üç teker devrildi: gürültü, uyarı; yük taşınıyorsa yük 35 puan zarar görür
   // Yaya tepkileri (21 Kas 2026, kurucu: "Yaya tepkileri"): üç teker iki tekere kalkınca (kalkış > 0,5) 26 m içindekiler ellerini başına götürür;
   // devrilmeden toparlanırsa (en yüksek kalkış ≥ 0,72) 32 m içindekiler alkışlar ("Kıl payı"). Devrilince güler (devrildi). Zil: zilCal.
-  const UCT = { tepe: 0, sasirT: 0, alkisT: 0 };
+  // İki teker (27 Kas 2026; kurucu: "3 tekerlekli bisiklet komik geliyor insanlara... uzun süre oynanması mümkün değil çünkü sıkıcı oluyor. hızlanması ve başka bir
+  // şeyler koymalısın heyecan katmak için"): iç teker havadayken (kalkış UCT.ikiAlt–UCT.ikiUst) UCT.ikiSure sn devrilmeden giden üç teker ödül alır: nefes dolar
+  // (pedallı), UCT.hizSure sn rüzgâr itişi (azami hız ×1,25, itiş ×1,4; src/arac.js c.ucHiz), yarışta puan. Devrilme riskiyle oynanır; UCT.ikiBekle sn'de bir.
+  const UCT = { tepe: 0, sasirT: 0, alkisT: 0, ikiT: 0, ikiBekle: 4, ikiBekleT: 0, ikiAlt: 0.28, ikiUst: 0.97, ikiSure: 0.8, hizSure: 2.5, say: 0 };
   function ucTepki(dt) {
     if (UCT.sasirT > 0) UCT.sasirT -= dt;
     if (UCT.alkisT > 0) UCT.alkisT -= dt;
     if (!player.ucTeker || player.ski || player.devrik > 0) { UCT.tepe = 0; return; }
     const k = player.kalkis || 0;
     if (k > UCT.tepe) UCT.tepe = k;
+    if (UCT.ikiBekleT > 0) UCT.ikiBekleT -= dt;
+    if (player.ucHiz > 0) player.ucHiz = Math.max(0, player.ucHiz - dt);
+    UCT.ikiT = k > UCT.ikiAlt && k < UCT.ikiUst && !player.air && Math.hypot(player.vx, player.vz) > 4 ? UCT.ikiT + dt : 0;
+    if (UCT.ikiT >= UCT.ikiSure && UCT.ikiBekleT <= 0) {
+      UCT.ikiT = 0; UCT.ikiBekleT = UCT.ikiBekle; UCT.say++; player.ucHiz = UCT.hizSure;
+      if (player.pedal) { player.nefes = 1; player.nefesYok = false; }
+      beep(780, 0.12, 0.2, 'triangle'); beep(1170, 0.18, 0.18, 'triangle', 0.07);
+      if (yhVar()) yhOdul(T('uc.ikiTeker'), 0, 80); else flash(T('uc.ikiTeker'), T('uc.ikiTeker.alt'), 1.6);
+    }
     if (k > 0.5 && UCT.sasirT <= 0) { yayaTepki(player, 26, 'sasir', 1.8); UCT.sasirT = 3; }
     if (k < 0.05 && UCT.tepe > 0) {
       if (UCT.tepe >= 0.72 && UCT.alkisT <= 0) { const n = yayaTepki(player, 32, 'alkis', 2.4); if (n) { alkisSes(n); flash(T('uc.kilPayi'), T('uc.kilPayi.alt'), 1.8); UCT.alkisT = 6; } }
@@ -20404,7 +20428,7 @@ function cokKur(o) {
     sim(sec) { const n = Math.round(sec / STEP); for (let i = 0; i < n; i++) { if (G.state === 'free' || G.state === 'race' || G.state === 'count') tick(STEP); } },
     teleport(x, z, h) { placeCar(player, x, z, h || 0); camSnap = true; },
     groundH,
-    ETK, etkGrupSec, hedef, hedefYazi, ALEV, CANV, canVur, izlAdim, updateHud, poseCar, VIRAJ, ISIT, TISIK, RDEV, rakipDevrikAdim, STORY, get hikaye() { return S; }, isitEksik() { const d = havuzDokular(dokular(scene, new Set())); dokular(UZAK.sahne, d); const e = []; for (const t of d) { if (!t.image || t.isRenderTargetTexture) continue; if (renderer.properties.get(t).__version !== t.version) e.push([t.name || String(t.image.src || t.image.currentSrc || '').split('/').pop() || t.uuid.slice(0, 6), t.image.width, t.image.height]); } return e; }, trafikSec(v) { AYAR.trafik = !!v; applySettings(false); },
+    ETK, MENU_ETK, UCT, etkGrupSec, hedef, hedefYazi, ALEV, CANV, canVur, izlAdim, updateHud, poseCar, VIRAJ, ISIT, TISIK, RDEV, rakipDevrikAdim, STORY, get hikaye() { return S; }, isitEksik() { const d = havuzDokular(dokular(scene, new Set())); dokular(UZAK.sahne, d); const e = []; for (const t of d) { if (!t.image || t.isRenderTargetTexture) continue; if (renderer.properties.get(t).__version !== t.version) e.push([t.name || String(t.image.src || t.image.currentSrc || '').split('/').pop() || t.uuid.slice(0, 6), t.image.width, t.image.height]); } return e; }, trafikSec(v) { AYAR.trafik = !!v; applySettings(false); },
     wallCount: () => WSEG.length / 4, segCount: () => SEG.length / 7, texMissing: () => TEX.missing, trafik: TRF, vakitSec, vakitZorla: vakitZorlaAyarla, get ek() { return Object.keys(EK.paket); }, get turnuva() { return G.tur; }, TURNUVA, turnuvaKur, HH, KIV, kivilcim, IZL, LIZ, VTR, finishRace, showResult, startTanitim, TAN, startStory, get kamFov() { return camera.fov; }, agacYakin: (x, z) => (AGAC_HAVUZ ? AGAC_HAVUZ.enYakin(x, z) : null), get kapiYari() { return YD.kapiBit && YD.kapiBit.g.visible ? YD.kapiBit.yari : gate1.userData.yari; }, kapiTara(id, d0, d1) { const R = EVENTS.find((e) => e.id === id).R, o = []; for (let d = d0; d <= d1; d += 2) { const q = routePoint(R, d), p = { x: q.x, z: q.z, dx: q.dx, dz: q.dz }, rd = roadAt(p.x, p.z), nx = p.dz, nz = -p.dx; o.push([d, rd && rd.on ? +rd.hw.toFixed(1) : null, +kapiYari(p).toFixed(1), +wallDist(p.x + nx * 4, p.z + nz * 4).toFixed(1), +wallDist(p.x - nx * 4, p.z - nz * 4).toFixed(1), +(binaUst(p.x + nx * 4, p.z + nz * 4) - groundH(p.x + nx * 4, p.z + nz * 4)).toFixed(1), +(binaUst(p.x - nx * 4, p.z - nz * 4) - groundH(p.x - nx * 4, p.z - nz * 4)).toFixed(1)]); } return o; }, VAKIT, vakitUygula, get vakitGu() { return vakitG; }, get renderer() { return renderer; }, get kapi() { return YD.kapiBas ? { bas: YD.kapiBas.g.visible, bit: YD.kapiBit.g.visible, basYari: YD.kapiBas.yari, bitYari: YD.kapiBit.yari, ekran: YD.kapiBas.anahtar, eskiIsik: !!(YD.isik && YD.isik.visible), eskiKapi: gate1.visible || gate2.visible } : null; }, wallDist, wallRay, binaUst, kaleKisa, kirikKati: () => KIRIK.oge.filter((o) => o.tip !== 1 && !o.kapali && o.durum === 0).map((o) => [o.x, o.z, o.r || 0]), initAudio, sesGorunur, get sesDurum() { return A.ctx ? A.ctx.state : 'yok'; }, get kamYer() { const c = player, dx = camera.position.x - c.x, dz = camera.position.z - c.z; return { geri: -(dx * Math.sin(c.h) + dz * Math.cos(c.h)), yan: dx * Math.cos(c.h) - dz * Math.sin(c.h), yuk: camera.position.y - c.y, yerden: camera.position.y - groundH(camera.position.x, camera.position.z) }; }, YH, YD, ydYukle, ydBariyerYer, PRK, PARKUR, parkurYer, KTUR, YOLR, RTUR, yolRampaYer, RKIM, RKE, rkDal, rkEtiketAdim, rakipHirs, rotaEgrilik, YT, ytKarar, ytYolBul, okAdim, galeri: { liste: GALERI, get durum() { return GAL; }, sec: galeriSec, tak: galeriTak, ciz: galeriCiz }, yhKaza: (c) => yhKaza(c || player, G.race), yhOdul, get vakit() { return { g: vakitG, n: geceN, secim: AYAR.vakit }; }, set vakitG(v) { AYAR.vakit = v < 0.5 ? 'gunduz' : v < 1.5 ? 'gunbatimi' : 'gece'; vakitG = v; vakitUygula(v); }, mobil: MOBIL, gol: GOL, mutfak: MUTFAK, startErzak, setVehicle, get para() { return G.para; }, set para(v) { G.para = v; store.set('para', v); updateKasa(); }, owns, get sahip() { return SAHIP.slice(); },
     cok: COK,      // birlikte sürüş: .durum, .kur(), .katil(kod), .ayril(), .sunucuAyarla(adres)
     gl: () => GLB,      // grafik bağlamı: kaçıncı denemede açıldı
